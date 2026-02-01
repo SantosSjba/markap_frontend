@@ -5,6 +5,7 @@ import { authGuard } from '@core/guards'
 import { authRoutes } from '@modules/auth/router'
 import { dashboardRoutes } from '@modules/dashboard/router'
 import { applicationsRoutes } from '@modules/applications/router'
+import { settingsRoutes } from '@modules/settings/router'
 
 /**
  * Application Router
@@ -39,6 +40,7 @@ const baseRoutes: RouteRecordRaw[] = [
 const routes: RouteRecordRaw[] = [
   ...authRoutes,
   ...applicationsRoutes,
+  ...settingsRoutes,
   ...dashboardRoutes,
   ...baseRoutes,
 ]

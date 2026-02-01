@@ -1,21 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@modules/auth/stores'
-import { applicationsService } from '../services'
+import { useMyApplications } from '../composables'
 import type { Application } from '../types'
 
 /**
  * ApplicationsView
  * Shows available applications for the user after login
+ * Uses TanStack Query for data fetching
  */
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const applications = ref<Application[]>([])
-const isLoading = ref(true)
-const error = ref('')
+// TanStack Query
+const { data: applications, isLoading, error, refetch } = useMyApplications()
+
+const isUserMenuOpen = ref(false)
 
 // Icon mapping based on icon name
 const DEFAULT_ICON_PATH = 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'
@@ -34,40 +36,57 @@ const getIconPath = (iconName: string | null): string => {
   return iconPaths[iconName] || DEFAULT_ICON_PATH
 }
 
-const loadApplications = async () => {
-  isLoading.value = true
-  error.value = ''
-
-  try {
-    applications.value = await applicationsService.getMyApplications()
-  } catch (err) {
-    console.error('Failed to load applications:', err)
-    error.value = 'Error al cargar las aplicaciones'
-  } finally {
-    isLoading.value = false
-  }
-}
-
 const navigateToApp = (app: Application) => {
   if (app.url) {
     router.push(app.url)
   }
 }
 
+const toggleUserMenu = () => {
+  isUserMenuOpen.value = !isUserMenuOpen.value
+}
+
+const closeUserMenu = () => {
+  isUserMenuOpen.value = false
+}
+
+const goToProfile = () => {
+  closeUserMenu()
+  router.push('/settings/profile')
+}
+
+const goToSettings = () => {
+  closeUserMenu()
+  router.push('/settings')
+}
+
 const handleLogout = () => {
+  closeUserMenu()
   authStore.logout()
   router.push('/auth/login')
 }
 
+// Close menu when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.user-menu-container')) {
+    closeUserMenu()
+  }
+}
+
 onMounted(() => {
-  loadApplications()
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
 <template>
-  <div class="min-h-screen" style="background-color: #0a0a0a;">
+  <div class="min-h-screen" style="background-color: var(--color-background);">
     <!-- Header -->
-    <header class="border-b" style="border-color: #1a1a1a;">
+    <header class="bg-white border-b" style="border-color: var(--color-border);">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
@@ -79,32 +98,98 @@ onMounted(() => {
               M
             </div>
             <div>
-              <h1 class="text-white font-semibold">MARKAPP</h1>
-              <p class="text-xs" style="color: #666;">Sistema Integral</p>
+              <h1 class="font-semibold" style="color: var(--color-text-primary);">MARKAP</h1>
+              <p class="text-xs" style="color: var(--color-text-muted);">Sistema Integral</p>
             </div>
           </div>
 
           <!-- User menu -->
-          <div class="flex items-center gap-4">
-            <div class="text-right hidden sm:block">
-              <p class="text-sm text-white">{{ authStore.userFullName }}</p>
-              <p class="text-xs" style="color: #666;">{{ authStore.user?.email }}</p>
-            </div>
-            <div 
-              class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium"
-              style="background-color: var(--color-primary); color: white;"
-            >
-              {{ authStore.userInitials }}
-            </div>
+          <div class="relative user-menu-container">
             <button
-              @click="handleLogout"
-              class="text-sm px-3 py-1.5 rounded-lg transition-colors"
-              style="color: #888; background-color: transparent;"
-              @mouseenter="($event.target as HTMLElement).style.backgroundColor = '#1a1a1a'"
-              @mouseleave="($event.target as HTMLElement).style.backgroundColor = 'transparent'"
+              @click="toggleUserMenu"
+              class="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-gray-50"
             >
-              Salir
+              <div class="text-right hidden sm:block">
+                <p class="text-sm font-medium" style="color: var(--color-text-primary);">{{ authStore.userFullName }}</p>
+                <p class="text-xs" style="color: var(--color-text-muted);">{{ authStore.user?.email }}</p>
+              </div>
+              <div 
+                class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium text-white"
+                style="background-color: var(--color-primary);"
+              >
+                {{ authStore.userInitials }}
+              </div>
+              <svg 
+                class="w-4 h-4 transition-transform"
+                :class="{ 'rotate-180': isUserMenuOpen }"
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                style="color: var(--color-text-muted);"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
+
+            <!-- Dropdown menu -->
+            <Transition
+              enter-active-class="transition-all duration-200 ease-out"
+              leave-active-class="transition-all duration-150 ease-in"
+              enter-from-class="opacity-0 scale-95 -translate-y-1"
+              leave-to-class="opacity-0 scale-95 -translate-y-1"
+            >
+              <div
+                v-if="isUserMenuOpen"
+                class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border py-2 z-50"
+                style="border-color: var(--color-border);"
+              >
+                <!-- User info -->
+                <div class="px-4 py-3 border-b" style="border-color: var(--color-border);">
+                  <p class="text-sm font-medium" style="color: var(--color-text-primary);">{{ authStore.userFullName }}</p>
+                  <p class="text-xs" style="color: var(--color-text-muted);">{{ authStore.user?.email }}</p>
+                </div>
+
+                <!-- Menu items -->
+                <div class="py-1">
+                  <button
+                    @click="goToProfile"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-gray-50"
+                    style="color: var(--color-text-primary);"
+                  >
+                    <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Mi Perfil
+                  </button>
+
+                  <button
+                    @click="goToSettings"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-gray-50"
+                    style="color: var(--color-text-primary);"
+                  >
+                    <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Configuración
+                  </button>
+                </div>
+
+                <!-- Logout -->
+                <div class="border-t pt-1" style="border-color: var(--color-border);">
+                  <button
+                    @click="handleLogout"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-red-50"
+                    style="color: var(--color-error);"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Cerrar Sesión
+                  </button>
+                </div>
+              </div>
+            </Transition>
           </div>
         </div>
       </div>
@@ -114,10 +199,10 @@ onMounted(() => {
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <!-- Welcome message -->
       <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-white mb-2">
-          Bienvenida, {{ authStore.user?.firstName }}
+        <h2 class="text-3xl font-bold mb-2" style="color: var(--color-text-primary);">
+          Bienvenido, {{ authStore.user?.firstName }}
         </h2>
-        <p style="color: #888;">Selecciona la aplicación a la que deseas acceder</p>
+        <p style="color: var(--color-text-secondary);">Selecciona la aplicación a la que deseas acceder</p>
       </div>
 
       <!-- Loading state -->
@@ -130,11 +215,10 @@ onMounted(() => {
 
       <!-- Error state -->
       <div v-else-if="error" class="text-center py-12">
-        <p style="color: var(--color-error);">{{ error }}</p>
+        <p style="color: var(--color-error);">Error al cargar las aplicaciones</p>
         <button 
-          @click="loadApplications"
-          class="mt-4 px-4 py-2 rounded-lg"
-          style="background-color: var(--color-primary); color: white;"
+          @click="refetch"
+          class="btn-primary mt-4 px-6 py-2 rounded-lg"
         >
           Reintentar
         </button>
@@ -143,26 +227,23 @@ onMounted(() => {
       <!-- Applications grid -->
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <button
-          v-for="app in applications"
+          v-for="app in (applications ?? [])"
           :key="app.id"
           @click="navigateToApp(app)"
-          class="group text-left p-6 rounded-xl border transition-all duration-200 hover:scale-[1.02]"
-          style="background-color: #141414; border-color: #2a2a2a;"
-          @mouseenter="($event.currentTarget as HTMLElement).style.borderColor = app.color || '#0BB0BE'"
-          @mouseleave="($event.currentTarget as HTMLElement).style.borderColor = '#2a2a2a'"
+          class="card group text-left p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
         >
           <div class="flex items-start justify-between mb-4">
             <!-- Icon -->
             <div 
               class="w-12 h-12 rounded-xl flex items-center justify-center"
-              :style="{ backgroundColor: (app.color || '#0BB0BE') + '20' }"
+              :style="{ backgroundColor: (app.color || 'var(--color-primary)') + '15' }"
             >
               <svg 
                 class="w-6 h-6" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
-                :style="{ color: app.color || '#0BB0BE' }"
+                :style="{ color: app.color || 'var(--color-primary)' }"
               >
                 <path 
                   stroke-linecap="round" 
@@ -179,15 +260,15 @@ onMounted(() => {
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
-              style="color: #666;"
+              style="color: var(--color-text-muted);"
             >
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </div>
 
           <!-- Content -->
-          <h3 class="font-semibold text-white mb-1">{{ app.name }}</h3>
-          <p class="text-sm mb-4 line-clamp-2" style="color: #888;">
+          <h3 class="font-semibold mb-1" style="color: var(--color-text-primary);">{{ app.name }}</h3>
+          <p class="text-sm mb-4 line-clamp-2" style="color: var(--color-text-secondary);">
             {{ app.description }}
           </p>
 
@@ -196,21 +277,39 @@ onMounted(() => {
             <span class="flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full" style="background-color: var(--color-success);"></span>
               <span style="color: var(--color-success);">{{ app.activeCount }}</span>
-              <span style="color: #666;">activos</span>
+              <span style="color: var(--color-text-muted);">activos</span>
             </span>
             <span class="flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full" style="background-color: var(--color-warning);"></span>
               <span style="color: var(--color-warning);">{{ app.pendingCount }}</span>
-              <span style="color: #666;">pendientes</span>
+              <span style="color: var(--color-text-muted);">pendientes</span>
             </span>
           </div>
         </button>
       </div>
+
+      <!-- Empty state -->
+      <div v-if="!isLoading && !error && (applications ?? []).length === 0" class="text-center py-12">
+        <div 
+          class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          style="background-color: var(--color-primary-light);"
+        >
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-primary);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium mb-2" style="color: var(--color-text-primary);">
+          No tienes aplicaciones asignadas
+        </h3>
+        <p style="color: var(--color-text-secondary);">
+          Contacta al administrador para solicitar acceso.
+        </p>
+      </div>
     </main>
 
     <!-- Footer -->
-    <footer class="py-8 text-center">
-      <p class="text-sm" style="color: #444;">
+    <footer class="py-8 text-center border-t" style="border-color: var(--color-border);">
+      <p class="text-sm" style="color: var(--color-text-muted);">
         MARKAP S.A.C. - Sistema Integral de Gestión Empresarial
       </p>
     </footer>

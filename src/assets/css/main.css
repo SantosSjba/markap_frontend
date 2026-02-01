@@ -191,6 +191,16 @@ a:hover {
   background: var(--color-text-secondary);
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* ============================================
    FOCUS STYLES (Accessibility)
    ============================================ */
@@ -346,12 +356,13 @@ textarea::placeholder {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 th {
@@ -364,6 +375,7 @@ th {
   padding: 0.75rem 1rem;
   text-align: left;
   border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
 }
 
 td {
@@ -379,4 +391,15 @@ tr:last-child td {
 
 tr:hover td {
   background-color: var(--color-background);
+}
+
+/* Responsive table adjustments */
+@media (max-width: 640px) {
+  table {
+    min-width: 500px;
+  }
+  
+  th, td {
+    padding: 0.625rem 0.75rem;
+  }
 }

@@ -99,6 +99,21 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Update current user data (when editing own profile)
+   */
+  const updateCurrentUser = (updates: Partial<User>) => {
+    if (!user.value) return
+
+    user.value = {
+      ...user.value,
+      ...updates,
+      // Recalculate fullName if firstName or lastName changed
+      fullName: `${updates.firstName ?? user.value.firstName} ${updates.lastName ?? user.value.lastName}`,
+    }
+    localStorage.setItem(USER_KEY, JSON.stringify(user.value))
+  }
+
   const initializeAuth = () => {
     const storedToken = localStorage.getItem(TOKEN_KEY)
     const storedUser = localStorage.getItem(USER_KEY)
@@ -147,5 +162,6 @@ export const useAuthStore = defineStore('auth', () => {
     fetchProfile,
     initializeAuth,
     clearAuth,
+    updateCurrentUser,
   }
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores'
 import type { LoginCredentials } from '../types'
 
@@ -10,7 +10,6 @@ import type { LoginCredentials } from '../types'
  */
 
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 
 const credentials = reactive<LoginCredentials>({
