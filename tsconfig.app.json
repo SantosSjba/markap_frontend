@@ -11,9 +11,13 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
+      "@core": ["src/core"],
       "@core/*": ["src/core/*"],
+      "@shared": ["src/shared"],
       "@shared/*": ["src/shared/*"],
+      "@modules": ["src/modules"],
       "@modules/*": ["src/modules/*"],
+      "@layouts": ["src/layouts"],
       "@layouts/*": ["src/layouts/*"]
     },
 
