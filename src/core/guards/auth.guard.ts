@@ -29,7 +29,7 @@ export const authGuard = async (
   const requiresGuest = to.matched.some((record) => record.meta.requiresGuest)
 
   if (requiresGuest && authStore.isAuthenticated) {
-    return next({ name: 'dashboard' })
+    return next({ name: 'applications' })
   }
 
   next()

@@ -54,8 +54,8 @@ const handleSubmit = async () => {
   const result = await authStore.login(credentials)
 
   if (result.success) {
-    const redirect = route.query.redirect as string
-    router.push(redirect || '/dashboard')
+    // Always redirect to applications after login (ignore query redirect)
+    router.push('/applications')
   } else {
     errors.general = result.error || 'Credenciales inválidas'
   }

@@ -4,6 +4,7 @@ import { authGuard } from '@core/guards'
 // Import module routes
 import { authRoutes } from '@modules/auth/router'
 import { dashboardRoutes } from '@modules/dashboard/router'
+import { applicationsRoutes } from '@modules/applications/router'
 
 /**
  * Application Router
@@ -14,7 +15,7 @@ import { dashboardRoutes } from '@modules/dashboard/router'
 const baseRoutes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/dashboard',
+    redirect: '/applications', // Redirect to applications selector after login
   },
   {
     path: '/unauthorized',
@@ -37,6 +38,7 @@ const baseRoutes: RouteRecordRaw[] = [
 // Combine all routes
 const routes: RouteRecordRaw[] = [
   ...authRoutes,
+  ...applicationsRoutes,
   ...dashboardRoutes,
   ...baseRoutes,
 ]
