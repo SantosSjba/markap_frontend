@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { BaseButton, BaseInput } from '@shared/components'
 
 /**
