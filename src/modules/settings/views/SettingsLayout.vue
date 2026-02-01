@@ -71,7 +71,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen" style="background-color: var(--color-background);">
+  <div class="min-h-screen flex flex-col" style="background-color: var(--color-background);">
     <!-- Header -->
     <header class="bg-white border-b sticky top-0 z-40" style="border-color: var(--color-border);">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,15 +88,13 @@ onUnmounted(() => {
               </svg>
             </button>
             <div class="flex items-center gap-3">
-              <div 
-                class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white"
-                style="background-color: var(--color-primary);"
-              >
-                M
-              </div>
-              <div>
+              <img 
+                src="/images/logo.jpg" 
+                alt="MARKAP Homes" 
+                class="h-10 w-auto object-contain"
+              />
+              <div class="hidden sm:block">
                 <h1 class="font-semibold" style="color: var(--color-text-primary);">Configuración</h1>
-                <p class="text-xs" style="color: var(--color-text-muted);">MARKAP</p>
               </div>
             </div>
           </div>
@@ -175,7 +173,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+    <div class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 w-full">
       <div class="flex gap-8">
         <!-- Sidebar (desktop only) -->
         <aside class="w-64 flex-shrink-0 hidden md:block">
@@ -215,5 +213,12 @@ onUnmounted(() => {
         </main>
       </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center border-t mt-auto" style="border-color: var(--color-border);">
+      <p class="text-xs" style="color: var(--color-text-muted);">
+        MARKAP S.A.C. © {{ new Date().getFullYear() }} - Sistema Integral de Gestión Empresarial
+      </p>
+    </footer>
   </div>
 </template>

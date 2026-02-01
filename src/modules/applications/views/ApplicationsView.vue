@@ -84,23 +84,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen" style="background-color: var(--color-background);">
+  <div class="min-h-screen flex flex-col" style="background-color: var(--color-background);">
     <!-- Header -->
     <header class="bg-white border-b" style="border-color: var(--color-border);">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
-          <div class="flex items-center gap-3">
-            <div 
-              class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white"
-              style="background-color: var(--color-primary);"
-            >
-              M
-            </div>
-            <div>
-              <h1 class="font-semibold" style="color: var(--color-text-primary);">MARKAP</h1>
-              <p class="text-xs" style="color: var(--color-text-muted);">Sistema Integral</p>
-            </div>
+          <div class="flex items-center">
+            <img 
+              src="/images/logo.jpg" 
+              alt="MARKAP Homes" 
+              class="h-12 w-auto object-contain"
+            />
           </div>
 
           <!-- User menu -->
@@ -196,9 +191,9 @@ onUnmounted(() => {
     </header>
 
     <!-- Main content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
       <!-- Welcome message -->
-      <div class="text-center mb-12">
+      <div class="text-center mb-8">
         <h2 class="text-3xl font-bold mb-2" style="color: var(--color-text-primary);">
           Bienvenido, {{ authStore.user?.firstName }}
         </h2>
@@ -308,9 +303,9 @@ onUnmounted(() => {
     </main>
 
     <!-- Footer -->
-    <footer class="py-8 text-center border-t" style="border-color: var(--color-border);">
-      <p class="text-sm" style="color: var(--color-text-muted);">
-        MARKAP S.A.C. - Sistema Integral de Gestión Empresarial
+    <footer class="py-4 text-center border-t mt-auto" style="border-color: var(--color-border);">
+      <p class="text-xs" style="color: var(--color-text-muted);">
+        MARKAP S.A.C. © {{ new Date().getFullYear() }} - Sistema Integral de Gestión Empresarial
       </p>
     </footer>
   </div>

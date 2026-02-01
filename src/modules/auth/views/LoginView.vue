@@ -67,26 +67,16 @@ const togglePassword = () => {
 
 <template>
   <div class="text-center">
-    <!-- Icon -->
+    <!-- Logo -->
     <div class="flex justify-center mb-6">
-      <div 
-        class="w-16 h-16 rounded-xl flex items-center justify-center"
-        style="background-color: var(--color-primary-light); border: 1px solid var(--color-primary);"
-      >
-        <svg 
-          class="w-8 h-8" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-          style="color: var(--color-primary);"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      </div>
+      <img 
+        src="/images/logo.jpg" 
+        alt="MARKAP Homes" 
+        class="h-32 w-auto object-contain"
+      />
     </div>
 
     <!-- Title -->
-    <h1 class="text-2xl font-bold tracking-wide mb-2" style="color: var(--color-text-primary);">MARKAP</h1>
     <p class="text-sm mb-8" style="color: var(--color-text-secondary);">Sistema Integral de Gestión Empresarial</p>
 
     <!-- Form -->
