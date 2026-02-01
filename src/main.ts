@@ -1,5 +1,26 @@
 import { createApp } from 'vue'
-import './style.css'
-import App from './App.vue'
+import { createPinia } from 'pinia'
 
-createApp(App).mount('#app')
+import App from './App.vue'
+import router from './router'
+
+// Styles
+import './assets/css/main.css'
+
+// Create app instance
+const app = createApp(App)
+
+// Create Pinia store
+const pinia = createPinia()
+
+// Use plugins
+app.use(pinia)
+app.use(router)
+
+// Initialize auth state from localStorage before mounting
+import { useAuthStore } from '@modules/auth/stores'
+const authStore = useAuthStore()
+authStore.initializeAuth()
+
+// Mount app
+app.mount('#app')
