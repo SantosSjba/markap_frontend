@@ -1,22 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authService } from '../services'
-import type { User, LoginCredentials, RegisterData } from '../types'
+import type { User, LoginCredentials } from '../types'
 
 /**
  * Auth Store
  * Manages authentication state using Pinia
+ * Synchronized with backend response structure
  */
 
-const TOKEN_KEY = 'auth_token'
-const REFRESH_TOKEN_KEY = 'refresh_token'
-const USER_KEY = 'auth_user'
+const TOKEN_KEY = 'markap_token'
+const USER_KEY = 'markap_user'
+const EXPIRES_KEY = 'markap_expires'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref<User | null>(null)
   const accessToken = ref<string | null>(null)
-  const refreshTokenValue = ref<string | null>(null)
+  const expiresIn = ref<number | null>(null)
   const isLoading = ref(false)
 
   // Getters
@@ -24,101 +25,73 @@ export const useAuthStore = defineStore('auth', () => {
 
   const userFullName = computed(() => {
     if (!user.value) return ''
-    return `${user.value.firstName} ${user.value.lastName}`
+    return user.value.fullName || `${user.value.firstName} ${user.value.lastName}`
   })
 
   const userInitials = computed(() => {
     if (!user.value) return ''
-    return `${user.value.firstName.charAt(0)}${user.value.lastName.charAt(0)}`
+    return `${user.value.firstName.charAt(0)}${user.value.lastName.charAt(0)}`.toUpperCase()
   })
 
   // Actions
-  const setTokens = (access: string, refresh?: string) => {
-    accessToken.value = access
-    localStorage.setItem(TOKEN_KEY, access)
-
-    if (refresh) {
-      refreshTokenValue.value = refresh
-      localStorage.setItem(REFRESH_TOKEN_KEY, refresh)
-    }
-  }
-
-  const setUser = (userData: User) => {
+  const setAuth = (userData: User, token: string, expires: number) => {
     user.value = userData
+    accessToken.value = token
+    expiresIn.value = expires
+
+    localStorage.setItem(TOKEN_KEY, token)
     localStorage.setItem(USER_KEY, JSON.stringify(userData))
+    localStorage.setItem(EXPIRES_KEY, expires.toString())
   }
 
   const clearAuth = () => {
     user.value = null
     accessToken.value = null
-    refreshTokenValue.value = null
+    expiresIn.value = null
+
     localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(REFRESH_TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
+    localStorage.removeItem(EXPIRES_KEY)
   }
 
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
+  const login = async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
     isLoading.value = true
 
     try {
       const response = await authService.login(credentials)
-      setTokens(response.accessToken, response.refreshToken)
-      setUser(response.user)
-      return true
-    } catch (error) {
+      setAuth(response.user, response.accessToken, response.expiresIn)
+      return { success: true }
+    } catch (error: unknown) {
       console.error('Login failed:', error)
-      return false
+      
+      // Extract error message from backend response
+      let errorMessage = 'Error al iniciar sesión'
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string }; status?: number } }
+        if (axiosError.response?.status === 401) {
+          errorMessage = 'Credenciales inválidas'
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message
+        }
+      }
+
+      return { success: false, error: errorMessage }
     } finally {
       isLoading.value = false
     }
   }
 
-  const register = async (data: RegisterData): Promise<boolean> => {
-    isLoading.value = true
-
-    try {
-      const response = await authService.register(data)
-      setTokens(response.accessToken, response.refreshToken)
-      setUser(response.user)
-      return true
-    } catch (error) {
-      console.error('Registration failed:', error)
-      return false
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  const logout = async () => {
-    try {
-      await authService.logout()
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      clearAuth()
-    }
-  }
-
-  const refreshToken = async (): Promise<boolean> => {
-    const refresh = refreshTokenValue.value
-
-    if (!refresh) return false
-
-    try {
-      const response = await authService.refreshToken(refresh)
-      setTokens(response.accessToken)
-      return true
-    } catch (error) {
-      console.error('Token refresh failed:', error)
-      clearAuth()
-      return false
-    }
+  const logout = () => {
+    authService.logout()
+    clearAuth()
   }
 
   const fetchProfile = async (): Promise<boolean> => {
     try {
       const userData = await authService.getProfile()
-      setUser(userData)
+      user.value = userData
+      localStorage.setItem(USER_KEY, JSON.stringify(userData))
       return true
     } catch (error) {
       console.error('Failed to fetch profile:', error)
@@ -128,15 +101,15 @@ export const useAuthStore = defineStore('auth', () => {
 
   const initializeAuth = () => {
     const storedToken = localStorage.getItem(TOKEN_KEY)
-    const storedRefresh = localStorage.getItem(REFRESH_TOKEN_KEY)
     const storedUser = localStorage.getItem(USER_KEY)
+    const storedExpires = localStorage.getItem(EXPIRES_KEY)
 
     if (storedToken) {
       accessToken.value = storedToken
     }
 
-    if (storedRefresh) {
-      refreshTokenValue.value = storedRefresh
+    if (storedExpires) {
+      expiresIn.value = parseInt(storedExpires, 10)
     }
 
     if (storedUser) {
@@ -148,22 +121,29 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Check if token is expired (optional, for future use)
+  const isTokenExpired = computed(() => {
+    // This would need the actual token issue time to calculate
+    // For now, we rely on backend returning 401 for expired tokens
+    return false
+  })
+
   return {
     // State
     user,
     accessToken,
+    expiresIn,
     isLoading,
 
     // Getters
     isAuthenticated,
     userFullName,
     userInitials,
+    isTokenExpired,
 
     // Actions
     login,
-    register,
     logout,
-    refreshToken,
     fetchProfile,
     initializeAuth,
     clearAuth,

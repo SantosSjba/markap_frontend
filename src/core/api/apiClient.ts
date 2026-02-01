@@ -44,21 +44,18 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // Handle 401 Unauthorized - Token expired
+    // Handle 401 Unauthorized - Token expired or invalid
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
       const authStore = useAuthStore()
       
-      // Try to refresh token
-      const refreshed = await authStore.refreshToken()
+      // Clear auth and redirect to login
+      // Backend doesn't have refresh token mechanism
+      authStore.clearAuth()
       
-      if (refreshed) {
-        // Retry original request with new token
-        return apiClient(originalRequest)
-      } else {
-        // Redirect to login
-        authStore.logout()
+      // Only redirect if not already on auth pages
+      if (!window.location.pathname.startsWith('/auth')) {
         window.location.href = '/auth/login'
       }
     }

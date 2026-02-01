@@ -2,14 +2,13 @@ import { apiClient } from '@core/api'
 import type {
   LoginCredentials,
   LoginResponse,
-  RegisterData,
-  RegisterResponse,
   User,
 } from '../types'
 
 /**
  * Auth Service
  * Handles all authentication-related API calls
+ * Synchronized with backend endpoints
  */
 
 const AUTH_ENDPOINT = '/auth'
@@ -17,6 +16,7 @@ const AUTH_ENDPOINT = '/auth'
 export const authService = {
   /**
    * Login user
+   * POST /auth/login
    */
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const { data } = await apiClient.post<LoginResponse>(
@@ -27,18 +27,8 @@ export const authService = {
   },
 
   /**
-   * Register new user
-   */
-  async register(userData: RegisterData): Promise<RegisterResponse> {
-    const { data } = await apiClient.post<RegisterResponse>(
-      `${AUTH_ENDPOINT}/register`,
-      userData
-    )
-    return data
-  },
-
-  /**
    * Get current user profile
+   * GET /auth/profile
    */
   async getProfile(): Promise<User> {
     const { data } = await apiClient.get<User>(`${AUTH_ENDPOINT}/profile`)
@@ -46,20 +36,10 @@ export const authService = {
   },
 
   /**
-   * Refresh access token
+   * Logout user (client-side only, backend doesn't have logout endpoint)
    */
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
-    const { data } = await apiClient.post<{ accessToken: string }>(
-      `${AUTH_ENDPOINT}/refresh`,
-      { refreshToken }
-    )
-    return data
-  },
-
-  /**
-   * Logout user
-   */
-  async logout(): Promise<void> {
-    await apiClient.post(`${AUTH_ENDPOINT}/logout`)
+  logout(): void {
+    // Backend uses JWT without refresh tokens, so logout is client-side only
+    // Just clear local storage
   },
 }

@@ -3,6 +3,7 @@ import { AuthLayout } from '@layouts'
 
 /**
  * Auth Module Routes
+ * Note: Register is not public - requires authentication (admin only)
  */
 
 export const authRoutes: RouteRecordRaw[] = [
@@ -21,14 +22,6 @@ export const authRoutes: RouteRecordRaw[] = [
         component: () => import('../views/LoginView.vue'),
         meta: {
           title: 'Iniciar Sesión',
-        },
-      },
-      {
-        path: 'register',
-        name: 'register',
-        component: () => import('../views/RegisterView.vue'),
-        meta: {
-          title: 'Registrarse',
         },
       },
       {

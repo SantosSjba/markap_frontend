@@ -49,7 +49,7 @@ const closeMobileSidebar = () => {
 
       <!-- Page content -->
       <main class="p-4 lg:p-6 mt-16">
-        <slot />
+        <router-view />
       </main>
     </div>
 

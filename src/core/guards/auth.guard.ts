@@ -34,30 +34,3 @@ export const authGuard = async (
 
   next()
 }
-
-/**
- * Role Guard
- * Protects routes that require specific roles
- */
-export const roleGuard = (allowedRoles: string[]) => {
-  return async (
-    _to: RouteLocationNormalized,
-    _from: RouteLocationNormalized,
-    next: NavigationGuardNext
-  ) => {
-    const authStore = useAuthStore()
-
-    if (!authStore.isAuthenticated) {
-      return next({ name: 'login' })
-    }
-
-    const userRoles = authStore.user?.roles || []
-    const hasAccess = allowedRoles.some((role) => userRoles.includes(role))
-
-    if (!hasAccess) {
-      return next({ name: 'unauthorized' })
-    }
-
-    next()
-  }
-}

@@ -1,23 +1,23 @@
 /**
  * Auth Module Types
+ * Sincronizado con el backend NestJS
  */
 
 /**
- * User entity
+ * User entity (from backend UserResponseDto)
  */
 export interface User {
   id: string
   email: string
   firstName: string
   lastName: string
-  roles: string[]
-  avatar?: string
+  fullName: string
+  isActive: boolean
   createdAt: string
-  updatedAt: string
 }
 
 /**
- * Login credentials
+ * Login credentials (from backend LoginDto)
  */
 export interface LoginCredentials {
   email: string
@@ -25,7 +25,16 @@ export interface LoginCredentials {
 }
 
 /**
- * Register data
+ * Login response (from backend LoginResponseDto)
+ */
+export interface LoginResponse {
+  user: User
+  accessToken: string
+  expiresIn: number
+}
+
+/**
+ * Register data (from backend RegisterDto)
  */
 export interface RegisterData {
   email: string
@@ -35,38 +44,20 @@ export interface RegisterData {
 }
 
 /**
- * Auth tokens
+ * Register response (from backend RegisterResponseDto)
  */
-export interface AuthTokens {
-  accessToken: string
-  refreshToken?: string
+export interface RegisterResponse {
+  message: string
+  user: User
 }
 
 /**
- * Auth state
+ * Auth state for store
  */
 export interface AuthState {
   user: User | null
   accessToken: string | null
-  refreshToken: string | null
+  expiresIn: number | null
   isAuthenticated: boolean
   isLoading: boolean
-}
-
-/**
- * Login response
- */
-export interface LoginResponse {
-  user: User
-  accessToken: string
-  refreshToken?: string
-}
-
-/**
- * Register response
- */
-export interface RegisterResponse {
-  user: User
-  accessToken: string
-  refreshToken?: string
 }
