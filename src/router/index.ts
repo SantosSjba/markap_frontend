@@ -6,6 +6,7 @@ import { authRoutes } from '@modules/auth/router'
 import { dashboardRoutes } from '@modules/dashboard/router'
 import { applicationsRoutes } from '@modules/applications/router'
 import { settingsRoutes } from '@modules/settings/router'
+import { alquileresRoutes } from '@modules/alquileres/router'
 
 /**
  * Application Router
@@ -40,6 +41,7 @@ const baseRoutes: RouteRecordRaw[] = [
 const routes: RouteRecordRaw[] = [
   ...authRoutes,
   ...applicationsRoutes,
+  ...alquileresRoutes,
   ...settingsRoutes,
   ...dashboardRoutes,
   ...baseRoutes,
