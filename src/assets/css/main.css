@@ -73,10 +73,15 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+
+  /* Hover (light mode) */
+  --color-hover: rgba(0, 0, 0, 0.04);
+  --color-hover-strong: rgba(0, 0, 0, 0.08);
+  --color-hover-danger: rgba(229, 83, 61, 0.1);
 }
 
 /* ============================================
-   DARK MODE (Optional)
+   DARK MODE
    ============================================ */
 .dark {
   --color-background: #111827;
@@ -85,10 +90,23 @@
   --color-text-primary: #F9FAFB;
   --color-text-secondary: #D1D5DB;
   --color-text-muted: #9CA3AF;
-  
+
+  --color-primary-light: #134E4A;
   --color-sidebar-bg: #0A5558;
   --color-sidebar-item: #134E4A;
+
+  --color-success-light: #064E3B;
+  --color-warning-light: #451A03;
+  --color-error-light: #450A0A;
+  --color-info-light: #1E3A8A;
+  --color-accent-gold-light: #422006;
+
+  /* Hover (dark mode) */
+  --color-hover: rgba(255, 255, 255, 0.06);
+  --color-hover-strong: rgba(255, 255, 255, 0.1);
+  --color-hover-danger: rgba(229, 83, 61, 0.2);
 }
+
 
 /* ============================================
    TAILWIND THEME EXTENSION
@@ -141,12 +159,17 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  color-scheme: light dark;
+}
+
 body {
   font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--color-background);
   color: var(--color-text-primary);
   line-height: 1.6;
   min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* ============================================
@@ -211,6 +234,37 @@ a:hover {
 /* ============================================
    UTILITY CLASSES
    ============================================ */
+
+/* Surface/background utilities (theme-aware) */
+.bg-surface {
+  background-color: var(--color-surface);
+}
+
+.bg-background {
+  background-color: var(--color-background);
+}
+
+/* Hover utilities (theme-aware, variables override in .dark) */
+.hover-surface {
+  transition: background-color var(--transition-fast);
+}
+.hover-surface:hover {
+  background-color: var(--color-hover);
+}
+
+.hover-surface-strong {
+  transition: background-color var(--transition-fast);
+}
+.hover-surface-strong:hover {
+  background-color: var(--color-hover-strong);
+}
+
+.hover-danger {
+  transition: background-color var(--transition-fast);
+}
+.hover-danger:hover {
+  background-color: var(--color-hover-danger);
+}
 
 /* Cards */
 .card {

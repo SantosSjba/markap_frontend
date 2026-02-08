@@ -4,9 +4,13 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { setupVueQuery } from '@core/plugins'
+import { initTheme } from '@shared/composables'
 
 // Styles
 import './assets/css/main.css'
+
+// Initialize theme (sync composable state, inline script in index.html prevents flash)
+initTheme()
 
 // Create app instance
 const app = createApp(App)

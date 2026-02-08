@@ -303,7 +303,7 @@ const paginationProps = computed(() => ({
                 <div class="flex items-center justify-end gap-2">
                   <button
                     @click="openRolesModal(user)"
-                    class="p-2 rounded-lg transition-colors hover:bg-gray-100"
+                    class="p-2 rounded-lg hover-surface"
                     title="Gestionar roles"
                   >
                     <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,7 +312,7 @@ const paginationProps = computed(() => ({
                   </button>
                   <button
                     @click="openEditModal(user)"
-                    class="p-2 rounded-lg transition-colors hover:bg-gray-100"
+                    class="p-2 rounded-lg hover-surface"
                     title="Editar"
                   >
                     <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -321,7 +321,7 @@ const paginationProps = computed(() => ({
                   </button>
                   <button
                     @click="toggleUserActive(user)"
-                    class="p-2 rounded-lg transition-colors hover:bg-gray-100"
+                    class="p-2 rounded-lg hover-surface"
                     :title="user.isActive ? 'Desactivar' : 'Activar'"
                   >
                     <svg 
@@ -398,7 +398,7 @@ const paginationProps = computed(() => ({
                 <button
                   type="button"
                   @click="closeCreateModal"
-                  class="px-4 py-2 rounded-lg transition-colors hover:bg-gray-100"
+                  class="px-4 py-2 rounded-lg hover-surface"
                   style="color: var(--color-text-secondary);"
                 >
                   Cancelar
@@ -451,7 +451,7 @@ const paginationProps = computed(() => ({
                 <button
                   type="button"
                   @click="closeEditModal"
-                  class="px-4 py-2 rounded-lg transition-colors hover:bg-gray-100"
+                  class="px-4 py-2 rounded-lg hover-surface"
                   style="color: var(--color-text-secondary);"
                 >
                   Cancelar
@@ -491,7 +491,7 @@ const paginationProps = computed(() => ({
                 @click="toggleRole(role.id)"
                 :class="[
                   'w-full flex items-center justify-between p-3 rounded-lg border transition-colors',
-                  hasRole(role.id) ? 'border-2' : 'hover:bg-gray-50',
+                  hasRole(role.id) ? 'border-2' : 'hover-surface',
                 ]"
                 :style="{
                   borderColor: hasRole(role.id) ? 'var(--color-primary)' : 'var(--color-border)',

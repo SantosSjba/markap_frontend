@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@modules/auth/stores'
+import { ThemeToggle } from '@shared/components'
 import { useMyApplications } from '../composables'
 import type { Application } from '../types'
 
@@ -86,7 +87,7 @@ onUnmounted(() => {
 <template>
   <div class="min-h-screen flex flex-col" style="background-color: var(--color-background);">
     <!-- Header -->
-    <header class="bg-white border-b" style="border-color: var(--color-border);">
+    <header class="bg-surface border-b" style="border-color: var(--color-border);">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
@@ -98,11 +99,13 @@ onUnmounted(() => {
             />
           </div>
 
-          <!-- User menu -->
-          <div class="relative user-menu-container">
+          <div class="flex items-center gap-2">
+            <ThemeToggle />
+            <!-- User menu -->
+            <div class="relative user-menu-container">
             <button
               @click="toggleUserMenu"
-              class="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-gray-50"
+              class="flex items-center gap-3 p-2 rounded-lg hover-surface"
             >
               <div class="text-right hidden sm:block">
                 <p class="text-sm font-medium" style="color: var(--color-text-primary);">{{ authStore.userFullName }}</p>
@@ -135,7 +138,7 @@ onUnmounted(() => {
             >
               <div
                 v-if="isUserMenuOpen"
-                class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border py-2 z-50"
+                class="absolute right-0 mt-2 w-56 bg-surface rounded-xl shadow-lg border py-2 z-50"
                 style="border-color: var(--color-border);"
               >
                 <!-- User info -->
@@ -148,7 +151,7 @@ onUnmounted(() => {
                 <div class="py-1">
                   <button
                     @click="goToProfile"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-gray-50"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover-surface mx-1 rounded-lg"
                     style="color: var(--color-text-primary);"
                   >
                     <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,7 +162,7 @@ onUnmounted(() => {
 
                   <button
                     @click="goToSettings"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-gray-50"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover-surface mx-1 rounded-lg"
                     style="color: var(--color-text-primary);"
                   >
                     <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +177,7 @@ onUnmounted(() => {
                 <div class="border-t pt-1" style="border-color: var(--color-border);">
                   <button
                     @click="handleLogout"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-red-50"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover-danger mx-1 rounded-lg"
                     style="color: var(--color-error);"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,6 +188,7 @@ onUnmounted(() => {
                 </div>
               </div>
             </Transition>
+            </div>
           </div>
         </div>
       </div>

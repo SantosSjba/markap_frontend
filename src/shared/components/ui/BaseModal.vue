@@ -100,22 +100,25 @@ watch(
           <div
             v-if="modelValue"
             :class="[
-              'relative w-full bg-white rounded-xl shadow-xl',
+              'relative w-full rounded-xl shadow-xl',
               sizeClasses[size],
             ]"
+            style="background-color: var(--color-surface);"
           >
             <!-- Header -->
             <div
               v-if="title || closable"
               class="flex items-center justify-between p-4 border-b"
+              style="border-color: var(--color-border);"
             >
-              <h3 v-if="title" class="text-lg font-semibold text-gray-900">
+              <h3 v-if="title" class="text-lg font-semibold" style="color: var(--color-text-primary);">
                 {{ title }}
               </h3>
               <button
                 v-if="closable"
                 type="button"
-                class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                class="p-1 rounded hover-surface transition-colors"
+                style="color: var(--color-text-muted);"
                 @click="close"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +133,11 @@ watch(
             </div>
 
             <!-- Footer -->
-            <div v-if="$slots.footer" class="p-4 border-t bg-gray-50 rounded-b-xl">
+            <div
+              v-if="$slots.footer"
+              class="p-4 border-t rounded-b-xl"
+              style="border-color: var(--color-border); background-color: var(--color-background);"
+            >
               <slot name="footer" />
             </div>
           </div>

@@ -137,7 +137,7 @@ const handlePageSizeChange = (event: Event) => {
       >
         <button
           type="button"
-          class="p-2 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+          class="p-2 rounded-lg hover-surface disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="!hasPrevPage"
           aria-label="Página anterior"
           @click="goToPage(currentPage - 1)"
@@ -158,7 +158,7 @@ const handlePageSizeChange = (event: Event) => {
                 ? 'cursor-default'
                 : pageNum === currentPage
                   ? 'text-white'
-                  : 'hover:bg-gray-100',
+                  : 'hover-surface',
             ]"
             :style="
               pageNum === currentPage
@@ -174,7 +174,7 @@ const handlePageSizeChange = (event: Event) => {
 
         <button
           type="button"
-          class="p-2 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+          class="p-2 rounded-lg hover-surface disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="!hasNextPage"
           aria-label="Página siguiente"
           @click="goToPage(currentPage + 1)"

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@modules/auth/stores'
+import { ThemeToggle } from '@shared/components'
 
 /**
  * SettingsLayout
@@ -93,14 +94,14 @@ onUnmounted(() => {
 <template>
   <div class="min-h-screen flex flex-col" style="background-color: var(--color-background);">
     <!-- Header -->
-    <header class="bg-white border-b sticky top-0 z-40" style="border-color: var(--color-border);">
+    <header class="bg-surface border-b sticky top-0 z-40" style="border-color: var(--color-border);">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo & Back -->
           <div class="flex items-center gap-4">
             <button
               @click="goToApplications"
-              class="p-2 rounded-lg transition-colors hover:bg-gray-100"
+              class="p-2 rounded-lg hover-surface"
               style="color: var(--color-text-secondary);"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,11 +120,13 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- User menu (always visible with name and avatar) -->
-          <div class="relative user-menu-container">
+          <div class="flex items-center gap-2">
+            <ThemeToggle />
+            <!-- User menu (always visible with name and avatar) -->
+            <div class="relative user-menu-container">
             <button
               @click="toggleUserMenu"
-              class="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-gray-50"
+              class="flex items-center gap-3 p-2 rounded-lg hover-surface"
             >
               <div class="text-right hidden sm:block">
                 <p class="text-sm font-medium" style="color: var(--color-text-primary);">{{ authStore.userFullName }}</p>
@@ -156,7 +159,7 @@ onUnmounted(() => {
             >
               <div
                 v-if="isUserMenuOpen"
-                class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border py-2 z-50"
+                class="absolute right-0 mt-2 w-56 bg-surface rounded-xl shadow-lg border py-2 z-50"
                 style="border-color: var(--color-border);"
               >
                 <!-- User info -->
@@ -169,7 +172,7 @@ onUnmounted(() => {
                 <div class="py-1">
                   <button
                     @click="goToProfile"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-gray-50"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover-surface mx-1 rounded-lg"
                     style="color: var(--color-text-primary);"
                   >
                     <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +184,7 @@ onUnmounted(() => {
                   <button
                     v-if="authStore.isAdmin"
                     @click="goToApplications"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-gray-50"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover-surface mx-1 rounded-lg"
                     style="color: var(--color-text-primary);"
                   >
                     <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,7 +198,7 @@ onUnmounted(() => {
                 <div class="border-t pt-1" style="border-color: var(--color-border);">
                   <button
                     @click="handleLogout"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-red-50"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover-danger mx-1 rounded-lg"
                     style="color: var(--color-error);"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,13 +209,14 @@ onUnmounted(() => {
                 </div>
               </div>
             </Transition>
+            </div>
           </div>
         </div>
       </div>
     </header>
 
     <!-- Mobile Navigation (tabs) -->
-    <div class="md:hidden border-b bg-white" style="border-color: var(--color-border);">
+    <div class="md:hidden border-b bg-surface" style="border-color: var(--color-border);">
       <div class="max-w-7xl mx-auto px-4">
         <nav class="flex overflow-x-auto scrollbar-hide -mb-px">
           <router-link
@@ -255,7 +259,7 @@ onUnmounted(() => {
                 'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                 isActive(item.to)
                   ? 'font-medium'
-                  : 'hover:bg-gray-50',
+                  : 'hover-surface',
               ]"
               :style="{
                 backgroundColor: isActive(item.to) ? 'var(--color-primary-light)' : '',

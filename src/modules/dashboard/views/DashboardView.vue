@@ -84,7 +84,7 @@ const stats = [
           <button
             v-for="action in ['Nuevo Usuario', 'Nuevo Producto', 'Ver Reportes', 'Configuración']"
             :key="action"
-            class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+            class="p-4 border border-[var(--color-border)] rounded-lg hover-surface text-left"
           >
             <p class="font-medium text-gray-900">{{ action }}</p>
             <p class="text-sm text-gray-500 mt-1">Acceso rápido</p>
