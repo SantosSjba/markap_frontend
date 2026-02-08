@@ -9,6 +9,8 @@ import {
   useAssignRole, 
   useRevokeRole 
 } from '../composables'
+import { usePagination } from '@shared/composables'
+import { BasePagination } from '@shared/components'
 import type { UserListItem, CreateUserData } from '../types'
 
 /**
@@ -16,9 +18,17 @@ import type { UserListItem, CreateUserData } from '../types'
  * User management page with TanStack Query
  */
 
+const ITEMS_PER_PAGE = 10
+
 // Queries
 const { data: users, isLoading, error, refetch } = useUsers()
 const { data: roles } = useRoles()
+
+// Pagination
+const pagination = usePagination({
+  initialPage: 1,
+  initialLimit: ITEMS_PER_PAGE,
+})
 
 // Mutations
 const createUserMutation = useCreateUser()
@@ -60,6 +70,28 @@ const filteredUsers = computed(() => {
       user.fullName.toLowerCase().includes(query) ||
       user.email.toLowerCase().includes(query)
   )
+})
+
+// Update total when filtered users change
+watch(filteredUsers, (list) => {
+  pagination.setTotal(list.length)
+  // Reset to page 1 if current page exceeds total pages
+  if (pagination.page.value > 1 && pagination.totalPages.value > 0 && pagination.page.value > pagination.totalPages.value) {
+    pagination.page.value = pagination.totalPages.value
+  }
+}, { immediate: true })
+
+// Paginated users (slice of filtered users)
+const paginatedUsers = computed(() => {
+  const list = filteredUsers.value
+  const start = (pagination.page.value - 1) * pagination.limit.value
+  const end = start + pagination.limit.value
+  return list.slice(start, end)
+})
+
+// Reset to page 1 when search changes
+watch(searchQuery, () => {
+  pagination.page.value = 1
 })
 
 // Watch for users update to refresh selectedUser
@@ -156,6 +188,16 @@ const toggleRole = async (roleId: string) => {
 const isSaving = computed(() => 
   createUserMutation.isPending.value || updateUserMutation.isPending.value
 )
+
+// Pagination props (unwrapped for BasePagination)
+const paginationProps = computed(() => ({
+  currentPage: pagination.page.value,
+  totalPages: pagination.totalPages.value,
+  totalItems: pagination.total.value,
+  pageSize: pagination.limit.value,
+  hasPrevPage: pagination.hasPrevPage.value,
+  hasNextPage: pagination.hasNextPage.value,
+}))
 </script>
 
 <template>
@@ -207,7 +249,7 @@ const isSaving = computed(() =>
     <!-- Error -->
     <div v-else-if="error" class="text-center py-12">
       <p style="color: var(--color-error);">Error al cargar los datos</p>
-      <button @click="refetch" class="btn-primary mt-4 px-6 py-2 rounded-lg">Reintentar</button>
+      <button @click="() => refetch()" class="btn-primary mt-4 px-6 py-2 rounded-lg">Reintentar</button>
     </div>
 
     <!-- Users table -->
@@ -223,7 +265,7 @@ const isSaving = computed(() =>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in filteredUsers" :key="user.id">
+            <tr v-for="user in paginatedUsers" :key="user.id">
               <td>
                 <div class="flex items-center gap-3">
                   <div 
@@ -298,6 +340,22 @@ const isSaving = computed(() =>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="px-4 border-t" style="border-color: var(--color-border);">
+        <BasePagination
+          :current-page="paginationProps.currentPage"
+          :total-pages="paginationProps.totalPages"
+          :total-items="paginationProps.totalItems"
+          :page-size="paginationProps.pageSize"
+          :has-prev-page="paginationProps.hasPrevPage"
+          :has-next-page="paginationProps.hasNextPage"
+          :show-page-size="true"
+          :page-size-options="[5, 10, 20, 50]"
+          @update:current-page="pagination.setPage"
+          @update:page-size="pagination.setLimit"
+        />
       </div>
     </div>
 

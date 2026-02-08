@@ -212,7 +212,7 @@ onUnmounted(() => {
       <div v-else-if="error" class="text-center py-12">
         <p style="color: var(--color-error);">Error al cargar las aplicaciones</p>
         <button 
-          @click="refetch"
+          @click="() => refetch()"
           class="btn-primary mt-4 px-6 py-2 rounded-lg"
         >
           Reintentar
