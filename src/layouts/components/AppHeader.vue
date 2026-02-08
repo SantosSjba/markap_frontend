@@ -10,9 +10,16 @@ import { ThemeToggle } from '@shared/components'
 
 interface Props {
   isSidebarCollapsed: boolean
+  /** En apps: solo Mi Perfil. En vista general: Mi Perfil + Configuración */
+  minimalUserMenu?: boolean
+  /** Ruta del perfil cuando minimalUserMenu (ej: /alquileres/perfil) */
+  profileTo?: string
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  minimalUserMenu: false,
+  profileTo: '/settings/profile',
+})
 
 const emit = defineEmits<{
   toggleSidebar: []
@@ -115,13 +122,14 @@ const handleLogout = () => {
             class="absolute right-0 mt-2 w-48 bg-[var(--color-surface)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50"
           >
             <router-link
-              to="/profile"
+              :to="profileTo"
               class="block px-4 py-2 text-sm text-[var(--color-text-primary)] hover-surface rounded mx-1"
               @click="closeUserMenu"
             >
               Mi Perfil
             </router-link>
             <router-link
+              v-if="!minimalUserMenu"
               to="/settings"
               class="block px-4 py-2 text-sm text-[var(--color-text-primary)] hover-surface rounded mx-1"
               @click="closeUserMenu"

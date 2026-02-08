@@ -58,6 +58,8 @@ const applicationInfo = computed(() =>
     >
       <AppHeader
         :is-sidebar-collapsed="isSidebarCollapsed"
+        minimal-user-menu
+        profile-to="/alquileres/perfil"
         @toggle-sidebar="toggleSidebar"
         @toggle-mobile-sidebar="toggleMobileSidebar"
       />

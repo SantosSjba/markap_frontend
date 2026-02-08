@@ -2,8 +2,9 @@
 import { ProfileCard } from '@shared/components'
 
 /**
- * ProfileView
- * Vista de perfil en la sección Configuración general
+ * AlquileresPerfilView
+ * Vista independiente de perfil dentro de la app Alquileres
+ * Solo muestra datos del perfil, sin opciones de configuración general
  */
 </script>
 
