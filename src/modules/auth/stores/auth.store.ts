@@ -33,6 +33,12 @@ export const useAuthStore = defineStore('auth', () => {
     return `${user.value.firstName.charAt(0)}${user.value.lastName.charAt(0)}`.toUpperCase()
   })
 
+  /** Whether the user has admin role (can access Users and Roles configuration) */
+  const isAdmin = computed(() => {
+    const roles = user.value?.roles ?? []
+    return roles.some((r) => r.code === 'ADMIN')
+  })
+
   // Actions
   const setAuth = (userData: User, token: string, expires: number) => {
     user.value = userData
@@ -114,7 +120,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem(USER_KEY, JSON.stringify(user.value))
   }
 
-  const initializeAuth = () => {
+  const initializeAuth = async () => {
     const storedToken = localStorage.getItem(TOKEN_KEY)
     const storedUser = localStorage.getItem(USER_KEY)
     const storedExpires = localStorage.getItem(EXPIRES_KEY)
@@ -130,6 +136,8 @@ export const useAuthStore = defineStore('auth', () => {
     if (storedUser) {
       try {
         user.value = JSON.parse(storedUser)
+        // Refresh profile to get latest data including roles
+        await fetchProfile()
       } catch {
         localStorage.removeItem(USER_KEY)
       }
@@ -154,6 +162,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     userFullName,
     userInitials,
+    isAdmin,
     isTokenExpired,
 
     // Actions

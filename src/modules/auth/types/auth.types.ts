@@ -4,6 +4,15 @@
  */
 
 /**
+ * Role info (from backend)
+ */
+export interface UserRole {
+  id: string
+  name: string
+  code: string
+}
+
+/**
  * User entity (from backend UserResponseDto)
  */
 export interface User {
@@ -14,6 +23,7 @@ export interface User {
   fullName: string
   isActive: boolean
   createdAt: string
+  roles?: UserRole[]
 }
 
 /**

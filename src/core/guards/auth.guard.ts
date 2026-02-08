@@ -23,6 +23,12 @@ export const authGuard = async (
         query: { redirect: to.fullPath },
       })
     }
+
+    // Check if route requires admin role
+    const requiresAdmin = to.matched.some((record) => record.meta.requiresAdmin)
+    if (requiresAdmin && !authStore.isAdmin) {
+      return next({ path: '/settings/profile' })
+    }
   }
 
   // Check if route requires guest (not authenticated)
