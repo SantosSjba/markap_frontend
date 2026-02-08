@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { authService } from '../services'
 
 /**
  * ForgotPasswordView
- * Password recovery page
+ * Solicita un código de recuperación enviado por correo
  */
 
 const email = ref('')
@@ -26,11 +27,19 @@ const handleSubmit = async () => {
 
   isLoading.value = true
 
-  // TODO: Implement password reset API call
-  await new Promise((resolve) => setTimeout(resolve, 1500))
-
-  isLoading.value = false
-  isSubmitted.value = true
+  try {
+    await authService.forgotPassword(email.value.trim())
+    isSubmitted.value = true
+  } catch (err: unknown) {
+    const status = (err as { response?: { status?: number } })?.response?.status
+    if (status === 404) {
+      error.value = 'No existe un usuario registrado con ese correo electrónico'
+    } else {
+      error.value = 'Error al enviar el código. Intente nuevamente.'
+    }
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
@@ -56,7 +65,7 @@ const handleSubmit = async () => {
 
     <!-- Title -->
     <h1 class="text-2xl font-bold tracking-wide mb-2" style="color: var(--color-text-primary);">Recuperar Contraseña</h1>
-    <p class="text-sm mb-8" style="color: var(--color-text-secondary);">Te enviaremos un enlace para restablecer tu contraseña</p>
+    <p class="text-sm mb-8" style="color: var(--color-text-secondary);">Te enviaremos un código de 6 dígitos por correo para restablecer tu contraseña</p>
 
     <!-- Success message -->
     <div v-if="isSubmitted" class="text-center">
@@ -69,15 +78,27 @@ const handleSubmit = async () => {
         </svg>
       </div>
       <p class="mb-6" style="color: var(--color-text-secondary);">
-        Hemos enviado un enlace de recuperación a<br />
+        Hemos enviado un código de recuperación a<br />
         <strong style="color: var(--color-text-primary);">{{ email }}</strong>
       </p>
-      <router-link
-        to="/auth/login"
-        class="btn-primary inline-block py-3 px-6 rounded-lg font-medium"
-      >
-        Volver al inicio de sesión
-      </router-link>
+      <p class="text-sm mb-4" style="color: var(--color-text-muted);">
+        Revisa tu bandeja de entrada y usa el código en la siguiente pantalla.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <router-link
+          to="/auth/login"
+          class="btn-primary inline-block py-3 px-6 rounded-lg font-medium text-center"
+        >
+          Volver al inicio de sesión
+        </router-link>
+        <router-link
+          :to="{ path: '/auth/reset-password', query: { email } }"
+          class="btn inline-block py-3 px-6 rounded-lg font-medium text-center border-2"
+          style="border-color: var(--color-primary); color: var(--color-primary);"
+        >
+          Ingresar código
+        </router-link>
+      </div>
     </div>
 
     <!-- Form -->
@@ -115,7 +136,7 @@ const handleSubmit = async () => {
           </svg>
           Enviando...
         </span>
-        <span v-else>Enviar enlace</span>
+        <span v-else>Enviar código</span>
       </button>
 
       <!-- Back to login -->

@@ -36,6 +36,34 @@ export const authService = {
   },
 
   /**
+   * Request password reset - sends code via email
+   * POST /auth/forgot-password
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const { data } = await apiClient.post<{ message: string }>(
+      `${AUTH_ENDPOINT}/forgot-password`,
+      { email }
+    )
+    return data
+  },
+
+  /**
+   * Reset password with code received by email
+   * POST /auth/reset-password
+   */
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
+    const { data } = await apiClient.post<{ message: string }>(
+      `${AUTH_ENDPOINT}/reset-password`,
+      { email, code, newPassword }
+    )
+    return data
+  },
+
+  /**
    * Logout user (client-side only, backend doesn't have logout endpoint)
    */
   logout(): void {
