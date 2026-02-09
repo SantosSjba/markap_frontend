@@ -37,15 +37,37 @@ const emit = defineEmits<{
 const route = useRoute()
 const expandedIds = ref<Set<string>>(new Set())
 
-const isActive = (path: string | null) => {
+// Base path de la aplicación (ej: /alquileres)
+const basePath = computed(() => `/${props.application.slug}`)
+
+// Convierte path del menú a ruta completa
+// parentFullPath: cuando es un hijo, el path del hijo es relativo al padre
+const toFullPath = (path: string | null, parentFullPath?: string): string => {
+  if (!path || path === '#') return '#'
+  const base = parentFullPath ?? basePath.value
+  if (path === '/' || path === '') return base
+  const segment = path.startsWith('/') ? path.slice(1) : path
+  const parentBase = base.replace(/\/$/, '')
+  return parentBase ? `${parentBase}/${segment}` : `/${segment}`
+}
+
+const isActive = (path: string | null, parentFullPath?: string) => {
   if (!path) return false
-  return route.path === path || route.path.startsWith(path + '/')
+  const full = toFullPath(path, parentFullPath)
+  if (full === '#') return false
+  // El Dashboard (path "/") solo coincide exactamente con la ruta base, no con subrutas
+  if (path === '/' || path === '') {
+    return route.path === full || route.path === full + '/'
+  }
+  return route.path === full || route.path.startsWith(full + '/')
 }
 
 const hasActiveChild = (item: MenuItem): boolean => {
   if (item.children?.length) {
+    const parentFull = toFullPath(item.path)
     return item.children.some(
-      (c) => (c.path && isActive(c.path)) || hasActiveChild(c)
+      (c) =>
+        (c.path && isActive(c.path, parentFull)) || hasActiveChild(c)
     )
   }
   return false
@@ -61,6 +83,12 @@ const toggleExpand = (id: string) => {
 }
 
 const isExpanded = (id: string) => expandedIds.value.has(id)
+
+// Normaliza nombre de ícono (PascalCase/camelCase -> kebab-case)
+const normalizeIconName = (name: string | null) =>
+  name
+    ? name.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')
+    : null
 
 // Iconos por nombre (SVG paths)
 const iconMap: Record<string, string> = {
@@ -79,10 +107,14 @@ const iconMap: Record<string, string> = {
   settings:
     'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
   key: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
+  'user-plus':
+    'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',
 }
 
-const getIconPath = (iconName: string | null) =>
-  iconName ? iconMap[iconName] || iconMap['layout-dashboard'] : null
+const getIconPath = (iconName: string | null) => {
+  const key = normalizeIconName(iconName)
+  return key ? iconMap[key] || iconMap['layout-dashboard'] : null
+}
 
 // Expandir padres que tengan un hijo activo
 const expandActiveParents = () => {
@@ -250,14 +282,14 @@ const sidebarClasses = computed(() => [
               <router-link
                 v-for="child in item.children"
                 :key="child.id"
-                :to="child.path || '#'"
+                :to="toFullPath(child.path, toFullPath(item.path))"
                 class="flex items-center px-3 py-2 rounded-lg hover-surface text-sm transition-colors"
                 :class="[
-                  isActive(child.path || '') ? 'font-medium' : '',
+                  isActive(child.path, toFullPath(item.path)) ? 'font-medium' : '',
                 ]"
                 :style="{
-                  color: isActive(child.path || '') ? appColor : 'var(--color-text-secondary)',
-                  backgroundColor: isActive(child.path || '') ? appColor + '12' : 'transparent',
+                  color: isActive(child.path, toFullPath(item.path)) ? appColor : 'var(--color-text-secondary)',
+                  backgroundColor: isActive(child.path, toFullPath(item.path)) ? appColor + '12' : 'transparent',
                 }"
                 @click="emit('closeMobile')"
               >
@@ -271,7 +303,7 @@ const sidebarClasses = computed(() => [
         <router-link
           v-else
           :key="item.id"
-          :to="item.path || '#'"
+          :to="toFullPath(item.path)"
           :class="[
             'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
             isActive(item.path || '') ? 'font-medium' : '',
