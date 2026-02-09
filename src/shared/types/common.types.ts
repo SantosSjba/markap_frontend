@@ -47,16 +47,3 @@ export interface TableColumn<T = unknown> {
   align?: 'left' | 'center' | 'right'
   formatter?: (value: unknown, row: T) => string
 }
-
-/**
- * Menu item for navigation
- */
-export interface MenuItem {
-  id: string
-  label: string
-  icon?: string
-  to?: string
-  children?: MenuItem[]
-  permission?: string
-  badge?: string | number
-}
