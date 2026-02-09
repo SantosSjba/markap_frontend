@@ -33,7 +33,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
           {
             path: 'nuevo',
             name: 'alquileres-clientes-nuevo',
-            component: () => import('../views/AlquileresPlaceholderView.vue'),
+            component: () => import('../views/NuevoClienteView.vue'),
             meta: { title: 'Nuevo Cliente' },
           },
         ],
