@@ -65,16 +65,36 @@ const isActive = (path: string | null, parentFullPath?: string) => {
   if (path === '/' || path === '') {
     return route.path === full || route.path === full + '/'
   }
-  return route.path === full || route.path.startsWith(full + '/')
+  return route.path === full || route.path === full + '/' || route.path.startsWith(full + '/')
+}
+
+/** Entre varios hijos del mismo padre, devuelve el id del hijo que debe verse activo (el de ruta más específica que coincida) */
+const getActiveChildId = (item: MenuItem): string | null => {
+  if (!item.children?.length) return null
+  const parentFull = toFullPath(item.path)
+  const candidates = item.children
+    .filter((c) => c.path)
+    .map((c) => ({ id: c.id, full: toFullPath(c.path, parentFull) }))
+    .filter((x) => x.full !== '#')
+  // Ordenar por longitud de path descendente para que /alquileres/clientes/nuevo gane sobre /alquileres/clientes
+  candidates.sort((a, b) => b.full.length - a.full.length)
+  const active = candidates.find(
+    (x) =>
+      route.path === x.full ||
+      route.path === x.full + '/' ||
+      route.path.startsWith(x.full + '/')
+  )
+  return active?.id ?? null
+}
+
+const isActiveChild = (child: MenuItem, parent: MenuItem): boolean => {
+  const activeId = getActiveChildId(parent)
+  return activeId === child.id
 }
 
 const hasActiveChild = (item: MenuItem): boolean => {
   if (item.children?.length) {
-    const parentFull = toFullPath(item.path)
-    return item.children.some(
-      (c) =>
-        (c.path && isActive(c.path, parentFull)) || hasActiveChild(c)
-    )
+    return getActiveChildId(item) !== null
   }
   return false
 }
@@ -291,11 +311,11 @@ const sidebarClasses = computed(() => [
                 :to="toFullPath(child.path, toFullPath(item.path))"
                 class="flex items-center px-3 py-2 rounded-lg hover-surface text-sm transition-colors"
                 :class="[
-                  isActive(child.path, toFullPath(item.path)) ? 'font-medium' : '',
+                  isActiveChild(child, item) ? 'font-medium' : '',
                 ]"
                 :style="{
-                  color: isActive(child.path, toFullPath(item.path)) ? appColor : 'var(--color-text-secondary)',
-                  backgroundColor: isActive(child.path, toFullPath(item.path)) ? appColor + '12' : 'transparent',
+                  color: isActiveChild(child, item) ? appColor : 'var(--color-text-secondary)',
+                  backgroundColor: isActiveChild(child, item) ? appColor + '12' : 'transparent',
                 }"
                 @click="emit('closeMobile')"
               >
