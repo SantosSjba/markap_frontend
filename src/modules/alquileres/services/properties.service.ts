@@ -51,6 +51,43 @@ export interface CreatePropertyPayload {
   depositMonths?: number | null
 }
 
+export interface PropertyListItem {
+  id: string
+  code: string
+  addressLine: string
+  districtName: string
+  propertyTypeName: string
+  area: number | null
+  ownerId: string
+  ownerFullName: string
+  monthlyRent: number | null
+  listingStatus: string | null
+}
+
+export interface ListPropertiesParams {
+  applicationSlug?: string
+  page?: number
+  limit?: number
+  search?: string
+  propertyTypeId?: string
+  listingStatus?: string
+}
+
+export interface ListPropertiesResponse {
+  data: PropertyListItem[]
+  total: number
+  page: number
+  limit: number
+}
+
+export interface PropertyStats {
+  total: number
+  rented: number
+  available: number
+  expiring: number
+  maintenance: number
+}
+
 export const propertiesService = {
   getPropertyTypes: () =>
     apiClient.get<PropertyType[]>('/properties/property-types').then((r) => r.data),
@@ -74,4 +111,16 @@ export const propertiesService = {
     apiClient
       .post('/properties', { ...data, applicationSlug: 'alquileres' })
       .then((r) => r.data),
+
+  getList: (params: ListPropertiesParams) => {
+    const { applicationSlug = 'alquileres', page = 1, limit = 10, search, propertyTypeId, listingStatus } = params
+    const query: Record<string, string | number> = { applicationSlug, page, limit }
+    if (search?.trim()) query.search = search.trim()
+    if (propertyTypeId) query.propertyTypeId = propertyTypeId
+    if (listingStatus) query.listingStatus = listingStatus
+    return apiClient.get<ListPropertiesResponse>('/properties', { params: query }).then((r) => r.data)
+  },
+
+  getStats: (applicationSlug = 'alquileres') =>
+    apiClient.get<PropertyStats>('/properties/stats', { params: { applicationSlug } }).then((r) => r.data),
 }

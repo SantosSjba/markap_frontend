@@ -61,12 +61,6 @@ export const alquileresRoutes: RouteRecordRaw[] = [
             component: () => import('../views/NuevaPropiedadView.vue'),
             meta: { title: 'Nueva Propiedad' },
           },
-          {
-            path: 'disponibles',
-            name: 'alquileres-propiedades-disponibles',
-            component: () => import('../views/AlquileresPropiedadesView.vue'),
-            meta: { title: 'Propiedades Disponibles' },
-          },
         ],
       },
       {
