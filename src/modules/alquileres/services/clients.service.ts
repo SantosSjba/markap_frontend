@@ -23,7 +23,7 @@ export interface District {
 
 export interface CreateClientPayload {
   applicationSlug?: string
-  clientType: 'OWNER' | 'TENANT' | 'BOTH'
+  clientType: 'OWNER' | 'TENANT'
   documentTypeId: string
   documentNumber: string
   fullName: string

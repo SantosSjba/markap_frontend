@@ -11,7 +11,7 @@ import type { DocumentType, District } from '../services/clients.service'
 const router = useRouter()
 const appColor = 'var(--color-primary)'
 
-const clientType = ref<'OWNER' | 'TENANT' | 'BOTH'>('OWNER')
+const clientType = ref<'OWNER' | 'TENANT'>('OWNER')
 
 const form = ref({
   documentTypeId: '',
@@ -81,7 +81,7 @@ const districtOptions = computed(() =>
 )
 
 const goBack = () => router.push('/alquileres/clientes')
-const selectClientType = (type: 'OWNER' | 'TENANT' | 'BOTH') => {
+const selectClientType = (type: 'OWNER' | 'TENANT') => {
   clientType.value = type
 }
 
@@ -193,7 +193,7 @@ const handleSubmit = async () => {
         <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
           Selecciona el tipo de cliente a registrar
         </p>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"
             class="p-4 rounded-lg border-2 text-left transition-all"
@@ -232,27 +232,6 @@ const handleSubmit = async () => {
                 <span class="font-medium block">Inquilino</span>
                 <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
                   Persona que alquila una propiedad
-                </span>
-              </div>
-            </div>
-          </button>
-          <button
-            type="button"
-            class="p-4 rounded-lg border-2 text-left transition-all"
-            :style="{
-              borderColor: clientType === 'BOTH' ? appColor : 'var(--color-border)',
-              color: clientType === 'BOTH' ? appColor : 'var(--color-text-primary)',
-            }"
-            @click="selectClientType('BOTH')"
-          >
-            <div class="flex items-center gap-3">
-              <svg class="w-8 h-8 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <div>
-                <span class="font-medium block">Ambos</span>
-                <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-                  Es propietario e inquilino
                 </span>
               </div>
             </div>
