@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import FormSelect from '../forms/FormSelect.vue'
 
 /**
  * BasePagination Component
@@ -87,9 +88,14 @@ const goToPage = (page: number) => {
   }
 }
 
-const handlePageSizeChange = (event: Event) => {
-  const value = parseInt((event.target as HTMLSelectElement).value, 10)
-  emit('update:pageSize', value)
+const pageSizeOptionsForSelect = computed(() =>
+  props.pageSizeOptions.map((size) => ({ value: size, label: String(size) }))
+)
+
+const onPageSizeChange = (value: string | number | null) => {
+  if (value !== null && value !== '') {
+    emit('update:pageSize', Number(value))
+  }
 }
 </script>
 
@@ -111,22 +117,16 @@ const handlePageSizeChange = (event: Event) => {
     <div class="flex items-center gap-4 order-1 sm:order-2">
       <!-- Page size selector -->
       <div v-if="showPageSize && totalItems > 0" class="flex items-center gap-2">
-        <label class="text-sm" for="page-size">Por página:</label>
-        <select
-          id="page-size"
-          :value="pageSize"
-          class="rounded-lg border px-2 py-1.5 text-sm"
-          style="border-color: var(--color-border); background-color: var(--color-surface); color: var(--color-text-primary);"
-          @change="handlePageSizeChange"
-        >
-          <option
-            v-for="size in pageSizeOptions"
-            :key="size"
-            :value="size"
-          >
-            {{ size }}
-          </option>
-        </select>
+        <span class="text-sm shrink-0">Por página:</span>
+        <div class="w-20 shrink-0">
+          <FormSelect
+            :model-value="pageSize"
+            :options="pageSizeOptionsForSelect"
+            placeholder=""
+            id="page-size"
+            @update:model-value="onPageSizeChange"
+          />
+        </div>
       </div>
 
       <!-- Pagination controls -->
