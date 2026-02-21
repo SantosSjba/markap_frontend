@@ -12,7 +12,7 @@ defineProps<Props>()
 
 <template>
   <div
-    class="p-4 rounded-xl border transition-colors"
+    class="p-4 sm:p-5 rounded-xl border transition-colors"
     :style="{
       backgroundColor: 'var(--color-surface)',
       borderColor: 'var(--color-border)',

@@ -95,7 +95,7 @@ const handlePageSizeChange = (event: Event) => {
 
 <template>
   <div
-    class="flex flex-col sm:flex-row items-center justify-between gap-4 py-4"
+    class="flex flex-col sm:flex-row items-center justify-between gap-3"
     style="color: var(--color-text-secondary);"
   >
     <!-- Info text -->

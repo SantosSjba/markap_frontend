@@ -9,6 +9,8 @@ import {
   Avatar,
   DataTable,
   ActionsDropdown,
+  FormSelect,
+  SearchInput,
 } from '@shared/components'
 import { useClientsList, useClientStats } from '../composables/useClients'
 import type { ClientListItem, ListClientsParams } from '../services/clients.service'
@@ -87,27 +89,38 @@ const paginationProps = computed(() => {
     hasNextPage: page < totalPages,
   }
 })
+
+const typeOptions = [
+  { value: 'ALL', label: 'Todos los tipos' },
+  { value: 'OWNER', label: 'Propietario' },
+  { value: 'TENANT', label: 'Inquilino' },
+]
+const statusOptions = [
+  { value: 'ALL', label: 'Todos los estados' },
+  { value: 'active', label: 'Activo' },
+  { value: 'inactive', label: 'Inactivo' },
+]
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1
-          class="text-xl font-bold"
+          class="text-xl sm:text-2xl font-bold"
           :style="{ color: 'var(--color-text-primary)' }"
         >
           Clientes
         </h1>
         <p
-          class="text-sm mt-0.5"
+          class="text-sm mt-1"
           :style="{ color: 'var(--color-text-secondary)' }"
         >
           Gestión de propietarios e inquilinos
         </p>
       </div>
-      <BaseButton variant="primary" class="flex items-center gap-2" @click="goToNew">
+      <BaseButton variant="primary" class="flex items-center gap-2 w-full sm:w-auto justify-center" @click="goToNew">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
@@ -118,11 +131,11 @@ const paginationProps = computed(() => {
     <!-- Stats -->
     <div
       v-if="loadingStats"
-      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 h-20"
+      class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20"
     />
     <div
       v-else
-      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
     >
       <StatsCard :title="'Total Clientes'" :value="stats?.total ?? 0">
         <template #icon>
@@ -156,75 +169,46 @@ const paginationProps = computed(() => {
 
     <!-- Search & Filters -->
     <div
-      class="flex flex-col sm:flex-row gap-3"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-        borderRadius: '0.75rem',
-        padding: '1rem',
-      }"
-    >
-      <div class="relative flex-1">
-        <svg
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none"
-          :style="{ color: 'var(--color-text-muted)' }"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          v-model="searchInput"
-          type="text"
-          placeholder="Buscar por nombre, documento o email..."
-          class="w-full py-2.5 pl-10 pr-4 rounded-lg border text-sm"
-          :style="{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)',
-          }"
-        />
-      </div>
-      <div class="flex gap-2 flex-shrink-0">
-        <select
-          v-model="filterType"
-          class="py-2.5 px-3 rounded-lg border text-sm"
-          :style="{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)',
-          }"
-        >
-          <option value="ALL">Todos los tipos</option>
-          <option value="OWNER">Propietario</option>
-          <option value="TENANT">Inquilino</option>
-        </select>
-        <select
-          v-model="filterStatus"
-          class="py-2.5 px-3 rounded-lg border text-sm"
-          :style="{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)',
-          }"
-        >
-          <option value="ALL">Todos los estados</option>
-          <option value="active">Activo</option>
-          <option value="inactive">Inactivo</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div
-      class="rounded-xl border overflow-hidden"
+      class="flex flex-col sm:flex-row gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border"
       :style="{
         backgroundColor: 'var(--color-surface)',
         borderColor: 'var(--color-border)',
       }"
     >
-      <div v-if="loadingList" class="flex justify-center py-16">
+      <div class="flex-1 min-w-0">
+        <SearchInput
+          v-model="searchInput"
+          placeholder="Buscar por nombre, documento o email..."
+        />
+      </div>
+      <div class="flex flex-wrap gap-3 flex-shrink-0 sm:flex-nowrap">
+        <div class="w-full sm:w-[180px] min-w-0">
+          <FormSelect
+            v-model="filterType"
+            :options="typeOptions"
+            placeholder="Todos los tipos"
+          />
+        </div>
+        <div class="w-full sm:w-[180px] min-w-0">
+          <FormSelect
+            v-model="filterStatus"
+            :options="statusOptions"
+            placeholder="Todos los estados"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div
+      class="rounded-xl border overflow-visible"
+      :style="{
+        backgroundColor: 'var(--color-surface)',
+        borderColor: 'var(--color-border)',
+      }"
+    >
+      <div class="overflow-x-auto overflow-y-visible">
+        <div v-if="loadingList" class="flex justify-center py-16 px-4">
         <svg
           class="animate-spin h-8 w-8"
           :style="{ color: 'var(--color-primary)' }"
@@ -302,7 +286,7 @@ const paginationProps = computed(() => {
             </td>
           </template>
         </DataTable>
-        <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+        <div class="border-t px-4 py-3" :style="{ borderColor: 'var(--color-border)' }">
           <BasePagination
             v-bind="paginationProps"
             :show-page-size="true"
@@ -311,6 +295,7 @@ const paginationProps = computed(() => {
           />
         </div>
       </template>
+      </div>
     </div>
   </div>
 </template>
