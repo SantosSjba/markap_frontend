@@ -41,6 +41,52 @@ export interface CreateClientPayload {
   }
 }
 
+/** Detalle de cliente (GET /clients/:id) con documentType y primaryAddress anidados */
+export interface ClientDetail {
+  id: string
+  applicationSlug: string
+  clientType: 'OWNER' | 'TENANT'
+  documentTypeId: string
+  documentNumber: string
+  fullName: string
+  legalRepresentativeName: string | null
+  legalRepresentativePosition: string | null
+  primaryPhone: string
+  secondaryPhone: string | null
+  primaryEmail: string
+  secondaryEmail: string | null
+  notes: string | null
+  isActive: boolean
+  documentType: DocumentType
+  primaryAddress: {
+    id: string
+    addressLine: string
+    reference: string | null
+    districtId: string
+    district: District
+  } | null
+}
+
+/** Payload para PATCH /clients/:id (todos opcionales) */
+export interface UpdateClientPayload {
+  clientType?: 'OWNER' | 'TENANT'
+  documentTypeId?: string
+  documentNumber?: string
+  fullName?: string
+  legalRepresentativeName?: string | null
+  legalRepresentativePosition?: string | null
+  primaryPhone?: string
+  secondaryPhone?: string | null
+  primaryEmail?: string
+  secondaryEmail?: string | null
+  notes?: string | null
+  address?: {
+    addressLine?: string
+    districtId?: string
+    reference?: string | null
+  }
+}
+
 export interface ClientListItem {
   id: string
   fullName: string
@@ -108,4 +154,10 @@ export const clientsService = {
 
   create: (data: CreateClientPayload) =>
     apiClient.post('/clients', { ...data, applicationSlug: 'alquileres' }).then((r) => r.data),
+
+  getById: (id: string) =>
+    apiClient.get<ClientDetail>(`/clients/${id}`).then((r) => r.data),
+
+  update: (id: string, data: UpdateClientPayload) =>
+    apiClient.patch(`/clients/${id}`, data).then((r) => r.data),
 }

@@ -1,14 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { computed, type Ref } from 'vue'
+import { computed, unref, type Ref } from 'vue'
 import {
   clientsService,
   type CreateClientPayload,
+  type UpdateClientPayload,
   type ListClientsParams,
 } from '../services/clients.service'
 
 export const clientKeys = {
   all: ['clients'] as const,
   list: (params: ListClientsParams) => [...clientKeys.all, 'list', params] as const,
+  detail: (id: string) => [...clientKeys.all, 'detail', id] as const,
   stats: (slug?: string) => [...clientKeys.all, 'stats', slug ?? 'alquileres'] as const,
   documentTypes: () => [...clientKeys.all, 'document-types'] as const,
   districts: (provinceId?: string) =>
@@ -43,12 +45,32 @@ export function useDistricts(provinceId?: string) {
   })
 }
 
+export function useClient(id: Ref<string> | string) {
+  return useQuery({
+    queryKey: computed(() => clientKeys.detail(unref(id))),
+    queryFn: () => clientsService.getById(unref(id)),
+    enabled: computed(() => !!unref(id)),
+  })
+}
+
 export function useCreateClient() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateClientPayload) => clientsService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientKeys.all })
+    },
+  })
+}
+
+export function useUpdateClient() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateClientPayload }) =>
+      clientsService.update(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: clientKeys.all })
+      queryClient.invalidateQueries({ queryKey: clientKeys.detail(id) })
     },
   })
 }
