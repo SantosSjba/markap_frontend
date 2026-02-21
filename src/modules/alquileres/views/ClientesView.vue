@@ -63,7 +63,7 @@ const tableColumns = [
   { key: 'contacto', label: 'Contacto', align: 'left' as const },
   { key: 'tipo', label: 'Tipo', align: 'left' as const },
   { key: 'propiedades', label: 'Propiedades', align: 'left' as const },
-  { key: 'contratos', label: 'Contratos', align: 'left' as const },
+  { key: 'contratos', label: 'Alquileres', align: 'left' as const },
   { key: 'estado', label: 'Estado', align: 'left' as const },
   { key: 'actions', label: '', align: 'right' as const },
 ]
@@ -273,7 +273,7 @@ const statusOptions = [
                 </svg>
                 {{ (row as ClientListItem).contractsCount !== undefined && (row as ClientListItem).contractsCount > 0
                   ? `${(row as ClientListItem).contractsCount} activo(s)`
-                  : 'Sin contratos' }}
+                  : 'Sin alquileres' }}
               </span>
             </td>
             <td class="py-3 px-4">
