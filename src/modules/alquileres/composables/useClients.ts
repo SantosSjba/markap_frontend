@@ -1,11 +1,32 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { clientsService, type CreateClientPayload } from '../services/clients.service'
+import { computed, type Ref } from 'vue'
+import {
+  clientsService,
+  type CreateClientPayload,
+  type ListClientsParams,
+} from '../services/clients.service'
 
 export const clientKeys = {
   all: ['clients'] as const,
+  list: (params: ListClientsParams) => [...clientKeys.all, 'list', params] as const,
+  stats: (slug?: string) => [...clientKeys.all, 'stats', slug ?? 'alquileres'] as const,
   documentTypes: () => [...clientKeys.all, 'document-types'] as const,
   districts: (provinceId?: string) =>
     [...clientKeys.all, 'districts', provinceId ?? 'all'] as const,
+}
+
+export function useClientsList(params: Ref<ListClientsParams>) {
+  return useQuery({
+    queryKey: computed(() => clientKeys.list(params.value)),
+    queryFn: () => clientsService.getList(params.value),
+  })
+}
+
+export function useClientStats(applicationSlug = 'alquileres') {
+  return useQuery({
+    queryKey: clientKeys.stats(applicationSlug),
+    queryFn: () => clientsService.getStats(applicationSlug),
+  })
 }
 
 export function useDocumentTypes() {

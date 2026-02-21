@@ -42,10 +42,16 @@ const basePath = computed(() => `/${props.application.slug}`)
 
 // Convierte path del menú a ruta completa
 // parentFullPath: cuando es un hijo, el path del hijo es relativo al padre
+// Si el path ya está bajo la base de la app (ej: /alquileres/clientes), se usa tal cual
 const toFullPath = (path: string | null, parentFullPath?: string): string => {
   if (!path || path === '#') return '#'
   const base = parentFullPath ?? basePath.value
   if (path === '/' || path === '') return base
+  const pathNorm = path.startsWith('/') ? path : `/${path}`
+  // Path ya es absoluto dentro de esta aplicación → no concatenar al padre
+  if (pathNorm === basePath.value || pathNorm.startsWith(basePath.value + '/')) {
+    return pathNorm.replace(/\/$/, '') || pathNorm
+  }
   const segment = path.startsWith('/') ? path.slice(1) : path
   const parentBase = base.replace(/\/$/, '')
   return parentBase ? `${parentBase}/${segment}` : `/${segment}`

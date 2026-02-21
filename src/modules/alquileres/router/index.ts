@@ -27,8 +27,14 @@ export const alquileresRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'alquileres-clientes',
-            component: () => import('../views/AlquileresPlaceholderView.vue'),
+            component: () => import('../views/ClientesView.vue'),
             meta: { title: 'Clientes' },
+          },
+          {
+            path: ':id/editar',
+            name: 'alquileres-clientes-editar',
+            component: () => import('../views/EditarClienteView.vue'),
+            meta: { title: 'Editar Cliente' },
           },
           {
             path: 'nuevo',
