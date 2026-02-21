@@ -51,6 +51,34 @@ export interface CreatePropertyPayload {
   depositMonths?: number | null
 }
 
+/** Propiedad completa (para edición) - mismo shape que el backend PropertyData */
+export interface PropertyDetail {
+  id: string
+  applicationId: string
+  code: string
+  propertyTypeId: string
+  addressLine: string
+  districtId: string
+  description: string | null
+  area: number | null
+  bedrooms: number | null
+  bathrooms: number | null
+  ageYears: number | null
+  floorLevel: string | null
+  parkingSpaces: number | null
+  partida1: string | null
+  partida2: string | null
+  partida3: string | null
+  ownerId: string
+  monthlyRent: number | null
+  maintenanceAmount: number | null
+  depositMonths: number | null
+  listingStatus: string | null
+  isActive: boolean
+}
+
+export type UpdatePropertyPayload = Omit<CreatePropertyPayload, 'applicationSlug'>
+
 export interface PropertyListItem {
   id: string
   code: string
@@ -123,4 +151,10 @@ export const propertiesService = {
 
   getStats: (applicationSlug = 'alquileres') =>
     apiClient.get<PropertyStats>('/properties/stats', { params: { applicationSlug } }).then((r) => r.data),
+
+  getById: (id: string) =>
+    apiClient.get<PropertyDetail>('/properties/' + encodeURIComponent(id)).then((r) => r.data),
+
+  update: (id: string, data: UpdatePropertyPayload) =>
+    apiClient.patch<PropertyDetail>('/properties/' + encodeURIComponent(id), data).then((r) => r.data),
 }

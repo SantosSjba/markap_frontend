@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { computed, type Ref } from 'vue'
+import { computed, unref, type Ref } from 'vue'
 import {
   propertiesService,
   type CreatePropertyPayload,
   type ListPropertiesParams,
+  type UpdatePropertyPayload,
 } from '../services/properties.service'
 
 export const propertyKeys = {
   all: ['properties'] as const,
+  detail: (id: string) => [...propertyKeys.all, 'detail', id] as const,
   list: (params: ListPropertiesParams) =>
     [...propertyKeys.all, 'list', params?.applicationSlug ?? 'alquileres', params?.page ?? 1, params?.limit ?? 10, params?.search ?? '', params?.propertyTypeId ?? '', params?.listingStatus ?? ''] as const,
   propertyTypes: () => [...propertyKeys.all, 'property-types'] as const,
@@ -54,12 +56,32 @@ export function usePropertyStats(applicationSlug = 'alquileres') {
   })
 }
 
+export function usePropertyById(id: Ref<string> | string) {
+  return useQuery({
+    queryKey: computed(() => propertyKeys.detail(unref(id))),
+    queryFn: () => propertiesService.getById(unref(id)),
+    enabled: computed(() => !!unref(id)),
+  })
+}
+
 export function useCreateProperty() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CreatePropertyPayload) => propertiesService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+    },
+  })
+}
+
+export function useUpdateProperty() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdatePropertyPayload }) =>
+      propertiesService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      queryClient.invalidateQueries({ queryKey: propertyKeys.detail(variables.id) })
     },
   })
 }
