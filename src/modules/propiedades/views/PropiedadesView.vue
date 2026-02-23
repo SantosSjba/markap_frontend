@@ -364,7 +364,7 @@ function formatDate(d: string | null | undefined): string {
               </td>
             </template>
           </DataTable>
-          <div class="border-t px-4 py-3" :style="{ borderColor: 'var(--color-border)' }">
+          <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

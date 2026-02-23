@@ -101,13 +101,13 @@ function formatGuarantee(item: RentalListItem): string {
   return `Garantía: ${sym} ${Number(item.securityDeposit).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
 }
 
-const statusBadgeVariant = (display: string) => {
+const statusBadgeVariant = (display: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' => {
   switch (display) {
     case 'vigente': return 'success'
     case 'porVencer': return 'warning'
     case 'vencido': return 'error'
     case 'proximo': return 'info'
-    default: return 'default'
+    default: return 'neutral'
   }
 }
 
@@ -363,7 +363,7 @@ const statusOptions = [
               </td>
             </template>
           </DataTable>
-          <div class="border-t px-4 py-3" :style="{ borderColor: 'var(--color-border)' }">
+          <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

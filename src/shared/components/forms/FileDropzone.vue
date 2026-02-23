@@ -47,7 +47,8 @@ const files = computed(() => {
 
 const displayText = computed(() => {
   if (files.value.length === 0) return props.placeholder
-  if (files.value.length === 1) return files.value[0].name
+  const first = files.value[0]
+  if (files.value.length === 1 && first) return first.name
   return `${files.value.length} archivos seleccionados`
 })
 
@@ -84,7 +85,7 @@ function validateAndEmit(selected: File[]) {
   if (props.multiple) {
     emit('update:modelValue', selected)
   } else {
-    emit('update:modelValue', selected[0])
+    emit('update:modelValue', selected[0] ?? null)
   }
 }
 
@@ -121,7 +122,7 @@ function removeFile(index: number) {
   const list = files.value.filter((_, i) => i !== index)
   if (list.length === 0) emit('update:modelValue', null)
   else if (props.multiple) emit('update:modelValue', list)
-  else emit('update:modelValue', list[0])
+  else emit('update:modelValue', list[0] ?? null)
 }
 
 function clearAll() {

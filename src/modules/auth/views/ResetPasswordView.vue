@@ -1,23 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { authService } from '../services'
+import { useResetPassword } from '../composables'
+import { isAxiosError } from 'axios'
 
 /**
  * ResetPasswordView
- * Restablece la contraseña usando el código recibido por correo
+ * Restablece la contraseña usando el código recibido por correo (TanStack Query)
  */
 
 const route = useRoute()
 const router = useRouter()
+const resetMutation = useResetPassword()
 
 const email = ref('')
 const code = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 const error = ref('')
-const isLoading = ref(false)
-const isSuccess = ref(false)
 
 const emailFromQuery = computed(() => {
   const q = route.query.email
@@ -29,6 +29,9 @@ onMounted(() => {
     email.value = emailFromQuery.value
   }
 })
+
+const isSuccess = computed(() => resetMutation.isSuccess.value)
+const isLoading = computed(() => resetMutation.isPending.value)
 
 const handleSubmit = async () => {
   error.value = ''
@@ -63,27 +66,25 @@ const handleSubmit = async () => {
     return
   }
 
-  isLoading.value = true
-
-  try {
-    await authService.resetPassword(
-      email.value.trim(),
-      code.value.trim(),
-      newPassword.value
-    )
-    isSuccess.value = true
-  } catch (err: unknown) {
-    const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response
-    if (res?.status === 400) {
-      error.value = res.data?.message || 'El código es inválido o ha expirado'
-    } else if (res?.status === 404) {
-      error.value = 'No existe un usuario con ese correo electrónico'
-    } else {
-      error.value = 'Error al restablecer la contraseña. Intente nuevamente.'
+  resetMutation.mutate(
+    {
+      email: email.value.trim(),
+      code: code.value.trim(),
+      newPassword: newPassword.value,
+    },
+    {
+      onError: (err: unknown) => {
+        const res = isAxiosError(err) ? err.response : undefined
+        if (res?.status === 400) {
+          error.value = (res.data as { message?: string })?.message || 'El código es inválido o ha expirado'
+        } else if (res?.status === 404) {
+          error.value = 'No existe un usuario con ese correo electrónico'
+        } else {
+          error.value = 'Error al restablecer la contraseña. Intente nuevamente.'
+        }
+      },
     }
-  } finally {
-    isLoading.value = false
-  }
+  )
 }
 
 const goToLogin = () => {

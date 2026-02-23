@@ -1,8 +1,6 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useQuery } from '@tanstack/vue-query'
-import { applicationsService } from '@modules/applications/services'
-import { useMyApplications } from '@modules/applications/composables'
+import { useMyApplications, useApplicationMenus } from '@modules/applications/composables'
 
 /**
  * Hook para layout de aplicación (menús + info de app)
@@ -19,11 +17,7 @@ export function useAppLayout() {
     () => applications.value?.find((a) => a.slug === slug.value) ?? null
   )
 
-  const { data: menus, isLoading: menusLoading } = useQuery({
-    queryKey: ['applications', slug.value, 'menus'],
-    queryFn: () => applicationsService.getMenus(slug.value),
-    enabled: computed(() => !!slug.value),
-  })
+  const { data: menus, isLoading: menusLoading } = useApplicationMenus(slug)
 
   return {
     slug,

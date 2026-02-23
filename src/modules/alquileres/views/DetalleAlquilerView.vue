@@ -26,11 +26,11 @@ function statusLabel(s: string): string {
   return map[s] ?? s
 }
 
-function statusVariant(s: string): 'success' | 'error' | 'warning' | 'default' {
+function statusVariant(s: string): 'success' | 'error' | 'warning' | 'neutral' {
   if (s === 'ACTIVE') return 'success'
   if (s === 'EXPIRED') return 'error'
   if (s === 'CANCELLED') return 'warning'
-  return 'default'
+  return 'neutral'
 }
 
 const goBack = () => router.push('/alquileres/contratos')

@@ -343,7 +343,7 @@ const paginationProps = computed(() => ({
       </div>
 
       <!-- Pagination -->
-      <div class="px-4 border-t" style="border-color: var(--color-border);">
+<div class="border-t" style="border-color: var(--color-border);">
         <BasePagination
           :current-page="paginationProps.currentPage"
           :total-pages="paginationProps.totalPages"

@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { authService } from '../services'
+import { ref, computed } from 'vue'
+import { useForgotPassword } from '../composables'
+import { isAxiosError } from 'axios'
 
 /**
  * ForgotPasswordView
- * Solicita un código de recuperación enviado por correo
+ * Solicita un código de recuperación enviado por correo (TanStack Query)
  */
+
+const forgotMutation = useForgotPassword()
 
 const email = ref('')
 const error = ref('')
-const isLoading = ref(false)
-const isSubmitted = ref(false)
+
+const isSubmitted = computed(() => forgotMutation.isSuccess.value)
+const isLoading = computed(() => forgotMutation.isPending.value)
 
 const handleSubmit = async () => {
   error.value = ''
@@ -25,21 +29,18 @@ const handleSubmit = async () => {
     return
   }
 
-  isLoading.value = true
-
-  try {
-    await authService.forgotPassword(email.value.trim())
-    isSubmitted.value = true
-  } catch (err: unknown) {
-    const status = (err as { response?: { status?: number } })?.response?.status
-    if (status === 404) {
-      error.value = 'No existe un usuario registrado con ese correo electrónico'
-    } else {
-      error.value = 'Error al enviar el código. Intente nuevamente.'
-    }
-  } finally {
-    isLoading.value = false
-  }
+  forgotMutation.mutate(email.value.trim(), {
+    onSuccess: () => {
+      // isSubmitted is derived from isSuccess
+    },
+    onError: (err: unknown) => {
+      if (isAxiosError(err) && err.response?.status === 404) {
+        error.value = 'No existe un usuario registrado con ese correo electrónico'
+      } else {
+        error.value = 'Error al enviar el código. Intente nuevamente.'
+      }
+    },
+  })
 }
 </script>
 
@@ -47,14 +48,14 @@ const handleSubmit = async () => {
   <div class="text-center">
     <!-- Icon -->
     <div class="flex justify-center mb-6">
-      <div 
+      <div
         class="w-16 h-16 rounded-xl flex items-center justify-center"
         style="background-color: var(--color-primary-light); border: 1px solid var(--color-primary);"
       >
-        <svg 
-          class="w-8 h-8" 
-          fill="none" 
-          stroke="currentColor" 
+        <svg
+          class="w-8 h-8"
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
           style="color: var(--color-primary);"
         >
@@ -69,7 +70,7 @@ const handleSubmit = async () => {
 
     <!-- Success message -->
     <div v-if="isSubmitted" class="text-center">
-      <div 
+      <div
         class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
         style="background-color: var(--color-success-light); border: 1px solid var(--color-success);"
       >
@@ -105,7 +106,7 @@ const handleSubmit = async () => {
     <form v-else @submit.prevent="handleSubmit" class="space-y-5 text-left">
       <!-- Email -->
       <div>
-        <label 
+        <label
           class="block text-sm font-medium mb-2"
           style="color: var(--color-text-secondary);"
         >

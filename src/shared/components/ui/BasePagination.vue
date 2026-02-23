@@ -101,7 +101,7 @@ const onPageSizeChange = (value: string | number | null) => {
 
 <template>
   <div
-    class="flex flex-col sm:flex-row items-center justify-between gap-3"
+    class="flex flex-col sm:flex-row items-center justify-between gap-3 py-4 px-4"
     style="color: var(--color-text-secondary);"
   >
     <!-- Info text -->

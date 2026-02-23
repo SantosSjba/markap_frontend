@@ -1,38 +1,30 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { usersService } from '../services'
+import { computed } from 'vue'
+import { useRoles } from '../composables'
 import type { RoleInfo } from '../types'
 
 /**
  * RolesView
- * Roles list view (read-only for now)
+ * Roles list view (read-only) — uses TanStack Query
  */
 
-const roles = ref<RoleInfo[]>([])
-const isLoading = ref(true)
+const { data: rolesData, isLoading, error, refetch } = useRoles()
 
-const loadRoles = async () => {
-  isLoading.value = true
-  try {
-    roles.value = await usersService.getRoles()
-  } catch (err) {
-    console.error('Failed to load roles:', err)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-onMounted(() => {
-  loadRoles()
-})
+const roles = computed<RoleInfo[]>(() => rolesData.value ?? [])
 </script>
 
 <template>
   <div>
     <h2 class="text-2xl font-bold mb-6" style="color: var(--color-text-primary);">Roles</h2>
 
+    <!-- Error -->
+    <div v-if="error" class="rounded-lg p-4 mb-6" style="background-color: var(--color-error-light); color: var(--color-error);">
+      Error al cargar los roles.
+      <button type="button" class="underline ml-2 font-medium" @click="() => refetch()">Reintentar</button>
+    </div>
+
     <!-- Loading -->
-    <div v-if="isLoading" class="flex justify-center py-12">
+    <div v-else-if="isLoading" class="flex justify-center py-12">
       <svg class="animate-spin h-8 w-8" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -47,7 +39,7 @@ onMounted(() => {
         class="card p-4 flex items-center justify-between"
       >
         <div class="flex items-center gap-4">
-          <div 
+          <div
             class="w-12 h-12 rounded-lg flex items-center justify-center"
             style="background-color: var(--color-primary-light);"
           >
