@@ -5,11 +5,11 @@ import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
-import { usePropertiesList } from '../composables/useProperties'
-import { useClientsList } from '../composables/useClients'
+import { usePropertiesList } from '@modules/propiedades/composables/useProperties'
+import { useClientsList } from '@modules/clientes/composables/useClients'
 import { useCreateRental } from '../composables/useRentals'
-import type { PropertyListItem } from '../services/properties.service'
-import type { ClientListItem } from '../services/clients.service'
+import type { PropertyListItem } from '@modules/propiedades/services/properties.service'
+import type { ClientListItem } from '@modules/clientes/services/clients.service'
 
 const route = useRoute()
 const router = useRouter()

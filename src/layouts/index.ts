@@ -5,4 +5,5 @@
 export { default as MainLayout } from './MainLayout.vue'
 export { default as AuthLayout } from './AuthLayout.vue'
 export { default as BlankLayout } from './BlankLayout.vue'
+export { default as SectionLayout } from './SectionLayout.vue'
 export * from './components'

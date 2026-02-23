@@ -1,2 +1,2 @@
 export * from './useAppLayout'
-export * from './useClients'
+export * from './useRentals'

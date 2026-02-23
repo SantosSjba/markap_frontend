@@ -6,7 +6,7 @@ import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useDocumentTypes, useDistricts, useCreateClient, clientKeys } from '../composables/useClients'
-import { propertyKeys } from '../composables/useProperties'
+import { propertyKeys } from '@modules/propiedades/composables/useProperties'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { DocumentType, District } from '../services/clients.service'
 

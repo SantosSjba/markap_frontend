@@ -1,5 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router'
 import AlquileresLayout from '../views/AlquileresLayout.vue'
+import { SectionLayout } from '@layouts'
+import { clientesRoutes } from '@modules/clientes/router'
+import { propiedadesRoutes } from '@modules/propiedades/router'
 
 export const alquileresRoutes: RouteRecordRaw[] = [
   {
@@ -21,57 +24,19 @@ export const alquileresRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'clientes',
-        component: () => import('../views/SectionLayout.vue'),
+        component: SectionLayout,
         meta: { title: 'Clientes' },
-        children: [
-          {
-            path: '',
-            name: 'alquileres-clientes',
-            component: () => import('../views/ClientesView.vue'),
-            meta: { title: 'Clientes' },
-          },
-          {
-            path: ':id/editar',
-            name: 'alquileres-clientes-editar',
-            component: () => import('../views/EditarClienteView.vue'),
-            meta: { title: 'Editar Cliente' },
-          },
-          {
-            path: 'nuevo',
-            name: 'alquileres-clientes-nuevo',
-            component: () => import('../views/NuevoClienteView.vue'),
-            meta: { title: 'Nuevo Cliente' },
-          },
-        ],
+        children: clientesRoutes,
       },
       {
         path: 'propiedades',
-        component: () => import('../views/SectionLayout.vue'),
+        component: SectionLayout,
         meta: { title: 'Propiedades' },
-        children: [
-          {
-            path: '',
-            name: 'alquileres-propiedades',
-            component: () => import('../views/AlquileresPropiedadesView.vue'),
-            meta: { title: 'Propiedades' },
-          },
-          {
-            path: 'nueva',
-            name: 'alquileres-propiedades-nueva',
-            component: () => import('../views/NuevaPropiedadView.vue'),
-            meta: { title: 'Nueva Propiedad' },
-          },
-          {
-            path: ':id/editar',
-            name: 'alquileres-propiedades-editar',
-            component: () => import('../views/EditarPropiedadView.vue'),
-            meta: { title: 'Editar Propiedad' },
-          },
-        ],
+        children: propiedadesRoutes,
       },
       {
         path: 'contratos',
-        component: () => import('../views/SectionLayout.vue'),
+        component: SectionLayout,
         meta: { title: 'Alquileres' },
         children: [
           {
@@ -102,7 +67,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'inquilinos',
-        component: () => import('../views/SectionLayout.vue'),
+        component: SectionLayout,
         meta: { title: 'Inquilinos' },
         children: [
           {
@@ -115,7 +80,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'cobranzas',
-        component: () => import('../views/SectionLayout.vue'),
+        component: SectionLayout,
         meta: { title: 'Cobranzas' },
         children: [
           {
@@ -128,7 +93,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'reportes',
-        component: () => import('../views/SectionLayout.vue'),
+        component: SectionLayout,
         meta: { title: 'Reportes' },
         children: [
           {
@@ -141,7 +106,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'configuracion',
-        component: () => import('../views/SectionLayout.vue'),
+        component: SectionLayout,
         meta: { title: 'Configuración' },
         children: [
           {
