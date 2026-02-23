@@ -92,6 +92,10 @@ export interface PropertyListItem {
   listingStatus: string | null
   /** true si tiene al menos un alquiler en vigencia (permite "Cambiar estado") */
   hasActiveRental?: boolean
+  /** Fecha de vencimiento del alquiler vigente (ISO string), si tiene */
+  activeRentalEndDate?: string | null
+  /** Nombre del inquilino del alquiler vigente, si tiene */
+  activeRentalTenantName?: string | null
 }
 
 export interface ListPropertiesParams {

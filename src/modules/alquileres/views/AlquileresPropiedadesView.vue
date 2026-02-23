@@ -183,6 +183,15 @@ function formatRent(monthlyRent: number | null): string {
   if (monthlyRent == null) return '—'
   return `S/ ${Number(monthlyRent).toLocaleString('es-PE')} mensual`
 }
+
+function formatDate(d: string | null | undefined): string {
+  if (!d) return '—'
+  try {
+    return new Date(d).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  } catch {
+    return d
+  }
+}
 </script>
 
 <template>
@@ -334,8 +343,8 @@ function formatRent(monthlyRent: number | null): string {
                   {{ (row as PropertyListItem).ownerFullName }}
                 </span>
               </td>
-              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-                Sin inquilino
+              <td class="py-3 px-4 text-sm" :style="{ color: (row as PropertyListItem).activeRentalTenantName ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }">
+                {{ (row as PropertyListItem).activeRentalTenantName || 'Sin inquilino' }}
               </td>
               <td class="py-3 px-4">
                 <Badge :variant="listingStatusVariant((row as PropertyListItem).listingStatus)">
@@ -343,7 +352,9 @@ function formatRent(monthlyRent: number | null): string {
                 </Badge>
               </td>
               <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-                —
+                {{ (row as PropertyListItem).hasActiveRental && (row as PropertyListItem).activeRentalEndDate
+                  ? formatDate((row as PropertyListItem).activeRentalEndDate)
+                  : '—' }}
               </td>
               <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-primary)' }">
                 {{ formatRent((row as PropertyListItem).monthlyRent) }}
