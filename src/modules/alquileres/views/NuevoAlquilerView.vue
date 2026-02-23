@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
@@ -11,6 +11,7 @@ import { useCreateRental } from '../composables/useRentals'
 import type { PropertyListItem } from '../services/properties.service'
 import type { ClientListItem } from '../services/clients.service'
 
+const route = useRoute()
 const router = useRouter()
 const appColor = 'var(--color-primary)'
 
@@ -107,7 +108,16 @@ const montoLabel = computed(() => {
 })
 
 const goBack = () => router.push('/alquileres/contratos')
-const goToNewTenant = () => router.push('/alquileres/clientes/nuevo')
+const goToNewTenant = () => {
+  router.push({
+    name: 'alquileres-clientes-nuevo',
+    query: { clientType: 'TENANT', returnTo: '/alquileres/contratos/nuevo' },
+  })
+}
+onMounted(() => {
+  const id = route.query.selectedClientId
+  if (typeof id === 'string' && id) form.value.tenantId = id
+})
 
 const setError = (field: string, message: string) => {
   errors.value[field] = message

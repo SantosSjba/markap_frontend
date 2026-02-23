@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
@@ -13,6 +13,7 @@ import {
 } from '../composables/useProperties'
 import type { PropertyType, District, OwnerOption } from '../services/properties.service'
 
+const route = useRoute()
 const router = useRouter()
 const appColor = 'var(--color-primary)'
 
@@ -94,7 +95,18 @@ const ownerOptions = computed(() =>
 )
 
 const goBack = () => router.push('/alquileres/propiedades')
-const goToNewOwner = () => router.push('/alquileres/clientes/nuevo')
+
+const goToNewOwner = () => {
+  router.push({
+    name: 'alquileres-clientes-nuevo',
+    query: { clientType: 'OWNER', returnTo: '/alquileres/propiedades/nueva' },
+  })
+}
+
+onMounted(() => {
+  const id = route.query.selectedClientId
+  if (typeof id === 'string' && id) form.value.ownerId = id
+})
 
 const setError = (field: string, message: string) => {
   errors.value[field] = message

@@ -1,17 +1,32 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useDocumentTypes, useDistricts, useCreateClient } from '../composables/useClients'
+import { propertyKeys } from '../composables/useProperties'
+import { useQueryClient } from '@tanstack/vue-query'
 import type { DocumentType, District } from '../services/clients.service'
 
+const route = useRoute()
 const router = useRouter()
+const queryClient = useQueryClient()
 const appColor = 'var(--color-primary)'
 
 const clientType = ref<'OWNER' | 'TENANT'>('OWNER')
+
+/** returnTo: path para volver tras registrar (ej. /alquileres/propiedades/nueva) */
+const returnTo = computed(() => {
+  const t = route.query.returnTo
+  return typeof t === 'string' ? t : ''
+})
+
+onMounted(() => {
+  const q = route.query.clientType
+  if (q === 'OWNER' || q === 'TENANT') clientType.value = q
+})
 
 const form = ref({
   documentTypeId: '',
@@ -80,7 +95,10 @@ const districtOptions = computed(() =>
   (districts.value ?? []).map((d: District) => ({ value: d.id, label: d.name }))
 )
 
-const goBack = () => router.push('/alquileres/clientes')
+const goBack = () => {
+  if (returnTo.value) router.push(returnTo.value)
+  else router.push('/alquileres/clientes')
+}
 const selectClientType = (type: 'OWNER' | 'TENANT') => {
   clientType.value = type
 }
@@ -128,7 +146,14 @@ const handleSubmit = async () => {
       },
     },
     {
-      onSuccess: () => router.push('/alquileres/clientes'),
+      onSuccess: (data: { id: string }) => {
+        if (returnTo.value && data?.id) {
+          queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+          router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
+        } else {
+          router.push('/alquileres/clientes')
+        }
+      },
       onError: (error: Error) => {
         const msg =
           isAxiosError(error) && error.response?.data?.message

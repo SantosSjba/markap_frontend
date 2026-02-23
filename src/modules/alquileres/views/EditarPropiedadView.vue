@@ -78,6 +78,8 @@ watch(
   property,
   (p) => {
     if (!p) return
+    const selectedId = route.query.selectedClientId
+    const ownerId = typeof selectedId === 'string' && selectedId ? selectedId : p.ownerId
     form.value = {
       code: p.code,
       propertyTypeId: p.propertyTypeId,
@@ -93,7 +95,7 @@ watch(
       partida1: p.partida1 ?? '',
       partida2: p.partida2 ?? '',
       partida3: p.partida3 ?? '',
-      ownerId: p.ownerId,
+      ownerId,
       monthlyRent: p.monthlyRent ?? '',
       maintenanceAmount: p.maintenanceAmount ?? '',
       depositMonths: p.depositMonths ?? '',
@@ -127,7 +129,15 @@ const ownerOptions = computed(() =>
 )
 
 const goBack = () => router.push('/alquileres/propiedades')
-const goToNewOwner = () => router.push('/alquileres/clientes/nuevo')
+const goToNewOwner = () => {
+  router.push({
+    name: 'alquileres-clientes-nuevo',
+    query: {
+      clientType: 'OWNER',
+      returnTo: `/alquileres/propiedades/${route.params.id}/editar`,
+    },
+  })
+}
 
 const setError = (field: string, message: string) => {
   errors.value[field] = message
