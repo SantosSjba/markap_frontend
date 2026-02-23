@@ -99,7 +99,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'alquileres-reportes',
-            component: () => import('../views/AlquileresPlaceholderView.vue'),
+            component: () => import('@modules/reportes/views/ReportesView.vue'),
             meta: { title: 'Reportes' },
           },
         ],
