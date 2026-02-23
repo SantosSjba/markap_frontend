@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@modules/auth/stores/auth.store'
+import { useNotificationsStore } from '@core/notifications/notifications.store'
 import { ThemeToggle } from '@shared/components'
 
 /**
  * AppHeader Component
- * Main application header with user menu
+ * Main application header with user menu and notifications
  */
 
 interface Props {
   isSidebarCollapsed: boolean
-  /** En apps: solo Mi Perfil. En vista general: Mi Perfil + Configuración */
   minimalUserMenu?: boolean
-  /** Ruta del perfil cuando minimalUserMenu (ej: /alquileres/perfil) */
   profileTo?: string
 }
 
@@ -27,7 +27,13 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const notificationsStore = useNotificationsStore()
+const router = useRouter()
 const isUserMenuOpen = ref(false)
+
+onMounted(() => {
+  notificationsStore.requestBrowserPermission()
+})
 
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value
@@ -37,9 +43,41 @@ const closeUserMenu = () => {
   isUserMenuOpen.value = false
 }
 
+const toggleNotificationsDropdown = () => {
+  notificationsStore.isDropdownOpen = !notificationsStore.isDropdownOpen
+  if (notificationsStore.isDropdownOpen) {
+    notificationsStore.fetchList()
+    notificationsStore.fetchUnreadCount()
+  }
+}
+
+const closeNotificationsDropdown = () => {
+  notificationsStore.isDropdownOpen = false
+}
+
 const handleLogout = () => {
   closeUserMenu()
+  closeNotificationsDropdown()
+  notificationsStore.disconnect()
   authStore.logout()
+}
+
+function formatNotificationDate(iso: string) {
+  const d = new Date(iso)
+  const now = new Date()
+  const diff = now.getTime() - d.getTime()
+  if (diff < 60000) return 'Ahora'
+  if (diff < 3600000) return `Hace ${Math.floor(diff / 60000)} min`
+  if (diff < 86400000) return d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' })
+}
+
+function openNotification(n: { id: string; data?: Record<string, unknown> | null }) {
+  notificationsStore.markAsRead(n.id)
+  closeNotificationsDropdown()
+  const slug = n.data?.applicationSlug as string | undefined
+  const rentalId = n.data?.rentalId as string | undefined
+  if (slug && rentalId) router.push(`/${slug}/contratos/${rentalId}`)
 }
 </script>
 
@@ -81,16 +119,69 @@ const handleLogout = () => {
     <div class="flex items-center gap-4">
       <ThemeToggle />
       <!-- Notifications -->
-      <button
-        type="button"
-        class="p-2 rounded-lg hover-surface relative"
-      >
-        <svg class="w-6 h-6 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        </svg>
-        <!-- Badge -->
-        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-      </button>
+      <div class="relative">
+        <button
+          type="button"
+          class="p-2 rounded-lg hover-surface relative"
+          @click="toggleNotificationsDropdown"
+        >
+          <svg class="w-6 h-6 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span
+            v-if="notificationsStore.hasUnread"
+            class="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold bg-red-500 text-white rounded-full"
+          >
+            {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
+          </span>
+        </button>
+
+        <!-- Notifications dropdown -->
+        <Transition
+          enter-active-class="transition-all duration-200"
+          leave-active-class="transition-all duration-150"
+          enter-from-class="opacity-0 scale-95"
+          leave-to-class="opacity-0 scale-95"
+        >
+          <div
+            v-if="notificationsStore.isDropdownOpen"
+            class="absolute right-0 mt-2 w-80 max-h-[400px] overflow-hidden bg-[var(--color-surface)] rounded-lg shadow-lg border border-[var(--color-border)] z-50 flex flex-col"
+          >
+            <div class="px-4 py-3 border-b border-[var(--color-border)]">
+              <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">Notificaciones</h3>
+            </div>
+            <div class="overflow-y-auto flex-1">
+              <div v-if="notificationsStore.isLoading" class="p-4 text-center text-sm text-[var(--color-text-muted)]">
+                Cargando...
+              </div>
+              <template v-else-if="notificationsStore.list.length === 0">
+                <p class="p-4 text-center text-sm text-[var(--color-text-muted)]">
+                  No hay notificaciones
+                </p>
+              </template>
+              <template v-else>
+                <button
+                  v-for="n in notificationsStore.list"
+                  :key="n.id"
+                  type="button"
+                  class="w-full text-left px-4 py-3 border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-surface-elevated)] transition-colors"
+                  :class="{ 'bg-[var(--color-surface-elevated)]/50': !n.readAt }"
+                  @click="openNotification(n)"
+                >
+                  <p class="text-sm font-medium text-[var(--color-text-primary)]">{{ n.title }}</p>
+                  <p v-if="n.body" class="text-xs text-[var(--color-text-secondary)] mt-0.5 line-clamp-2">{{ n.body }}</p>
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1">{{ formatNotificationDate(n.createdAt) }}</p>
+                </button>
+              </template>
+            </div>
+          </div>
+        </Transition>
+        <div
+          v-if="notificationsStore.isDropdownOpen"
+          class="fixed inset-0 z-40"
+          @click="closeNotificationsDropdown"
+        />
+      </div>
 
       <!-- User menu -->
       <div class="relative">
