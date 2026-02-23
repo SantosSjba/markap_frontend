@@ -5,7 +5,7 @@
 
 interface Props {
   modelValue: string | number
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date'
   placeholder?: string
   label?: string
   error?: string
@@ -33,7 +33,7 @@ const inputId = props.id ?? `input-${Math.random().toString(36).slice(2, 11)}`
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   const val = target.value
-  emit('update:modelValue', props.type === 'number' ? Number(val) || 0 : val)
+  emit('update:modelValue', props.type === 'number' ? Number(val) || 0 : val as string | number)
 }
 </script>
 

@@ -90,6 +90,8 @@ export interface PropertyListItem {
   ownerFullName: string
   monthlyRent: number | null
   listingStatus: string | null
+  /** true si tiene al menos un alquiler en vigencia (permite "Cambiar estado") */
+  hasActiveRental?: boolean
 }
 
 export interface ListPropertiesParams {
@@ -157,4 +159,15 @@ export const propertiesService = {
 
   update: (id: string, data: UpdatePropertyPayload) =>
     apiClient.patch<PropertyDetail>('/properties/' + encodeURIComponent(id), data).then((r) => r.data),
+
+  /** Cambiar solo estado de listado (solo si la propiedad tiene alquiler en vigencia) */
+  updateListingStatus: (
+    id: string,
+    listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE'
+  ) =>
+    apiClient
+      .patch<PropertyDetail>(`/properties/${encodeURIComponent(id)}/listing-status`, {
+        listingStatus,
+      })
+      .then((r) => r.data),
 }

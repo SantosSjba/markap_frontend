@@ -10,8 +10,14 @@ import {
   ActionsDropdown,
   FormSelect,
   SearchInput,
+  BaseModal,
 } from '@shared/components'
-import { usePropertiesList, usePropertyStats, usePropertyTypes } from '../composables/useProperties'
+import {
+  usePropertiesList,
+  usePropertyStats,
+  usePropertyTypes,
+  useUpdatePropertyListingStatus,
+} from '../composables/useProperties'
 import type { PropertyListItem, ListPropertiesParams } from '../services/properties.service'
 
 const router = useRouter()
@@ -69,9 +75,59 @@ const goToNew = () => router.push('/alquileres/propiedades/nueva')
 const goToEdit = (row: PropertyListItem) =>
   router.push(`/alquileres/propiedades/${row.id}/editar`)
 
-const getActions = (row: PropertyListItem) => [
-  { label: 'Editar', onClick: () => goToEdit(row) },
+const showStatusModal = ref(false)
+const propertyForStatus = ref<PropertyListItem | null>(null)
+const newListingStatus = ref<'RENTED' | 'EXPIRING' | 'MAINTENANCE'>('RENTED')
+const updateListingStatusMutation = useUpdatePropertyListingStatus()
+
+const openChangeStatusModal = (row: PropertyListItem) => {
+  propertyForStatus.value = row
+  newListingStatus.value = (row.listingStatus === 'RENTED' || row.listingStatus === 'EXPIRING' || row.listingStatus === 'MAINTENANCE')
+    ? row.listingStatus
+    : 'RENTED'
+  showStatusModal.value = true
+}
+
+const closeStatusModal = () => {
+  showStatusModal.value = false
+  propertyForStatus.value = null
+}
+
+const listingStatusChangeOptions = [
+  { value: 'RENTED' as const, label: 'Alquilada' },
+  { value: 'EXPIRING' as const, label: 'Por Vencer' },
+  { value: 'MAINTENANCE' as const, label: 'En Mantenimiento' },
 ]
+
+const saveListingStatus = () => {
+  if (!propertyForStatus.value) return
+  updateListingStatusMutation.mutate(
+    { id: propertyForStatus.value.id, listingStatus: newListingStatus.value },
+    {
+      onSuccess: () => closeStatusModal(),
+      onError: (err: unknown) => {
+        const msg =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          (err as Error)?.message ||
+          'No se pudo cambiar el estado'
+        alert(msg)
+      },
+    }
+  )
+}
+
+const getActions = (row: PropertyListItem) => {
+  const items: { label: string; onClick: () => void }[] = [
+    { label: 'Editar', onClick: () => goToEdit(row) },
+  ]
+  if (row.hasActiveRental) {
+    items.push({
+      label: 'Cambiar estado',
+      onClick: () => openChangeStatusModal(row),
+    })
+  }
+  return items
+}
 
 const paginationProps = computed(() => {
   const page = listParams.value.page ?? 1
@@ -308,5 +364,36 @@ function formatRent(monthlyRent: number | null): string {
         </template>
       </div>
     </div>
+
+    <!-- Modal Cambiar estado (solo si tiene alquiler en vigencia) -->
+    <BaseModal
+      v-model="showStatusModal"
+      title="Cambiar estado de la propiedad"
+      size="sm"
+    >
+      <template v-if="propertyForStatus">
+        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+          {{ propertyForStatus.code }} – {{ propertyForStatus.addressLine }}
+        </p>
+        <FormSelect
+          v-model="newListingStatus"
+          label="Nuevo estado"
+          :options="listingStatusChangeOptions"
+          placeholder="Seleccionar"
+        />
+        <div class="flex justify-end gap-3 mt-6">
+          <BaseButton variant="outline" @click="closeStatusModal">
+            Cancelar
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            :loading="updateListingStatusMutation.isPending.value"
+            @click="saveListingStatus"
+          >
+            Guardar
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>

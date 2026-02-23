@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
@@ -19,6 +19,7 @@ const listPropertiesParams = ref({
   applicationSlug: 'alquileres' as const,
   page: 1,
   limit: 200,
+  listingStatus: 'AVAILABLE' as const, // Solo propiedades disponibles (no alquiladas)
 })
 const listTenantsParams = ref({
   applicationSlug: 'alquileres' as const,
@@ -56,7 +57,7 @@ const schema = yup.object({
 })
 
 const { data: propertiesData } = usePropertiesList(listPropertiesParams)
-const { data: tenantsData } = useClientsList(listTenantsParams)
+const { data: tenantsData, refetch: refetchTenants } = useClientsList(listTenantsParams)
 const createRentalMutation = useCreateRental()
 
 const loading = computed(
@@ -88,10 +89,22 @@ const paymentDueDayOptions = Array.from({ length: 28 }, (_, i) => ({
   label: `Día ${i + 1} de cada mes`,
 }))
 
+const selectedProperty = computed(() =>
+  (properties.value as PropertyListItem[]).find((x) => x.id === form.value.propertyId)
+)
 const selectedPropertyLabel = computed(() => {
-  const p = (properties.value as PropertyListItem[]).find((x) => x.id === form.value.propertyId)
+  const p = selectedProperty.value
   return p ? `${p.code} - ${p.addressLine}` : 'Sin seleccionar'
 })
+
+// Pre-llenar monto de alquiler (y garantía si hay datos) al elegir propiedad; el usuario puede modificar
+watch(
+  () => form.value.propertyId,
+  (propertyId) => {
+    const p = (properties.value as PropertyListItem[]).find((x) => x.id === propertyId)
+    if (p && p.monthlyRent != null) form.value.monthlyAmount = p.monthlyRent
+  }
+)
 const selectedTenantLabel = computed(() => {
   const t = (tenants.value as ClientListItem[]).find((x) => x.id === form.value.tenantId)
   return t ? t.fullName : 'Sin seleccionar'
@@ -114,9 +127,12 @@ const goToNewTenant = () => {
     query: { clientType: 'TENANT', returnTo: '/alquileres/contratos/nuevo' },
   })
 }
-onMounted(() => {
+onMounted(async () => {
   const id = route.query.selectedClientId
-  if (typeof id === 'string' && id) form.value.tenantId = id
+  if (typeof id === 'string' && id) {
+    await refetchTenants()
+    form.value.tenantId = id
+  }
 })
 
 const setError = (field: string, message: string) => {

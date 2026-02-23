@@ -85,3 +85,20 @@ export function useUpdateProperty() {
     },
   })
 }
+
+export function useUpdatePropertyListingStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      listingStatus,
+    }: {
+      id: string
+      listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE'
+    }) => propertiesService.updateListingStatus(id, listingStatus),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      queryClient.invalidateQueries({ queryKey: propertyKeys.detail(variables.id) })
+    },
+  })
+}

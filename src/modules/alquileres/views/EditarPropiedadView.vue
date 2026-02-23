@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
@@ -67,7 +67,7 @@ const schema = yup.object({
 const { data: property, isLoading: loadingProperty, isError: propertyError } = usePropertyById(id)
 const { data: propertyTypes, isLoading: loadingTypes } = usePropertyTypes()
 const { data: districts, isLoading: loadingDistricts } = usePropertyDistricts()
-const { data: owners, isLoading: loadingOwners } = usePropertyOwners('alquileres')
+const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = usePropertyOwners('alquileres')
 const updateMutation = useUpdateProperty()
 
 const loading = computed(
@@ -103,6 +103,11 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(async () => {
+  const selectedId = route.query.selectedClientId
+  if (typeof selectedId === 'string' && selectedId) await refetchOwners()
+})
 
 const selectedDistrict = computed(() =>
   (districts.value ?? []).find((d: District) => d.id === form.value.districtId)

@@ -63,7 +63,7 @@ const schema = yup.object({
 
 const { data: propertyTypes, isLoading: loadingTypes } = usePropertyTypes()
 const { data: districts, isLoading: loadingDistricts } = usePropertyDistricts()
-const { data: owners, isLoading: loadingOwners } = usePropertyOwners('alquileres')
+const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = usePropertyOwners('alquileres')
 const createMutation = useCreateProperty()
 
 const loading = computed(
@@ -103,9 +103,12 @@ const goToNewOwner = () => {
   })
 }
 
-onMounted(() => {
+onMounted(async () => {
   const id = route.query.selectedClientId
-  if (typeof id === 'string' && id) form.value.ownerId = id
+  if (typeof id === 'string' && id) {
+    await refetchOwners()
+    form.value.ownerId = id
+  }
 })
 
 const setError = (field: string, message: string) => {

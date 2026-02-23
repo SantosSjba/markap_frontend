@@ -123,8 +123,12 @@ const statusBadgeLabel = (display: string) => {
 
 const goToNew = () => router.push('/alquileres/contratos/nuevo')
 
-const getActions = (_item: RentalListItem) => [
-  { label: 'Ver detalle', onClick: () => {} },
+const goToDetail = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}`)
+const goToEdit = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}/editar`)
+
+const getActions = (item: RentalListItem) => [
+  { label: 'Ver detalle', onClick: () => goToDetail(item) },
+  { label: 'Editar', onClick: () => goToEdit(item) },
 ]
 
 const paginationProps = computed(() => {

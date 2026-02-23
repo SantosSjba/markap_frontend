@@ -5,7 +5,7 @@ import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useDocumentTypes, useDistricts, useCreateClient } from '../composables/useClients'
+import { useDocumentTypes, useDistricts, useCreateClient, clientKeys } from '../composables/useClients'
 import { propertyKeys } from '../composables/useProperties'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { DocumentType, District } from '../services/clients.service'
@@ -148,6 +148,7 @@ const handleSubmit = async () => {
     {
       onSuccess: (data: { id: string }) => {
         if (returnTo.value && data?.id) {
+          queryClient.invalidateQueries({ queryKey: clientKeys.all })
           queryClient.invalidateQueries({ queryKey: propertyKeys.all })
           router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
         } else {

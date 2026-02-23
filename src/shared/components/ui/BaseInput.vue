@@ -6,7 +6,7 @@
 
 interface Props {
   modelValue: string | number
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date'
   placeholder?: string
   label?: string
   error?: string

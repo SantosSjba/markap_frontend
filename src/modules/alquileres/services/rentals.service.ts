@@ -69,7 +69,50 @@ export interface RentalStats {
   vencidos: number
 }
 
+export interface RentalDetail {
+  id: string
+  applicationId: string
+  propertyId: string
+  tenantId: string
+  startDate: string
+  endDate: string
+  currency: string
+  monthlyAmount: number
+  securityDeposit: number | null
+  paymentDueDay: number
+  notes: string | null
+  status: string
+  code: string
+  property: {
+    id: string
+    code: string
+    addressLine: string
+    ownerId: string
+    owner: { id: string; fullName: string }
+  }
+  tenant: { id: string; fullName: string }
+  hasContract: boolean
+  hasDeliveryAct: boolean
+}
+
+export interface UpdateRentalPayload {
+  startDate?: string
+  endDate?: string
+  currency?: string
+  monthlyAmount?: number
+  securityDeposit?: number | null
+  paymentDueDay?: number
+  notes?: string | null
+  status?: 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
+}
+
 export const rentalsService = {
+  getById: (id: string) =>
+    apiClient.get<RentalDetail>(`/rentals/${id}`).then((r) => r.data),
+
+  update: (id: string, data: UpdateRentalPayload) =>
+    apiClient.patch<RentalCreated>(`/rentals/${id}`, data).then((r) => r.data),
+
   getList: (params: ListRentalsParams) => {
     const searchParams = new URLSearchParams()
     searchParams.set('applicationSlug', params.applicationSlug ?? 'alquileres')
