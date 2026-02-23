@@ -192,26 +192,62 @@ a:hover {
 }
 
 /* ============================================
-   SCROLLBAR STYLES
+   SCROLLBAR STYLES (global, delgado minimalista)
    ============================================ */
+
+/* Global: todos los scrollbars */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+  transition: background var(--transition-fast);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Ocultar botones de flecha (Chrome/Edge/Safari) */
+*::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox: scrollbar delgado */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* Clase opcional para mismo estilo donde haga falta */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--color-background);
-  border-radius: 3px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--color-border);
-  border-radius: 3px;
+  border-radius: 999px;
   transition: background var(--transition-fast);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
+  background: var(--color-text-muted);
+}
+
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none;
 }
 
 /* Hide scrollbar utility */
