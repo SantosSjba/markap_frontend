@@ -32,6 +32,12 @@ export const settingsRoutes: RouteRecordRaw[] = [
         component: () => import('../views/RolesView.vue'),
         meta: { title: 'Roles', requiresAdmin: true },
       },
+      {
+        path: 'role-applications',
+        name: 'settings-role-applications',
+        component: () => import('../views/RoleApplicationsView.vue'),
+        meta: { title: 'Roles y aplicaciones', requiresAdmin: true },
+      },
     ],
   },
 ]
