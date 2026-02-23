@@ -13,17 +13,20 @@ import {
   useActiveClientsReport,
   useContractStatusSummary,
   useMonthlyMetrics,
+  useRentalsByMonth,
 } from '../composables'
 
 const APPLICATION_SLUG = 'alquileres'
 
 const periodFilter = ref(30)
 const activeTab = ref('contratos-por-vencer')
+const yearFilter = ref(new Date().getFullYear())
 
 const reportTabs = [
   { id: 'contratos-por-vencer', label: 'Contratos por Vencer' },
   { id: 'sin-contrato', label: 'Sin Contrato' },
   { id: 'clientes-activos', label: 'Clientes Activos' },
+  { id: 'alquiler-por-mes', label: 'Alquiler por mes' },
 ]
 
 const days = computed(() => Math.min(365, Math.max(1, periodFilter.value)))
@@ -34,6 +37,7 @@ const propertiesWithoutContractQuery = usePropertiesWithoutContract(APPLICATION_
 const activeClientsQuery = useActiveClientsReport(APPLICATION_SLUG)
 const contractStatusQuery = useContractStatusSummary(APPLICATION_SLUG)
 const monthlyMetricsQuery = useMonthlyMetrics(APPLICATION_SLUG)
+const rentalsByMonthQuery = useRentalsByMonth(APPLICATION_SLUG, yearFilter)
 
 const stats = computed(() => summaryQuery.data.value ?? {
   contratosPorVencer: 0,
@@ -78,7 +82,8 @@ const loading = computed(
     propertiesWithoutContractQuery.isPending.value ||
     activeClientsQuery.isPending.value ||
     contractStatusQuery.isPending.value ||
-    monthlyMetricsQuery.isPending.value
+    monthlyMetricsQuery.isPending.value ||
+    (activeTab.value === 'alquiler-por-mes' && rentalsByMonthQuery.isPending.value)
 )
 
 function formatDate(dateStr: string) {
@@ -89,11 +94,27 @@ function formatDate(dateStr: string) {
   })
 }
 
+function formatCurrency(value: number, currency: string) {
+  return new Intl.NumberFormat('es-PE', {
+    style: 'currency',
+    currency: currency === 'USD' ? 'USD' : 'PEN',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 const periodOptions = [
   { value: 30, label: 'Próximos 30 días' },
   { value: 60, label: 'Próximos 60 días' },
   { value: 90, label: 'Próximos 90 días' },
 ]
+
+const rentalsByMonthRows = computed(() => rentalsByMonthQuery.data.value ?? [])
+
+const yearOptions = computed(() => {
+  const current = new Date().getFullYear()
+  return [current - 2, current - 1, current, current + 1]
+})
 </script>
 
 <template>
@@ -343,6 +364,85 @@ const periodOptions = [
             >
               No hay clientes activos.
             </p>
+          </div>
+        </template>
+
+        <!-- Alquiler por mes -->
+        <template v-else-if="activeTab === 'alquiler-por-mes'">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-lg flex items-center justify-center"
+                style="backgroundColor: var(--color-primary-light);"
+              >
+                <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">
+                  Alquiler por mes
+                </h2>
+                <p class="text-sm" style="color: var(--color-text-secondary);">
+                  Contratos nuevos, vencidos, activos al cierre e ingresos por mes
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm shrink-0" style="color: var(--color-text-secondary);">Año:</label>
+              <select
+                v-model.number="yearFilter"
+                class="rounded-lg border px-3 py-2 text-sm min-w-[100px]"
+                style="
+                  border-color: var(--color-border);
+                  background-color: var(--color-surface);
+                  color: var(--color-text-primary);
+                "
+              >
+                <option v-for="y in yearOptions" :key="y" :value="y">
+                  {{ y }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div v-if="rentalsByMonthQuery.isPending.value" class="flex justify-center py-12">
+            <svg
+              class="animate-spin h-8 w-8"
+              style="color: var(--color-primary);"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          </div>
+          <div v-else class="overflow-x-auto">
+            <table class="w-full border-collapse text-sm">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Mes</th>
+                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Contratos nuevos</th>
+                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Contratos vencidos</th>
+                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Activos al cierre</th>
+                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Ingresos del mes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="row in rentalsByMonthRows"
+                  :key="`${row.year}-${row.month}`"
+                  style="border-bottom: 1px solid var(--color-border);"
+                >
+                  <td class="py-3 px-4 font-medium" style="color: var(--color-text-primary);">{{ row.monthName }}</td>
+                  <td class="py-3 px-4 text-right" style="color: var(--color-text-primary);">{{ row.newContracts }}</td>
+                  <td class="py-3 px-4 text-right" style="color: var(--color-text-primary);">{{ row.expiredContracts }}</td>
+                  <td class="py-3 px-4 text-right" style="color: var(--color-text-primary);">{{ row.activeAtEndOfMonth }}</td>
+                  <td class="py-3 px-4 text-right font-medium" style="color: var(--color-text-primary);">
+                    {{ formatCurrency(row.totalRevenue, row.currency) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </template>
       </div>

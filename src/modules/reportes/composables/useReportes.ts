@@ -13,6 +13,8 @@ export const reportKeys = {
   contractStatusSummary: (slug: string) =>
     [...reportKeys.all, 'contract-status-summary', slug] as const,
   monthlyMetrics: (slug: string) => [...reportKeys.all, 'monthly-metrics', slug] as const,
+  rentalsByMonth: (slug: string, year: number) =>
+    [...reportKeys.all, 'rentals-by-month', slug, year] as const,
 }
 
 const APPLICATION_SLUG = 'alquileres'
@@ -66,5 +68,17 @@ export function useMonthlyMetrics(applicationSlug: string = APPLICATION_SLUG) {
   return useQuery({
     queryKey: reportKeys.monthlyMetrics(applicationSlug),
     queryFn: () => reportesService.getMonthlyMetrics(applicationSlug),
+  })
+}
+
+export function useRentalsByMonth(
+  applicationSlug: MaybeRefOrGetter<string> = APPLICATION_SLUG,
+  year: MaybeRefOrGetter<number> = () => new Date().getFullYear()
+) {
+  const slugVal = computed(() => toValue(applicationSlug))
+  const yearVal = computed(() => toValue(year))
+  return useQuery({
+    queryKey: computed(() => reportKeys.rentalsByMonth(slugVal.value, yearVal.value)),
+    queryFn: () => reportesService.getRentalsByMonth(slugVal.value, yearVal.value),
   })
 }

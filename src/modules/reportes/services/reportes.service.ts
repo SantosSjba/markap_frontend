@@ -44,6 +44,17 @@ export interface MonthlyMetrics {
   clientesNuevos: number
 }
 
+export interface RentalsByMonthItem {
+  month: number
+  year: number
+  monthName: string
+  newContracts: number
+  expiredContracts: number
+  activeAtEndOfMonth: number
+  totalRevenue: number
+  currency: string
+}
+
 const APPLICATION_SLUG = 'alquileres'
 
 export const reportesService = {
@@ -89,6 +100,17 @@ export const reportesService = {
     return apiClient
       .get<MonthlyMetrics>('/reports/monthly-metrics', {
         params: { applicationSlug },
+      })
+      .then((r) => r.data)
+  },
+
+  getRentalsByMonth(
+    applicationSlug: string = APPLICATION_SLUG,
+    year: number = new Date().getFullYear()
+  ) {
+    return apiClient
+      .get<RentalsByMonthItem[]>('/reports/rentals-by-month', {
+        params: { applicationSlug, year },
       })
       .then((r) => r.data)
   },
