@@ -77,7 +77,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'alquileres-contratos',
-            component: () => import('../views/AlquileresPlaceholderView.vue'),
+            component: () => import('../views/AlquileresContratosView.vue'),
             meta: { title: 'Alquileres' },
           },
           {

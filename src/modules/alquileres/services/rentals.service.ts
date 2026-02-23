@@ -28,7 +28,65 @@ export interface RentalCreated {
   status: string
 }
 
+export interface RentalListItem {
+  id: string
+  code: string
+  propertyId: string
+  propertyAddress: string
+  propertyCode: string
+  tenantId: string
+  tenantName: string
+  ownerId: string
+  ownerName: string
+  startDate: string
+  endDate: string
+  currency: string
+  monthlyAmount: number
+  securityDeposit: number | null
+  status: string
+  hasContract: boolean
+}
+
+export interface ListRentalsParams {
+  applicationSlug?: string
+  page?: number
+  limit?: number
+  search?: string
+  status?: 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
+}
+
+export interface ListRentalsResponse {
+  data: RentalListItem[]
+  total: number
+  page: number
+  limit: number
+}
+
+export interface RentalStats {
+  total: number
+  vigentes: number
+  porVencer: number
+  vencidos: number
+}
+
 export const rentalsService = {
+  getList: (params: ListRentalsParams) => {
+    const searchParams = new URLSearchParams()
+    searchParams.set('applicationSlug', params.applicationSlug ?? 'alquileres')
+    searchParams.set('page', String(params.page ?? 1))
+    searchParams.set('limit', String(params.limit ?? 10))
+    if (params.search) searchParams.set('search', params.search)
+    if (params.status) searchParams.set('status', params.status)
+    return apiClient
+      .get<ListRentalsResponse>(`/rentals?${searchParams.toString()}`)
+      .then((r) => r.data)
+  },
+
+  getStats: (applicationSlug = 'alquileres') =>
+    apiClient
+      .get<RentalStats>(`/rentals/stats?applicationSlug=${applicationSlug}`)
+      .then((r) => r.data),
+
   create: (
     data: CreateRentalPayload,
     files?: { contractFile?: File; deliveryActFile?: File }
