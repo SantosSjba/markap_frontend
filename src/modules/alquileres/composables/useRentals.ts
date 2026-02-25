@@ -5,6 +5,7 @@ import {
   type CreateRentalPayload,
   type ListRentalsParams,
   type UpdateRentalPayload,
+  type UpsertRentalFinancialConfigPayload,
 } from '../services/rentals.service'
 
 export const rentalKeys = {
@@ -13,6 +14,8 @@ export const rentalKeys = {
     [...rentalKeys.all, 'list', params?.applicationSlug ?? '', params?.page ?? 1, params?.limit ?? 10, params?.search ?? '', params?.status ?? ''] as const,
   stats: (slug?: string) => [...rentalKeys.all, 'stats', slug ?? 'alquileres'] as const,
   detail: (id: string) => [...rentalKeys.all, 'detail', id] as const,
+  financialConfig: (id: string) => [...rentalKeys.all, 'financial-config', id] as const,
+  financialBreakdown: (id: string) => [...rentalKeys.all, 'financial-breakdown', id] as const,
 }
 
 export function useRentalsList(params: Ref<ListRentalsParams>) {
@@ -58,6 +61,34 @@ export function useUpdateRental() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: rentalKeys.all })
       queryClient.invalidateQueries({ queryKey: rentalKeys.detail(id) })
+    },
+  })
+}
+
+export function useRentalFinancialConfig(id: Ref<string> | string) {
+  return useQuery({
+    queryKey: computed(() => rentalKeys.financialConfig(unref(id))),
+    queryFn: () => rentalsService.getFinancialConfig(unref(id)),
+    enabled: computed(() => !!unref(id)),
+  })
+}
+
+export function useRentalFinancialBreakdown(id: Ref<string> | string) {
+  return useQuery({
+    queryKey: computed(() => rentalKeys.financialBreakdown(unref(id))),
+    queryFn: () => rentalsService.getFinancialBreakdown(unref(id)),
+    enabled: computed(() => !!unref(id)),
+  })
+}
+
+export function useUpsertRentalFinancialConfig() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ rentalId, data }: { rentalId: string; data: UpsertRentalFinancialConfigPayload }) =>
+      rentalsService.upsertFinancialConfig(rentalId, data),
+    onSuccess: (_, { rentalId }) => {
+      queryClient.invalidateQueries({ queryKey: rentalKeys.financialConfig(rentalId) })
+      queryClient.invalidateQueries({ queryKey: rentalKeys.financialBreakdown(rentalId) })
     },
   })
 }

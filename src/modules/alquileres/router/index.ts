@@ -3,6 +3,7 @@ import AlquileresLayout from '../views/AlquileresLayout.vue'
 import { SectionLayout } from '@layouts'
 import { clientesRoutes } from '@modules/clientes/router'
 import { propiedadesRoutes } from '@modules/propiedades/router'
+import { agentesRoutes } from '@modules/agentes/router'
 
 export const alquileresRoutes: RouteRecordRaw[] = [
   {
@@ -35,6 +36,12 @@ export const alquileresRoutes: RouteRecordRaw[] = [
         children: propiedadesRoutes,
       },
       {
+        path: 'agentes',
+        component: SectionLayout,
+        meta: { title: 'Agentes' },
+        children: agentesRoutes,
+      },
+      {
         path: 'contratos',
         component: SectionLayout,
         meta: { title: 'Alquileres' },
@@ -62,6 +69,12 @@ export const alquileresRoutes: RouteRecordRaw[] = [
             name: 'alquileres-contratos-editar',
             component: () => import('../views/EditarAlquilerView.vue'),
             meta: { title: 'Editar Alquiler' },
+          },
+          {
+            path: ':id/distribucion-financiera',
+            name: 'alquileres-contratos-distribucion-financiera',
+            component: () => import('../views/DistribucionFinancieraView.vue'),
+            meta: { title: 'Distribución Financiera' },
           },
         ],
       },

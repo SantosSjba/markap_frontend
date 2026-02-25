@@ -106,6 +106,53 @@ export interface UpdateRentalPayload {
   status?: 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
 }
 
+export type FinancialValueType = 'PERCENT' | 'FIXED'
+
+export interface RentalFinancialConfig {
+  id: string
+  rentalId: string
+  currency: string
+  expenseType: FinancialValueType
+  expenseValue: number
+  taxType: FinancialValueType
+  taxValue: number
+  externalAgentId: string | null
+  externalAgentType: FinancialValueType
+  externalAgentValue: number
+  externalAgentName: string | null
+  internalAgentId: string | null
+  internalAgentType: FinancialValueType
+  internalAgentValue: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RentalFinancialBreakdown {
+  monthlyAmount: number
+  currency: string
+  expense: number
+  tax: number
+  externalAgentCommission: number
+  internalAgentCommission: number
+  utility: number
+  config: RentalFinancialConfig | null
+}
+
+export interface UpsertRentalFinancialConfigPayload {
+  currency?: string
+  expenseType?: FinancialValueType
+  expenseValue?: number
+  taxType?: FinancialValueType
+  taxValue?: number
+  externalAgentId?: string | null
+  externalAgentType?: FinancialValueType
+  externalAgentValue?: number
+  externalAgentName?: string | null
+  internalAgentId?: string | null
+  internalAgentType?: FinancialValueType
+  internalAgentValue?: number
+}
+
 export const rentalsService = {
   getById: (id: string) =>
     apiClient.get<RentalDetail>(`/rentals/${id}`).then((r) => r.data),
@@ -128,6 +175,21 @@ export const rentalsService = {
   getStats: (applicationSlug = 'alquileres') =>
     apiClient
       .get<RentalStats>(`/rentals/stats?applicationSlug=${applicationSlug}`)
+      .then((r) => r.data),
+
+  getFinancialConfig: (rentalId: string) =>
+    apiClient
+      .get<RentalFinancialConfig | null>(`/rentals/${rentalId}/financial-config`)
+      .then((r) => r.data),
+
+  getFinancialBreakdown: (rentalId: string) =>
+    apiClient
+      .get<RentalFinancialBreakdown>(`/rentals/${rentalId}/financial-breakdown`)
+      .then((r) => r.data),
+
+  upsertFinancialConfig: (rentalId: string, data: UpsertRentalFinancialConfigPayload) =>
+    apiClient
+      .put<RentalFinancialConfig>(`/rentals/${rentalId}/financial-config`, data)
       .then((r) => r.data),
 
   create: (

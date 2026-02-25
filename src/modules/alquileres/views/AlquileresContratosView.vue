@@ -125,10 +125,12 @@ const goToNew = () => router.push('/alquileres/contratos/nuevo')
 
 const goToDetail = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}`)
 const goToEdit = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}/editar`)
+const goToFinancialConfig = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}/distribucion-financiera`)
 
 const getActions = (item: RentalListItem) => [
   { label: 'Ver detalle', onClick: () => goToDetail(item) },
   { label: 'Editar', onClick: () => goToEdit(item) },
+  { label: 'Distribución financiera', onClick: () => goToFinancialConfig(item) },
 ]
 
 const paginationProps = computed(() => {
