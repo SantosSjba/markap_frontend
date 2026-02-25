@@ -42,7 +42,7 @@ export function useRental(id: Ref<string> | string) {
 
 export function useCreateRental() {
   const queryClient = useQueryClient()
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (params: {
       data: CreateRentalPayload
       files?: { contractFile?: File; deliveryActFile?: File }
@@ -51,11 +51,16 @@ export function useCreateRental() {
       queryClient.invalidateQueries({ queryKey: rentalKeys.all })
     },
   })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () => queryClient.refetchQueries({ queryKey: rentalKeys.all }),
+  }
 }
 
 export function useUpdateRental() {
   const queryClient = useQueryClient()
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateRentalPayload }) =>
       rentalsService.update(id, data),
     onSuccess: (_, { id }) => {
@@ -63,6 +68,11 @@ export function useUpdateRental() {
       queryClient.invalidateQueries({ queryKey: rentalKeys.detail(id) })
     },
   })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () => queryClient.refetchQueries({ queryKey: rentalKeys.all }),
+  }
 }
 
 export function useRentalFinancialConfig(id: Ref<string> | string) {

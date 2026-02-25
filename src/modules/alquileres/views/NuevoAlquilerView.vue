@@ -162,8 +162,8 @@ const handleSubmit = async () => {
     throw e
   }
 
-  createRentalMutation.mutate(
-    {
+  try {
+    await createRentalMutation.mutateAsync({
       data: {
         applicationSlug: 'alquileres',
         propertyId: form.value.propertyId,
@@ -180,23 +180,21 @@ const handleSubmit = async () => {
         contractFile: contractFile.value ?? undefined,
         deliveryActFile: deliveryActFile.value ?? undefined,
       },
-    },
-    {
-      onSuccess: () => router.push('/alquileres/contratos'),
-      onError: (error: Error) => {
-        const msg =
-          isAxiosError(error) && error.response?.data?.message
-            ? String(error.response.data.message)
-            : 'Error al guardar el contrato'
-        setError('_form', msg)
-      },
-    }
-  )
+    })
+    await createRentalMutation.invalidateList()
+    router.push('/alquileres/contratos')
+  } catch (error) {
+    const msg =
+      isAxiosError(error) && error.response?.data?.message
+        ? String(error.response.data.message)
+        : 'Error al guardar el contrato'
+    setError('_form', msg)
+  }
 }
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
     <div class="flex items-center gap-4 mb-6">
       <button
         type="button"

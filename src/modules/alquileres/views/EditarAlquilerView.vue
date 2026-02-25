@@ -101,8 +101,8 @@ const handleSubmit = async () => {
     throw e
   }
 
-  updateMutation.mutate(
-    {
+  try {
+    await updateMutation.mutateAsync({
       id: id.value,
       data: {
         startDate: form.value.startDate,
@@ -114,23 +114,22 @@ const handleSubmit = async () => {
         notes: form.value.notes.trim() || null,
         status: form.value.status as 'ACTIVE' | 'EXPIRED' | 'CANCELLED',
       },
-    },
-    {
-      onSuccess: () => router.push(`/alquileres/contratos/${id.value}`),
-      onError: (error: Error) => {
-        const msg =
-          isAxiosError(error) && error.response?.data?.message
-            ? String(error.response.data.message)
-            : 'Error al actualizar el alquiler'
-        setError('_form', msg)
-      },
-    }
-  )
+    })
+    await updateMutation.invalidateList()
+    router.push(`/alquileres/contratos/${id.value}`)
+  } catch (error) {
+    const msg =
+      isAxiosError(error) && error.response?.data?.message
+        ? String(error.response.data.message)
+        : 'Error al actualizar el contrato'
+    setError('_form', msg)
+  }
 }
+
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-3 sm:px-5 py-6 sm:py-8">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
     <div class="flex items-center gap-4 mb-6">
       <button
         type="button"

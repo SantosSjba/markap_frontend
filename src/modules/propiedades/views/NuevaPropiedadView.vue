@@ -138,8 +138,8 @@ const handleSubmit = async () => {
     throw e
   }
 
-  createMutation.mutate(
-    {
+  try {
+    await createMutation.mutateAsync({
       applicationSlug: 'alquileres',
       code: form.value.code.trim(),
       propertyTypeId: form.value.propertyTypeId,
@@ -159,23 +159,21 @@ const handleSubmit = async () => {
       monthlyRent: toNum(form.value.monthlyRent),
       maintenanceAmount: toNum(form.value.maintenanceAmount),
       depositMonths: toNum(form.value.depositMonths),
-    },
-    {
-      onSuccess: () => router.push('/alquileres/propiedades'),
-      onError: (error: Error) => {
-        const msg =
-          isAxiosError(error) && error.response?.data?.message
-            ? String(error.response.data.message)
-            : 'Error al guardar la propiedad'
-        setError('_form', msg)
-      },
-    }
-  )
+    })
+    await createMutation.invalidateList()
+    router.push('/alquileres/propiedades')
+  } catch (error) {
+    const msg =
+      isAxiosError(error) && error.response?.data?.message
+        ? String(error.response.data.message)
+        : 'Error al guardar la propiedad'
+    setError('_form', msg)
+  }
 }
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
     <div class="flex items-center gap-4 mb-6">
       <button
         type="button"

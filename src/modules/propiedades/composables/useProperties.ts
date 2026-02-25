@@ -66,17 +66,22 @@ export function usePropertyById(id: Ref<string> | string) {
 
 export function useCreateProperty() {
   const queryClient = useQueryClient()
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (data: CreatePropertyPayload) => propertiesService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: propertyKeys.all })
     },
   })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () => queryClient.refetchQueries({ queryKey: propertyKeys.all }),
+  }
 }
 
 export function useUpdateProperty() {
   const queryClient = useQueryClient()
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdatePropertyPayload }) =>
       propertiesService.update(id, data),
     onSuccess: (_, variables) => {
@@ -84,6 +89,11 @@ export function useUpdateProperty() {
       queryClient.invalidateQueries({ queryKey: propertyKeys.detail(variables.id) })
     },
   })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () => queryClient.refetchQueries({ queryKey: propertyKeys.all }),
+  }
 }
 
 export function useUpdatePropertyListingStatus() {

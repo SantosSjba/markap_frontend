@@ -94,8 +94,8 @@ const handleSubmit = async () => {
     throw e
   }
 
-  createMutation.mutate(
-    {
+  try {
+    await createMutation.mutateAsync({
       applicationSlug: 'alquileres',
       type: form.value.type,
       userId: form.value.type === 'INTERNAL' && form.value.userId ? form.value.userId : null,
@@ -104,23 +104,21 @@ const handleSubmit = async () => {
       phone: form.value.phone?.trim() || null,
       documentTypeId: form.value.documentTypeId || null,
       documentNumber: form.value.documentNumber?.trim() || null,
-    },
-    {
-      onSuccess: () => router.push('/alquileres/agentes'),
-      onError: (error: Error) => {
-        const msg =
-          isAxiosError(error) && error.response?.data?.message
-            ? String(error.response.data.message)
-            : 'Error al crear el agente'
-        setError('_form', msg)
-      },
-    }
-  )
+    })
+    await createMutation.invalidateList()
+    router.push('/alquileres/agentes')
+  } catch (error) {
+    const msg =
+      isAxiosError(error) && (error as any).response?.data?.message
+        ? String((error as any).response.data.message)
+        : 'Error al crear el agente'
+    setError('_form', msg)
+  }
 }
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto px-3 sm:px-5 py-6 sm:py-8">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
     <div class="flex items-center gap-4 mb-6">
       <button
         type="button"

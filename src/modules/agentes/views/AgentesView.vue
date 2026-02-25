@@ -105,7 +105,7 @@ function displayName(row: AgentListItem): string {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1200px] mx-auto">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-xl sm:text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">

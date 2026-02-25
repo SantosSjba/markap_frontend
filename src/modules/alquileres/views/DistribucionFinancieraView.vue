@@ -108,7 +108,7 @@ const selectedInternalUser = computed(() => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-3 sm:px-5 py-6 sm:py-8">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
     <div class="flex items-center justify-between gap-4 mb-6">
       <button
         type="button"
@@ -222,18 +222,19 @@ const selectedInternalUser = computed(() => {
           class="space-y-6"
           @submit.prevent="submitFinancialConfig"
         >
-          <!-- Gastos -->
+          <!-- Grid 2 columnas responsivo -->
           <div
-            class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg"
+            class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-5 rounded-lg"
             :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
           >
-            <div>
+            <!-- Gastos -->
+            <div class="min-w-0">
               <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-primary)' }">Gastos</label>
-              <div class="flex gap-3 items-center">
+              <div class="grid grid-cols-[auto_1fr] sm:grid-cols-2 gap-2 sm:gap-3 items-center">
                 <FormSelect
                   v-model="form.expenseType"
                   :options="expenseTypeOptions"
-                  class="w-36"
+                  class="min-w-0 w-full"
                 />
                 <FormInput
                   v-model="form.expenseValue"
@@ -241,17 +242,18 @@ const selectedInternalUser = computed(() => {
                   min="0"
                   step="0.01"
                   :placeholder="form.expenseType === 'PERCENT' ? '%' : '0.00'"
-                  class="w-28"
+                  class="min-w-0 w-full"
                 />
               </div>
             </div>
-            <div>
+            <!-- Impuestos -->
+            <div class="min-w-0">
               <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-primary)' }">Impuestos</label>
-              <div class="flex gap-3 items-center">
+              <div class="grid grid-cols-[auto_1fr] sm:grid-cols-2 gap-2 sm:gap-3 items-center">
                 <FormSelect
                   v-model="form.taxType"
                   :options="expenseTypeOptions"
-                  class="w-36"
+                  class="min-w-0 w-full"
                 />
                 <FormInput
                   v-model="form.taxValue"
@@ -259,87 +261,97 @@ const selectedInternalUser = computed(() => {
                   min="0"
                   step="0.01"
                   :placeholder="form.taxType === 'PERCENT' ? '%' : '0.00'"
-                  class="w-28"
+                  class="min-w-0 w-full"
                 />
               </div>
             </div>
           </div>
 
-          <!-- Agente externo -->
+          <!-- Agente externo: grid 2 cols -->
           <div
-            class="p-4 rounded-lg space-y-3"
+            class="p-4 sm:p-5 rounded-lg"
             :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
           >
-            <label class="block text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Agente externo</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
-              <FormSelect
-                v-model="externalAgentIdModel"
-                label="Seleccionar agente"
-                :options="externalAgentOptions"
-                placeholder="Ninguno"
-                class="min-w-0"
-              />
-              <FormSelect
-                v-model="form.externalAgentType"
-                label="Tipo comisión"
-                :options="expenseTypeOptions"
-                class="min-w-0"
-              />
-              <FormInput
-                v-model="form.externalAgentValue"
-                type="number"
-                min="0"
-                step="0.01"
-                label="Valor"
-                placeholder="0"
-                class="min-w-0"
-              />
-              <FormInput
-                v-model="form.externalAgentName"
-                type="text"
-                label="Nombre (si no elige agente)"
-                :placeholder="form.externalAgentId ? 'Del agente seleccionado' : 'Opcional'"
-                class="min-w-0"
-              />
+            <label class="block text-sm font-medium mb-3" :style="{ color: 'var(--color-text-primary)' }">Agente externo</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div class="min-w-0">
+                <FormSelect
+                  v-model="externalAgentIdModel"
+                  label="Seleccionar agente"
+                  :options="externalAgentOptions"
+                  placeholder="Ninguno"
+                  class="w-full"
+                />
+              </div>
+              <div class="min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 items-end">
+                <FormSelect
+                  v-model="form.externalAgentType"
+                  label="Tipo comisión"
+                  :options="expenseTypeOptions"
+                  class="min-w-0"
+                />
+                <FormInput
+                  v-model="form.externalAgentValue"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  label="Valor"
+                  placeholder="0"
+                  class="min-w-0"
+                />
+              </div>
+              <div class="sm:col-span-2 min-w-0">
+                <FormInput
+                  v-model="form.externalAgentName"
+                  type="text"
+                  label="Nombre (si no elige agente)"
+                  :placeholder="form.externalAgentId ? 'Del agente seleccionado' : 'Opcional'"
+                  class="w-full"
+                />
+              </div>
             </div>
           </div>
 
-          <!-- Agente interno -->
+          <!-- Agente interno: grid 2 cols -->
           <div
-            class="p-4 rounded-lg space-y-3"
+            class="p-4 sm:p-5 rounded-lg"
             :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
           >
-            <label class="block text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Agente interno</label>
-            <FormSelect
-              v-model="internalAgentIdModel"
-              label="Seleccionar usuario"
-              :options="internalAgentOptions"
-              placeholder="Ninguno"
-              class="max-w-md"
-            />
-            <p
-              v-if="selectedInternalUser"
-              class="text-sm rounded-md px-3 py-2"
-              :style="{ color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }"
-            >
-              <span class="font-medium">Correo:</span> {{ selectedInternalUser.email }}
-            </p>
-            <div class="flex flex-wrap gap-3 items-end max-w-md">
-              <FormSelect
-                v-model="form.internalAgentType"
-                label="Tipo comisión"
-                :options="expenseTypeOptions"
-                class="w-36"
-              />
-              <FormInput
-                v-model="form.internalAgentValue"
-                type="number"
-                min="0"
-                step="0.01"
-                label="Valor"
-                placeholder="0"
-                class="w-28"
-              />
+            <label class="block text-sm font-medium mb-3" :style="{ color: 'var(--color-text-primary)' }">Agente interno</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div class="min-w-0">
+                <FormSelect
+                  v-model="internalAgentIdModel"
+                  label="Seleccionar usuario"
+                  :options="internalAgentOptions"
+                  placeholder="Ninguno"
+                  class="w-full"
+                />
+                <p
+                  v-if="selectedInternalUser"
+                  class="mt-2 text-sm rounded-md px-3 py-2"
+                  :style="{ color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }"
+                >
+                  <span class="font-medium">Correo:</span> {{ selectedInternalUser.email }}
+                </p>
+              </div>
+              <div class="min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 items-end">
+                <FormSelect
+                  v-model="form.internalAgentType"
+                  label="Tipo comisión"
+                  :options="expenseTypeOptions"
+                  class="min-w-0"
+                />
+                <FormInput
+                  v-model="form.internalAgentValue"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  label="Valor"
+                  placeholder="0"
+                  class="min-w-0"
+                />
+              </div>
             </div>
           </div>
 

@@ -55,17 +55,22 @@ export function useClient(id: Ref<string> | string) {
 
 export function useCreateClient() {
   const queryClient = useQueryClient()
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (data: CreateClientPayload) => clientsService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientKeys.all })
     },
   })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () => queryClient.refetchQueries({ queryKey: clientKeys.all }),
+  }
 }
 
 export function useUpdateClient() {
   const queryClient = useQueryClient()
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateClientPayload }) =>
       clientsService.update(id, data),
     onSuccess: (_, { id }) => {
@@ -73,4 +78,9 @@ export function useUpdateClient() {
       queryClient.invalidateQueries({ queryKey: clientKeys.detail(id) })
     },
   })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () => queryClient.refetchQueries({ queryKey: clientKeys.all }),
+  }
 }

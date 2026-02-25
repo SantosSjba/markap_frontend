@@ -171,8 +171,8 @@ const handleSubmit = async () => {
     throw e
   }
 
-  updateMutation.mutate(
-    {
+  try {
+    await updateMutation.mutateAsync({
       id: id.value,
       data: {
         code: form.value.code.trim(),
@@ -194,23 +194,21 @@ const handleSubmit = async () => {
         maintenanceAmount: toNum(form.value.maintenanceAmount),
         depositMonths: toNum(form.value.depositMonths),
       },
-    },
-    {
-      onSuccess: () => router.push('/alquileres/propiedades'),
-      onError: (error: Error) => {
-        const msg =
-          isAxiosError(error) && error.response?.data?.message
-            ? String(error.response.data.message)
-            : 'Error al actualizar la propiedad'
-        setError('_form', msg)
-      },
-    }
-  )
+    })
+    await updateMutation.invalidateList()
+    router.push('/alquileres/propiedades')
+  } catch (error) {
+    const msg =
+      isAxiosError(error) && error.response?.data?.message
+        ? String(error.response.data.message)
+        : 'Error al actualizar la propiedad'
+    setError('_form', msg)
+  }
 }
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
     <div class="flex items-center gap-4 mb-6">
       <button
         type="button"

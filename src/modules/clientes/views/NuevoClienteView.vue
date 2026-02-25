@@ -5,7 +5,7 @@ import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useDocumentTypes, useDistricts, useCreateClient, clientKeys } from '../composables/useClients'
+import { useDocumentTypes, useDistricts, useCreateClient } from '../composables/useClients'
 import { propertyKeys } from '@modules/propiedades/composables/useProperties'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { DocumentType, District } from '../services/clients.service'
@@ -124,8 +124,8 @@ const handleSubmit = async () => {
     throw e
   }
 
-  createMutation.mutate(
-    {
+  try {
+    const data = await createMutation.mutateAsync({
       applicationSlug: 'alquileres',
       clientType: clientType.value,
       documentTypeId: form.value.documentTypeId,
@@ -144,31 +144,26 @@ const handleSubmit = async () => {
         districtId: form.value.districtId,
         reference: form.value.reference.trim() || null,
       },
-    },
-    {
-      onSuccess: (data: { id: string }) => {
-        if (returnTo.value && data?.id) {
-          queryClient.invalidateQueries({ queryKey: clientKeys.all })
-          queryClient.invalidateQueries({ queryKey: propertyKeys.all })
-          router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
-        } else {
-          router.push('/alquileres/clientes')
-        }
-      },
-      onError: (error: Error) => {
-        const msg =
-          isAxiosError(error) && error.response?.data?.message
-            ? String(error.response.data.message)
-            : 'Error al guardar el cliente'
-        setError('_form', msg)
-      },
+    })
+    await createMutation.invalidateList()
+    if (returnTo.value && data?.id) {
+      await queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
+    } else {
+      router.push('/alquileres/clientes')
     }
-  )
+  } catch (error) {
+    const msg =
+      isAxiosError(error) && error.response?.data?.message
+        ? String(error.response.data.message)
+        : 'Error al guardar el cliente'
+    setError('_form', msg)
+  }
 }
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
     <div class="flex items-center gap-4 mb-6">
       <button
         type="button"

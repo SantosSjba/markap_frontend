@@ -31,17 +31,23 @@ export function useAgent(id: Ref<string> | string) {
 
 export function useCreateAgent() {
   const queryClient = useQueryClient()
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (payload: CreateAgentPayload) => agentsService.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: agentKeys.lists() })
     },
   })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () =>
+      queryClient.refetchQueries({ queryKey: agentKeys.lists() }),
+  }
 }
 
 export function useUpdateAgent() {
   const queryClient = useQueryClient()
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateAgentPayload }) =>
       agentsService.update(id, data),
     onSuccess: (_, { id }) => {
@@ -49,4 +55,10 @@ export function useUpdateAgent() {
       queryClient.invalidateQueries({ queryKey: agentKeys.lists() })
     },
   })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () =>
+      queryClient.refetchQueries({ queryKey: agentKeys.lists() }),
+  }
 }
