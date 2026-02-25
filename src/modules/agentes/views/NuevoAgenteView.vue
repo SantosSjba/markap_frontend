@@ -51,22 +51,23 @@ const userOptions = computed(() => {
   }))
 })
 
+function fillFromUser(userId: string) {
+  const u = usersList.value?.find((x) => x.id === userId)
+  if (!u) return
+  form.value.fullName = u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email
+  form.value.email = u.email ?? ''
+}
+
 watch(
   () => form.value.type,
   (t) => {
-    if (t === 'INTERNAL') {
-      const u = usersList.value?.find((x) => x.id === form.value.userId)
-      if (u) form.value.fullName = `${u.firstName} ${u.lastName}`.trim() || u.email
-    }
+    if (t === 'INTERNAL' && form.value.userId) fillFromUser(form.value.userId)
   }
 )
 watch(
   () => form.value.userId,
   (id) => {
-    if (form.value.type === 'INTERNAL' && id) {
-      const u = usersList.value?.find((x) => x.id === id)
-      if (u) form.value.fullName = `${u.firstName} ${u.lastName}`.trim() || u.email
-    }
+    if (form.value.type === 'INTERNAL' && id) fillFromUser(id)
   }
 )
 
@@ -167,6 +168,13 @@ const handleSubmit = async () => {
             placeholder="Seleccionar usuario..."
             :error="errors.userId"
           />
+          <p
+            v-if="form.type === 'INTERNAL' && form.userId"
+            class="text-xs rounded-md px-3 py-2"
+            :style="{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-surface-elevated)' }"
+          >
+            Se completan nombre y correo con los datos del usuario seleccionado.
+          </p>
           <FormInput
             v-model="form.fullName"
             label="Nombre completo"

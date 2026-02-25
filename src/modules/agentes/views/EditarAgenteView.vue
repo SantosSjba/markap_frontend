@@ -45,6 +45,13 @@ const { data: agent, isLoading: loadingAgent, isError: agentError } = useAgent(i
 const { data: usersList } = useUsers()
 const updateMutation = useUpdateAgent()
 
+function fillFromUser(userId: string) {
+  const u = usersList.value?.find((x) => x.id === userId)
+  if (!u) return
+  form.value.fullName = u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email
+  form.value.email = u.email ?? ''
+}
+
 watch(
   agent,
   (a) => {
@@ -61,6 +68,12 @@ watch(
     }
   },
   { immediate: true }
+)
+watch(
+  () => form.value.userId,
+  (id) => {
+    if (form.value.type === 'INTERNAL' && id) fillFromUser(id)
+  }
 )
 
 const typeOptions = [
@@ -191,6 +204,13 @@ const handleSubmit = async () => {
             placeholder="Seleccionar usuario..."
             :error="errors.userId"
           />
+          <p
+            v-if="form.type === 'INTERNAL' && form.userId"
+            class="text-xs rounded-md px-3 py-2"
+            :style="{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-surface-elevated)' }"
+          >
+            Nombre y correo se completan con los datos del usuario seleccionado.
+          </p>
           <FormInput
             v-model="form.fullName"
             label="Nombre completo"

@@ -100,6 +100,11 @@ const externalAgentOptions = computed(() => [
   { value: '', label: 'Ninguno (nombre manual)' },
   ...externalAgentsList.value.map((a) => ({ value: a.id, label: a.fullName }))
 ])
+const selectedInternalUser = computed(() => {
+  const id = form.value.internalAgentId
+  if (!id) return null
+  return usersList.value?.find((u) => u.id === id) ?? null
+})
 </script>
 
 <template>
@@ -214,82 +219,115 @@ const externalAgentOptions = computed(() => [
           Configuración
         </h2>
         <form
-          class="space-y-4"
+          class="space-y-6"
           @submit.prevent="submitFinancialConfig"
         >
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="flex gap-2 items-end">
-              <FormSelect
-                v-model="form.expenseType"
-                label="Gastos"
-                :options="expenseTypeOptions"
-                class="flex-1 min-w-0"
-              />
-              <FormInput
-                v-model="form.expenseValue"
-                type="number"
-                min="0"
-                step="0.01"
-                :placeholder="form.expenseType === 'PERCENT' ? '%' : '0.00'"
-                class="w-28"
-              />
-            </div>
-            <div class="flex gap-2 items-end">
-              <FormSelect
-                v-model="form.taxType"
-                label="Impuestos"
-                :options="expenseTypeOptions"
-                class="flex-1 min-w-0"
-              />
-              <FormInput
-                v-model="form.taxValue"
-                type="number"
-                min="0"
-                step="0.01"
-                :placeholder="form.taxType === 'PERCENT' ? '%' : '0.00'"
-                class="w-28"
-              />
-            </div>
-            <div class="sm:col-span-2 space-y-2">
-              <p class="block text-sm font-medium mb-1" :style="{ color: 'var(--color-text-primary)' }">Agente externo</p>
-              <div class="flex flex-wrap gap-2 items-end">
+          <!-- Gastos -->
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+          >
+            <div>
+              <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-primary)' }">Gastos</label>
+              <div class="flex gap-3 items-center">
                 <FormSelect
-                  v-model="externalAgentIdModel"
-                  :options="externalAgentOptions"
-                  placeholder="Seleccionar agente..."
-                  class="flex-1 min-w-[200px]"
-                />
-                <FormSelect
-                  v-model="form.externalAgentType"
+                  v-model="form.expenseType"
                   :options="expenseTypeOptions"
                   class="w-36"
                 />
                 <FormInput
-                  v-model="form.externalAgentValue"
+                  v-model="form.expenseValue"
                   type="number"
                   min="0"
                   step="0.01"
-                  placeholder="0"
-                  class="w-24"
-                />
-                <FormInput
-                  v-model="form.externalAgentName"
-                  type="text"
-                  :placeholder="form.externalAgentId ? 'Nombre del agente seleccionado' : 'Nombre (si no selecciona agente)'"
-                  class="flex-1 min-w-[140px]"
+                  :placeholder="form.expenseType === 'PERCENT' ? '%' : '0.00'"
+                  class="w-28"
                 />
               </div>
             </div>
-            <div class="flex gap-2 items-end sm:col-span-2">
+            <div>
+              <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-primary)' }">Impuestos</label>
+              <div class="flex gap-3 items-center">
+                <FormSelect
+                  v-model="form.taxType"
+                  :options="expenseTypeOptions"
+                  class="w-36"
+                />
+                <FormInput
+                  v-model="form.taxValue"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  :placeholder="form.taxType === 'PERCENT' ? '%' : '0.00'"
+                  class="w-28"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Agente externo -->
+          <div
+            class="p-4 rounded-lg space-y-3"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+          >
+            <label class="block text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Agente externo</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
               <FormSelect
-                v-model="internalAgentIdModel"
-                label="Agente interno"
-                :options="internalAgentOptions"
-                placeholder="Seleccionar agente..."
-                class="flex-1 min-w-0"
+                v-model="externalAgentIdModel"
+                label="Seleccionar agente"
+                :options="externalAgentOptions"
+                placeholder="Ninguno"
+                class="min-w-0"
               />
               <FormSelect
+                v-model="form.externalAgentType"
+                label="Tipo comisión"
+                :options="expenseTypeOptions"
+                class="min-w-0"
+              />
+              <FormInput
+                v-model="form.externalAgentValue"
+                type="number"
+                min="0"
+                step="0.01"
+                label="Valor"
+                placeholder="0"
+                class="min-w-0"
+              />
+              <FormInput
+                v-model="form.externalAgentName"
+                type="text"
+                label="Nombre (si no elige agente)"
+                :placeholder="form.externalAgentId ? 'Del agente seleccionado' : 'Opcional'"
+                class="min-w-0"
+              />
+            </div>
+          </div>
+
+          <!-- Agente interno -->
+          <div
+            class="p-4 rounded-lg space-y-3"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+          >
+            <label class="block text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Agente interno</label>
+            <FormSelect
+              v-model="internalAgentIdModel"
+              label="Seleccionar usuario"
+              :options="internalAgentOptions"
+              placeholder="Ninguno"
+              class="max-w-md"
+            />
+            <p
+              v-if="selectedInternalUser"
+              class="text-sm rounded-md px-3 py-2"
+              :style="{ color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }"
+            >
+              <span class="font-medium">Correo:</span> {{ selectedInternalUser.email }}
+            </p>
+            <div class="flex flex-wrap gap-3 items-end max-w-md">
+              <FormSelect
                 v-model="form.internalAgentType"
+                label="Tipo comisión"
                 :options="expenseTypeOptions"
                 class="w-36"
               />
@@ -298,12 +336,14 @@ const externalAgentOptions = computed(() => [
                 type="number"
                 min="0"
                 step="0.01"
+                label="Valor"
                 placeholder="0"
                 class="w-28"
               />
             </div>
           </div>
-          <div class="flex justify-end">
+
+          <div class="flex justify-end pt-2">
             <BaseButton type="submit" :disabled="upsertFinancial.isPending.value">
               {{ upsertFinancial.isPending.value ? 'Guardando...' : 'Guardar configuración' }}
             </BaseButton>
