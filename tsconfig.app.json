@@ -17,13 +17,7 @@
       "@applications": ["src/applications"],
       "@applications/*": ["src/applications/*"],
       "@widgets": ["src/widgets"],
-      "@widgets/*": ["src/widgets/*"],
-      "@core": ["src/core"],
-      "@core/*": ["src/core/*"],
-      "@modules": ["src/modules"],
-      "@modules/*": ["src/modules/*"],
-      "@layouts": ["src/layouts"],
-      "@layouts/*": ["src/layouts/*"]
+      "@widgets/*": ["src/widgets/*"]
     },
 
     /* Linting */
@@ -34,6 +28,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
-  "exclude": ["src/modules", "src/views"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

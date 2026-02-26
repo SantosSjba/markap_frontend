@@ -32,7 +32,6 @@ Base reutilizable, sin lógica de negocio específica.
 | Segmento   | Contenido |
 |-----------|-----------|
 | `ui/`     | Componentes de interfaz (botones, inputs, tablas, modales, etc.). |
-| `api/`    | Cliente HTTP (axios), interceptores, base URL. |
 | `config/` | Constantes, variables de entorno, flags. |
 | `lib/`    | Utilidades (formatters, validators). |
 | `composables/` | Hooks reutilizables (paginación, tema, notificaciones). |
@@ -110,10 +109,11 @@ Todo lo que hace arrancar la aplicación.
 
 | Segmento      | Contenido |
 |---------------|-----------|
-| `routes/`     | Router principal: creación, combinación de rutas de `features` y `applications`, guards. |
+| `api/`        | Cliente HTTP (axios) con interceptores y token de auth. |
+| `routes/`     | Router principal: combinación de rutas de `features` y `applications`, guards. |
 | `guards/`     | Guards de navegación (auth). |
-| `plugins/`   | Plugins globales (Pinia, Vue Query, etc.). |
-| `styles/`    | Estilos globales (opcional si se usan `assets`). |
+| `plugins/`    | Plugins globales (Pinia, Vue Query, etc.). |
+| `styles/`     | Estilos globales (opcional; también en `assets/`). |
 
 El punto de entrada (`main.ts`) sigue en `src/` y usa el router y los plugins desde `app/`.
 
@@ -132,7 +132,7 @@ El punto de entrada (`main.ts`) sigue en `src/` y usa el router y los plugins de
 | `@applications/` | `src/applications/` |
 | `@widgets/`   | `src/widgets/` |
 
-Se pueden mantener temporalmente `@core` y `@modules` apuntando a las nuevas ubicaciones para una migración gradual.
+No se usan `@core` ni `@modules`; todo el código vive en las capas anteriores.
 
 ---
 
@@ -147,6 +147,10 @@ Se pueden mantener temporalmente `@core` y `@modules` apuntando a las nuevas ubi
 Nunca: `shared` → `features` o `applications`; `features` → `applications`.
 
 ---
+
+## Cómo extender el proyecto
+
+Para agregar nuevas aplicaciones, funciones dentro de una app o features transversales, sigue la guía **[Cómo agregar nuevas funcionalidades](./ADDING_FEATURES.md)**.
 
 ## Referencias
 

@@ -16,10 +16,6 @@ export default defineConfig({
       '@features': fileURLToPath(new URL('./src/features', import.meta.url)),
       '@applications': fileURLToPath(new URL('./src/applications', import.meta.url)),
       '@widgets': fileURLToPath(new URL('./src/widgets', import.meta.url)),
-      /* Legacy (re-export from new structure) */
-      '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
-      '@modules': fileURLToPath(new URL('./src/modules', import.meta.url)),
-      '@layouts': fileURLToPath(new URL('./src/widgets', import.meta.url)),
     },
   },
 })

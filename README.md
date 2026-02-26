@@ -1,5 +1,10 @@
 # Markap Frontend
 
+El proyecto usa **Arquitectura por Features (Clean + Modular)**. El código se organiza en capas: `app`, `applications`, `features`, `widgets`, `shared`.
+
+- **[Arquitectura](docs/ARCHITECTURE.md)** — Capas, dependencias y convenciones.
+- **[Cómo agregar funcionalidades](docs/ADDING_FEATURES.md)** — Pasos para nuevas aplicaciones, funciones o features.
+
 ## Pasos de ejecución
 
 ```bash
