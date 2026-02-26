@@ -1,0 +1,114 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { computed, unref, type Ref } from 'vue'
+import {
+  propertiesService,
+  type CreatePropertyPayload,
+  type ListPropertiesParams,
+  type UpdatePropertyPayload,
+} from '../services/properties.service'
+
+export const propertyKeys = {
+  all: ['properties'] as const,
+  detail: (id: string) => [...propertyKeys.all, 'detail', id] as const,
+  list: (params: ListPropertiesParams) =>
+    [...propertyKeys.all, 'list', params?.applicationSlug ?? 'alquileres', params?.page ?? 1, params?.limit ?? 10, params?.search ?? '', params?.propertyTypeId ?? '', params?.listingStatus ?? ''] as const,
+  propertyTypes: () => [...propertyKeys.all, 'property-types'] as const,
+  districts: (provinceId?: string) =>
+    [...propertyKeys.all, 'districts', provinceId ?? 'all'] as const,
+  owners: (slug?: string, search?: string) =>
+    [...propertyKeys.all, 'owners', slug ?? 'alquileres', search ?? ''] as const,
+  stats: (slug?: string) => [...propertyKeys.all, 'stats', slug ?? 'alquileres'] as const,
+}
+
+export function usePropertyTypes() {
+  return useQuery({
+    queryKey: propertyKeys.propertyTypes(),
+    queryFn: () => propertiesService.getPropertyTypes(),
+  })
+}
+
+export function usePropertyDistricts(provinceId?: string) {
+  return useQuery({
+    queryKey: propertyKeys.districts(provinceId),
+    queryFn: () => propertiesService.getDistricts(provinceId),
+  })
+}
+
+export function usePropertyOwners(applicationSlug = 'alquileres', search?: string) {
+  return useQuery({
+    queryKey: propertyKeys.owners(applicationSlug, search),
+    queryFn: () => propertiesService.getOwners(applicationSlug, search),
+  })
+}
+
+export function usePropertiesList(params: Ref<ListPropertiesParams> | ListPropertiesParams) {
+  const resolved = computed(() => (typeof params === 'object' && 'value' in params ? params.value : params))
+  return useQuery({
+    queryKey: computed(() => propertyKeys.list(resolved.value)),
+    queryFn: () => propertiesService.getList(resolved.value),
+  })
+}
+
+export function usePropertyStats(applicationSlug = 'alquileres') {
+  return useQuery({
+    queryKey: propertyKeys.stats(applicationSlug),
+    queryFn: () => propertiesService.getStats(applicationSlug),
+  })
+}
+
+export function usePropertyById(id: Ref<string> | string) {
+  return useQuery({
+    queryKey: computed(() => propertyKeys.detail(unref(id))),
+    queryFn: () => propertiesService.getById(unref(id)),
+    enabled: computed(() => !!unref(id)),
+  })
+}
+
+export function useCreateProperty() {
+  const queryClient = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: (data: CreatePropertyPayload) => propertiesService.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+    },
+  })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () => queryClient.refetchQueries({ queryKey: propertyKeys.all }),
+  }
+}
+
+export function useUpdateProperty() {
+  const queryClient = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdatePropertyPayload }) =>
+      propertiesService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      queryClient.invalidateQueries({ queryKey: propertyKeys.detail(variables.id) })
+    },
+  })
+  return {
+    ...mutation,
+    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () => queryClient.refetchQueries({ queryKey: propertyKeys.all }),
+  }
+}
+
+export function useUpdatePropertyListingStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      listingStatus,
+    }: {
+      id: string
+      listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE'
+    }) => propertiesService.updateListingStatus(id, listingStatus),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      queryClient.invalidateQueries({ queryKey: propertyKeys.detail(variables.id) })
+    },
+  })
+}

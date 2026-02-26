@@ -8,10 +8,18 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@core": ["src/core"],
-      "@core/*": ["src/core/*"],
+      "@app": ["src/app"],
+      "@app/*": ["src/app/*"],
       "@shared": ["src/shared"],
       "@shared/*": ["src/shared/*"],
+      "@features": ["src/features"],
+      "@features/*": ["src/features/*"],
+      "@applications": ["src/applications"],
+      "@applications/*": ["src/applications/*"],
+      "@widgets": ["src/widgets"],
+      "@widgets/*": ["src/widgets/*"],
+      "@core": ["src/core"],
+      "@core/*": ["src/core/*"],
       "@modules": ["src/modules"],
       "@modules/*": ["src/modules/*"],
       "@layouts": ["src/layouts"],
@@ -26,5 +34,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "exclude": ["src/modules", "src/views"]
 }

@@ -1,6 +1,7 @@
 /**
- * Core Module Exports
- * Central export point for core functionality
+ * Core Module Exports (legacy)
+ * Re-exports from app + shared for backward compatibility.
+ * New code should use @app and @shared directly.
  */
 
 export * from './api'

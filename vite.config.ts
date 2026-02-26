@@ -11,10 +11,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
+      '@app': fileURLToPath(new URL('./src/app', import.meta.url)),
       '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
+      '@features': fileURLToPath(new URL('./src/features', import.meta.url)),
+      '@applications': fileURLToPath(new URL('./src/applications', import.meta.url)),
+      '@widgets': fileURLToPath(new URL('./src/widgets', import.meta.url)),
+      /* Legacy (re-export from new structure) */
+      '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
       '@modules': fileURLToPath(new URL('./src/modules', import.meta.url)),
-      '@layouts': fileURLToPath(new URL('./src/layouts', import.meta.url)),
+      '@layouts': fileURLToPath(new URL('./src/widgets', import.meta.url)),
     },
   },
 })
