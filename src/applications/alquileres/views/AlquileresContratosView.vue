@@ -337,8 +337,12 @@ const statusOptions = [
                     :style="{
                       color:
                         getDisplayStatus(row as RentalListItem) === 'vencido'
-                          ? 'var(--color-error, #dc2626)'
-                          : 'var(--color-success, #16a34a)',
+                          ? 'var(--color-error)'
+                          : getDisplayStatus(row as RentalListItem) === 'porVencer'
+                            ? 'var(--color-warning)'
+                            : getDisplayStatus(row as RentalListItem) === 'proximo'
+                              ? 'var(--color-info, #3B82F6)'
+                              : 'var(--color-success)',
                     }"
                   >
                     {{ getDaysLabel(row as RentalListItem) }}

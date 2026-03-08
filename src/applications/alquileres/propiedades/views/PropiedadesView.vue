@@ -78,6 +78,7 @@ const goToEdit = (row: PropertyListItem) =>
 const showStatusModal = ref(false)
 const propertyForStatus = ref<PropertyListItem | null>(null)
 const newListingStatus = ref<'RENTED' | 'EXPIRING' | 'MAINTENANCE'>('RENTED')
+const statusModalError = ref('')
 const updateListingStatusMutation = useUpdatePropertyListingStatus()
 
 const openChangeStatusModal = (row: PropertyListItem) => {
@@ -85,12 +86,14 @@ const openChangeStatusModal = (row: PropertyListItem) => {
   newListingStatus.value = (row.listingStatus === 'RENTED' || row.listingStatus === 'EXPIRING' || row.listingStatus === 'MAINTENANCE')
     ? row.listingStatus
     : 'RENTED'
+  statusModalError.value = ''
   showStatusModal.value = true
 }
 
 const closeStatusModal = () => {
   showStatusModal.value = false
   propertyForStatus.value = null
+  statusModalError.value = ''
 }
 
 const listingStatusChangeOptions = [
@@ -101,16 +104,16 @@ const listingStatusChangeOptions = [
 
 const saveListingStatus = () => {
   if (!propertyForStatus.value) return
+  statusModalError.value = ''
   updateListingStatusMutation.mutate(
     { id: propertyForStatus.value.id, listingStatus: newListingStatus.value },
     {
       onSuccess: () => closeStatusModal(),
       onError: (err: unknown) => {
-        const msg =
+        statusModalError.value =
           (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
           (err as Error)?.message ||
           'No se pudo cambiar el estado'
-        alert(msg)
       },
     }
   )
@@ -385,6 +388,9 @@ function formatDate(d: string | null | undefined): string {
       <template v-if="propertyForStatus">
         <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
           {{ propertyForStatus.code }} – {{ propertyForStatus.addressLine }}
+        </p>
+        <p v-if="statusModalError" class="text-sm mb-3 px-3 py-2 rounded-lg" :style="{ color: 'var(--color-error)', backgroundColor: 'var(--color-error-light)' }">
+          {{ statusModalError }}
         </p>
         <FormSelect
           v-model="newListingStatus"

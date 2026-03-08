@@ -61,8 +61,9 @@ const isActive = (path: string | null, parentFullPath?: string) => {
   if (!path) return false
   const full = toFullPath(path, parentFullPath)
   if (full === '#') return false
-  // El Dashboard (path "/") solo coincide exactamente con la ruta base, no con subrutas
-  if (path === '/' || path === '') {
+  // El path raíz de la aplicación (ej: /alquileres) es el Dashboard:
+  // solo coincide de forma exacta, nunca por prefijo.
+  if (full === basePath.value || path === '/' || path === '') {
     return route.path === full || route.path === full + '/'
   }
   return route.path === full || route.path === full + '/' || route.path.startsWith(full + '/')

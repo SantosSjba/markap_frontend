@@ -203,19 +203,19 @@ const yearOptions = computed(() => {
       <!-- Contenido según pestaña activa -->
       <div
         class="rounded-xl border p-6"
-        style="
-          backgroundColor: var(--color-surface);
-          borderColor: var(--color-border);
-        "
+        :style="{
+          backgroundColor: 'var(--color-surface)',
+          borderColor: 'var(--color-border)',
+        }"
       >
         <!-- Contratos por Vencer -->
         <template v-if="activeTab === 'contratos-por-vencer'">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 rounded-lg flex items-center justify-center"
-                style="backgroundColor: var(--color-primary-light);"
-              >
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center"
+              :style="{ backgroundColor: 'var(--color-primary-light)' }"
+            >
                 <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -280,7 +280,7 @@ const yearOptions = computed(() => {
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-10 h-10 rounded-lg flex items-center justify-center"
-              style="backgroundColor: var(--color-primary-light);"
+              :style="{ backgroundColor: 'var(--color-primary-light)' }"
             >
               <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
@@ -327,7 +327,7 @@ const yearOptions = computed(() => {
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-10 h-10 rounded-lg flex items-center justify-center"
-              style="backgroundColor: var(--color-primary-light);"
+              :style="{ backgroundColor: 'var(--color-primary-light)' }"
             >
               <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -371,10 +371,10 @@ const yearOptions = computed(() => {
         <template v-else-if="activeTab === 'alquiler-por-mes'">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 rounded-lg flex items-center justify-center"
-                style="backgroundColor: var(--color-primary-light);"
-              >
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center"
+              :style="{ backgroundColor: 'var(--color-primary-light)' }"
+            >
                 <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
@@ -452,10 +452,10 @@ const yearOptions = computed(() => {
         <!-- Resumen de Estado de Contratos -->
         <div
           class="rounded-xl border p-6"
-          style="
-            backgroundColor: var(--color-surface);
-            borderColor: var(--color-border);
-          "
+          :style="{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: 'var(--color-border)',
+          }"
         >
           <div class="flex items-center gap-2 mb-4">
             <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,7 +474,7 @@ const yearOptions = computed(() => {
               <span class="text-sm w-40 shrink-0" style="color: var(--color-text-secondary);">
                 {{ item.label }}
               </span>
-              <div class="flex-1 h-6 rounded-full overflow-hidden" style="backgroundColor: var(--color-surface-elevated);">
+              <div class="flex-1 h-6 rounded-full overflow-hidden" :style="{ backgroundColor: 'var(--color-background)' }">
                 <div
                   class="h-full rounded-full transition-all duration-300"
                   :style="{
@@ -493,10 +493,10 @@ const yearOptions = computed(() => {
         <!-- Métricas del Mes -->
         <div
           class="rounded-xl border p-6"
-          style="
-            backgroundColor: var(--color-surface);
-            borderColor: var(--color-border);
-          "
+          :style="{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: 'var(--color-border)',
+          }"
         >
           <div class="flex items-center gap-2 mb-4">
             <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">

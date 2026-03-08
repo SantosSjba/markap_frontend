@@ -64,7 +64,7 @@ const schema = yup.object({
   notes: yup.string().trim(),
 })
 
-const { data: client, isLoading: loadingClient, isError: clientError } = useClient(id.value)
+const { data: client, isLoading: loadingClient, isError: clientError } = useClient(id)
 const { data: documentTypes, isLoading: loadingDocs } = useDocumentTypes()
 const { data: districts, isLoading: loadingDistricts } = useDistricts()
 const updateMutation = useUpdateClient()
