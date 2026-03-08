@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import StatsCard from '@shared/components/ui/StatsCard.vue'
 import BasePagination from '@shared/components/ui/BasePagination.vue'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 import SearchInput from '@shared/components/forms/SearchInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
 import { usePaymentHistory } from '../composables/usePayments'
@@ -102,9 +103,7 @@ function clearFilters() {
           :style="{ color: 'var(--color-text-muted)' }"
           @click="router.push({ name: 'alquileres-cobranzas' })"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
+          <AppIcon icon="lucide:chevron-left" :size="20" />
         </button>
         <div>
           <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Historial de Pagos</h1>
@@ -116,33 +115,21 @@ function clearFilters() {
         :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }"
         title="Exportar historial"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
+        <AppIcon icon="lucide:download" :size="16" />
         Exportar
       </button>
     </div>
 
     <!-- KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <StatsCard
-        :value="isLoading ? '...' : formatCurrency(historyData?.totalAmount ?? 0)"
-        title="Total filtrado"
-      >
+      <StatsCard :value="isLoading ? '...' : formatCurrency(historyData?.totalAmount ?? 0)" title="Total filtrado">
         <template #icon>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#10b981' }">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <AppIcon icon="lucide:circle-dollar-sign" :size="20" color="#10b981" />
         </template>
       </StatsCard>
-      <StatsCard
-        :value="isLoading ? '...' : String(historyData?.total ?? 0)"
-        title="Pagos registrados"
-      >
+      <StatsCard :value="isLoading ? '...' : String(historyData?.total ?? 0)" title="Pagos registrados">
         <template #icon>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#6366f1' }">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <AppIcon icon="lucide:circle-check" :size="20" color="#6366f1" />
         </template>
       </StatsCard>
       <StatsCard
@@ -188,17 +175,16 @@ function clearFilters() {
     >
       <!-- Skeleton -->
       <template v-if="isLoading">
-        <div class="p-4 space-y-3">
-          <div v-for="i in 6" :key="i" class="h-14 rounded-lg animate-pulse" :style="{ backgroundColor: 'var(--color-surface-elevated)' }" />
+        <div class="flex flex-col items-center justify-center py-12 gap-3">
+          <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
+          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando historial...</p>
         </div>
       </template>
 
       <!-- Empty -->
       <template v-else-if="!historyData?.data?.length">
         <div class="flex flex-col items-center justify-center py-16 gap-3">
-          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: 'var(--color-text-muted)' }">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
+          <AppIcon icon="lucide:clipboard-list" :size="48" color="var(--color-text-muted)" />
           <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No se encontraron pagos</p>
         </div>
       </template>

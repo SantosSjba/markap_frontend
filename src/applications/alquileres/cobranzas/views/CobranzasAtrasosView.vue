@@ -5,6 +5,7 @@ import StatsCard from '@shared/components/ui/StatsCard.vue'
 import Badge from '@shared/components/ui/Badge.vue'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import BaseButton from '@shared/components/ui/BaseButton.vue'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 import SearchInput from '@shared/components/forms/SearchInput.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
@@ -147,9 +148,7 @@ function getAvatarColor(name: string) {
         :style="{ color: 'var(--color-text-muted)' }"
         @click="router.push({ name: 'alquileres-cobranzas' })"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
+        <AppIcon icon="lucide:chevron-left" :size="20" />
       </button>
       <div>
         <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Clientes con Atraso</h1>
@@ -161,30 +160,22 @@ function getAvatarColor(name: string) {
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <StatsCard :value="isLoading ? '...' : String(overdueList?.length ?? 0)" title="Con atraso">
         <template #icon>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#ef4444' }">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+          <AppIcon icon="lucide:triangle-alert" :size="20" color="#ef4444" />
         </template>
       </StatsCard>
       <StatsCard :value="isLoading ? '...' : formatCurrency(totalOwed)" title="Total adeudado">
         <template #icon>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#f59e0b' }">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <AppIcon icon="lucide:circle-dollar-sign" :size="20" color="#f59e0b" />
         </template>
       </StatsCard>
       <StatsCard :value="isLoading ? '...' : String(criticalCount)" title="Estado crítico">
         <template #icon>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#ef4444' }">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <AppIcon icon="lucide:clock-alert" :size="20" color="#ef4444" />
         </template>
       </StatsCard>
       <StatsCard value="0" title="Comunicaciones">
         <template #icon>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#6366f1' }">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
+          <AppIcon icon="lucide:message-circle" :size="20" color="#6366f1" />
         </template>
       </StatsCard>
     </div>
@@ -194,10 +185,11 @@ function getAvatarColor(name: string) {
       <SearchInput v-model="search" placeholder="Buscar por inquilino o propiedad..." />
     </div>
 
-    <!-- Skeleton -->
+    <!-- Skeleton loading -->
     <template v-if="isLoading">
-      <div class="space-y-3">
-        <div v-for="i in 3" :key="i" class="h-40 rounded-xl animate-pulse" :style="{ backgroundColor: 'var(--color-surface)' }" />
+      <div class="flex flex-col items-center justify-center py-12 gap-3">
+        <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
+        <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando atrasos...</p>
       </div>
     </template>
 
@@ -207,9 +199,7 @@ function getAvatarColor(name: string) {
         class="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border"
         :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
       >
-        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: 'var(--color-text-muted)' }">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <AppIcon icon="lucide:circle-check-big" :size="48" color="var(--color-text-muted)" />
         <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No hay clientes con pagos en atraso</p>
       </div>
     </template>
@@ -242,9 +232,7 @@ function getAvatarColor(name: string) {
                 <Badge :variant="getOverdueLevelBadge(item.overdueLevel).variant" :label="getOverdueLevelBadge(item.overdueLevel).label" />
               </div>
               <div class="flex items-center gap-1 mt-0.5">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: 'var(--color-text-muted)' }">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                </svg>
+                <AppIcon icon="lucide:map-pin" :size="14" color="var(--color-text-muted)" />
                 <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ item.propertyAddress }}</span>
               </div>
               <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">Propietario: {{ item.ownerName }}</p>
@@ -259,32 +247,20 @@ function getAvatarColor(name: string) {
             </div>
             <div class="flex flex-col gap-1.5">
               <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                Llamar
+                <AppIcon icon="lucide:phone" :size="14" /> Llamar
               </button>
               <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Email
+                <AppIcon icon="lucide:mail" :size="14" /> Email
               </button>
               <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Nota
+                <AppIcon icon="lucide:pencil-line" :size="14" /> Nota
               </button>
               <button
                 class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-colors"
                 :style="{ backgroundColor: 'var(--color-primary)' }"
                 @click="openModal(item)"
               >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Cobrar
+                <AppIcon icon="lucide:circle-dollar-sign" :size="14" /> Cobrar
               </button>
             </div>
           </div>
