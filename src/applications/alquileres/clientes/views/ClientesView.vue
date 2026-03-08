@@ -11,6 +11,7 @@ import {
   ActionsDropdown,
   FormSelect,
   SearchInput,
+  AppIcon,
 } from '@shared/components'
 import { useClientsList, useClientStats } from '../composables/useClients'
 import type { ClientListItem, ListClientsParams } from '../services/clients.service'
@@ -121,9 +122,7 @@ const statusOptions = [
         </p>
       </div>
       <BaseButton variant="primary" class="flex items-center gap-2 w-full sm:w-auto justify-center" @click="goToNew">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
+        <AppIcon icon="lucide:plus" :size="18" />
         Nuevo Cliente
       </BaseButton>
     </div>
@@ -138,32 +137,16 @@ const statusOptions = [
       class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
     >
       <StatsCard :title="'Total Clientes'" :value="stats?.total ?? 0">
-        <template #icon>
-          <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </template>
+        <template #icon><AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
       <StatsCard :title="'Propietarios'" :value="stats?.owners ?? 0">
-        <template #icon>
-          <svg class="w-5 h-5" :style="{ color: 'var(--color-info, #2563eb)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-        </template>
+        <template #icon><AppIcon icon="lucide:building-2" :size="20" color="#2563eb" /></template>
       </StatsCard>
       <StatsCard :title="'Inquilinos'" :value="stats?.tenants ?? 0">
-        <template #icon>
-          <svg class="w-5 h-5" :style="{ color: 'var(--color-success, #16a34a)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-        </template>
+        <template #icon><AppIcon icon="lucide:user" :size="20" color="#16a34a" /></template>
       </StatsCard>
       <StatsCard :title="'Activos'" :value="stats?.active ?? 0">
-        <template #icon>
-          <svg class="w-5 h-5" :style="{ color: 'var(--color-warning, #d97706)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-        </template>
+        <template #icon><AppIcon icon="lucide:trending-up" :size="20" color="#d97706" /></template>
       </StatsCard>
     </div>
 
@@ -209,15 +192,7 @@ const statusOptions = [
     >
       <div class="overflow-x-auto overflow-y-visible">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
-          <svg
-            class="animate-spin h-8 w-8"
-            :style="{ color: 'var(--color-primary)' }"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+          <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
         </div>
         <template v-else>
         <DataTable :columns="tableColumns" :data="clients" row-key="id">
@@ -238,15 +213,11 @@ const statusOptions = [
             <td class="py-3 px-4">
               <div class="flex flex-col gap-0.5 text-sm">
                 <span class="flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
-                  <svg class="w-4 h-4 shrink-0" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
+                  <AppIcon icon="lucide:phone" :size="16" color="var(--color-text-muted)" />
                   {{ (row as ClientListItem).primaryPhone }}
                 </span>
                 <span class="flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
-                  <svg class="w-4 h-4 shrink-0" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
+                  <AppIcon icon="lucide:mail" :size="16" color="var(--color-text-muted)" />
                   {{ (row as ClientListItem).primaryEmail }}
                 </span>
               </div>
@@ -258,19 +229,15 @@ const statusOptions = [
                 {{ (row as ClientListItem).clientType === 'OWNER' ? 'Propietario' : 'Inquilino' }}
               </Badge>
             </td>
-            <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
               <span class="inline-flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
-                </svg>
+                <AppIcon icon="lucide:building-2" :size="16" />
                 {{ (row as ClientListItem).propertiesCount ?? '-' }}
               </span>
             </td>
             <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
               <span class="inline-flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+                <AppIcon icon="lucide:file-text" :size="16" />
                 {{ (row as ClientListItem).contractsCount !== undefined && (row as ClientListItem).contractsCount > 0
                   ? `${(row as ClientListItem).contractsCount} activo(s)`
                   : 'Sin alquileres' }}

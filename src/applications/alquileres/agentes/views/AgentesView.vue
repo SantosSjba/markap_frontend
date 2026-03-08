@@ -9,6 +9,7 @@ import {
   ActionsDropdown,
   FormSelect,
   SearchInput,
+  AppIcon,
 } from '@shared/components'
 import { useAgentsList } from '../composables/useAgents'
 import type { AgentListItem, ListAgentsParams } from '../services/agents.service'
@@ -116,9 +117,7 @@ function displayName(row: AgentListItem): string {
         </p>
       </div>
       <BaseButton variant="primary" class="flex items-center gap-2 w-full sm:w-auto justify-center" @click="goToNew">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
+        <AppIcon icon="lucide:plus" :size="18" />
         Nuevo Agente
       </BaseButton>
     </div>
@@ -157,15 +156,7 @@ function displayName(row: AgentListItem): string {
     >
       <div class="overflow-x-auto">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
-          <svg
-            class="animate-spin h-8 w-8"
-            :style="{ color: 'var(--color-primary)' }"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+          <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
         </div>
         <template v-else>
           <DataTable :columns="tableColumns" :data="agents" row-key="id">

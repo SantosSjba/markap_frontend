@@ -5,6 +5,7 @@
  */
 import type { ContractExpiringItem } from '@applications/alquileres/reportes/services/reportes.service'
 import { useRouter } from 'vue-router'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 interface Props {
   items: ContractExpiringItem[]
@@ -130,10 +131,7 @@ function goToRental(id: string) {
     <!-- Empty -->
     <template v-else-if="items.length === 0">
       <div class="flex flex-col items-center justify-center py-10 gap-2 px-5">
-        <svg class="w-10 h-10" :style="{ color: 'var(--color-success)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <AppIcon icon="lucide:circle-check-big" :size="40" color="var(--color-success)" />
         <p class="text-sm font-medium" :style="{ color: 'var(--color-text-secondary)' }">
           Sin contratos urgentes
         </p>

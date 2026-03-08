@@ -11,6 +11,7 @@ import {
   FormSelect,
   SearchInput,
   BaseModal,
+  AppIcon,
 } from '@shared/components'
 import {
   usePropertiesList,
@@ -216,9 +217,7 @@ function formatDate(d: string | null | undefined): string {
         </p>
       </div>
       <BaseButton variant="primary" class="flex items-center gap-2 w-full sm:w-auto justify-center" @click="goToNew">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
+        <AppIcon icon="lucide:plus" :size="18" />
         Nueva Propiedad
       </BaseButton>
     </div>
@@ -233,32 +232,16 @@ function formatDate(d: string | null | undefined): string {
       class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
     >
       <StatsCard :title="'Total'" :value="stats?.total ?? 0">
-        <template #icon>
-          <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-        </template>
+        <template #icon><AppIcon icon="lucide:building-2" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
       <StatsCard :title="'Alquiladas'" :value="stats?.rented ?? 0">
-        <template #icon>
-          <svg class="w-5 h-5" :style="{ color: 'var(--color-success, #16a34a)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </template>
+        <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="#16a34a" /></template>
       </StatsCard>
       <StatsCard :title="'Disponibles'" :value="stats?.available ?? 0">
-        <template #icon>
-          <svg class="w-5 h-5" :style="{ color: 'var(--color-info, #2563eb)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
-          </svg>
-        </template>
+        <template #icon><AppIcon icon="lucide:door-open" :size="20" color="#2563eb" /></template>
       </StatsCard>
       <StatsCard :title="'Por Vencer'" :value="stats?.expiring ?? 0">
-        <template #icon>
-          <svg class="w-5 h-5" :style="{ color: 'var(--color-error, #dc2626)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </template>
+        <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" color="#dc2626" /></template>
       </StatsCard>
     </div>
 
@@ -304,24 +287,14 @@ function formatDate(d: string | null | undefined): string {
     >
       <div class="overflow-x-auto overflow-y-visible">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
-          <svg
-            class="animate-spin h-8 w-8"
-            :style="{ color: 'var(--color-primary)' }"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+          <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
         </div>
         <template v-else>
           <DataTable :columns="tableColumns" :data="properties" row-key="id">
             <template #row="{ row }">
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
-                  <svg class="w-5 h-5 shrink-0" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
-                  </svg>
+                  <AppIcon icon="lucide:building-2" :size="20" color="var(--color-text-muted)" class="shrink-0" />
                   <div>
                     <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
                       {{ (row as PropertyListItem).code }}
@@ -340,9 +313,7 @@ function formatDate(d: string | null | undefined): string {
               </td>
               <td class="py-3 px-4">
                 <span class="inline-flex items-center gap-1.5 text-sm" :style="{ color: 'var(--color-text-primary)' }">
-                  <svg class="w-4 h-4 shrink-0" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+                  <AppIcon icon="lucide:user" :size="16" color="var(--color-text-muted)" class="shrink-0" />
                   {{ (row as PropertyListItem).ownerFullName }}
                 </span>
               </td>

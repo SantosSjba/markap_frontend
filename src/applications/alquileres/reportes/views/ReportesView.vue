@@ -5,6 +5,7 @@ import {
   BaseTabs,
   BaseButton,
   Badge,
+  AppIcon,
 } from '@shared/components'
 import {
   useReportsSummary,
@@ -153,47 +154,23 @@ const yearOptions = computed(() => {
 
     <!-- Loading -->
     <div v-if="loading" class="flex justify-center py-12">
-      <svg
-        class="animate-spin h-8 w-8"
-        style="color: var(--color-primary);"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
     </div>
 
     <template v-else>
       <!-- Cards resumen -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title="Contratos por Vencer" :value="stats.contratosPorVencer">
-          <template #icon>
-            <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </template>
+          <template #icon><AppIcon icon="lucide:calendar-clock" :size="20" color="var(--color-primary)" /></template>
         </StatsCard>
         <StatsCard title="Propiedades Sin Contrato" :value="stats.propiedadesSinContrato">
-          <template #icon>
-            <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </template>
+          <template #icon><AppIcon icon="lucide:building-2" :size="20" color="var(--color-primary)" /></template>
         </StatsCard>
         <StatsCard title="Clientes Activos" :value="stats.clientesActivos">
-          <template #icon>
-            <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          </template>
+          <template #icon><AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" /></template>
         </StatsCard>
         <StatsCard title="Clientes con Incidencias" :value="stats.clientesConIncidencias">
-          <template #icon>
-            <svg class="w-5 h-5" style="color: var(--color-error);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </template>
+          <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" color="var(--color-error)" /></template>
         </StatsCard>
       </div>
 
@@ -216,9 +193,7 @@ const yearOptions = computed(() => {
               class="w-10 h-10 rounded-lg flex items-center justify-center"
               :style="{ backgroundColor: 'var(--color-primary-light)' }"
             >
-                <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                <AppIcon icon="lucide:calendar-clock" :size="20" color="var(--color-primary)" />
               </div>
               <div>
                 <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">
@@ -230,9 +205,7 @@ const yearOptions = computed(() => {
               </div>
             </div>
             <BaseButton variant="outline" disabled title="En desarrollo">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
+              <AppIcon icon="lucide:download" :size="18" />
               Exportar Excel <span class="opacity-70 text-xs ml-1">(en desarrollo)</span>
             </BaseButton>
           </div>
@@ -282,9 +255,7 @@ const yearOptions = computed(() => {
               class="w-10 h-10 rounded-lg flex items-center justify-center"
               :style="{ backgroundColor: 'var(--color-primary-light)' }"
             >
-              <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
-              </svg>
+              <AppIcon icon="lucide:building-2" :size="20" color="var(--color-primary)" />
             </div>
             <div>
               <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">Propiedades sin contrato</h2>
@@ -329,9 +300,7 @@ const yearOptions = computed(() => {
               class="w-10 h-10 rounded-lg flex items-center justify-center"
               :style="{ backgroundColor: 'var(--color-primary-light)' }"
             >
-              <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
+              <AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" />
             </div>
             <div>
               <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">Clientes activos</h2>
@@ -375,9 +344,7 @@ const yearOptions = computed(() => {
               class="w-10 h-10 rounded-lg flex items-center justify-center"
               :style="{ backgroundColor: 'var(--color-primary-light)' }"
             >
-                <svg class="w-5 h-5" style="color: var(--color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+                <AppIcon icon="lucide:bar-chart-2" :size="20" color="var(--color-primary)" />
               </div>
               <div>
                 <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">
@@ -406,15 +373,7 @@ const yearOptions = computed(() => {
             </div>
           </div>
           <div v-if="rentalsByMonthQuery.isPending.value" class="flex justify-center py-12">
-            <svg
-              class="animate-spin h-8 w-8"
-              style="color: var(--color-primary);"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
+            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
           </div>
           <div v-else class="overflow-x-auto">
             <table class="w-full border-collapse text-sm">
@@ -458,9 +417,7 @@ const yearOptions = computed(() => {
           }"
         >
           <div class="flex items-center gap-2 mb-4">
-            <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <AppIcon icon="lucide:clock" :size="20" color="var(--color-text-muted)" />
             <h3 class="text-base font-semibold" style="color: var(--color-text-primary);">
               Resumen de Estado de Contratos
             </h3>
@@ -499,9 +456,7 @@ const yearOptions = computed(() => {
           }"
         >
           <div class="flex items-center gap-2 mb-4">
-            <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
+            <AppIcon icon="lucide:trending-up" :size="20" color="var(--color-text-muted)" />
             <h3 class="text-base font-semibold" style="color: var(--color-text-primary);">
               Métricas del Mes
             </h3>
