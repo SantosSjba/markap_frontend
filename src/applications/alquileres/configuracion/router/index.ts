@@ -2,10 +2,9 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const configuracionRoutes: RouteRecordRaw[] = [
   {
-    path: 'configuracion',
+    path: '',
     name: 'alquileres-configuracion',
-    component: () =>
-      import('../views/ConfiguracionView.vue'),
+    component: () => import('../views/ConfiguracionView.vue'),
     meta: { title: 'Configuración' },
   },
 ]
