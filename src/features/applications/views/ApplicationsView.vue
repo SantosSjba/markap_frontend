@@ -14,6 +14,14 @@ const { data: applications, isLoading, error, refetch } = useMyApplications()
 
 const isUserMenuOpen = ref(false)
 
+// Labels descriptivos por slug de aplicación
+const statsLabels: Record<string, { active: string; pending: string }> = {
+  alquileres: { active: 'contratos activos', pending: 'pagos pendientes' },
+}
+const DEFAULT_LABELS = { active: 'activos', pending: 'pendientes' }
+
+const getStatsLabels = (slug: string) => statsLabels[slug] ?? DEFAULT_LABELS
+
 // Mapeo de icon name del backend → iconify icon id
 const iconMap: Record<string, string> = {
   key: 'lucide:key-round',
@@ -182,12 +190,12 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
             <span class="flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full" style="background-color: var(--color-success);"></span>
               <span style="color: var(--color-success);">{{ app.activeCount }}</span>
-              <span style="color: var(--color-text-muted);">activos</span>
+              <span style="color: var(--color-text-muted);">{{ getStatsLabels(app.slug).active }}</span>
             </span>
-            <span class="flex items-center gap-1.5">
+            <span v-if="app.pendingCount > 0" class="flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full" style="background-color: var(--color-warning);"></span>
               <span style="color: var(--color-warning);">{{ app.pendingCount }}</span>
-              <span style="color: var(--color-text-muted);">pendientes</span>
+              <span style="color: var(--color-text-muted);">{{ getStatsLabels(app.slug).pending }}</span>
             </span>
           </div>
         </button>
