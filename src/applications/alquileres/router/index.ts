@@ -5,6 +5,7 @@ import { clientesRoutes } from '@applications/alquileres/clientes/router'
 import { propiedadesRoutes } from '@applications/alquileres/propiedades/router'
 import { agentesRoutes } from '@applications/alquileres/agentes/router'
 import { cobranzasRoutes } from '@applications/alquileres/cobranzas/router'
+import { configuracionRoutes } from '@applications/alquileres/configuracion/router'
 
 export const alquileresRoutes: RouteRecordRaw[] = [
   {
@@ -115,14 +116,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
         path: 'configuracion',
         component: SectionLayout,
         meta: { title: 'Configuración' },
-        children: [
-          {
-            path: '',
-            name: 'alquileres-configuracion',
-            component: () => import('../views/AlquileresPlaceholderView.vue'),
-            meta: { title: 'Configuración' },
-          },
-        ],
+        children: configuracionRoutes,
       },
     ],
   },

@@ -38,6 +38,7 @@ const form = ref({
   securityDeposit: '' as string | number,
   paymentDueDay: 5 as number,
   notes: '',
+  enableAlerts: true,
 })
 const contractFile = ref<File | null>(null)
 const deliveryActFile = ref<File | null>(null)
@@ -175,6 +176,7 @@ const handleSubmit = async () => {
         securityDeposit: toNum(form.value.securityDeposit),
         paymentDueDay: form.value.paymentDueDay,
         notes: form.value.notes.trim() || null,
+        enableAlerts: form.value.enableAlerts,
       },
       files: {
         contractFile: contractFile.value ?? undefined,
@@ -373,6 +375,43 @@ const handleSubmit = async () => {
               :max-size="10 * 1024 * 1024"
               hint="PDF, Word o imágenes. Máx. 10 MB"
             />
+          </div>
+        </section>
+
+        <!-- Notificaciones -->
+        <section
+          class="p-5 rounded-xl"
+          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        >
+          <div class="flex items-center gap-2 mb-1">
+            <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Alertas y Notificaciones</h2>
+          </div>
+          <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+            Controla si recibirás alertas para este contrato (vencimientos, pagos)
+          </p>
+          <div class="flex items-center justify-between p-4 rounded-lg" :style="{ backgroundColor: 'var(--color-surface-elevated)' }">
+            <div>
+              <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Recibir alertas para este contrato</p>
+              <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                Según la configuración global de alertas del sistema
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="form.enableAlerts"
+              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+              :style="{ backgroundColor: form.enableAlerts ? 'var(--color-primary)' : 'var(--color-border)' }"
+              @click="form.enableAlerts = !form.enableAlerts"
+            >
+              <span
+                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                :style="{ transform: form.enableAlerts ? 'translateX(20px)' : 'translateX(0)' }"
+              />
+            </button>
           </div>
         </section>
 

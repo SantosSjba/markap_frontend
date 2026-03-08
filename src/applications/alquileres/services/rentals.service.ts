@@ -11,6 +11,7 @@ export interface CreateRentalPayload {
   securityDeposit?: number | null
   paymentDueDay: number
   notes?: string | null
+  enableAlerts?: boolean
 }
 
 export interface RentalCreated {
@@ -26,6 +27,7 @@ export interface RentalCreated {
   paymentDueDay: number
   notes: string | null
   status: string
+  enableAlerts: boolean
 }
 
 export interface RentalListItem {
@@ -82,6 +84,7 @@ export interface RentalDetail {
   paymentDueDay: number
   notes: string | null
   status: string
+  enableAlerts: boolean
   code: string
   property: {
     id: string
@@ -104,6 +107,7 @@ export interface UpdateRentalPayload {
   paymentDueDay?: number
   notes?: string | null
   status?: 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
+  enableAlerts?: boolean
 }
 
 export type FinancialValueType = 'PERCENT' | 'FIXED'
@@ -208,6 +212,7 @@ export const rentalsService = {
       form.append('securityDeposit', String(data.securityDeposit))
     form.append('paymentDueDay', String(data.paymentDueDay))
     if (data.notes != null) form.append('notes', data.notes)
+    form.append('enableAlerts', String(data.enableAlerts ?? true))
     if (files?.contractFile) form.append('contractFile', files.contractFile)
     if (files?.deliveryActFile)
       form.append('deliveryActFile', files.deliveryActFile)
