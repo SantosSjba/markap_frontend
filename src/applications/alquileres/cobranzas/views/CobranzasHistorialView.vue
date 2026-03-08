@@ -1,0 +1,290 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import StatsCard from '@shared/components/ui/StatsCard.vue'
+import BasePagination from '@shared/components/ui/BasePagination.vue'
+import SearchInput from '@shared/components/forms/SearchInput.vue'
+import FormSelect from '@shared/components/forms/FormSelect.vue'
+import { usePaymentHistory } from '../composables/usePayments'
+
+const router = useRouter()
+
+const search = ref('')
+const filterYear = ref<string>('')
+const filterMonth = ref<string>('')
+const filterMethod = ref<string>('')
+const currentPage = ref(1)
+const pageSize = 20
+
+const params = computed(() => ({
+  search: search.value || undefined,
+  periodYear: filterYear.value ? parseInt(filterYear.value) : undefined,
+  periodMonth: filterMonth.value ? parseInt(filterMonth.value) : undefined,
+  paymentMethod: filterMethod.value || undefined,
+  page: currentPage.value,
+  limit: pageSize,
+}))
+
+const { data: historyData, isLoading } = usePaymentHistory(params)
+
+const totalPages = computed(() => Math.ceil((historyData.value?.total ?? 0) / pageSize))
+
+const currentYear = new Date().getFullYear()
+const yearOptions = Array.from({ length: 4 }, (_, i) => ({
+  value: String(currentYear - i),
+  label: String(currentYear - i),
+}))
+
+const monthOptions = [
+  { value: '1', label: 'Enero' }, { value: '2', label: 'Febrero' },
+  { value: '3', label: 'Marzo' }, { value: '4', label: 'Abril' },
+  { value: '5', label: 'Mayo' }, { value: '6', label: 'Junio' },
+  { value: '7', label: 'Julio' }, { value: '8', label: 'Agosto' },
+  { value: '9', label: 'Septiembre' }, { value: '10', label: 'Octubre' },
+  { value: '11', label: 'Noviembre' }, { value: '12', label: 'Diciembre' },
+]
+
+const methodOptions = [
+  { value: 'CASH', label: 'Efectivo' },
+  { value: 'TRANSFER', label: 'Transferencia' },
+  { value: 'DEPOSIT', label: 'Depósito' },
+  { value: 'YAPE', label: 'Yape' },
+  { value: 'PLIN', label: 'Plin' },
+  { value: 'CHECK', label: 'Cheque' },
+  { value: 'OTHER', label: 'Otro' },
+]
+
+const methodLabels: Record<string, string> = {
+  CASH: 'Efectivo', TRANSFER: 'Transferencia', DEPOSIT: 'Depósito',
+  YAPE: 'Yape', PLIN: 'Plin', CHECK: 'Cheque', OTHER: 'Otro',
+}
+
+function formatCurrency(amount: number, currency = 'PEN') {
+  return `${currency === 'PEN' ? 'S/' : '$'} ${amount.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
+}
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('es-PE')
+}
+
+function getInitials(name: string) {
+  return name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
+}
+
+const avatarColors = [
+  '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
+  '#10b981', '#14b8a6', '#3b82f6', '#f97316',
+]
+function getAvatarColor(name: string) {
+  let hash = 0
+  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % avatarColors.length
+  return avatarColors[Math.abs(hash)]
+}
+
+function clearFilters() {
+  search.value = ''
+  filterYear.value = ''
+  filterMonth.value = ''
+  filterMethod.value = ''
+  currentPage.value = 1
+}
+</script>
+
+<template>
+  <div class="flex flex-col gap-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button
+          class="p-2 rounded-lg hover-surface transition-colors"
+          :style="{ color: 'var(--color-text-muted)' }"
+          @click="router.push({ name: 'alquileres-cobranzas' })"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div>
+          <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Historial de Pagos</h1>
+          <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">Registro de todos los pagos realizados</p>
+        </div>
+      </div>
+      <button
+        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover-surface"
+        :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }"
+        title="Exportar historial"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Exportar
+      </button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <StatsCard
+        :value="isLoading ? '...' : formatCurrency(historyData?.totalAmount ?? 0)"
+        title="Total filtrado"
+      >
+        <template #icon>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#10b981' }">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </template>
+      </StatsCard>
+      <StatsCard
+        :value="isLoading ? '...' : String(historyData?.total ?? 0)"
+        title="Pagos registrados"
+      >
+        <template #icon>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#6366f1' }">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </template>
+      </StatsCard>
+      <StatsCard
+        :value="isLoading || !historyData?.total ? '...' : formatCurrency((historyData?.totalAmount ?? 0) / (historyData?.total ?? 1))"
+        title="Promedio por pago"
+      >
+        <template #icon>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#f59e0b' }">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </template>
+      </StatsCard>
+    </div>
+
+    <!-- Filtros -->
+    <div class="flex flex-col sm:flex-row gap-3">
+      <div class="flex-1">
+        <SearchInput v-model="search" placeholder="Buscar por inquilino, propiedad o referencia..." />
+      </div>
+      <div class="w-full sm:w-40">
+        <FormSelect v-model="filterYear" :options="yearOptions" placeholder="Todos los meses" />
+      </div>
+      <div class="w-full sm:w-40">
+        <FormSelect v-model="filterMonth" :options="monthOptions" placeholder="Todos los meses" />
+      </div>
+      <div class="w-full sm:w-44">
+        <FormSelect v-model="filterMethod" :options="methodOptions" placeholder="Todos los métodos" />
+      </div>
+      <button
+        v-if="search || filterYear || filterMonth || filterMethod"
+        class="px-3 py-2 text-sm rounded-lg hover-surface transition-colors"
+        :style="{ color: 'var(--color-text-muted)' }"
+        @click="clearFilters"
+      >
+        Limpiar
+      </button>
+    </div>
+
+    <!-- Tabla -->
+    <div
+      class="rounded-xl border overflow-hidden"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+    >
+      <!-- Skeleton -->
+      <template v-if="isLoading">
+        <div class="p-4 space-y-3">
+          <div v-for="i in 6" :key="i" class="h-14 rounded-lg animate-pulse" :style="{ backgroundColor: 'var(--color-surface-elevated)' }" />
+        </div>
+      </template>
+
+      <!-- Empty -->
+      <template v-else-if="!historyData?.data?.length">
+        <div class="flex flex-col items-center justify-center py-16 gap-3">
+          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: 'var(--color-text-muted)' }">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No se encontraron pagos</p>
+        </div>
+      </template>
+
+      <!-- Rows -->
+      <template v-else>
+        <!-- Table header -->
+        <div
+          class="hidden lg:grid grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b"
+          :style="{ color: 'var(--color-text-muted)', borderColor: 'var(--color-border)' }"
+        >
+          <span>Fecha</span>
+          <span>Inquilino</span>
+          <span>Propiedad</span>
+          <span>Período</span>
+          <span>Método</span>
+          <span>Referencia</span>
+          <span class="text-right">Monto</span>
+        </div>
+
+        <div
+          v-for="item in historyData.data"
+          :key="item.paymentId"
+          class="grid grid-cols-1 lg:grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-4 border-b transition-colors hover-surface items-center"
+          :style="{ borderColor: 'var(--color-border)' }"
+        >
+          <!-- Fecha -->
+          <div>
+            <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ formatDate(item.paidDate) }}</p>
+          </div>
+
+          <!-- Inquilino -->
+          <div class="flex items-center gap-2">
+            <div
+              class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+              :style="{ backgroundColor: getAvatarColor(item.tenantName) }"
+            >
+              {{ getInitials(item.tenantName) }}
+            </div>
+            <div>
+              <p class="text-sm" :style="{ color: 'var(--color-text-primary)' }">{{ item.tenantName }}</p>
+            </div>
+          </div>
+
+          <!-- Propiedad -->
+          <div>
+            <p class="text-sm" :style="{ color: 'var(--color-text-primary)' }">{{ item.propertyAddress }}</p>
+            <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ item.ownerName }}</p>
+          </div>
+
+          <!-- Período -->
+          <div>
+            <span
+              class="inline-block text-xs px-2 py-0.5 rounded-full font-medium"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }"
+            >
+              {{ item.periodLabel }}
+            </span>
+          </div>
+
+          <!-- Método -->
+          <div>
+            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ methodLabels[item.paymentMethod] ?? item.paymentMethod }}</p>
+          </div>
+
+          <!-- Referencia -->
+          <div>
+            <p class="text-sm font-mono" :style="{ color: 'var(--color-text-muted)' }">{{ item.referenceNumber ?? '—' }}</p>
+          </div>
+
+          <!-- Monto -->
+          <div class="text-right">
+            <p class="text-sm font-semibold" :style="{ color: '#10b981' }">
+              {{ formatCurrency(item.paidAmount, item.currency) }}
+            </p>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Paginación -->
+    <BasePagination
+      v-if="totalPages > 1"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      @update:current-page="currentPage = $event"
+    />
+  </div>
+</template>

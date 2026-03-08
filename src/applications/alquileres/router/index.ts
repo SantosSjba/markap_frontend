@@ -4,6 +4,7 @@ import { SectionLayout } from '@widgets'
 import { clientesRoutes } from '@applications/alquileres/clientes/router'
 import { propiedadesRoutes } from '@applications/alquileres/propiedades/router'
 import { agentesRoutes } from '@applications/alquileres/agentes/router'
+import { cobranzasRoutes } from '@applications/alquileres/cobranzas/router'
 
 export const alquileresRoutes: RouteRecordRaw[] = [
   {
@@ -95,14 +96,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
         path: 'cobranzas',
         component: SectionLayout,
         meta: { title: 'Cobranzas' },
-        children: [
-          {
-            path: '',
-            name: 'alquileres-cobranzas',
-            component: () => import('../views/AlquileresPlaceholderView.vue'),
-            meta: { title: 'Cobranzas' },
-          },
-        ],
+        children: cobranzasRoutes,
       },
       {
         path: 'reportes',
