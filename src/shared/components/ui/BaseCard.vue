@@ -44,15 +44,21 @@ const roundedClasses = {
 <template>
   <div
     :class="[
-      'bg-white',
-      paddingClasses[padding],
-      shadowClasses[shadow],
-      roundedClasses[rounded],
-      { 'border border-gray-200': border },
+      paddingClasses[props.padding],
+      shadowClasses[props.shadow],
+      roundedClasses[props.rounded],
     ]"
+    :style="{
+      backgroundColor: 'var(--color-surface)',
+      border: props.border ? '1px solid var(--color-border)' : 'none',
+    }"
   >
     <!-- Header -->
-    <div v-if="$slots.header" class="border-b border-gray-200 pb-4 mb-4">
+    <div
+      v-if="$slots.header"
+      class="pb-4 mb-4"
+      :style="{ borderBottom: '1px solid var(--color-border)' }"
+    >
       <slot name="header" />
     </div>
 
@@ -60,7 +66,11 @@ const roundedClasses = {
     <slot />
 
     <!-- Footer -->
-    <div v-if="$slots.footer" class="border-t border-gray-200 pt-4 mt-4">
+    <div
+      v-if="$slots.footer"
+      class="pt-4 mt-4"
+      :style="{ borderTop: '1px solid var(--color-border)' }"
+    >
       <slot name="footer" />
     </div>
   </div>
