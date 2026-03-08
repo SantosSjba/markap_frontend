@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Icon } from '@iconify/vue'
 import {
   useRoleApplicationsPage,
   useAssignRoleApplication,
@@ -53,15 +54,7 @@ const toggleAccess = (roleId: string, applicationId: string) => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-12">
-      <svg
-        class="animate-spin h-8 w-8"
-        style="color: var(--color-primary);"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <Icon icon="svg-spinners:ring-resize" class="w-10 h-10" :style="{ color: 'var(--color-primary)' }" />
     </div>
 
     <div v-else class="card overflow-x-auto">
@@ -117,37 +110,12 @@ const toggleAccess = (roleId: string, applicationId: string) => {
                 }"
                 @click="toggleAccess(role.id, app.id)"
               >
-                <svg
-                  v-if="isSaving(role.id, app.id)"
-                  class="animate-spin h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                <svg
+                <Icon v-if="isSaving(role.id, app.id)" icon="svg-spinners:ring-resize" class="w-5 h-5" />
+                <Icon
                   v-else
+                  :icon="hasAccess(role.id, app.id) ? 'lucide:check' : 'lucide:plus'"
                   class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    v-if="hasAccess(role.id, app.id)"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 13l4 4L19 7"
-                  />
-                  <path
-                    v-else
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
+                />
               </button>
             </td>
           </tr>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { Icon } from '@iconify/vue'
 import { 
   useUsers, 
   useRoles, 
@@ -209,25 +210,19 @@ const paginationProps = computed(() => ({
         @click="openCreateModal"
         class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
+        <Icon icon="lucide:plus" class="w-5 h-5" />
         Nuevo Usuario
       </button>
     </div>
 
     <!-- Search -->
-    <div class="card p-4 mb-6">
+      <div class="card p-4 mb-6">
       <div class="relative">
-        <svg 
-          class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-          style="color: var(--color-text-muted);"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+        <Icon
+          icon="lucide:search"
+          class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none"
+          :style="{ color: 'var(--color-text-muted)' }"
+        />
         <input
           v-model="searchQuery"
           type="text"
@@ -240,10 +235,7 @@ const paginationProps = computed(() => ({
 
     <!-- Loading -->
     <div v-if="isLoading" class="flex justify-center py-12">
-      <svg class="animate-spin h-8 w-8" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <Icon icon="svg-spinners:ring-resize" class="w-10 h-10" :style="{ color: 'var(--color-primary)' }" />
     </div>
 
     <!-- Error -->
@@ -306,34 +298,25 @@ const paginationProps = computed(() => ({
                     class="p-2 rounded-lg hover-surface"
                     title="Gestionar roles"
                   >
-                    <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
+                    <Icon icon="lucide:shield-check" class="w-5 h-5" :style="{ color: 'var(--color-text-muted)' }" />
                   </button>
                   <button
                     @click="openEditModal(user)"
                     class="p-2 rounded-lg hover-surface"
                     title="Editar"
                   >
-                    <svg class="w-5 h-5" style="color: var(--color-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
+                    <Icon icon="lucide:pencil" class="w-5 h-5" :style="{ color: 'var(--color-text-muted)' }" />
                   </button>
                   <button
                     @click="toggleUserActive(user)"
                     class="p-2 rounded-lg hover-surface"
                     :title="user.isActive ? 'Desactivar' : 'Activar'"
                   >
-                    <svg 
-                      class="w-5 h-5" 
+                    <Icon
+                      :icon="user.isActive ? 'lucide:circle-x' : 'lucide:circle-check'"
+                      class="w-5 h-5"
                       :style="{ color: user.isActive ? 'var(--color-error)' : 'var(--color-success)' }"
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path v-if="user.isActive" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                      <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    />
                   </button>
                 </div>
               </td>
@@ -502,16 +485,12 @@ const paginationProps = computed(() => ({
                   <p class="font-medium text-left" style="color: var(--color-text-primary);">{{ role.name }}</p>
                   <p class="text-sm text-left" style="color: var(--color-text-muted);">{{ role.code }}</p>
                 </div>
-                <svg
+                <Icon
                   v-if="hasRole(role.id)"
+                  icon="lucide:circle-check"
                   class="w-5 h-5"
-                  style="color: var(--color-primary);"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-              </button>
+                  :style="{ color: 'var(--color-primary)' }"
+                />              </button>
             </div>
 
             <div class="flex justify-end pt-4">
