@@ -6,12 +6,15 @@ import BaseModal from '@shared/components/ui/BaseModal.vue'
 import BaseButton from '@shared/components/ui/BaseButton.vue'
 import Badge from '@shared/components/ui/Badge.vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/components/ui/ExcelIcon.vue'
 import SearchInput from '@shared/components/forms/SearchInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
+import { useExcelExport } from '@shared/composables'
 import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../composables/usePayments'
 import type { PendingPaymentItem, RegisterPaymentPayload } from '../services/payments.service'
+import { paymentsService } from '../services/payments.service'
 
 const router = useRouter()
 
@@ -130,6 +133,45 @@ function getAvatarColor(name: string) {
   for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % avatarColors.length
   return avatarColors[Math.abs(hash)]
 }
+
+const { isExporting, exportToExcel } = useExcelExport()
+
+async function handleExport() {
+  const data = await paymentsService.listPending({
+    applicationSlug: 'alquileres',
+    search: search.value || undefined,
+    status: statusFilter.value !== 'ALL' ? (statusFilter.value as any) : undefined,
+  })
+  const now = new Date().toLocaleDateString('es-PE')
+  await exportToExcel({
+    fileName: `cobranzas_pendientes_${now}`,
+    sheetName: 'Pagos Pendientes',
+    columns: [
+      { header: 'Código alquiler', key: 'rentalCode', width: 16 },
+      { header: 'Inquilino', key: 'tenantName', width: 26 },
+      { header: 'Propiedad', key: 'propertyAddress', width: 32 },
+      { header: 'Propietario', key: 'ownerName', width: 24 },
+      { header: 'Período', key: 'periodLabel', width: 14 },
+      { header: 'Vencimiento', key: 'dueDate', width: 14 },
+      { header: 'Días atraso', key: 'daysOverdue', width: 12 },
+      { header: 'Moneda', key: 'currency', width: 10 },
+      { header: 'Monto', key: 'amount', width: 14 },
+      { header: 'Estado', key: 'status', width: 12 },
+    ],
+    rows: data.map((p: PendingPaymentItem) => ({
+      rentalCode: p.rentalCode,
+      tenantName: p.tenantName,
+      propertyAddress: p.propertyAddress,
+      ownerName: p.ownerName,
+      periodLabel: p.periodLabel,
+      dueDate: formatDate(p.dueDate),
+      daysOverdue: p.daysOverdue,
+      currency: p.currency,
+      amount: p.amount,
+      status: getStatusBadge(p.status).label,
+    })),
+  })
+}
 </script>
 
 <template>
@@ -140,14 +182,26 @@ function getAvatarColor(name: string) {
         <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Cobranzas</h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">Seguimiento de pagos de alquiler</p>
       </div>
-      <button
-        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover-surface"
-        :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }"
-        @click="router.push({ name: 'alquileres-cobranzas-historial' })"
-      >
-        <AppIcon icon="lucide:history" :size="16" />
-        Ver Historial
-      </button>
+      <div class="flex items-center gap-2">
+        <BaseButton
+          variant="outline"
+          class="flex items-center gap-2"
+          :loading="isExporting"
+          title="Exportar a Excel"
+          @click="handleExport"
+        >
+          <ExcelIcon class="w-5 h-5" />
+          Exportar
+        </BaseButton>
+        <button
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover-surface"
+          :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }"
+          @click="router.push({ name: 'alquileres-cobranzas-historial' })"
+        >
+          <AppIcon icon="lucide:history" :size="16" />
+          Ver Historial
+        </button>
+      </div>
     </div>
 
     <!-- KPIs -->

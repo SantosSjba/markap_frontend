@@ -12,9 +12,12 @@ import {
   FormSelect,
   SearchInput,
   AppIcon,
+  ExcelIcon,
 } from '@shared/components'
+import { useExcelExport } from '@shared/composables'
 import { useClientsList, useClientStats } from '../composables/useClients'
 import type { ClientListItem, ListClientsParams } from '../services/clients.service'
+import { clientsService } from '../services/clients.service'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -101,6 +104,47 @@ const statusOptions = [
   { value: 'active', label: 'Activo' },
   { value: 'inactive', label: 'Inactivo' },
 ]
+
+const { isExporting, exportToExcel } = useExcelExport()
+
+async function handleExport() {
+  // Traer todos los clientes sin paginación
+  const result = await clientsService.getList({
+    applicationSlug: 'alquileres',
+    page: 1,
+    limit: 10000,
+    search: searchInput.value.trim() || undefined,
+    clientType: filterType.value === 'ALL' ? undefined : filterType.value,
+    isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
+  })
+  const now = new Date().toLocaleDateString('es-PE')
+  await exportToExcel({
+    fileName: `clientes_${now}`,
+    sheetName: 'Clientes',
+    columns: [
+      { header: 'Nombre completo', key: 'fullName', width: 28 },
+      { header: 'Tipo doc.', key: 'documentTypeCode', width: 12 },
+      { header: 'N° documento', key: 'documentNumber', width: 16 },
+      { header: 'Tipo cliente', key: 'clientType', width: 14 },
+      { header: 'Teléfono', key: 'primaryPhone', width: 16 },
+      { header: 'Email', key: 'primaryEmail', width: 28 },
+      { header: 'Propiedades', key: 'propertiesCount', width: 14 },
+      { header: 'Alquileres', key: 'contractsCount', width: 14 },
+      { header: 'Estado', key: 'isActive', width: 10 },
+    ],
+    rows: result.data.map((c: ClientListItem) => ({
+      fullName: c.fullName,
+      documentTypeCode: c.documentTypeCode,
+      documentNumber: c.documentNumber,
+      clientType: c.clientType === 'OWNER' ? 'Propietario' : 'Inquilino',
+      primaryPhone: c.primaryPhone,
+      primaryEmail: c.primaryEmail,
+      propertiesCount: c.propertiesCount ?? 0,
+      contractsCount: c.contractsCount ?? 0,
+      isActive: c.isActive ? 'Activo' : 'Inactivo',
+    })),
+  })
+}
 </script>
 
 <template>
@@ -121,10 +165,22 @@ const statusOptions = [
           Gestión de propietarios e inquilinos
         </p>
       </div>
-      <BaseButton variant="primary" class="flex items-center gap-2 w-full sm:w-auto justify-center" @click="goToNew">
-        <AppIcon icon="lucide:plus" :size="18" />
-        Nuevo Cliente
-      </BaseButton>
+      <div class="flex gap-2 w-full sm:w-auto">
+        <BaseButton
+          variant="outline"
+          class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
+          :loading="isExporting"
+          title="Exportar a Excel"
+          @click="handleExport"
+        >
+          <ExcelIcon class="w-5 h-5" />
+          Exportar
+        </BaseButton>
+        <BaseButton variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
+          <AppIcon icon="lucide:plus" :size="18" />
+          Nuevo Cliente
+        </BaseButton>
+      </div>
     </div>
 
     <!-- Stats -->

@@ -11,9 +11,12 @@ import {
   FormSelect,
   SearchInput,
   AppIcon,
+  ExcelIcon,
 } from '@shared/components'
+import { useExcelExport } from '@shared/composables'
 import { useRentalsList, useRentalStats } from '../composables/useRentals'
 import type { RentalListItem, ListRentalsParams } from '../services/rentals.service'
+import { rentalsService } from '../services/rentals.service'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -154,6 +157,49 @@ const statusOptions = [
   { value: 'EXPIRED', label: 'Vencidos' },
   { value: 'CANCELLED', label: 'Cancelados' },
 ]
+
+const { isExporting, exportToExcel } = useExcelExport()
+
+async function handleExport() {
+  const result = await rentalsService.getList({
+    applicationSlug: 'alquileres',
+    page: 1,
+    limit: 10000,
+    search: searchInput.value.trim() || undefined,
+    status: filterStatus.value === 'ALL' ? undefined : filterStatus.value,
+  })
+  const now = new Date().toLocaleDateString('es-PE')
+  await exportToExcel({
+    fileName: `alquileres_${now}`,
+    sheetName: 'Alquileres',
+    columns: [
+      { header: 'Código', key: 'code', width: 14 },
+      { header: 'Propiedad', key: 'propertyAddress', width: 32 },
+      { header: 'Inquilino', key: 'tenantName', width: 26 },
+      { header: 'Propietario', key: 'ownerName', width: 26 },
+      { header: 'Inicio', key: 'startDate', width: 14 },
+      { header: 'Vencimiento', key: 'endDate', width: 14 },
+      { header: 'Estado', key: 'status', width: 14 },
+      { header: 'Moneda', key: 'currency', width: 10 },
+      { header: 'Monto mensual', key: 'monthlyAmount', width: 16 },
+      { header: 'Garantía', key: 'securityDeposit', width: 14 },
+      { header: 'Con contrato', key: 'hasContract', width: 14 },
+    ],
+    rows: result.data.map((r: RentalListItem) => ({
+      code: r.code,
+      propertyAddress: r.propertyAddress,
+      tenantName: r.tenantName,
+      ownerName: r.ownerName,
+      startDate: formatDate(r.startDate),
+      endDate: formatDate(r.endDate),
+      status: statusBadgeLabel(getDisplayStatus(r)),
+      currency: r.currency,
+      monthlyAmount: Number(r.monthlyAmount),
+      securityDeposit: r.securityDeposit ?? '—',
+      hasContract: r.hasContract ? 'Sí' : 'No',
+    })),
+  })
+}
 </script>
 
 <template>
@@ -174,10 +220,22 @@ const statusOptions = [
           Gestión de contratos de alquiler
         </p>
       </div>
-      <BaseButton variant="primary" class="flex items-center gap-2 w-full sm:w-auto justify-center" @click="goToNew">
-        <AppIcon icon="lucide:plus" :size="18" />
-        Nuevo Alquiler
-      </BaseButton>
+      <div class="flex gap-2 w-full sm:w-auto">
+        <BaseButton
+          variant="outline"
+          class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
+          :loading="isExporting"
+          title="Exportar a Excel"
+          @click="handleExport"
+        >
+          <ExcelIcon class="w-5 h-5" />
+          Exportar
+        </BaseButton>
+        <BaseButton variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
+          <AppIcon icon="lucide:plus" :size="18" />
+          Nuevo Alquiler
+        </BaseButton>
+      </div>
     </div>
 
     <!-- Stats -->

@@ -6,7 +6,9 @@ import {
   BaseButton,
   Badge,
   AppIcon,
+  ExcelIcon,
 } from '@shared/components'
+import { useExcelExport } from '@shared/composables'
 import {
   useReportsSummary,
   useContractsExpiring,
@@ -16,6 +18,13 @@ import {
   useMonthlyMetrics,
   useRentalsByMonth,
 } from '../composables'
+import { reportesService } from '../services/reportes.service'
+import type {
+  ContractExpiringItem,
+  PropertyWithoutContractItem,
+  ActiveClientReportItem,
+  RentalsByMonthItem,
+} from '../services/reportes.service'
 
 const APPLICATION_SLUG = 'alquileres'
 
@@ -116,6 +125,87 @@ const yearOptions = computed(() => {
   const current = new Date().getFullYear()
   return [current - 2, current - 1, current, current + 1]
 })
+
+const { isExporting, exportToExcel } = useExcelExport()
+
+async function handleExportTab() {
+  const now = new Date().toLocaleDateString('es-PE')
+  if (activeTab.value === 'contratos-por-vencer') {
+    const data = await reportesService.getContractsExpiring(APPLICATION_SLUG, days.value)
+    await exportToExcel({
+      fileName: `contratos_por_vencer_${now}`,
+      sheetName: 'Contratos por Vencer',
+      columns: [
+        { header: 'Código', key: 'code', width: 14 },
+        { header: 'Inquilino', key: 'tenantName', width: 26 },
+        { header: 'Propiedad', key: 'propertyAddress', width: 32 },
+        { header: 'Propietario', key: 'ownerName', width: 24 },
+        { header: 'Vencimiento', key: 'endDate', width: 16 },
+        { header: 'Días restantes', key: 'daysLeft', width: 14 },
+      ],
+      rows: data.map((r: ContractExpiringItem) => ({
+        code: r.code,
+        tenantName: r.tenantName,
+        propertyAddress: r.propertyAddress,
+        ownerName: r.ownerName,
+        endDate: formatDate(r.endDate),
+        daysLeft: r.daysLeft,
+      })),
+    })
+  } else if (activeTab.value === 'sin-contrato') {
+    const data = await reportesService.getPropertiesWithoutContract(APPLICATION_SLUG)
+    await exportToExcel({
+      fileName: `propiedades_sin_contrato_${now}`,
+      sheetName: 'Sin Contrato',
+      columns: [
+        { header: 'Código', key: 'code', width: 14 },
+        { header: 'Dirección', key: 'addressLine', width: 36 },
+        { header: 'Propietario', key: 'ownerName', width: 26 },
+      ],
+      rows: data.map((p: PropertyWithoutContractItem) => ({
+        code: p.code,
+        addressLine: p.addressLine,
+        ownerName: p.ownerName,
+      })),
+    })
+  } else if (activeTab.value === 'clientes-activos') {
+    const data = await reportesService.getActiveClients(APPLICATION_SLUG)
+    await exportToExcel({
+      fileName: `clientes_activos_${now}`,
+      sheetName: 'Clientes Activos',
+      columns: [
+        { header: 'Cliente', key: 'fullName', width: 28 },
+        { header: 'Contratos activos', key: 'contractsCount', width: 18 },
+      ],
+      rows: data.map((c: ActiveClientReportItem) => ({
+        fullName: c.fullName,
+        contractsCount: c.contractsCount,
+      })),
+    })
+  } else if (activeTab.value === 'alquiler-por-mes') {
+    const data = await reportesService.getRentalsByMonth(APPLICATION_SLUG, yearFilter.value)
+    await exportToExcel({
+      fileName: `alquiler_por_mes_${yearFilter.value}_${now}`,
+      sheetName: `Alquiler ${yearFilter.value}`,
+      columns: [
+        { header: 'Mes', key: 'monthName', width: 14 },
+        { header: 'Contratos nuevos', key: 'newContracts', width: 18 },
+        { header: 'Contratos vencidos', key: 'expiredContracts', width: 20 },
+        { header: 'Activos al cierre', key: 'activeAtEndOfMonth', width: 18 },
+        { header: 'Ingresos', key: 'totalRevenue', width: 16 },
+        { header: 'Moneda', key: 'currency', width: 10 },
+      ],
+      rows: data.map((r: RentalsByMonthItem) => ({
+        monthName: r.monthName,
+        newContracts: r.newContracts,
+        expiredContracts: r.expiredContracts,
+        activeAtEndOfMonth: r.activeAtEndOfMonth,
+        totalRevenue: r.totalRevenue,
+        currency: r.currency,
+      })),
+    })
+  }
+}
 </script>
 
 <template>
@@ -204,9 +294,9 @@ const yearOptions = computed(() => {
                 </p>
               </div>
             </div>
-            <BaseButton variant="outline" disabled title="En desarrollo">
-              <AppIcon icon="lucide:download" :size="18" />
-              Exportar Excel <span class="opacity-70 text-xs ml-1">(en desarrollo)</span>
+            <BaseButton variant="outline" :loading="isExporting" @click="handleExportTab">
+              <ExcelIcon class="w-5 h-5" />
+              Exportar Excel
             </BaseButton>
           </div>
           <div class="overflow-x-auto">
@@ -250,7 +340,8 @@ const yearOptions = computed(() => {
 
         <!-- Sin Contrato -->
         <template v-else-if="activeTab === 'sin-contrato'">
-          <div class="flex items-center gap-3 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
             <div
               class="w-10 h-10 rounded-lg flex items-center justify-center"
               :style="{ backgroundColor: 'var(--color-primary-light)' }"
@@ -261,6 +352,11 @@ const yearOptions = computed(() => {
               <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">Propiedades sin contrato</h2>
               <p class="text-sm" style="color: var(--color-text-secondary);">Propiedades disponibles sin contrato activo</p>
             </div>
+          </div>
+            <BaseButton variant="outline" :loading="isExporting" @click="handleExportTab">
+              <ExcelIcon class="w-5 h-5" />
+              Exportar Excel
+            </BaseButton>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full border-collapse text-sm">
@@ -295,7 +391,8 @@ const yearOptions = computed(() => {
 
         <!-- Clientes Activos -->
         <template v-else-if="activeTab === 'clientes-activos'">
-          <div class="flex items-center gap-3 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
             <div
               class="w-10 h-10 rounded-lg flex items-center justify-center"
               :style="{ backgroundColor: 'var(--color-primary-light)' }"
@@ -306,6 +403,11 @@ const yearOptions = computed(() => {
               <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">Clientes activos</h2>
               <p class="text-sm" style="color: var(--color-text-secondary);">Inquilinos con al menos un contrato vigente</p>
             </div>
+          </div>
+            <BaseButton variant="outline" :loading="isExporting" @click="handleExportTab">
+              <ExcelIcon class="w-5 h-5" />
+              Exportar Excel
+            </BaseButton>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full border-collapse text-sm">

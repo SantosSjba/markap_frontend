@@ -6,12 +6,15 @@ import Badge from '@shared/components/ui/Badge.vue'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import BaseButton from '@shared/components/ui/BaseButton.vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/components/ui/ExcelIcon.vue'
 import SearchInput from '@shared/components/forms/SearchInput.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
+import { useExcelExport } from '@shared/composables'
 import { useOverduePayments, useRegisterPayment, usePendingPayments } from '../composables/usePayments'
 import type { OverduePaymentItem, RegisterPaymentPayload } from '../services/payments.service'
+import { paymentsService } from '../services/payments.service'
 
 const router = useRouter()
 
@@ -137,23 +140,70 @@ function getAvatarColor(name: string) {
   for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % avatarColors.length
   return avatarColors[Math.abs(hash)]
 }
+
+const { isExporting, exportToExcel } = useExcelExport()
+
+async function handleExport() {
+  const data = await paymentsService.listOverdue('alquileres', search.value || undefined)
+  const now = new Date().toLocaleDateString('es-PE')
+  await exportToExcel({
+    fileName: `cobranzas_atrasos_${now}`,
+    sheetName: 'Con Atraso',
+    columns: [
+      { header: 'Inquilino', key: 'tenantName', width: 26 },
+      { header: 'Documento', key: 'tenantDocument', width: 16 },
+      { header: 'Propiedad', key: 'propertyAddress', width: 32 },
+      { header: 'Propietario', key: 'ownerName', width: 24 },
+      { header: 'Nivel atraso', key: 'overdueLevel', width: 14 },
+      { header: 'Meses vencidos', key: 'monthsOverdue', width: 16 },
+      { header: 'Días máx. atraso', key: 'maxDaysOverdue', width: 16 },
+      { header: 'Moneda', key: 'currency', width: 10 },
+      { header: 'Total adeudado', key: 'totalOwed', width: 16 },
+      { header: 'Último pago', key: 'lastPaymentDate', width: 16 },
+    ],
+    rows: data.map((o: OverduePaymentItem) => ({
+      tenantName: o.tenantName,
+      tenantDocument: o.tenantDocument ?? '—',
+      propertyAddress: o.propertyAddress,
+      ownerName: o.ownerName,
+      overdueLevel: getOverdueLevelBadge(o.overdueLevel).label,
+      monthsOverdue: o.monthsOverdue,
+      maxDaysOverdue: o.maxDaysOverdue,
+      currency: o.currency,
+      totalOwed: o.totalOwed,
+      lastPaymentDate: formatDate(o.lastPaymentDate),
+    })),
+  })
+}
 </script>
 
 <template>
   <div class="flex flex-col gap-6">
     <!-- Header -->
-    <div class="flex items-center gap-3">
-      <button
-        class="p-2 rounded-lg hover-surface transition-colors"
-        :style="{ color: 'var(--color-text-muted)' }"
-        @click="router.push({ name: 'alquileres-cobranzas' })"
-      >
-        <AppIcon icon="lucide:chevron-left" :size="20" />
-      </button>
-      <div>
-        <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Clientes con Atraso</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">Seguimiento de pagos pendientes</p>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button
+          class="p-2 rounded-lg hover-surface transition-colors"
+          :style="{ color: 'var(--color-text-muted)' }"
+          @click="router.push({ name: 'alquileres-cobranzas' })"
+        >
+          <AppIcon icon="lucide:chevron-left" :size="20" />
+        </button>
+        <div>
+          <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Clientes con Atraso</h1>
+          <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">Seguimiento de pagos pendientes</p>
+        </div>
       </div>
+      <BaseButton
+          variant="outline"
+          class="flex items-center gap-2"
+          :loading="isExporting"
+          title="Exportar a Excel"
+          @click="handleExport"
+        >
+          <ExcelIcon class="w-5 h-5" />
+          Exportar
+        </BaseButton>
     </div>
 
     <!-- KPIs -->

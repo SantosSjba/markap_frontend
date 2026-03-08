@@ -12,7 +12,9 @@ import {
   SearchInput,
   BaseModal,
   AppIcon,
+  ExcelIcon,
 } from '@shared/components'
+import { useExcelExport } from '@shared/composables'
 import {
   usePropertiesList,
   usePropertyStats,
@@ -20,6 +22,7 @@ import {
   useUpdatePropertyListingStatus,
 } from '../composables/useProperties'
 import type { PropertyListItem, ListPropertiesParams } from '../services/properties.service'
+import { propertiesService } from '../services/properties.service'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -196,6 +199,48 @@ function formatDate(d: string | null | undefined): string {
     return d
   }
 }
+
+const { isExporting, exportToExcel } = useExcelExport()
+
+async function handleExport() {
+  const result = await propertiesService.getList({
+    applicationSlug: 'alquileres',
+    page: 1,
+    limit: 10000,
+    search: searchInput.value.trim() || undefined,
+    listingStatus: filterListingStatus.value || undefined,
+    propertyTypeId: filterPropertyTypeId.value || undefined,
+  })
+  const now = new Date().toLocaleDateString('es-PE')
+  await exportToExcel({
+    fileName: `propiedades_${now}`,
+    sheetName: 'Propiedades',
+    columns: [
+      { header: 'Código', key: 'code', width: 14 },
+      { header: 'Dirección', key: 'addressLine', width: 32 },
+      { header: 'Distrito', key: 'districtName', width: 18 },
+      { header: 'Tipo', key: 'propertyTypeName', width: 16 },
+      { header: 'Área (m²)', key: 'area', width: 12 },
+      { header: 'Propietario', key: 'ownerFullName', width: 26 },
+      { header: 'Inquilino activo', key: 'activeRentalTenantName', width: 26 },
+      { header: 'Estado', key: 'listingStatus', width: 18 },
+      { header: 'Vencimiento contrato', key: 'activeRentalEndDate', width: 20 },
+      { header: 'Alquiler mensual', key: 'monthlyRent', width: 18 },
+    ],
+    rows: result.data.map((p: PropertyListItem) => ({
+      code: p.code,
+      addressLine: p.addressLine,
+      districtName: p.districtName,
+      propertyTypeName: p.propertyTypeName,
+      area: p.area ?? '—',
+      ownerFullName: p.ownerFullName,
+      activeRentalTenantName: p.activeRentalTenantName ?? 'Sin inquilino',
+      listingStatus: listingStatusLabel(p.listingStatus),
+      activeRentalEndDate: p.hasActiveRental && p.activeRentalEndDate ? formatDate(p.activeRentalEndDate) : '—',
+      monthlyRent: p.monthlyRent ?? '—',
+    })),
+  })
+}
 </script>
 
 <template>
@@ -216,10 +261,22 @@ function formatDate(d: string | null | undefined): string {
           Gestión de propiedades en administración
         </p>
       </div>
-      <BaseButton variant="primary" class="flex items-center gap-2 w-full sm:w-auto justify-center" @click="goToNew">
-        <AppIcon icon="lucide:plus" :size="18" />
-        Nueva Propiedad
-      </BaseButton>
+      <div class="flex gap-2 w-full sm:w-auto">
+        <BaseButton
+          variant="outline"
+          class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
+          :loading="isExporting"
+          title="Exportar a Excel"
+          @click="handleExport"
+        >
+          <ExcelIcon class="w-5 h-5" />
+          Exportar
+        </BaseButton>
+        <BaseButton variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
+          <AppIcon icon="lucide:plus" :size="18" />
+          Nueva Propiedad
+        </BaseButton>
+      </div>
     </div>
 
     <!-- Stats -->

@@ -10,9 +10,12 @@ import {
   FormSelect,
   SearchInput,
   AppIcon,
+  ExcelIcon,
 } from '@shared/components'
+import { useExcelExport } from '@shared/composables'
 import { useAgentsList } from '../composables/useAgents'
 import type { AgentListItem, ListAgentsParams } from '../services/agents.service'
+import { agentsService } from '../services/agents.service'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -103,6 +106,42 @@ function displayName(row: AgentListItem): string {
   }
   return row.fullName
 }
+
+const { isExporting, exportToExcel } = useExcelExport()
+
+async function handleExport() {
+  const result = await agentsService.list({
+    applicationSlug: 'alquileres',
+    page: 1,
+    limit: 10000,
+    search: searchInput.value.trim() || undefined,
+    type: filterType.value === 'ALL' ? undefined : filterType.value,
+    isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
+  })
+  const now = new Date().toLocaleDateString('es-PE')
+  await exportToExcel({
+    fileName: `agentes_${now}`,
+    sheetName: 'Agentes',
+    columns: [
+      { header: 'Nombre', key: 'fullName', width: 28 },
+      { header: 'Tipo', key: 'type', width: 12 },
+      { header: 'Tipo doc.', key: 'documentTypeCode', width: 12 },
+      { header: 'N° documento', key: 'documentNumber', width: 16 },
+      { header: 'Email', key: 'email', width: 28 },
+      { header: 'Teléfono', key: 'phone', width: 16 },
+      { header: 'Estado', key: 'isActive', width: 10 },
+    ],
+    rows: result.data.map((a: AgentListItem) => ({
+      fullName: displayName(a),
+      type: a.type === 'INTERNAL' ? 'Interno' : 'Externo',
+      documentTypeCode: a.documentType?.code ?? '—',
+      documentNumber: a.documentNumber ?? '—',
+      email: a.email ?? '—',
+      phone: a.phone ?? '—',
+      isActive: a.isActive ? 'Activo' : 'Inactivo',
+    })),
+  })
+}
 </script>
 
 <template>
@@ -116,10 +155,22 @@ function displayName(row: AgentListItem): string {
           Agentes internos (usuarios del sistema) y externos (terceros)
         </p>
       </div>
-      <BaseButton variant="primary" class="flex items-center gap-2 w-full sm:w-auto justify-center" @click="goToNew">
-        <AppIcon icon="lucide:plus" :size="18" />
-        Nuevo Agente
-      </BaseButton>
+      <div class="flex gap-2 w-full sm:w-auto">
+        <BaseButton
+          variant="outline"
+          class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
+          :loading="isExporting"
+          title="Exportar a Excel"
+          @click="handleExport"
+        >
+          <ExcelIcon class="w-5 h-5" />
+          Exportar
+        </BaseButton>
+        <BaseButton variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
+          <AppIcon icon="lucide:plus" :size="18" />
+          Nuevo Agente
+        </BaseButton>
+      </div>
     </div>
 
     <div

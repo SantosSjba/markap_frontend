@@ -3,10 +3,15 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import StatsCard from '@shared/components/ui/StatsCard.vue'
 import BasePagination from '@shared/components/ui/BasePagination.vue'
+import BaseButton from '@shared/components/ui/BaseButton.vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/components/ui/ExcelIcon.vue'
 import SearchInput from '@shared/components/forms/SearchInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
+import { useExcelExport } from '@shared/composables'
 import { usePaymentHistory } from '../composables/usePayments'
+import type { PaymentHistoryItem } from '../services/payments.service'
+import { paymentsService } from '../services/payments.service'
 
 const router = useRouter()
 
@@ -91,6 +96,51 @@ function clearFilters() {
   filterMethod.value = ''
   currentPage.value = 1
 }
+
+const { isExporting, exportToExcel } = useExcelExport()
+
+async function handleExport() {
+  const result = await paymentsService.listHistory({
+    applicationSlug: 'alquileres',
+    page: 1,
+    limit: 10000,
+    search: search.value || undefined,
+    periodYear: filterYear.value ? parseInt(filterYear.value) : undefined,
+    periodMonth: filterMonth.value ? parseInt(filterMonth.value) : undefined,
+    paymentMethod: filterMethod.value || undefined,
+  })
+  const now = new Date().toLocaleDateString('es-PE')
+  await exportToExcel({
+    fileName: `historial_pagos_${now}`,
+    sheetName: 'Historial de Pagos',
+    columns: [
+      { header: 'Código alquiler', key: 'rentalCode', width: 16 },
+      { header: 'Inquilino', key: 'tenantName', width: 26 },
+      { header: 'Propiedad', key: 'propertyAddress', width: 32 },
+      { header: 'Propietario', key: 'ownerName', width: 24 },
+      { header: 'Período', key: 'periodLabel', width: 14 },
+      { header: 'Fecha pago', key: 'paidDate', width: 14 },
+      { header: 'Moneda', key: 'currency', width: 10 },
+      { header: 'Monto pagado', key: 'paidAmount', width: 16 },
+      { header: 'Método', key: 'paymentMethod', width: 16 },
+      { header: 'N° referencia', key: 'referenceNumber', width: 18 },
+      { header: 'Notas', key: 'notes', width: 28 },
+    ],
+    rows: result.data.map((h: PaymentHistoryItem) => ({
+      rentalCode: h.rentalCode,
+      tenantName: h.tenantName,
+      propertyAddress: h.propertyAddress,
+      ownerName: h.ownerName,
+      periodLabel: h.periodLabel,
+      paidDate: formatDate(h.paidDate),
+      currency: h.currency,
+      paidAmount: h.paidAmount,
+      paymentMethod: methodLabels[h.paymentMethod] ?? h.paymentMethod,
+      referenceNumber: h.referenceNumber ?? '—',
+      notes: h.notes ?? '—',
+    })),
+  })
+}
 </script>
 
 <template>
@@ -110,14 +160,16 @@ function clearFilters() {
           <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">Registro de todos los pagos realizados</p>
         </div>
       </div>
-      <button
-        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover-surface"
-        :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }"
-        title="Exportar historial"
-      >
-        <AppIcon icon="lucide:download" :size="16" />
-        Exportar
-      </button>
+      <BaseButton
+          variant="outline"
+          class="flex items-center gap-2"
+          :loading="isExporting"
+          title="Exportar historial a Excel"
+          @click="handleExport"
+        >
+          <ExcelIcon class="w-5 h-5" />
+          Exportar
+        </BaseButton>
     </div>
 
     <!-- KPIs -->
