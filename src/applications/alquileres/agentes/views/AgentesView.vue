@@ -72,7 +72,7 @@ const goToEdit = (agent: AgentListItem) =>
   router.push(`/alquileres/agentes/${agent.id}/editar`)
 
 const getActions = (agent: AgentListItem) => [
-  { label: 'Editar', onClick: () => goToEdit(agent) },
+  { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(agent) },
 ]
 
 const paginationProps = computed(() => {
@@ -121,7 +121,7 @@ async function handleExport() {
   const now = new Date().toLocaleDateString('es-PE')
   await exportToExcel({
     fileName: `agentes_${now}`,
-    sheetName: 'Agentes',
+    sheetName: 'Agentes',
     columns: [
       { header: 'Nombre', key: 'fullName', width: 28 },
       { header: 'Tipo', key: 'type', width: 12 },

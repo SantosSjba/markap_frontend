@@ -11,6 +11,7 @@ import SearchInput from '@shared/components/forms/SearchInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
+import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
 import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../composables/usePayments'
 import type { PendingPaymentItem, RegisterPaymentPayload } from '../services/payments.service'
@@ -134,6 +135,23 @@ function getAvatarColor(name: string) {
   return avatarColors[Math.abs(hash)]
 }
 
+function getPaymentActions(item: PendingPaymentItem) {
+  const actions = []
+  if (item.status !== 'PAID') {
+    actions.push({
+      label: 'Registrar pago',
+      icon: 'lucide:credit-card',
+      onClick: () => openModal(item),
+    })
+  }
+  actions.push({
+    label: 'Ver contrato',
+    icon: 'lucide:file-text',
+    onClick: () => router.push(`/alquileres/contratos/${item.rentalId}`),
+  })
+  return actions
+}
+
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
@@ -145,7 +163,7 @@ async function handleExport() {
   const now = new Date().toLocaleDateString('es-PE')
   await exportToExcel({
     fileName: `cobranzas_pendientes_${now}`,
-    sheetName: 'Pagos Pendientes',
+    sheetName: 'Pagos Pendientes',
     columns: [
       { header: 'Código alquiler', key: 'rentalCode', width: 16 },
       { header: 'Inquilino', key: 'tenantName', width: 26 },
@@ -326,13 +344,7 @@ async function handleExport() {
               <AppIcon icon="lucide:credit-card" :size="16" />
               Pagar
             </button>
-            <button
-              class="p-1.5 rounded-lg hover-surface"
-              :style="{ color: 'var(--color-text-muted)' }"
-              title="Más opciones"
-            >
-              <AppIcon icon="lucide:ellipsis" :size="16" />
-            </button>
+            <ActionsDropdown :items="getPaymentActions(item)" />
           </div>
         </div>
       </template>

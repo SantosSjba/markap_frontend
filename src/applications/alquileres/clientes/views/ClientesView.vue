@@ -77,7 +77,7 @@ const goToEdit = (client: ClientListItem) =>
   router.push(`/alquileres/clientes/${client.id}/editar`)
 
 const getActions = (client: ClientListItem) => [
-  { label: 'Editar', onClick: () => goToEdit(client) },
+  { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(client) },
 ]
 
 const paginationProps = computed(() => {
@@ -120,7 +120,8 @@ async function handleExport() {
   const now = new Date().toLocaleDateString('es-PE')
   await exportToExcel({
     fileName: `clientes_${now}`,
-    sheetName: 'Clientes',
+    sheetName: 'Clientes',
+
     columns: [
       { header: 'Nombre completo', key: 'fullName', width: 28 },
       { header: 'Tipo doc.', key: 'documentTypeCode', width: 12 },

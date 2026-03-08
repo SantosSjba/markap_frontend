@@ -124,12 +124,13 @@ const saveListingStatus = () => {
 }
 
 const getActions = (row: PropertyListItem) => {
-  const items: { label: string; onClick: () => void }[] = [
-    { label: 'Editar', onClick: () => goToEdit(row) },
+  const items: { label: string; icon: string; onClick: () => void }[] = [
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(row) },
   ]
   if (row.hasActiveRental) {
     items.push({
       label: 'Cambiar estado',
+      icon: 'lucide:refresh-cw',
       onClick: () => openChangeStatusModal(row),
     })
   }
@@ -214,7 +215,7 @@ async function handleExport() {
   const now = new Date().toLocaleDateString('es-PE')
   await exportToExcel({
     fileName: `propiedades_${now}`,
-    sheetName: 'Propiedades',
+    sheetName: 'Propiedades',
     columns: [
       { header: 'Código', key: 'code', width: 14 },
       { header: 'Dirección', key: 'addressLine', width: 32 },

@@ -132,9 +132,9 @@ const goToEdit = (item: RentalListItem) => router.push(`/alquileres/contratos/${
 const goToFinancialConfig = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}/distribucion-financiera`)
 
 const getActions = (item: RentalListItem) => [
-  { label: 'Ver detalle', onClick: () => goToDetail(item) },
-  { label: 'Editar', onClick: () => goToEdit(item) },
-  { label: 'Distribución financiera', onClick: () => goToFinancialConfig(item) },
+  { label: 'Ver detalle', icon: 'lucide:eye', onClick: () => goToDetail(item) },
+  { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(item) },
+  { label: 'Distribución financiera', icon: 'lucide:sliders-horizontal', onClick: () => goToFinancialConfig(item) },
 ]
 
 const paginationProps = computed(() => {
@@ -171,7 +171,7 @@ async function handleExport() {
   const now = new Date().toLocaleDateString('es-PE')
   await exportToExcel({
     fileName: `alquileres_${now}`,
-    sheetName: 'Alquileres',
+    sheetName: 'Alquileres',
     columns: [
       { header: 'Código', key: 'code', width: 14 },
       { header: 'Propiedad', key: 'propertyAddress', width: 32 },

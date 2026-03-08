@@ -8,6 +8,7 @@ import AppIcon from '@shared/components/ui/AppIcon.vue'
 import ExcelIcon from '@shared/components/ui/ExcelIcon.vue'
 import SearchInput from '@shared/components/forms/SearchInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
+import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
 import { usePaymentHistory } from '../composables/usePayments'
 import type { PaymentHistoryItem } from '../services/payments.service'
@@ -98,6 +99,16 @@ function clearFilters() {
 }
 
 const { isExporting, exportToExcel } = useExcelExport()
+
+function getHistoryActions(item: PaymentHistoryItem) {
+  return [
+    {
+      label: 'Ver contrato',
+      icon: 'lucide:file-text',
+      onClick: () => router.push(`/alquileres/contratos/${item.rentalId}`),
+    },
+  ]
+}
 
 async function handleExport() {
   const result = await paymentsService.listHistory({
@@ -202,7 +213,7 @@ async function handleExport() {
         <SearchInput v-model="search" placeholder="Buscar por inquilino, propiedad o referencia..." />
       </div>
       <div class="w-full sm:w-40">
-        <FormSelect v-model="filterYear" :options="yearOptions" placeholder="Todos los meses" />
+        <FormSelect v-model="filterYear" :options="yearOptions" placeholder="Todos los años" />
       </div>
       <div class="w-full sm:w-40">
         <FormSelect v-model="filterMonth" :options="monthOptions" placeholder="Todos los meses" />
@@ -245,7 +256,7 @@ async function handleExport() {
       <template v-else>
         <!-- Table header -->
         <div
-          class="hidden lg:grid grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b"
+          class="hidden lg:grid grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b"
           :style="{ color: 'var(--color-text-muted)', borderColor: 'var(--color-border)' }"
         >
           <span>Fecha</span>
@@ -255,12 +266,13 @@ async function handleExport() {
           <span>Método</span>
           <span>Referencia</span>
           <span class="text-right">Monto</span>
+          <span></span>
         </div>
 
         <div
           v-for="item in historyData.data"
           :key="item.paymentId"
-          class="grid grid-cols-1 lg:grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-4 border-b transition-colors hover-surface items-center"
+          class="grid grid-cols-1 lg:grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-5 py-4 border-b transition-colors hover-surface items-center"
           :style="{ borderColor: 'var(--color-border)' }"
         >
           <!-- Fecha -->
@@ -312,6 +324,11 @@ async function handleExport() {
             <p class="text-sm font-semibold" :style="{ color: '#10b981' }">
               {{ formatCurrency(item.paidAmount, item.currency) }}
             </p>
+          </div>
+
+          <!-- Acciones -->
+          <div class="flex justify-end">
+            <ActionsDropdown :items="getHistoryActions(item)" />
           </div>
         </div>
       </template>

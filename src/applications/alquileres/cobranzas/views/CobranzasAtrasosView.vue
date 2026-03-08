@@ -11,6 +11,7 @@ import SearchInput from '@shared/components/forms/SearchInput.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
+import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
 import { useOverduePayments, useRegisterPayment, usePendingPayments } from '../composables/usePayments'
 import type { OverduePaymentItem, RegisterPaymentPayload } from '../services/payments.service'
@@ -142,6 +143,21 @@ function getAvatarColor(name: string) {
 }
 
 const { isExporting, exportToExcel } = useExcelExport()
+
+function getOverdueActions(item: OverduePaymentItem) {
+  return [
+    {
+      label: 'Cobrar',
+      icon: 'lucide:circle-dollar-sign',
+      onClick: () => openModal(item),
+    },
+    {
+      label: 'Ver contrato',
+      icon: 'lucide:file-text',
+      onClick: () => router.push(`/alquileres/contratos/${item.rentalId}`),
+    },
+  ]
+}
 
 async function handleExport() {
   const data = await paymentsService.listOverdue('alquileres', search.value || undefined)
@@ -305,13 +321,16 @@ async function handleExport() {
               <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
                 <AppIcon icon="lucide:pencil-line" :size="14" /> Nota
               </button>
-              <button
-                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-colors"
-                :style="{ backgroundColor: 'var(--color-primary)' }"
-                @click="openModal(item)"
-              >
-                <AppIcon icon="lucide:circle-dollar-sign" :size="14" /> Cobrar
-              </button>
+              <div class="flex items-center gap-1">
+                <button
+                  class="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-colors"
+                  :style="{ backgroundColor: 'var(--color-primary)' }"
+                  @click="openModal(item)"
+                >
+                  <AppIcon icon="lucide:circle-dollar-sign" :size="14" /> Cobrar
+                </button>
+                <ActionsDropdown :items="getOverdueActions(item)" />
+              </div>
             </div>
           </div>
         </div>
