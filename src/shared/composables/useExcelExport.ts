@@ -9,29 +9,26 @@ export type ExcelColumn = {
 
 export type ExcelRow = Record<string, string | number | boolean | null | undefined>
 
-export interface ExcelExportOptions {
-  fileName: string
+export interface ExcelSheetOptions {
   sheetName: string
   columns: ExcelColumn[]
   rows: ExcelRow[]
 }
 
-async function generateExcel(options: ExcelExportOptions): Promise<void> {
-  const { fileName, sheetName, columns, rows } = options
+export interface ExcelExportOptions extends ExcelSheetOptions {
+  fileName: string
+  additionalSheets?: ExcelSheetOptions[]
+}
 
-  const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'MARKAP'
-  workbook.created = new Date()
-
+function addSheetToWorkbook(workbook: ExcelJS.Workbook, opts: ExcelSheetOptions): void {
+  const { sheetName, columns, rows } = opts
   const sheet = workbook.addWorksheet(sheetName)
 
-  // Definir anchos de columna sin asignar header (lo hacemos manualmente)
   sheet.columns = columns.map((col) => ({
     key: col.key,
     width: col.width ?? 18,
   }))
 
-  // Fila 1 — encabezados escritos explícitamente
   const headerValues = columns.map((c) => c.header)
   const headerRow = sheet.addRow(headerValues)
   headerRow.height = 22
@@ -48,12 +45,10 @@ async function generateExcel(options: ExcelExportOptions): Promise<void> {
     }
   })
 
-  // Filas de datos — agregar por array ordenado según columns
   rows.forEach((rowData, idx) => {
     const values = columns.map((c) => rowData[c.key] ?? '')
     const row = sheet.addRow(values)
     row.height = 18
-    // Fondo alterno suave
     if (idx % 2 === 0) {
       row.eachCell({ includeEmpty: true }, (cell) => {
         cell.fill = {
@@ -71,10 +66,25 @@ async function generateExcel(options: ExcelExportOptions): Promise<void> {
     })
   })
 
-  // Auto-filter sobre la fila de encabezados
   sheet.autoFilter = {
     from: { row: 1, column: 1 },
     to: { row: 1, column: columns.length },
+  }
+}
+
+async function generateExcel(options: ExcelExportOptions): Promise<void> {
+  const { fileName, additionalSheets } = options
+
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'MARKAP'
+  workbook.created = new Date()
+
+  addSheetToWorkbook(workbook, options)
+
+  if (additionalSheets) {
+    for (const sheet of additionalSheets) {
+      addSheetToWorkbook(workbook, sheet)
+    }
   }
 
   const buffer = await workbook.xlsx.writeBuffer()

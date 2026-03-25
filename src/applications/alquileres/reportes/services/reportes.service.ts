@@ -51,8 +51,35 @@ export interface RentalsByMonthItem {
   newContracts: number
   expiredContracts: number
   activeAtEndOfMonth: number
+  /** Suma de monthlyAmount del contrato */
   totalRevenue: number
+  /** Monto real que recibe la empresa: baseAmount de config si existe, sino monthlyAmount */
+  companyRevenue: number
+  totalExpense: number
+  totalTax: number
+  totalExternalCommission: number
+  totalInternalCommission: number
+  totalUtility: number
   currency: string
+}
+
+export interface FinancialDistributionReportItem {
+  rentalId: string
+  rentalCode: string
+  propertyAddress: string
+  ownerName: string
+  tenantName: string
+  currency: string
+  baseAmount: number
+  monthlyAmount: number
+  expense: number
+  tax: number
+  externalAgentCommission: number
+  internalAgentCommission: number
+  utility: number
+  externalAgentName: string | null
+  internalAgentName: string | null
+  status: string
 }
 
 const APPLICATION_SLUG = 'alquileres'
@@ -106,11 +133,38 @@ export const reportesService = {
 
   getRentalsByMonth(
     applicationSlug: string = APPLICATION_SLUG,
-    year: number = new Date().getFullYear()
+    year: number = new Date().getFullYear(),
+    month?: number,
+    startDate?: string,
+    endDate?: string,
   ) {
     return apiClient
       .get<RentalsByMonthItem[]>('/reports/rentals-by-month', {
-        params: { applicationSlug, year },
+        params: {
+          applicationSlug,
+          year,
+          ...(month != null ? { month } : {}),
+          ...(startDate ? { startDate } : {}),
+          ...(endDate ? { endDate } : {}),
+        },
+      })
+      .then((r) => r.data)
+  },
+
+  getFinancialDistribution(
+    applicationSlug: string = APPLICATION_SLUG,
+    status?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    return apiClient
+      .get<FinancialDistributionReportItem[]>('/reports/financial-distribution', {
+        params: {
+          applicationSlug,
+          ...(status ? { status } : {}),
+          ...(startDate ? { startDate } : {}),
+          ...(endDate ? { endDate } : {}),
+        },
       })
       .then((r) => r.data)
   },

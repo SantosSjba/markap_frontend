@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, Badge } from '@shared/components'
-import { FormInput, FormSelect } from '@shared/components'
-import { useRental, useRentalFinancialBreakdown, useUpsertRentalFinancialConfig } from '../composables/useRentals'
-import { useUsers } from '@applications/settings/composables/useUsers'
-import { useAgentsList } from '@applications/alquileres/agentes/composables/useAgents'
+import { useRental, useRentalFinancialBreakdown } from '../composables/useRentals'
 import type { RentalDetail } from '../services/rentals.service'
 
 const route = useRoute()
@@ -15,44 +12,6 @@ const id = computed(() => String(route.params.id ?? ''))
 
 const { data: rental, isLoading: loadingRental, isError: rentalError } = useRental(id)
 const { data: breakdown, isLoading: loadingBreakdown } = useRentalFinancialBreakdown(id)
-const upsertFinancial = useUpsertRentalFinancialConfig()
-const { data: usersList } = useUsers()
-const externalAgentsParams = ref({ applicationSlug: 'alquileres', type: 'EXTERNAL' as const, page: 1, limit: 200, isActive: true })
-const { data: externalAgentsResult } = useAgentsList(externalAgentsParams)
-const externalAgentsList = computed(() => externalAgentsResult.value?.data ?? [])
-
-const showFinancialForm = ref(false)
-const form = ref({
-  expenseType: 'FIXED' as 'PERCENT' | 'FIXED',
-  expenseValue: 0,
-  taxType: 'FIXED' as 'PERCENT' | 'FIXED',
-  taxValue: 0,
-  externalAgentId: '' as string | null,
-  externalAgentType: 'FIXED' as 'PERCENT' | 'FIXED',
-  externalAgentValue: 0,
-  externalAgentName: '',
-  internalAgentId: '' as string | null,
-  internalAgentType: 'FIXED' as 'PERCENT' | 'FIXED',
-  internalAgentValue: 0,
-})
-
-watch(breakdown, (b) => {
-  if (!b?.config) return
-  const c = b.config
-  form.value = {
-    expenseType: c.expenseType,
-    expenseValue: c.expenseValue,
-    taxType: c.taxType,
-    taxValue: c.taxValue,
-    externalAgentId: c.externalAgentId ?? '',
-    externalAgentType: c.externalAgentType,
-    externalAgentValue: c.externalAgentValue,
-    externalAgentName: c.externalAgentName ?? '',
-    internalAgentId: c.internalAgentId ?? '',
-    internalAgentType: c.internalAgentType,
-    internalAgentValue: c.internalAgentValue,
-  }
-}, { immediate: true })
 
 function formatDate(d: string): string {
   return new Date(d).toLocaleDateString('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -80,57 +39,9 @@ function statusVariant(s: string): 'success' | 'error' | 'warning' | 'neutral' {
   return 'neutral'
 }
 
-function submitFinancialConfig() {
-  if (!id.value) return
-  upsertFinancial.mutate({
-    rentalId: id.value,
-    data: {
-      expenseType: form.value.expenseType,
-      expenseValue: form.value.expenseValue,
-      taxType: form.value.taxType,
-      taxValue: form.value.taxValue,
-      externalAgentId: form.value.externalAgentId || null,
-      externalAgentType: form.value.externalAgentType,
-      externalAgentValue: form.value.externalAgentValue,
-      externalAgentName: form.value.externalAgentName || null,
-      internalAgentId: form.value.internalAgentId || null,
-      internalAgentType: form.value.internalAgentType,
-      internalAgentValue: form.value.internalAgentValue,
-    },
-  })
-  showFinancialForm.value = false
-}
-
 const goBack = () => router.push('/alquileres/contratos')
 const goToEdit = () => router.push(`/alquileres/contratos/${id.value}/editar`)
 const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}/distribucion-financiera`)
-
-const expenseTypeOptions = [
-  { value: 'FIXED', label: 'Monto fijo' },
-  { value: 'PERCENT', label: 'Porcentaje' },
-]
-const internalAgentOptions = computed(() => {
-  const list = usersList.value ?? []
-  return [{ value: '', label: 'Ninguno' }, ...list.map((u) => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))]
-})
-// FormSelect emite null cuando value vacío; normalizamos a '' para que coincida con la opción "Ninguno"
-const internalAgentIdModel = computed({
-  get: () => form.value.internalAgentId ?? '',
-  set: (v: string | null) => { form.value.internalAgentId = (v === null || v === '') ? '' : v }
-})
-const externalAgentIdModel = computed({
-  get: () => form.value.externalAgentId ?? '',
-  set: (v: string | null) => { form.value.externalAgentId = (v === null || v === '') ? '' : v }
-})
-const externalAgentOptions = computed(() => [
-  { value: '', label: 'Ninguno (nombre manual)' },
-  ...externalAgentsList.value.map((a) => ({ value: a.id, label: a.fullName }))
-])
-const selectedInternalUser = computed(() => {
-  const id = form.value.internalAgentId
-  if (!id) return null
-  return usersList.value?.find((u) => u.id === id) ?? null
-})
 </script>
 
 <template>
@@ -268,16 +179,8 @@ const selectedInternalUser = computed(() => {
           <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
             Distribución financiera
           </h2>
-          <BaseButton
-            v-if="!showFinancialForm"
-            variant="outline"
-            size="sm"
-            @click="showFinancialForm = true"
-          >
+          <BaseButton variant="outline" size="sm" @click="goToFinancialConfig">
             {{ breakdown?.config ? 'Editar' : 'Configurar' }}
-          </BaseButton>
-          <BaseButton v-else variant="ghost" size="sm" @click="showFinancialForm = false">
-            Cancelar
           </BaseButton>
         </div>
 
@@ -286,20 +189,46 @@ const selectedInternalUser = computed(() => {
         </div>
 
         <template v-else-if="breakdown">
-          <!-- Desglose mensual -->
+          <!-- Información del contrato -->
+          <div
+            class="grid grid-cols-2 gap-3 mb-4 p-3 rounded-lg"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+          >
+            <div>
+              <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto mensual (contrato)</p>
+              <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                {{ formatAmount(breakdown.monthlyAmount, breakdown.currency) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto base para distribución</p>
+              <p class="text-sm font-semibold" :style="{ color: 'var(--color-primary)' }">
+                {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
+              </p>
+              <p
+                v-if="breakdown.baseAmount !== breakdown.monthlyAmount"
+                class="text-xs"
+                :style="{ color: 'var(--color-text-muted)' }"
+              >
+                (monto personalizado)
+              </p>
+            </div>
+          </div>
+
+          <!-- Desglose de la distribución -->
           <div class="overflow-x-auto mb-4">
             <table class="w-full text-sm border-collapse">
               <thead>
                 <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
                   <th class="text-left py-2 pr-4" :style="{ color: 'var(--color-text-secondary)' }">Concepto</th>
-                  <th class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">Monto mensual</th>
+                  <th class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">Monto</th>
                 </tr>
               </thead>
               <tbody>
                 <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Ingreso (alquiler)</td>
+                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Ingreso (monto base del alquiler)</td>
                   <td class="text-right py-2 font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                    {{ formatAmount(breakdown.monthlyAmount, breakdown.currency) }}
+                    {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
                   </td>
                 </tr>
                 <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
@@ -315,20 +244,20 @@ const selectedInternalUser = computed(() => {
                   </td>
                 </tr>
                 <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Agente externo</td>
+                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Comisión agente externo</td>
                   <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
                     − {{ formatAmount(breakdown.externalAgentCommission, breakdown.currency) }}
                   </td>
                 </tr>
                 <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Agente interno</td>
+                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Comisión agente interno</td>
                   <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
                     − {{ formatAmount(breakdown.internalAgentCommission, breakdown.currency) }}
                   </td>
                 </tr>
                 <tr>
-                  <td class="py-2 pr-4 font-semibold" :style="{ color: 'var(--color-text-primary)' }">Utilidad neta</td>
-                  <td class="text-right py-2 font-semibold" :style="{ color: 'var(--color-primary)' }">
+                  <td class="py-2 pr-4 font-semibold" :style="{ color: 'var(--color-text-primary)' }">Utilidad neta (propietario)</td>
+                  <td class="text-right py-2 font-bold" :style="{ color: 'var(--color-primary)' }">
                     {{ formatAmount(breakdown.utility, breakdown.currency) }}
                   </td>
                 </tr>
@@ -336,97 +265,10 @@ const selectedInternalUser = computed(() => {
             </table>
           </div>
 
-          <!-- Formulario config: grid 2 columnas responsivo -->
-          <form
-            v-if="showFinancialForm"
-            class="space-y-6 p-4 sm:p-5 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
-            @submit.prevent="submitFinancialConfig"
-          >
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div class="min-w-0">
-                <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-primary)' }">Gastos</label>
-                <div class="grid grid-cols-2 gap-2 sm:gap-3 items-center">
-                  <FormSelect v-model="form.expenseType" :options="expenseTypeOptions" class="min-w-0 w-full" />
-                  <FormInput
-                    v-model="form.expenseValue"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    :placeholder="form.expenseType === 'PERCENT' ? '%' : '0.00'"
-                    class="min-w-0 w-full"
-                  />
-                </div>
-              </div>
-              <div class="min-w-0">
-                <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-primary)' }">Impuestos</label>
-                <div class="grid grid-cols-2 gap-2 sm:gap-3 items-center">
-                  <FormSelect v-model="form.taxType" :options="expenseTypeOptions" class="min-w-0 w-full" />
-                  <FormInput
-                    v-model="form.taxValue"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    :placeholder="form.taxType === 'PERCENT' ? '%' : '0.00'"
-                    class="min-w-0 w-full"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div class="min-w-0">
-                <FormSelect
-                  v-model="externalAgentIdModel"
-                  label="Agente externo"
-                  :options="externalAgentOptions"
-                  placeholder="Ninguno"
-                  class="w-full"
-                />
-                <FormInput
-                  v-model="form.externalAgentName"
-                  type="text"
-                  label="Nombre (si no elige agente)"
-                  :placeholder="form.externalAgentId ? 'Del agente' : 'Opcional'"
-                  class="w-full mt-3"
-                />
-              </div>
-              <div class="min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 items-end">
-                <FormSelect v-model="form.externalAgentType" label="Tipo comisión" :options="expenseTypeOptions" class="min-w-0" />
-                <FormInput v-model="form.externalAgentValue" type="number" min="0" step="0.01" label="Valor" placeholder="0" class="min-w-0" />
-              </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div class="min-w-0">
-                <FormSelect
-                  v-model="internalAgentIdModel"
-                  label="Agente interno"
-                  :options="internalAgentOptions"
-                  placeholder="Ninguno"
-                  class="w-full"
-                />
-                <p
-                  v-if="selectedInternalUser"
-                  class="mt-2 text-sm rounded-md px-3 py-2"
-                  :style="{ color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }"
-                >
-                  <span class="font-medium">Correo:</span> {{ selectedInternalUser.email }}
-                </p>
-              </div>
-              <div class="min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 items-end">
-                <FormSelect v-model="form.internalAgentType" label="Tipo comisión" :options="expenseTypeOptions" class="min-w-0" />
-                <FormInput v-model="form.internalAgentValue" type="number" min="0" step="0.01" label="Valor" placeholder="0" class="min-w-0" />
-              </div>
-            </div>
-            <div class="flex justify-end pt-2">
-              <BaseButton type="submit" :disabled="upsertFinancial.isPending.value">
-                {{ upsertFinancial.isPending.value ? 'Guardando...' : 'Guardar configuración' }}
-              </BaseButton>
-            </div>
-          </form>
         </template>
 
         <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
-          Sin configuración financiera. Use "Configurar" para definir gastos, impuestos y comisiones.
+          Sin configuración financiera. Presione "Configurar" para definir el monto base, gastos, impuestos y comisiones.
         </p>
       </section>
 

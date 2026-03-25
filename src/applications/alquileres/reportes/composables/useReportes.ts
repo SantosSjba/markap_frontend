@@ -13,8 +13,10 @@ export const reportKeys = {
   contractStatusSummary: (slug: string) =>
     [...reportKeys.all, 'contract-status-summary', slug] as const,
   monthlyMetrics: (slug: string) => [...reportKeys.all, 'monthly-metrics', slug] as const,
-  rentalsByMonth: (slug: string, year: number) =>
-    [...reportKeys.all, 'rentals-by-month', slug, year] as const,
+  rentalsByMonth: (slug: string, year: number, month?: number, startDate?: string, endDate?: string) =>
+    [...reportKeys.all, 'rentals-by-month', slug, year, month ?? '', startDate ?? '', endDate ?? ''] as const,
+  financialDistribution: (slug: string, status?: string) =>
+    [...reportKeys.all, 'financial-distribution', slug, status ?? ''] as const,
 }
 
 const APPLICATION_SLUG = 'alquileres'
@@ -71,14 +73,65 @@ export function useMonthlyMetrics(applicationSlug: string = APPLICATION_SLUG) {
   })
 }
 
+export interface RentalsByMonthParams {
+  year?: number
+  month?: number
+  startDate?: string
+  endDate?: string
+}
+
 export function useRentalsByMonth(
   applicationSlug: MaybeRefOrGetter<string> = APPLICATION_SLUG,
-  year: MaybeRefOrGetter<number> = () => new Date().getFullYear()
+  params: MaybeRefOrGetter<RentalsByMonthParams> = {}
 ) {
   const slugVal = computed(() => toValue(applicationSlug))
-  const yearVal = computed(() => toValue(year))
+  const paramsVal = computed(() => toValue(params))
   return useQuery({
-    queryKey: computed(() => reportKeys.rentalsByMonth(slugVal.value, yearVal.value)),
-    queryFn: () => reportesService.getRentalsByMonth(slugVal.value, yearVal.value),
+    queryKey: computed(() =>
+      reportKeys.rentalsByMonth(
+        slugVal.value,
+        paramsVal.value.year ?? new Date().getFullYear(),
+        paramsVal.value.month,
+        paramsVal.value.startDate,
+        paramsVal.value.endDate,
+      )
+    ),
+    queryFn: () =>
+      reportesService.getRentalsByMonth(
+        slugVal.value,
+        paramsVal.value.year ?? new Date().getFullYear(),
+        paramsVal.value.month,
+        paramsVal.value.startDate,
+        paramsVal.value.endDate,
+      ),
+  })
+}
+
+export interface FinancialDistributionParams {
+  status?: string
+  startDate?: string
+  endDate?: string
+}
+
+export function useFinancialDistributionReport(
+  applicationSlug: MaybeRefOrGetter<string> = APPLICATION_SLUG,
+  params: MaybeRefOrGetter<FinancialDistributionParams> = {}
+) {
+  const slugVal = computed(() => toValue(applicationSlug))
+  const paramsVal = computed(() => toValue(params))
+  return useQuery({
+    queryKey: computed(() =>
+      reportKeys.financialDistribution(
+        slugVal.value,
+        [paramsVal.value.status ?? '', paramsVal.value.startDate ?? '', paramsVal.value.endDate ?? ''].join('|'),
+      )
+    ),
+    queryFn: () =>
+      reportesService.getFinancialDistribution(
+        slugVal.value,
+        paramsVal.value.status,
+        paramsVal.value.startDate,
+        paramsVal.value.endDate,
+      ),
   })
 }

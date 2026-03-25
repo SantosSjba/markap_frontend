@@ -24,7 +24,7 @@ const summaryQuery = useReportsSummary()
 const expiringQuery = useContractsExpiring('alquileres', 30)
 const contractStatusQuery = useContractStatusSummary()
 const monthlyMetricsQuery = useMonthlyMetrics()
-const rentalsByMonthQuery = useRentalsByMonth('alquileres', currentYear)
+const rentalsByMonthQuery = useRentalsByMonth('alquileres', computed(() => ({ year: currentYear.value })))
 
 const loading = computed(
   () =>

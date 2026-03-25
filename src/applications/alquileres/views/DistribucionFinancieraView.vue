@@ -21,6 +21,7 @@ const { data: externalAgentsResult } = useAgentsList(externalAgentsParams)
 const externalAgentsList = computed(() => externalAgentsResult.value?.data ?? [])
 
 const form = ref({
+  baseAmount: '' as number | string,
   expenseType: 'FIXED' as 'PERCENT' | 'FIXED',
   expenseValue: 0,
   taxType: 'FIXED' as 'PERCENT' | 'FIXED',
@@ -38,6 +39,7 @@ watch(breakdown, (b) => {
   if (!b?.config) return
   const c = b.config
   form.value = {
+    baseAmount: c.baseAmount ?? '',
     expenseType: c.expenseType,
     expenseValue: c.expenseValue,
     taxType: c.taxType,
@@ -62,6 +64,7 @@ function submitFinancialConfig() {
   upsertFinancial.mutate({
     rentalId: id.value,
     data: {
+      baseAmount: form.value.baseAmount !== '' && Number(form.value.baseAmount) > 0 ? Number(form.value.baseAmount) : null,
       expenseType: form.value.expenseType,
       expenseValue: form.value.expenseValue,
       taxType: form.value.taxType,
@@ -105,6 +108,11 @@ const selectedInternalUser = computed(() => {
   if (!id) return null
   return usersList.value?.find((u) => u.id === id) ?? null
 })
+
+const upsertSuccess = computed(() => upsertFinancial.isSuccess.value)
+watch(upsertSuccess, (ok) => {
+  if (ok) setTimeout(() => upsertFinancial.reset(), 3000)
+})
 </script>
 
 <template>
@@ -125,7 +133,7 @@ const selectedInternalUser = computed(() => {
           Distribución financiera – {{ rental?.code ?? 'Alquiler' }}
         </h1>
         <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Gastos, impuestos y comisiones de agentes
+          Monto ingresado, gastos, impuestos y comisiones de agentes
         </p>
       </div>
       <BaseButton variant="outline" @click="goToEdit">
@@ -150,12 +158,43 @@ const selectedInternalUser = computed(() => {
     </p>
 
     <template v-else>
+      <!-- Resumen del contrato -->
+      <section
+        class="p-5 rounded-xl"
+        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      >
+        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
+          Información del contrato
+        </h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+          <div>
+            <p class="font-medium" :style="{ color: 'var(--color-text-secondary)' }">Monto mensual (contrato)</p>
+            <p class="font-semibold text-base mt-0.5" :style="{ color: 'var(--color-text-primary)' }">
+              {{ rental ? formatAmount(rental.monthlyAmount, rental.currency) : '—' }}
+            </p>
+          </div>
+          <div>
+            <p class="font-medium" :style="{ color: 'var(--color-text-secondary)' }">Monto base para distribución</p>
+            <p class="font-semibold text-base mt-0.5" :style="{ color: 'var(--color-primary)' }">
+              {{ breakdown ? formatAmount(breakdown.baseAmount, breakdown.currency) : '—' }}
+            </p>
+            <p v-if="breakdown && breakdown.baseAmount !== breakdown.monthlyAmount" class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              (monto personalizado)
+            </p>
+            <p v-else class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              (del contrato)
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Desglose -->
       <section
         class="p-5 rounded-xl mb-4"
         :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
       >
         <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Desglose mensual
+          Desglose de la distribución
         </h2>
         <div v-if="loadingBreakdown" class="text-sm py-4" :style="{ color: 'var(--color-text-muted)' }">
           Cargando desglose...
@@ -165,14 +204,16 @@ const selectedInternalUser = computed(() => {
             <thead>
               <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
                 <th class="text-left py-2 pr-4" :style="{ color: 'var(--color-text-secondary)' }">Concepto</th>
-                <th class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">Monto mensual</th>
+                <th class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">Monto</th>
               </tr>
             </thead>
             <tbody>
               <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Ingreso (alquiler)</td>
-                <td class="text-right py-2 font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                  {{ formatAmount(breakdown.monthlyAmount, breakdown.currency) }}
+                <td class="py-2 pr-4 font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                  Ingreso (monto base del alquiler)
+                </td>
+                <td class="text-right py-2 font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                  {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
                 </td>
               </tr>
               <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
@@ -188,20 +229,20 @@ const selectedInternalUser = computed(() => {
                 </td>
               </tr>
               <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Agente externo</td>
+                <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Comisión agente externo</td>
                 <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
                   − {{ formatAmount(breakdown.externalAgentCommission, breakdown.currency) }}
                 </td>
               </tr>
               <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Agente interno</td>
+                <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Comisión agente interno</td>
                 <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
                   − {{ formatAmount(breakdown.internalAgentCommission, breakdown.currency) }}
                 </td>
               </tr>
               <tr>
-                <td class="py-2 pr-4 font-semibold" :style="{ color: 'var(--color-text-primary)' }">Utilidad neta</td>
-                <td class="text-right py-2 font-semibold" :style="{ color: 'var(--color-primary)' }">
+                <td class="py-3 pr-4 font-semibold text-base" :style="{ color: 'var(--color-text-primary)' }">Utilidad neta (propietario)</td>
+                <td class="text-right py-3 font-bold text-base" :style="{ color: 'var(--color-primary)' }">
                   {{ formatAmount(breakdown.utility, breakdown.currency) }}
                 </td>
               </tr>
@@ -215,13 +256,47 @@ const selectedInternalUser = computed(() => {
         class="p-5 rounded-xl"
         :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
       >
-        <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
+        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
           Configuración
         </h2>
+        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+          Ingresa el monto recibido por el alquiler concretado y configura los descuentos.
+        </p>
+
+        <div
+          v-if="upsertFinancial.isSuccess.value"
+          class="mb-4 px-4 py-3 rounded-lg text-sm font-medium"
+          :style="{ backgroundColor: 'var(--color-success-light, #dcfce7)', color: 'var(--color-success, #16a34a)' }"
+        >
+          Configuración guardada correctamente.
+        </div>
+
         <form
           class="space-y-6"
           @submit.prevent="submitFinancialConfig"
         >
+          <!-- Monto ingresado -->
+          <div
+            class="p-4 sm:p-5 rounded-lg"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '2px solid var(--color-primary)', borderStyle: 'dashed' }"
+          >
+            <label class="block text-sm font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
+              Monto ingresado por el alquiler concretado
+            </label>
+            <p class="text-xs mb-3" :style="{ color: 'var(--color-text-muted)' }">
+              Es el importe real que la empresa recibe por este alquiler. Sobre este monto se calculan todos los descuentos.
+              Si se deja vacío, se usará el monto mensual del contrato ({{ rental ? formatAmount(rental.monthlyAmount, rental.currency) : '' }}).
+            </p>
+            <FormInput
+              v-model="form.baseAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              :placeholder="`Ej: ${rental?.monthlyAmount ?? 0}`"
+              class="max-w-xs"
+            />
+          </div>
+
           <!-- Grid 2 columnas responsivo -->
           <div
             class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-5 rounded-lg"

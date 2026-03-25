@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { FormInput, FormSelect } from '@shared/components'
+import type { RentalsByMonthParams } from '../composables'
 import {
   StatsCard,
   BaseTabs,
   BaseButton,
-  Badge,
   AppIcon,
   ExcelIcon,
 } from '@shared/components'
@@ -30,7 +31,49 @@ const APPLICATION_SLUG = 'alquileres'
 
 const periodFilter = ref(30)
 const activeTab = ref('contratos-por-vencer')
+
+// --- Filtros para "Alquiler por mes" ---
+type FilterMode = 'year' | 'month' | 'range'
+const filterMode = ref<FilterMode>('year')
 const yearFilter = ref(new Date().getFullYear())
+const monthFilter = ref(new Date().getMonth() + 1)
+const startDateFilter = ref('')
+const endDateFilter = ref('')
+
+const filterModeOptions = [
+  { value: 'year', label: 'Por año completo' },
+  { value: 'month', label: 'Mes específico' },
+  { value: 'range', label: 'Rango de fechas' },
+]
+
+const monthOptions = [
+  { value: 1, label: 'Enero' },
+  { value: 2, label: 'Febrero' },
+  { value: 3, label: 'Marzo' },
+  { value: 4, label: 'Abril' },
+  { value: 5, label: 'Mayo' },
+  { value: 6, label: 'Junio' },
+  { value: 7, label: 'Julio' },
+  { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Septiembre' },
+  { value: 10, label: 'Octubre' },
+  { value: 11, label: 'Noviembre' },
+  { value: 12, label: 'Diciembre' },
+]
+
+const rentalsByMonthParams = computed<RentalsByMonthParams>(() => {
+  if (filterMode.value === 'range') {
+    return {
+      year: yearFilter.value,
+      startDate: startDateFilter.value || undefined,
+      endDate: endDateFilter.value || undefined,
+    }
+  }
+  if (filterMode.value === 'month') {
+    return { year: yearFilter.value, month: monthFilter.value }
+  }
+  return { year: yearFilter.value }
+})
 
 const reportTabs = [
   { id: 'contratos-por-vencer', label: 'Contratos por Vencer' },
@@ -47,7 +90,7 @@ const propertiesWithoutContractQuery = usePropertiesWithoutContract(APPLICATION_
 const activeClientsQuery = useActiveClientsReport(APPLICATION_SLUG)
 const contractStatusQuery = useContractStatusSummary(APPLICATION_SLUG)
 const monthlyMetricsQuery = useMonthlyMetrics(APPLICATION_SLUG)
-const rentalsByMonthQuery = useRentalsByMonth(APPLICATION_SLUG, yearFilter)
+const rentalsByMonthQuery = useRentalsByMonth(APPLICATION_SLUG, rentalsByMonthParams)
 
 const stats = computed(() => summaryQuery.data.value ?? {
   contratosPorVencer: 0,
@@ -134,7 +177,7 @@ async function handleExportTab() {
     const data = await reportesService.getContractsExpiring(APPLICATION_SLUG, days.value)
     await exportToExcel({
       fileName: `contratos_por_vencer_${now}`,
-      sheetName: 'Contratos por Vencer',
+      sheetName: 'Contratos por Vencer',
       columns: [
         { header: 'Código', key: 'code', width: 14 },
         { header: 'Inquilino', key: 'tenantName', width: 26 },
@@ -156,7 +199,7 @@ async function handleExportTab() {
     const data = await reportesService.getPropertiesWithoutContract(APPLICATION_SLUG)
     await exportToExcel({
       fileName: `propiedades_sin_contrato_${now}`,
-      sheetName: 'Sin Contrato',
+      sheetName: 'Sin Contrato',
       columns: [
         { header: 'Código', key: 'code', width: 14 },
         { header: 'Dirección', key: 'addressLine', width: 36 },
@@ -172,7 +215,7 @@ async function handleExportTab() {
     const data = await reportesService.getActiveClients(APPLICATION_SLUG)
     await exportToExcel({
       fileName: `clientes_activos_${now}`,
-      sheetName: 'Clientes Activos',
+      sheetName: 'Clientes Activos',
       columns: [
         { header: 'Cliente', key: 'fullName', width: 28 },
         { header: 'Contratos activos', key: 'contractsCount', width: 18 },
@@ -183,24 +226,45 @@ async function handleExportTab() {
       })),
     })
   } else if (activeTab.value === 'alquiler-por-mes') {
-    const data = await reportesService.getRentalsByMonth(APPLICATION_SLUG, yearFilter.value)
+    const p = rentalsByMonthParams.value
+    const data = await reportesService.getRentalsByMonth(
+      APPLICATION_SLUG,
+      p.year ?? yearFilter.value,
+      p.month,
+      p.startDate,
+      p.endDate,
+    )
+    const fileLabel = filterMode.value === 'range'
+      ? `${p.startDate ?? ''}_${p.endDate ?? ''}`
+      : filterMode.value === 'month'
+        ? `${p.year}_mes${p.month}`
+        : String(p.year ?? yearFilter.value)
+
     await exportToExcel({
-      fileName: `alquiler_por_mes_${yearFilter.value}_${now}`,
-      sheetName: `Alquiler ${yearFilter.value}`,
+      fileName: `alquiler_por_mes_${fileLabel}_${now}`,
+      sheetName: 'Alquiler por Mes',
       columns: [
-        { header: 'Mes', key: 'monthName', width: 14 },
+        { header: 'Mes', key: 'monthName', width: 16 },
+        { header: 'Ingreso (monto base)', key: 'companyRevenue', width: 22 },
+        { header: 'Gastos', key: 'totalExpense', width: 16 },
+        { header: 'Impuestos', key: 'totalTax', width: 16 },
+        { header: 'Comisión ag. externo', key: 'totalExternalCommission', width: 22 },
+        { header: 'Comisión ag. interno', key: 'totalInternalCommission', width: 22 },
+        { header: 'Utilidad neta', key: 'totalUtility', width: 18 },
         { header: 'Contratos nuevos', key: 'newContracts', width: 18 },
-        { header: 'Contratos vencidos', key: 'expiredContracts', width: 20 },
         { header: 'Activos al cierre', key: 'activeAtEndOfMonth', width: 18 },
-        { header: 'Ingresos', key: 'totalRevenue', width: 16 },
         { header: 'Moneda', key: 'currency', width: 10 },
       ],
       rows: data.map((r: RentalsByMonthItem) => ({
         monthName: r.monthName,
+        companyRevenue: r.companyRevenue,
+        totalExpense: r.totalExpense,
+        totalTax: r.totalTax,
+        totalExternalCommission: r.totalExternalCommission,
+        totalInternalCommission: r.totalInternalCommission,
+        totalUtility: r.totalUtility,
         newContracts: r.newContracts,
-        expiredContracts: r.expiredContracts,
         activeAtEndOfMonth: r.activeAtEndOfMonth,
-        totalRevenue: r.totalRevenue,
         currency: r.currency,
       })),
     })
@@ -440,71 +504,233 @@ async function handleExportTab() {
 
         <!-- Alquiler por mes -->
         <template v-else-if="activeTab === 'alquiler-por-mes'">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
             <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center"
-              :style="{ backgroundColor: 'var(--color-primary-light)' }"
-            >
+              <div
+                class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                :style="{ backgroundColor: 'var(--color-primary-light)' }"
+              >
                 <AppIcon icon="lucide:bar-chart-2" :size="20" color="var(--color-primary)" />
               </div>
               <div>
                 <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">
-                  Alquiler por mes
+                  Ingresos por alquileres por mes
                 </h2>
                 <p class="text-sm" style="color: var(--color-text-secondary);">
-                  Contratos nuevos, vencidos, activos al cierre e ingresos por mes
+                  Contratos nuevos, vencidos, activos y el ingreso único que la empresa recibe al concretar cada alquiler
                 </p>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <label class="text-sm shrink-0" style="color: var(--color-text-secondary);">Año:</label>
-              <select
-                v-model.number="yearFilter"
-                class="rounded-lg border px-3 py-2 text-sm min-w-[100px]"
-                style="
-                  border-color: var(--color-border);
-                  background-color: var(--color-surface);
-                  color: var(--color-text-primary);
-                "
-              >
-                <option v-for="y in yearOptions" :key="y" :value="y">
-                  {{ y }}
-                </option>
-              </select>
+            <BaseButton variant="outline" :loading="isExporting" @click="handleExportTab">
+              <ExcelIcon class="w-5 h-5" />
+              Exportar Excel
+            </BaseButton>
+          </div>
+
+          <!-- Filtros -->
+          <div
+            class="p-4 rounded-xl mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+          >
+            <!-- Modo de filtro -->
+            <FormSelect
+              v-model="filterMode"
+              label="Modo de filtro"
+              :options="filterModeOptions"
+            />
+
+            <!-- Año (siempre visible en modos year y month) -->
+            <FormSelect
+              v-if="filterMode !== 'range'"
+              v-model="yearFilter"
+              label="Año"
+              :options="yearOptions.map(y => ({ value: y, label: String(y) }))"
+            />
+
+            <!-- Mes (solo en modo mes específico) -->
+            <FormSelect
+              v-if="filterMode === 'month'"
+              v-model="monthFilter"
+              label="Mes"
+              :options="monthOptions"
+            />
+
+            <!-- Rango de fechas (solo en modo range) -->
+            <template v-if="filterMode === 'range'">
+              <FormInput
+                v-model="startDateFilter"
+                type="date"
+                label="Fecha inicio"
+              />
+              <FormInput
+                v-model="endDateFilter"
+                type="date"
+                label="Fecha fin"
+              />
+            </template>
+          </div>
+
+          <!-- Totales rápidos -->
+          <div
+            v-if="rentalsByMonthRows.length > 0"
+            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5"
+          >
+            <div
+              class="rounded-lg p-3 text-center"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Ingreso (monto base)</p>
+              <p class="text-lg font-bold" :style="{ color: 'var(--color-primary)' }">
+                {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.companyRevenue, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+              </p>
+            </div>
+            <div
+              class="rounded-lg p-3 text-center"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Gastos</p>
+              <p class="text-lg font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExpense, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+              </p>
+            </div>
+            <div
+              class="rounded-lg p-3 text-center"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Impuestos</p>
+              <p class="text-lg font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalTax, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+              </p>
+            </div>
+            <div
+              class="rounded-lg p-3 text-center"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Comisión ag. externo</p>
+              <p class="text-lg font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+              </p>
+            </div>
+            <div
+              class="rounded-lg p-3 text-center"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Comisión ag. interno</p>
+              <p class="text-lg font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalInternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+              </p>
+            </div>
+            <div
+              class="rounded-lg p-3 text-center"
+              :style="{ backgroundColor: 'var(--color-primary-light)', border: '1px solid var(--color-primary)' }"
+            >
+              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-primary)' }">Utilidad neta</p>
+              <p class="text-lg font-bold" :style="{ color: 'var(--color-primary)' }">
+                {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalUtility, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+              </p>
             </div>
           </div>
+
           <div v-if="rentalsByMonthQuery.isPending.value" class="flex justify-center py-12">
             <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
           </div>
           <div v-else class="overflow-x-auto">
             <table class="w-full border-collapse text-sm">
               <thead>
-                <tr style="border-bottom: 1px solid var(--color-border);">
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Mes</th>
-                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Contratos nuevos</th>
-                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Contratos vencidos</th>
-                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Activos al cierre</th>
-                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Ingresos del mes</th>
+                <tr style="border-bottom: 2px solid var(--color-border);">
+                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Período</th>
+                  <th class="text-right py-3 px-4 font-semibold" :style="{ color: 'var(--color-primary)' }">
+                    Ingreso
+                    <span class="block text-xs font-normal" :style="{ color: 'var(--color-text-muted)' }">(monto base)</span>
+                  </th>
+                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Gastos</th>
+                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Impuestos</th>
+                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">
+                    Comisión
+                    <span class="block text-xs font-normal">ag. externo</span>
+                  </th>
+                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">
+                    Comisión
+                    <span class="block text-xs font-normal">ag. interno</span>
+                  </th>
+                  <th class="text-right py-3 px-4 font-semibold" :style="{ color: 'var(--color-primary)' }">
+                    Utilidad neta
+                    <span class="block text-xs font-normal">(propietario)</span>
+                  </th>
+                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">
+                    Contratos
+                    <span class="block text-xs font-normal">nuevos / activos</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr
                   v-for="row in rentalsByMonthRows"
                   :key="`${row.year}-${row.month}`"
+                  class="hover:opacity-90 transition-opacity"
                   style="border-bottom: 1px solid var(--color-border);"
                 >
                   <td class="py-3 px-4 font-medium" style="color: var(--color-text-primary);">{{ row.monthName }}</td>
-                  <td class="py-3 px-4 text-right" style="color: var(--color-text-primary);">{{ row.newContracts }}</td>
-                  <td class="py-3 px-4 text-right" style="color: var(--color-text-primary);">{{ row.expiredContracts }}</td>
-                  <td class="py-3 px-4 text-right" style="color: var(--color-text-primary);">{{ row.activeAtEndOfMonth }}</td>
-                  <td class="py-3 px-4 text-right font-medium" style="color: var(--color-text-primary);">
-                    {{ formatCurrency(row.totalRevenue, row.currency) }}
+                  <td class="py-3 px-4 text-right font-semibold" :style="{ color: 'var(--color-primary)' }">
+                    {{ formatCurrency(row.companyRevenue, row.currency) }}
+                  </td>
+                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    {{ row.totalExpense > 0 ? `− ${formatCurrency(row.totalExpense, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                  </td>
+                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    {{ row.totalTax > 0 ? `− ${formatCurrency(row.totalTax, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                  </td>
+                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    {{ row.totalExternalCommission > 0 ? `− ${formatCurrency(row.totalExternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                  </td>
+                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    {{ row.totalInternalCommission > 0 ? `− ${formatCurrency(row.totalInternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-bold" :style="{ color: row.totalUtility >= 0 ? 'var(--color-primary)' : 'var(--color-error)' }">
+                    {{ formatCurrency(row.totalUtility, row.currency) }}
+                  </td>
+                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    {{ row.newContracts }} / {{ row.activeAtEndOfMonth }}
                   </td>
                 </tr>
               </tbody>
+              <tfoot v-if="rentalsByMonthRows.length > 1">
+                <tr style="border-top: 2px solid var(--color-border);">
+                  <td class="py-3 px-4 font-semibold" style="color: var(--color-text-primary);">Total</td>
+                  <td class="py-3 px-4 text-right font-bold" :style="{ color: 'var(--color-primary)' }">
+                    {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.companyRevenue, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                    − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExpense, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                    − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalTax, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                    − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                    − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalInternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-bold" :style="{ color: 'var(--color-primary)' }">
+                    {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalUtility, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                    {{ rentalsByMonthRows.reduce((s, r) => s + r.newContracts, 0) }} / —
+                  </td>
+                </tr>
+              </tfoot>
             </table>
+            <p
+              v-if="!rentalsByMonthRows.length && !rentalsByMonthQuery.isPending.value"
+              class="py-8 text-center text-sm"
+              style="color: var(--color-text-muted);"
+            >
+              No hay datos para el período seleccionado.
+            </p>
           </div>
+
         </template>
       </div>
 

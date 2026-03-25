@@ -116,6 +116,8 @@ export interface RentalFinancialConfig {
   id: string
   rentalId: string
   currency: string
+  /** Monto ingresado por la empresa al concretar el alquiler. null = usar monthlyAmount del contrato. */
+  baseAmount: number | null
   expenseType: FinancialValueType
   expenseValue: number
   taxType: FinancialValueType
@@ -132,7 +134,10 @@ export interface RentalFinancialConfig {
 }
 
 export interface RentalFinancialBreakdown {
+  /** Monto mensual del contrato */
   monthlyAmount: number
+  /** Monto base usado para el cálculo (baseAmount si está configurado, sino monthlyAmount) */
+  baseAmount: number
   currency: string
   expense: number
   tax: number
@@ -144,6 +149,8 @@ export interface RentalFinancialBreakdown {
 
 export interface UpsertRentalFinancialConfigPayload {
   currency?: string
+  /** Monto ingresado al concretar el alquiler (base para descuentos). null = usar monthlyAmount. */
+  baseAmount?: number | null
   expenseType?: FinancialValueType
   expenseValue?: number
   taxType?: FinancialValueType
