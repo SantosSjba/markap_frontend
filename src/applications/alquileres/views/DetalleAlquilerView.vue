@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, Badge } from '@shared/components'
+import { BaseButton, Badge, AppIcon } from '@shared/components'
 import { useRental, useRentalFinancialBreakdown } from '../composables/useRentals'
 import type { RentalDetail } from '../services/rentals.service'
 
@@ -45,266 +45,413 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
-    <div class="flex items-center justify-between gap-4 mb-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-6">
       <button
         type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
+        class="p-2 rounded-lg transition-colors hover:bg-[var(--color-hover)] shrink-0"
         :style="{ color: 'var(--color-text-secondary)' }"
+        title="Volver al listado"
         @click="goBack"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
+        <AppIcon icon="lucide:arrow-left" :size="20" />
       </button>
       <div class="flex-1 min-w-0">
-        <h1 class="text-xl font-bold truncate" :style="{ color: 'var(--color-text-primary)' }">
-          {{ rental?.code ?? 'Detalle del alquiler' }}
-        </h1>
+        <div class="flex items-center gap-2">
+          <AppIcon icon="lucide:file-text" :size="18" color="var(--color-primary)" />
+          <h1 class="text-xl font-bold truncate" :style="{ color: 'var(--color-text-primary)' }">
+            {{ rental?.code ?? 'Detalle del alquiler' }}
+          </h1>
+        </div>
         <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
           Contrato de alquiler
         </p>
       </div>
-      <div v-if="rental" class="flex items-center gap-2">
-        <BaseButton variant="outline" size="sm" @click="goToFinancialConfig">
-          Distribución financiera
+      <div v-if="rental" class="flex items-center gap-2 shrink-0">
+        <BaseButton variant="outline" size="sm" class="flex items-center gap-1.5" @click="goToFinancialConfig">
+          <AppIcon icon="lucide:sliders-horizontal" :size="15" />
+          <span class="hidden sm:inline">Distribución financiera</span>
         </BaseButton>
-        <BaseButton variant="outline" @click="goToEdit">
+        <BaseButton variant="primary" size="sm" class="flex items-center gap-1.5" @click="goToEdit">
+          <AppIcon icon="lucide:pencil" :size="15" />
           Editar
         </BaseButton>
       </div>
     </div>
 
-    <div v-if="loadingRental" class="flex justify-center py-16">
-      <svg
-        class="animate-spin h-8 w-8"
-        style="color: var(--color-primary)"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+    <!-- Loading -->
+    <div v-if="loadingRental" class="flex flex-col items-center justify-center py-24 gap-3">
+      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
+      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando contrato...</p>
     </div>
 
-    <p v-else-if="rentalError || !rental" class="text-sm py-8" :style="{ color: 'var(--color-error)' }">
-      No se encontró el alquiler o ocurrió un error.
-    </p>
+    <!-- Error -->
+    <div
+      v-else-if="rentalError || !rental"
+      class="flex flex-col items-center justify-center py-16 gap-3"
+    >
+      <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
+      <p class="text-sm font-medium" :style="{ color: 'var(--color-error)' }">
+        No se encontró el alquiler o ocurrió un error.
+      </p>
+      <BaseButton variant="outline" size="sm" @click="goBack">Volver al listado</BaseButton>
+    </div>
 
     <template v-else>
-      <!-- Alquiler y propiedad -->
-      <section
-        class="p-5 rounded-xl mb-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Alquiler y propiedad
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Código</p>
-            <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ rental.code }}</p>
-          </div>
-          <div>
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Estado</p>
-            <Badge :variant="statusVariant(rental.status)">{{ statusLabel(rental.status) }}</Badge>
-          </div>
-          <div class="sm:col-span-2">
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Propiedad</p>
-            <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ rental.property?.code }} – {{ rental.property?.addressLine }}</p>
-          </div>
-        </div>
-      </section>
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <!-- Columna principal -->
+        <div class="xl:col-span-2 space-y-5">
 
-      <!-- Partes -->
-      <section
-        class="p-5 rounded-xl mb-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Partes
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Inquilino</p>
-            <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ rental.tenant?.fullName }}</p>
-          </div>
-          <div>
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Propietario</p>
-            <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ rental.property?.owner?.fullName }}</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Vigencia y montos -->
-      <section
-        class="p-5 rounded-xl mb-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Vigencia y montos
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Inicio</p>
-            <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ formatDate(rental.startDate) }}</p>
-          </div>
-          <div>
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Fin</p>
-            <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ formatDate(rental.endDate) }}</p>
-          </div>
-          <div>
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto mensual</p>
-            <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ formatMoney(rental) }}</p>
-          </div>
-          <div>
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Garantía</p>
-            <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
-              {{ rental.securityDeposit != null ? formatMoney({ ...rental, monthlyAmount: rental.securityDeposit }) : '–' }}
-            </p>
-          </div>
-          <div>
-            <p class="text-xs uppercase tracking-wide mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Día de pago</p>
-            <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Día {{ rental.paymentDueDay }} de cada mes</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Distribución financiera: utilidades, gastos, impuestos, agentes -->
-      <section
-        class="p-5 rounded-xl mb-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-            Distribución financiera
-          </h2>
-          <BaseButton variant="outline" size="sm" @click="goToFinancialConfig">
-            {{ breakdown?.config ? 'Editar' : 'Configurar' }}
-          </BaseButton>
-        </div>
-
-        <div v-if="loadingBreakdown" class="text-sm py-4" :style="{ color: 'var(--color-text-muted)' }">
-          Cargando desglose...
-        </div>
-
-        <template v-else-if="breakdown">
-          <!-- Información del contrato -->
-          <div
-            class="grid grid-cols-2 gap-3 mb-4 p-3 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+          <!-- Alquiler y propiedad -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
           >
-            <div>
-              <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto mensual (contrato)</p>
-              <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-                {{ formatAmount(breakdown.monthlyAmount, breakdown.currency) }}
-              </p>
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                <AppIcon icon="lucide:building-2" :size="17" color="var(--color-primary)" />
+              </div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                Propiedad
+              </h2>
             </div>
-            <div>
-              <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto base para distribución</p>
-              <p class="text-sm font-semibold" :style="{ color: 'var(--color-primary)' }">
-                {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
-              </p>
-              <p
-                v-if="breakdown.baseAmount !== breakdown.monthlyAmount"
-                class="text-xs"
-                :style="{ color: 'var(--color-text-muted)' }"
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p class="text-xs uppercase tracking-wide font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Código</p>
+                <p class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">{{ rental.code }}</p>
+              </div>
+              <div>
+                <p class="text-xs uppercase tracking-wide font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Estado</p>
+                <Badge :variant="statusVariant(rental.status)">{{ statusLabel(rental.status) }}</Badge>
+              </div>
+              <div class="sm:col-span-2">
+                <p class="text-xs uppercase tracking-wide font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Dirección</p>
+                <div class="flex items-start gap-2">
+                  <AppIcon icon="lucide:map-pin" :size="15" color="var(--color-text-muted)" class="mt-0.5 shrink-0" />
+                  <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                    {{ rental.property?.code }} – {{ rental.property?.addressLine }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Partes -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          >
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                <AppIcon icon="lucide:users" :size="17" color="var(--color-primary)" />
+              </div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Partes</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div
+                class="flex items-center gap-3 p-3 rounded-lg"
+                :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
               >
-                (monto personalizado)
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-info, #3b82f6)20' }">
+                  <AppIcon icon="lucide:user" :size="17" color="var(--color-info, #3b82f6)" />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Inquilino</p>
+                  <p class="font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">{{ rental.tenant?.fullName }}</p>
+                </div>
+              </div>
+              <div
+                class="flex items-center gap-3 p-3 rounded-lg"
+                :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+              >
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-success, #16a34a)20' }">
+                  <AppIcon icon="lucide:briefcase" :size="17" color="var(--color-success, #16a34a)" />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Propietario</p>
+                  <p class="font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">{{ rental.property?.owner?.fullName }}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Distribución financiera -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                  <AppIcon icon="lucide:sliders-horizontal" :size="17" color="var(--color-primary)" />
+                </div>
+                <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                  Distribución financiera
+                </h2>
+              </div>
+              <BaseButton variant="outline" size="sm" class="flex items-center gap-1.5" @click="goToFinancialConfig">
+                <AppIcon :icon="breakdown?.config ? 'lucide:pencil' : 'lucide:settings'" :size="13" />
+                {{ breakdown?.config ? 'Editar' : 'Configurar' }}
+              </BaseButton>
+            </div>
+
+            <div v-if="loadingBreakdown" class="flex items-center gap-2 py-4" :style="{ color: 'var(--color-text-muted)' }">
+              <AppIcon icon="svg-spinners:ring-resize" :size="18" color="var(--color-primary)" />
+              <span class="text-sm">Cargando desglose...</span>
+            </div>
+
+            <template v-else-if="breakdown">
+              <div class="grid grid-cols-2 gap-3 mb-4">
+                <div
+                  class="p-3 rounded-lg"
+                  :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+                >
+                  <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Monto mensual (contrato)</p>
+                  <p class="text-base font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                    {{ formatAmount(breakdown.monthlyAmount, breakdown.currency) }}
+                  </p>
+                </div>
+                <div
+                  class="p-3 rounded-lg"
+                  :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+                >
+                  <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Monto base para distribución</p>
+                  <p class="text-base font-bold" :style="{ color: 'var(--color-primary)' }">
+                    {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
+                  </p>
+                  <p v-if="breakdown.baseAmount !== breakdown.monthlyAmount" class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                    Monto personalizado
+                  </p>
+                </div>
+              </div>
+
+              <div class="rounded-lg overflow-hidden" :style="{ border: '1px solid var(--color-border)' }">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr :style="{ backgroundColor: 'var(--color-surface-elevated)', borderBottom: '1px solid var(--color-border)' }">
+                      <th class="text-left py-2.5 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Concepto</th>
+                      <th class="text-right py-2.5 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Monto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                      <td class="py-2.5 px-4 flex items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
+                        <AppIcon icon="lucide:circle-plus" :size="15" color="var(--color-success, #16a34a)" />
+                        Ingreso (monto base)
+                      </td>
+                      <td class="py-2.5 px-4 text-right font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                        {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
+                      </td>
+                    </tr>
+                    <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                      <td class="py-2.5 px-4" :style="{ color: 'var(--color-text-secondary)' }">
+                        <span class="flex items-center gap-2">
+                          <AppIcon icon="lucide:minus-circle" :size="15" color="var(--color-warning, #d97706)" />
+                          Gastos
+                        </span>
+                      </td>
+                      <td class="py-2.5 px-4 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                        − {{ formatAmount(breakdown.expense, breakdown.currency) }}
+                      </td>
+                    </tr>
+                    <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                      <td class="py-2.5 px-4" :style="{ color: 'var(--color-text-secondary)' }">
+                        <span class="flex items-center gap-2">
+                          <AppIcon icon="lucide:minus-circle" :size="15" color="var(--color-warning, #d97706)" />
+                          Impuestos
+                        </span>
+                      </td>
+                      <td class="py-2.5 px-4 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                        − {{ formatAmount(breakdown.tax, breakdown.currency) }}
+                      </td>
+                    </tr>
+                    <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                      <td class="py-2.5 px-4" :style="{ color: 'var(--color-text-secondary)' }">
+                        <span class="flex items-center gap-2">
+                          <AppIcon icon="lucide:minus-circle" :size="15" color="var(--color-warning, #d97706)" />
+                          Comisión agente externo
+                        </span>
+                      </td>
+                      <td class="py-2.5 px-4 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                        − {{ formatAmount(breakdown.externalAgentCommission, breakdown.currency) }}
+                      </td>
+                    </tr>
+                    <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                      <td class="py-2.5 px-4" :style="{ color: 'var(--color-text-secondary)' }">
+                        <span class="flex items-center gap-2">
+                          <AppIcon icon="lucide:minus-circle" :size="15" color="var(--color-warning, #d97706)" />
+                          Comisión agente interno
+                        </span>
+                      </td>
+                      <td class="py-2.5 px-4 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                        − {{ formatAmount(breakdown.internalAgentCommission, breakdown.currency) }}
+                      </td>
+                    </tr>
+                    <tr :style="{ backgroundColor: 'var(--color-primary)0d' }">
+                      <td class="py-3 px-4 font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                        <span class="flex items-center gap-2">
+                          <AppIcon icon="lucide:circle-check" :size="16" color="var(--color-primary)" />
+                          Utilidad neta (propietario)
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-right font-bold text-base" :style="{ color: 'var(--color-primary)' }">
+                        {{ formatAmount(breakdown.utility, breakdown.currency) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+
+            <div
+              v-else
+              class="flex flex-col items-center py-8 gap-3 rounded-lg"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px dashed var(--color-border)' }"
+            >
+              <AppIcon icon="lucide:sliders-horizontal" :size="28" color="var(--color-text-muted)" />
+              <p class="text-sm text-center max-w-xs" :style="{ color: 'var(--color-text-muted)' }">
+                Sin configuración financiera. Presione "Configurar" para definir el monto base, gastos, impuestos y comisiones.
               </p>
             </div>
-          </div>
+          </section>
+        </div>
 
-          <!-- Desglose de la distribución -->
-          <div class="overflow-x-auto mb-4">
-            <table class="w-full text-sm border-collapse">
-              <thead>
-                <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                  <th class="text-left py-2 pr-4" :style="{ color: 'var(--color-text-secondary)' }">Concepto</th>
-                  <th class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">Monto</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Ingreso (monto base del alquiler)</td>
-                  <td class="text-right py-2 font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                    {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
-                  </td>
-                </tr>
-                <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Gastos</td>
-                  <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
-                    − {{ formatAmount(breakdown.expense, breakdown.currency) }}
-                  </td>
-                </tr>
-                <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Impuestos</td>
-                  <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
-                    − {{ formatAmount(breakdown.tax, breakdown.currency) }}
-                  </td>
-                </tr>
-                <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Comisión agente externo</td>
-                  <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
-                    − {{ formatAmount(breakdown.externalAgentCommission, breakdown.currency) }}
-                  </td>
-                </tr>
-                <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                  <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Comisión agente interno</td>
-                  <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
-                    − {{ formatAmount(breakdown.internalAgentCommission, breakdown.currency) }}
-                  </td>
-                </tr>
-                <tr>
-                  <td class="py-2 pr-4 font-semibold" :style="{ color: 'var(--color-text-primary)' }">Utilidad neta (propietario)</td>
-                  <td class="text-right py-2 font-bold" :style="{ color: 'var(--color-primary)' }">
-                    {{ formatAmount(breakdown.utility, breakdown.currency) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <!-- Columna lateral -->
+        <div class="space-y-5">
+          <!-- Vigencia y montos -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          >
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                <AppIcon icon="lucide:calendar" :size="17" color="var(--color-primary)" />
+              </div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Vigencia y montos</h2>
+            </div>
+            <dl class="space-y-3">
+              <div class="flex justify-between items-center">
+                <dt class="text-sm flex items-center gap-1.5" :style="{ color: 'var(--color-text-muted)' }">
+                  <AppIcon icon="lucide:calendar-plus" :size="14" />
+                  Inicio
+                </dt>
+                <dd class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ formatDate(rental.startDate) }}</dd>
+              </div>
+              <div class="flex justify-between items-center">
+                <dt class="text-sm flex items-center gap-1.5" :style="{ color: 'var(--color-text-muted)' }">
+                  <AppIcon icon="lucide:calendar-check" :size="14" />
+                  Fin
+                </dt>
+                <dd class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ formatDate(rental.endDate) }}</dd>
+              </div>
+              <div class="border-t pt-3" :style="{ borderColor: 'var(--color-border)' }">
+                <div class="flex justify-between items-center">
+                  <dt class="text-sm flex items-center gap-1.5" :style="{ color: 'var(--color-text-muted)' }">
+                    <AppIcon icon="lucide:banknote" :size="14" />
+                    Monto mensual
+                  </dt>
+                  <dd class="font-bold text-base" :style="{ color: 'var(--color-primary)' }">{{ formatMoney(rental) }}</dd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <dt class="text-sm flex items-center gap-1.5" :style="{ color: 'var(--color-text-muted)' }">
+                  <AppIcon icon="lucide:shield" :size="14" />
+                  Garantía
+                </dt>
+                <dd class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                  {{ rental.securityDeposit != null ? formatMoney({ ...rental, monthlyAmount: rental.securityDeposit }) : '–' }}
+                </dd>
+              </div>
+              <div class="flex justify-between items-center">
+                <dt class="text-sm flex items-center gap-1.5" :style="{ color: 'var(--color-text-muted)' }">
+                  <AppIcon icon="lucide:clock" :size="14" />
+                  Día de pago
+                </dt>
+                <dd class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Día {{ rental.paymentDueDay }}</dd>
+              </div>
+            </dl>
+          </section>
 
-        </template>
+          <!-- Adjuntos -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          >
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                <AppIcon icon="lucide:paperclip" :size="17" color="var(--color-primary)" />
+              </div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Adjuntos</h2>
+            </div>
+            <ul class="space-y-2">
+              <li
+                class="flex items-center gap-3 p-3 rounded-lg"
+                :style="{
+                  backgroundColor: rental.hasContract ? 'var(--color-success, #16a34a)0f' : 'var(--color-surface-elevated)',
+                  border: `1px solid ${rental.hasContract ? 'var(--color-success, #16a34a)33' : 'var(--color-border)'}`,
+                }"
+              >
+                <AppIcon
+                  :icon="rental.hasContract ? 'lucide:file-check' : 'lucide:file-x'"
+                  :size="20"
+                  :color="rental.hasContract ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)'"
+                />
+                <span class="text-sm font-medium" :style="{ color: rental.hasContract ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }">
+                  Contrato firmado
+                </span>
+                <span
+                  class="ml-auto text-xs font-medium"
+                  :style="{ color: rental.hasContract ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)' }"
+                >
+                  {{ rental.hasContract ? 'Adjunto' : 'Sin adjunto' }}
+                </span>
+              </li>
+              <li
+                class="flex items-center gap-3 p-3 rounded-lg"
+                :style="{
+                  backgroundColor: rental.hasDeliveryAct ? 'var(--color-success, #16a34a)0f' : 'var(--color-surface-elevated)',
+                  border: `1px solid ${rental.hasDeliveryAct ? 'var(--color-success, #16a34a)33' : 'var(--color-border)'}`,
+                }"
+              >
+                <AppIcon
+                  :icon="rental.hasDeliveryAct ? 'lucide:file-check' : 'lucide:file-x'"
+                  :size="20"
+                  :color="rental.hasDeliveryAct ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)'"
+                />
+                <span class="text-sm font-medium" :style="{ color: rental.hasDeliveryAct ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }">
+                  Acta de entrega
+                </span>
+                <span
+                  class="ml-auto text-xs font-medium"
+                  :style="{ color: rental.hasDeliveryAct ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)' }"
+                >
+                  {{ rental.hasDeliveryAct ? 'Adjunto' : 'Sin adjunto' }}
+                </span>
+              </li>
+            </ul>
+            <BaseButton variant="outline" size="sm" class="w-full mt-3 flex items-center justify-center gap-1.5" @click="goToEdit">
+              <AppIcon icon="lucide:upload" :size="14" />
+              Gestionar adjuntos
+            </BaseButton>
+          </section>
 
-        <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
-          Sin configuración financiera. Presione "Configurar" para definir el monto base, gastos, impuestos y comisiones.
-        </p>
-      </section>
-
-      <!-- Adjuntos -->
-      <section
-        class="p-5 rounded-xl mb-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Adjuntos
-        </h2>
-        <ul class="space-y-2 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-          <li class="flex items-center gap-2">
-            <span v-if="rental.hasContract">✓</span>
-            <span v-else>–</span>
-            Contrato firmado
-          </li>
-          <li class="flex items-center gap-2">
-            <span v-if="rental.hasDeliveryAct">✓</span>
-            <span v-else>–</span>
-            Acta de entrega
-          </li>
-        </ul>
-      </section>
-
-      <!-- Notas -->
-      <section
-        v-if="rental.notes"
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">
-          Notas
-        </h2>
-        <p class="text-sm whitespace-pre-wrap" :style="{ color: 'var(--color-text-secondary)' }">{{ rental.notes }}</p>
-      </section>
+          <!-- Notas -->
+          <section
+            v-if="rental.notes"
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          >
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                <AppIcon icon="lucide:notebook-pen" :size="17" color="var(--color-primary)" />
+              </div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Observaciones</h2>
+            </div>
+            <p class="text-sm whitespace-pre-wrap leading-relaxed" :style="{ color: 'var(--color-text-secondary)' }">{{ rental.notes }}</p>
+          </section>
+        </div>
+      </div>
     </template>
   </div>
 </template>

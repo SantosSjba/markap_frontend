@@ -61,8 +61,8 @@ export function useCreateRental() {
 export function useUpdateRental() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateRentalPayload }) =>
-      rentalsService.update(id, data),
+    mutationFn: ({ id, data, files }: { id: string; data: UpdateRentalPayload; files?: { contractFile?: File; deliveryActFile?: File } }) =>
+      rentalsService.update(id, data, files),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: rentalKeys.all })
       queryClient.invalidateQueries({ queryKey: rentalKeys.detail(id) })

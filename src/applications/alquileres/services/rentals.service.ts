@@ -168,8 +168,32 @@ export const rentalsService = {
   getById: (id: string) =>
     apiClient.get<RentalDetail>(`/rentals/${id}`).then((r) => r.data),
 
-  update: (id: string, data: UpdateRentalPayload) =>
-    apiClient.patch<RentalCreated>(`/rentals/${id}`, data).then((r) => r.data),
+  update: (
+    id: string,
+    data: UpdateRentalPayload,
+    files?: { contractFile?: File; deliveryActFile?: File },
+  ) => {
+    if (files?.contractFile || files?.deliveryActFile) {
+      const form = new FormData()
+      if (data.startDate != null) form.append('startDate', data.startDate)
+      if (data.endDate != null) form.append('endDate', data.endDate)
+      if (data.currency != null) form.append('currency', data.currency)
+      if (data.monthlyAmount != null) form.append('monthlyAmount', String(data.monthlyAmount))
+      if (data.securityDeposit != null) form.append('securityDeposit', String(data.securityDeposit))
+      if (data.paymentDueDay != null) form.append('paymentDueDay', String(data.paymentDueDay))
+      if (data.notes != null) form.append('notes', data.notes)
+      if (data.status != null) form.append('status', data.status)
+      if (data.enableAlerts != null) form.append('enableAlerts', String(data.enableAlerts))
+      if (files.contractFile) form.append('contractFile', files.contractFile)
+      if (files.deliveryActFile) form.append('deliveryActFile', files.deliveryActFile)
+      return apiClient
+        .patch<RentalCreated>(`/rentals/${id}`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        .then((r) => r.data)
+    }
+    return apiClient.patch<RentalCreated>(`/rentals/${id}`, data).then((r) => r.data)
+  },
 
   getList: (params: ListRentalsParams) => {
     const searchParams = new URLSearchParams()

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton } from '@shared/components'
+import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useRental, useRentalFinancialBreakdown, useUpsertRentalFinancialConfig } from '../composables/useRentals'
 import { useUsers } from '@applications/settings/composables/useUsers'
@@ -93,20 +93,20 @@ const internalAgentOptions = computed(() => {
 })
 const internalAgentIdModel = computed({
   get: () => form.value.internalAgentId ?? '',
-  set: (v: string | null) => { form.value.internalAgentId = (v === null || v === '') ? '' : v }
+  set: (v: string | null) => { form.value.internalAgentId = (v === null || v === '') ? '' : v },
 })
 const externalAgentIdModel = computed({
   get: () => form.value.externalAgentId ?? '',
-  set: (v: string | null) => { form.value.externalAgentId = (v === null || v === '') ? '' : v }
+  set: (v: string | null) => { form.value.externalAgentId = (v === null || v === '') ? '' : v },
 })
 const externalAgentOptions = computed(() => [
   { value: '', label: 'Ninguno (nombre manual)' },
-  ...externalAgentsList.value.map((a) => ({ value: a.id, label: a.fullName }))
+  ...externalAgentsList.value.map((a) => ({ value: a.id, label: a.fullName })),
 ])
 const selectedInternalUser = computed(() => {
-  const id = form.value.internalAgentId
-  if (!id) return null
-  return usersList.value?.find((u) => u.id === id) ?? null
+  const uid = form.value.internalAgentId
+  if (!uid) return null
+  return usersList.value?.find((u) => u.id === uid) ?? null
 })
 
 const upsertSuccess = computed(() => upsertFinancial.isSuccess.value)
@@ -116,327 +116,426 @@ watch(upsertSuccess, (ok) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
-    <div class="flex items-center justify-between gap-4 mb-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-6">
       <button
         type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
+        class="p-2 rounded-lg transition-colors hover:bg-[var(--color-hover)] shrink-0"
         :style="{ color: 'var(--color-text-secondary)' }"
+        title="Volver al detalle"
         @click="goBack"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
+        <AppIcon icon="lucide:arrow-left" :size="20" />
       </button>
       <div class="flex-1 min-w-0">
-        <h1 class="text-xl font-bold truncate" :style="{ color: 'var(--color-text-primary)' }">
-          Distribución financiera – {{ rental?.code ?? 'Alquiler' }}
-        </h1>
+        <div class="flex items-center gap-2">
+          <AppIcon icon="lucide:sliders-horizontal" :size="18" color="var(--color-primary)" />
+          <h1 class="text-xl font-bold truncate" :style="{ color: 'var(--color-text-primary)' }">
+            Distribución financiera – {{ rental?.code ?? 'Alquiler' }}
+          </h1>
+        </div>
         <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
           Monto ingresado, gastos, impuestos y comisiones de agentes
         </p>
       </div>
-      <BaseButton variant="outline" @click="goToEdit">
-        Editar alquiler
+      <BaseButton variant="outline" size="sm" class="flex items-center gap-1.5 shrink-0" @click="goToEdit">
+        <AppIcon icon="lucide:pencil" :size="14" />
+        <span class="hidden sm:inline">Editar alquiler</span>
       </BaseButton>
     </div>
 
-    <div v-if="loadingRental" class="flex justify-center py-16">
-      <svg
-        class="animate-spin h-8 w-8"
-        style="color: var(--color-primary)"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+    <!-- Loading -->
+    <div v-if="loadingRental" class="flex flex-col items-center justify-center py-24 gap-3">
+      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
+      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando información...</p>
     </div>
 
-    <p v-else-if="rentalError || !rental" class="text-sm py-8" :style="{ color: 'var(--color-error)' }">
-      No se encontró el alquiler o ocurrió un error.
-    </p>
+    <!-- Error -->
+    <div
+      v-else-if="rentalError || !rental"
+      class="flex flex-col items-center justify-center py-16 gap-3"
+    >
+      <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
+      <p class="text-sm font-medium" :style="{ color: 'var(--color-error)' }">
+        No se encontró el alquiler o ocurrió un error.
+      </p>
+      <BaseButton variant="outline" size="sm" @click="goBack">Volver</BaseButton>
+    </div>
 
     <template v-else>
-      <!-- Resumen del contrato -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Información del contrato
-        </h2>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-          <div>
-            <p class="font-medium" :style="{ color: 'var(--color-text-secondary)' }">Monto mensual (contrato)</p>
-            <p class="font-semibold text-base mt-0.5" :style="{ color: 'var(--color-text-primary)' }">
-              {{ rental ? formatAmount(rental.monthlyAmount, rental.currency) : '—' }}
-            </p>
-          </div>
-          <div>
-            <p class="font-medium" :style="{ color: 'var(--color-text-secondary)' }">Monto base para distribución</p>
-            <p class="font-semibold text-base mt-0.5" :style="{ color: 'var(--color-primary)' }">
-              {{ breakdown ? formatAmount(breakdown.baseAmount, breakdown.currency) : '—' }}
-            </p>
-            <p v-if="breakdown && breakdown.baseAmount !== breakdown.monthlyAmount" class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
-              (monto personalizado)
-            </p>
-            <p v-else class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
-              (del contrato)
-            </p>
-          </div>
-        </div>
-      </section>
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <!-- Columna principal: configuración -->
+        <div class="xl:col-span-2 space-y-5">
 
-      <!-- Desglose -->
-      <section
-        class="p-5 rounded-xl mb-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Desglose de la distribución
-        </h2>
-        <div v-if="loadingBreakdown" class="text-sm py-4" :style="{ color: 'var(--color-text-muted)' }">
-          Cargando desglose...
-        </div>
-        <div v-else-if="breakdown" class="overflow-x-auto mb-4">
-          <table class="w-full text-sm border-collapse">
-            <thead>
-              <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                <th class="text-left py-2 pr-4" :style="{ color: 'var(--color-text-secondary)' }">Concepto</th>
-                <th class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                <td class="py-2 pr-4 font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                  Ingreso (monto base del alquiler)
-                </td>
-                <td class="text-right py-2 font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-                  {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
-                </td>
-              </tr>
-              <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Gastos</td>
-                <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
-                  − {{ formatAmount(breakdown.expense, breakdown.currency) }}
-                </td>
-              </tr>
-              <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Impuestos</td>
-                <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
-                  − {{ formatAmount(breakdown.tax, breakdown.currency) }}
-                </td>
-              </tr>
-              <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Comisión agente externo</td>
-                <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
-                  − {{ formatAmount(breakdown.externalAgentCommission, breakdown.currency) }}
-                </td>
-              </tr>
-              <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                <td class="py-2 pr-4" :style="{ color: 'var(--color-text-primary)' }">Comisión agente interno</td>
-                <td class="text-right py-2" :style="{ color: 'var(--color-text-secondary)' }">
-                  − {{ formatAmount(breakdown.internalAgentCommission, breakdown.currency) }}
-                </td>
-              </tr>
-              <tr>
-                <td class="py-3 pr-4 font-semibold text-base" :style="{ color: 'var(--color-text-primary)' }">Utilidad neta (propietario)</td>
-                <td class="text-right py-3 font-bold text-base" :style="{ color: 'var(--color-primary)' }">
-                  {{ formatAmount(breakdown.utility, breakdown.currency) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Formulario -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Configuración
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Ingresa el monto recibido por el alquiler concretado y configura los descuentos.
-        </p>
-
-        <div
-          v-if="upsertFinancial.isSuccess.value"
-          class="mb-4 px-4 py-3 rounded-lg text-sm font-medium"
-          :style="{ backgroundColor: 'var(--color-success-light, #dcfce7)', color: 'var(--color-success, #16a34a)' }"
-        >
-          Configuración guardada correctamente.
-        </div>
-
-        <form
-          class="space-y-6"
-          @submit.prevent="submitFinancialConfig"
-        >
-          <!-- Monto ingresado -->
-          <div
-            class="p-4 sm:p-5 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '2px solid var(--color-primary)', borderStyle: 'dashed' }"
+          <!-- Monto base -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{
+              backgroundColor: 'var(--color-surface)',
+              border: '2px solid var(--color-primary)',
+              borderStyle: 'dashed',
+            }"
           >
-            <label class="block text-sm font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-              Monto ingresado por el alquiler concretado
-            </label>
-            <p class="text-xs mb-3" :style="{ color: 'var(--color-text-muted)' }">
-              Es el importe real que la empresa recibe por este alquiler. Sobre este monto se calculan todos los descuentos.
-              Si se deja vacío, se usará el monto mensual del contrato ({{ rental ? formatAmount(rental.monthlyAmount, rental.currency) : '' }}).
+            <div class="flex items-center gap-2 mb-1">
+              <AppIcon icon="lucide:banknote" :size="18" color="var(--color-primary)" />
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                Monto ingresado por el alquiler
+              </h2>
+            </div>
+            <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+              Importe real que la empresa recibe por este alquiler. Sobre este monto se calculan todos los descuentos.
+              Si se deja vacío, se usa el monto del contrato
+              <strong>{{ rental ? formatAmount(rental.monthlyAmount, rental.currency) : '' }}</strong>.
             </p>
-            <FormInput
-              v-model="form.baseAmount"
-              type="number"
-              min="0"
-              step="0.01"
-              :placeholder="`Ej: ${rental?.monthlyAmount ?? 0}`"
-              class="max-w-xs"
-            />
-          </div>
+            <div class="max-w-xs">
+              <FormInput
+                v-model="form.baseAmount"
+                type="number"
+                min="0"
+                step="0.01"
+                label="Monto base para distribución"
+                :placeholder="`Ej: ${rental?.monthlyAmount ?? 0}`"
+              />
+            </div>
+          </section>
 
-          <!-- Grid 2 columnas responsivo -->
-          <div
-            class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-5 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+          <!-- Descuentos: Gastos e Impuestos -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
           >
-            <!-- Gastos -->
-            <div class="min-w-0">
-              <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-primary)' }">Gastos</label>
-              <div class="grid grid-cols-[auto_1fr] sm:grid-cols-2 gap-2 sm:gap-3 items-center">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-warning, #d97706)1a' }">
+                <AppIcon icon="lucide:minus-circle" :size="17" color="var(--color-warning, #d97706)" />
+              </div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Gastos e Impuestos</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <!-- Gastos -->
+              <div
+                class="p-4 rounded-lg space-y-3"
+                :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              >
+                <div class="flex items-center gap-2">
+                  <AppIcon icon="lucide:receipt" :size="15" color="var(--color-text-muted)" />
+                  <label class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Gastos</label>
+                </div>
                 <FormSelect
                   v-model="form.expenseType"
+                  label="Tipo"
                   :options="expenseTypeOptions"
-                  class="min-w-0 w-full"
                 />
                 <FormInput
                   v-model="form.expenseValue"
                   type="number"
                   min="0"
                   step="0.01"
-                  :placeholder="form.expenseType === 'PERCENT' ? '%' : '0.00'"
-                  class="min-w-0 w-full"
+                  :label="form.expenseType === 'PERCENT' ? 'Porcentaje (%)' : 'Monto fijo'"
+                  :placeholder="form.expenseType === 'PERCENT' ? 'Ej: 5' : '0.00'"
                 />
               </div>
-            </div>
-            <!-- Impuestos -->
-            <div class="min-w-0">
-              <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-primary)' }">Impuestos</label>
-              <div class="grid grid-cols-[auto_1fr] sm:grid-cols-2 gap-2 sm:gap-3 items-center">
+              <!-- Impuestos -->
+              <div
+                class="p-4 rounded-lg space-y-3"
+                :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              >
+                <div class="flex items-center gap-2">
+                  <AppIcon icon="lucide:landmark" :size="15" color="var(--color-text-muted)" />
+                  <label class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Impuestos</label>
+                </div>
                 <FormSelect
                   v-model="form.taxType"
+                  label="Tipo"
                   :options="expenseTypeOptions"
-                  class="min-w-0 w-full"
                 />
                 <FormInput
                   v-model="form.taxValue"
                   type="number"
                   min="0"
                   step="0.01"
-                  :placeholder="form.taxType === 'PERCENT' ? '%' : '0.00'"
-                  class="min-w-0 w-full"
+                  :label="form.taxType === 'PERCENT' ? 'Porcentaje (%)' : 'Monto fijo'"
+                  :placeholder="form.taxType === 'PERCENT' ? 'Ej: 18' : '0.00'"
                 />
               </div>
             </div>
-          </div>
+          </section>
 
-          <!-- Agente externo: grid 2 cols -->
-          <div
-            class="p-4 sm:p-5 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+          <!-- Agente Externo -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
           >
-            <label class="block text-sm font-medium mb-3" :style="{ color: 'var(--color-text-primary)' }">Agente externo</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                <AppIcon icon="lucide:user-round-cog" :size="17" color="var(--color-primary)" />
+              </div>
+              <div>
+                <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Agente externo</h2>
+                <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Agente externo a la empresa</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
                 <FormSelect
                   v-model="externalAgentIdModel"
-                  label="Seleccionar agente"
+                  label="Seleccionar agente externo"
                   :options="externalAgentOptions"
                   placeholder="Ninguno"
-                  class="w-full"
                 />
               </div>
-              <div class="min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 items-end">
-                <FormSelect
-                  v-model="form.externalAgentType"
-                  label="Tipo comisión"
-                  :options="expenseTypeOptions"
-                  class="min-w-0"
-                />
-                <FormInput
-                  v-model="form.externalAgentValue"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  label="Valor"
-                  placeholder="0"
-                  class="min-w-0"
-                />
-              </div>
-              <div class="sm:col-span-2 min-w-0">
+              <FormSelect
+                v-model="form.externalAgentType"
+                label="Tipo de comisión"
+                :options="expenseTypeOptions"
+              />
+              <FormInput
+                v-model="form.externalAgentValue"
+                type="number"
+                min="0"
+                step="0.01"
+                :label="form.externalAgentType === 'PERCENT' ? 'Comisión (%)' : 'Comisión (monto fijo)'"
+                placeholder="0"
+              />
+              <div class="sm:col-span-2">
                 <FormInput
                   v-model="form.externalAgentName"
                   type="text"
-                  label="Nombre (si no elige agente)"
-                  :placeholder="form.externalAgentId ? 'Del agente seleccionado' : 'Opcional'"
-                  class="w-full"
+                  label="Nombre (si no elige agente del sistema)"
+                  :placeholder="form.externalAgentId ? 'Se usará el nombre del agente seleccionado' : 'Ej: Juan Pérez Inmobiliaria'"
                 />
               </div>
             </div>
-          </div>
+          </section>
 
-          <!-- Agente interno: grid 2 cols -->
-          <div
-            class="p-4 sm:p-5 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+          <!-- Agente Interno -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
           >
-            <label class="block text-sm font-medium mb-3" :style="{ color: 'var(--color-text-primary)' }">Agente interno</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                <AppIcon icon="lucide:user-check" :size="17" color="var(--color-primary)" />
+              </div>
+              <div>
+                <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Agente interno</h2>
+                <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Usuario de la empresa</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
                 <FormSelect
                   v-model="internalAgentIdModel"
-                  label="Seleccionar usuario"
+                  label="Seleccionar usuario interno"
                   :options="internalAgentOptions"
                   placeholder="Ninguno"
-                  class="w-full"
                 />
-                <p
+                <div
                   v-if="selectedInternalUser"
-                  class="mt-2 text-sm rounded-md px-3 py-2"
-                  :style="{ color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }"
+                  class="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                  :style="{ backgroundColor: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }"
                 >
-                  <span class="font-medium">Correo:</span> {{ selectedInternalUser.email }}
-                </p>
+                  <AppIcon icon="lucide:mail" :size="14" />
+                  <span>{{ selectedInternalUser.email }}</span>
+                </div>
               </div>
-              <div class="min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 items-end">
-                <FormSelect
-                  v-model="form.internalAgentType"
-                  label="Tipo comisión"
-                  :options="expenseTypeOptions"
-                  class="min-w-0"
-                />
-                <FormInput
-                  v-model="form.internalAgentValue"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  label="Valor"
-                  placeholder="0"
-                  class="min-w-0"
-                />
-              </div>
+              <FormSelect
+                v-model="form.internalAgentType"
+                label="Tipo de comisión"
+                :options="expenseTypeOptions"
+              />
+              <FormInput
+                v-model="form.internalAgentValue"
+                type="number"
+                min="0"
+                step="0.01"
+                :label="form.internalAgentType === 'PERCENT' ? 'Comisión (%)' : 'Comisión (monto fijo)'"
+                placeholder="0"
+              />
             </div>
+          </section>
+
+          <!-- Mensaje de éxito -->
+          <div
+            v-if="upsertFinancial.isSuccess.value"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg"
+            :style="{ backgroundColor: 'var(--color-success, #16a34a)15', border: '1px solid var(--color-success, #16a34a)40', color: 'var(--color-success, #16a34a)' }"
+          >
+            <AppIcon icon="lucide:circle-check" :size="18" />
+            <span class="text-sm font-medium">Configuración guardada correctamente.</span>
           </div>
 
-          <div class="flex justify-end pt-2">
-            <BaseButton type="submit" :disabled="upsertFinancial.isPending.value">
-              {{ upsertFinancial.isPending.value ? 'Guardando...' : 'Guardar configuración' }}
+          <!-- Botones de acción (móvil) -->
+          <div class="xl:hidden flex gap-3">
+            <BaseButton
+              type="button"
+              variant="primary"
+              class="flex-1 flex items-center justify-center gap-2"
+              :loading="upsertFinancial.isPending.value"
+              @click="submitFinancialConfig"
+            >
+              <AppIcon icon="lucide:save" :size="16" />
+              Guardar configuración
+            </BaseButton>
+            <BaseButton type="button" variant="outline" class="flex items-center gap-2" @click="goBack">
+              <AppIcon icon="lucide:x" :size="16" />
+              Cancelar
             </BaseButton>
           </div>
-        </form>
-      </section>
+        </div>
+
+        <!-- Columna lateral: desglose + acciones -->
+        <div class="space-y-5">
+          <!-- Resumen del contrato -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          >
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                <AppIcon icon="lucide:file-text" :size="17" color="var(--color-primary)" />
+              </div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Información del contrato</h2>
+            </div>
+            <dl class="space-y-3 text-sm">
+              <div>
+                <dt class="font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto mensual (contrato)</dt>
+                <dd class="font-bold text-base" :style="{ color: 'var(--color-text-primary)' }">
+                  {{ rental ? formatAmount(rental.monthlyAmount, rental.currency) : '—' }}
+                </dd>
+              </div>
+              <div>
+                <dt class="font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto base para distribución</dt>
+                <dd class="font-bold text-base" :style="{ color: 'var(--color-primary)' }">
+                  {{ breakdown ? formatAmount(breakdown.baseAmount, breakdown.currency) : '—' }}
+                </dd>
+                <dd class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                  <span v-if="breakdown && breakdown.baseAmount !== breakdown.monthlyAmount">Monto personalizado</span>
+                  <span v-else>Igual al contrato</span>
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <!-- Desglose actual -->
+          <section
+            class="p-5 rounded-xl"
+            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          >
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                <AppIcon icon="lucide:pie-chart" :size="17" color="var(--color-primary)" />
+              </div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Desglose actual</h2>
+            </div>
+
+            <div v-if="loadingBreakdown" class="flex items-center gap-2 py-4" :style="{ color: 'var(--color-text-muted)' }">
+              <AppIcon icon="svg-spinners:ring-resize" :size="18" color="var(--color-primary)" />
+              <span class="text-sm">Calculando...</span>
+            </div>
+
+            <div v-else-if="breakdown" class="rounded-lg overflow-hidden" :style="{ border: '1px solid var(--color-border)' }">
+              <table class="w-full text-xs">
+                <tbody>
+                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                    <td class="py-2.5 px-3 flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
+                      <AppIcon icon="lucide:circle-plus" :size="13" color="var(--color-success, #16a34a)" />
+                      Ingreso base
+                    </td>
+                    <td class="py-2.5 px-3 text-right font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                      {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
+                    </td>
+                  </tr>
+                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                    <td class="py-2.5 px-3" :style="{ color: 'var(--color-text-secondary)' }">
+                      <span class="flex items-center gap-1.5">
+                        <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
+                        Gastos
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                      − {{ formatAmount(breakdown.expense, breakdown.currency) }}
+                    </td>
+                  </tr>
+                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                    <td class="py-2.5 px-3" :style="{ color: 'var(--color-text-secondary)' }">
+                      <span class="flex items-center gap-1.5">
+                        <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
+                        Impuestos
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                      − {{ formatAmount(breakdown.tax, breakdown.currency) }}
+                    </td>
+                  </tr>
+                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                    <td class="py-2.5 px-3" :style="{ color: 'var(--color-text-secondary)' }">
+                      <span class="flex items-center gap-1.5">
+                        <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
+                        Ag. externo
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                      − {{ formatAmount(breakdown.externalAgentCommission, breakdown.currency) }}
+                    </td>
+                  </tr>
+                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
+                    <td class="py-2.5 px-3" :style="{ color: 'var(--color-text-secondary)' }">
+                      <span class="flex items-center gap-1.5">
+                        <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
+                        Ag. interno
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                      − {{ formatAmount(breakdown.internalAgentCommission, breakdown.currency) }}
+                    </td>
+                  </tr>
+                  <tr :style="{ backgroundColor: 'var(--color-primary)0d' }">
+                    <td class="py-3 px-3 font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                      <span class="flex items-center gap-1.5">
+                        <AppIcon icon="lucide:circle-check" :size="14" color="var(--color-primary)" />
+                        Utilidad neta
+                      </span>
+                    </td>
+                    <td class="py-3 px-3 text-right font-bold text-sm" :style="{ color: 'var(--color-primary)' }">
+                      {{ formatAmount(breakdown.utility, breakdown.currency) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              v-else
+              class="flex flex-col items-center py-6 gap-2 rounded-lg"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px dashed var(--color-border)' }"
+            >
+              <AppIcon icon="lucide:bar-chart-2" :size="24" color="var(--color-text-muted)" />
+              <p class="text-xs text-center" :style="{ color: 'var(--color-text-muted)' }">
+                Configura los valores para ver el desglose
+              </p>
+            </div>
+          </section>
+
+          <!-- Botón guardar (desktop) -->
+          <div class="hidden xl:flex flex-col gap-3">
+            <BaseButton
+              type="button"
+              variant="primary"
+              class="w-full flex items-center justify-center gap-2"
+              :loading="upsertFinancial.isPending.value"
+              @click="submitFinancialConfig"
+            >
+              <AppIcon icon="lucide:save" :size="16" />
+              Guardar configuración
+            </BaseButton>
+            <BaseButton type="button" variant="outline" class="w-full flex items-center justify-center gap-2" @click="goBack">
+              <AppIcon icon="lucide:arrow-left" :size="16" />
+              Volver al detalle
+            </BaseButton>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
