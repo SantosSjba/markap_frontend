@@ -7,6 +7,17 @@ export interface DocumentType {
   length: number | null
 }
 
+export interface Department {
+  id: string
+  name: string
+}
+
+export interface Province {
+  id: string
+  name: string
+  departmentId: string
+}
+
 export interface District {
   id: string
   name: string
@@ -126,6 +137,14 @@ export interface ListClientsResponse {
 export const clientsService = {
   getDocumentTypes: () =>
     apiClient.get<DocumentType[]>('/clients/document-types').then((r) => r.data),
+
+  getDepartments: () =>
+    apiClient.get<Department[]>('/clients/departments').then((r) => r.data),
+
+  getProvinces: (departmentId?: string) => {
+    const params = departmentId ? { departmentId } : {}
+    return apiClient.get<Province[]>('/clients/provinces', { params }).then((r) => r.data)
+  },
 
   getDistricts: (provinceId?: string) => {
     const params = provinceId ? { provinceId } : {}

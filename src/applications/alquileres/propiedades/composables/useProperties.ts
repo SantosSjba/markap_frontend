@@ -13,6 +13,9 @@ export const propertyKeys = {
   list: (params: ListPropertiesParams) =>
     [...propertyKeys.all, 'list', params?.applicationSlug ?? 'alquileres', params?.page ?? 1, params?.limit ?? 10, params?.search ?? '', params?.propertyTypeId ?? '', params?.listingStatus ?? ''] as const,
   propertyTypes: () => [...propertyKeys.all, 'property-types'] as const,
+  departments: () => [...propertyKeys.all, 'departments'] as const,
+  provinces: (departmentId?: string) =>
+    [...propertyKeys.all, 'provinces', departmentId ?? 'all'] as const,
   districts: (provinceId?: string) =>
     [...propertyKeys.all, 'districts', provinceId ?? 'all'] as const,
   owners: (slug?: string, search?: string) =>
@@ -27,10 +30,27 @@ export function usePropertyTypes() {
   })
 }
 
-export function usePropertyDistricts(provinceId?: string) {
+export function usePropertyDepartments() {
   return useQuery({
-    queryKey: propertyKeys.districts(provinceId),
-    queryFn: () => propertiesService.getDistricts(provinceId),
+    queryKey: propertyKeys.departments(),
+    queryFn: () => propertiesService.getDepartments(),
+    staleTime: Infinity,
+  })
+}
+
+export function usePropertyProvinces(departmentId: Ref<string | undefined> | undefined) {
+  return useQuery({
+    queryKey: computed(() => propertyKeys.provinces(unref(departmentId))),
+    queryFn: () => propertiesService.getProvinces(unref(departmentId)),
+    enabled: computed(() => !!unref(departmentId)),
+  })
+}
+
+export function usePropertyDistricts(provinceId?: Ref<string | undefined> | string) {
+  return useQuery({
+    queryKey: computed(() => propertyKeys.districts(unref(provinceId))),
+    queryFn: () => propertiesService.getDistricts(unref(provinceId)),
+    enabled: computed(() => !!unref(provinceId)),
   })
 }
 

@@ -8,21 +8,26 @@ import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import {
   usePropertyById,
   usePropertyTypes,
+  usePropertyDepartments,
+  usePropertyProvinces,
   usePropertyDistricts,
   usePropertyOwners,
   useUpdateProperty,
 } from '../composables/useProperties'
-import type { PropertyType, District, OwnerOption } from '../services/properties.service'
+import type { PropertyType, OwnerOption } from '../services/properties.service'
 
 const route = useRoute()
 const router = useRouter()
 
 const id = computed(() => String(route.params.id ?? ''))
+const isInitializing = ref(false)
 
 const form = ref({
   code: '',
   propertyTypeId: '',
   addressLine: '',
+  departmentId: '',
+  provinceId: '',
   districtId: '',
   description: '',
   area: '' as string | number,
@@ -63,26 +68,45 @@ const schema = yup.object({
   depositMonths: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
 })
 
+const selectedDepartmentId = computed(() => form.value.departmentId || undefined)
+const selectedProvinceId = computed(() => form.value.provinceId || undefined)
+
 const { data: property, isLoading: loadingProperty, isError: propertyError } = usePropertyById(id)
 const { data: propertyTypes, isLoading: loadingTypes } = usePropertyTypes()
-const { data: districts, isLoading: loadingDistricts } = usePropertyDistricts()
+const { data: departments, isLoading: loadingDepartments } = usePropertyDepartments()
+const { data: provinces, isLoading: loadingProvinces } = usePropertyProvinces(selectedDepartmentId)
+const { data: districts, isLoading: loadingDistricts } = usePropertyDistricts(selectedProvinceId)
 const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = usePropertyOwners('alquileres')
 const updateMutation = useUpdateProperty()
 
 const loading = computed(
-  () => loadingProperty.value || loadingTypes.value || loadingDistricts.value || loadingOwners.value
+  () => loadingProperty.value || loadingTypes.value || loadingDepartments.value || loadingOwners.value
 )
+
+watch(() => form.value.departmentId, () => {
+  if (isInitializing.value) return
+  form.value.provinceId = ''
+  form.value.districtId = ''
+})
+
+watch(() => form.value.provinceId, () => {
+  if (isInitializing.value) return
+  form.value.districtId = ''
+})
 
 watch(
   property,
   (p) => {
     if (!p) return
+    isInitializing.value = true
     const selectedId = route.query.selectedClientId
     const ownerId = typeof selectedId === 'string' && selectedId ? selectedId : p.ownerId
     form.value = {
       code: p.code,
       propertyTypeId: p.propertyTypeId,
       addressLine: p.addressLine,
+      departmentId: p.district?.province?.department?.id ?? '',
+      provinceId: p.district?.province?.id ?? '',
       districtId: p.districtId,
       description: p.description ?? '',
       area: p.area ?? '',
@@ -99,6 +123,7 @@ watch(
       maintenanceAmount: p.maintenanceAmount ?? '',
       depositMonths: p.depositMonths ?? '',
     }
+    setTimeout(() => { isInitializing.value = false }, 0)
   },
   { immediate: true }
 )
@@ -108,17 +133,17 @@ onMounted(async () => {
   if (typeof selectedId === 'string' && selectedId) await refetchOwners()
 })
 
-const selectedDistrict = computed(() =>
-  (districts.value ?? []).find((d: District) => d.id === form.value.districtId)
-)
-const provinceName = computed(() => selectedDistrict.value?.province?.name ?? '')
-const departmentName = computed(() => selectedDistrict.value?.province?.department?.name ?? '')
-
 const propertyTypeOptions = computed(() =>
   (propertyTypes.value ?? []).map((p: PropertyType) => ({ value: p.id, label: p.name }))
 )
+const departmentOptions = computed(() =>
+  (departments.value ?? []).map((d) => ({ value: d.id, label: d.name }))
+)
+const provinceOptions = computed(() =>
+  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name }))
+)
 const districtOptions = computed(() =>
-  (districts.value ?? []).map((d: District) => ({ value: d.id, label: d.name }))
+  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name }))
 )
 const ownerOptions = computed(() =>
   (owners.value ?? []).map((o: OwnerOption) => ({
@@ -301,15 +326,30 @@ const handleSubmit = async () => {
               required
             />
             <FormSelect
+              v-model="form.departmentId"
+              label="Departamento"
+              placeholder="Seleccionar departamento"
+              :options="departmentOptions"
+              :loading="loadingDepartments"
+            />
+            <FormSelect
+              v-model="form.provinceId"
+              label="Provincia"
+              placeholder="Seleccionar provincia"
+              :options="provinceOptions"
+              :loading="loadingProvinces"
+              :disabled="!form.departmentId"
+            />
+            <FormSelect
               v-model="form.districtId"
               label="Distrito"
               placeholder="Seleccionar distrito"
               :options="districtOptions"
+              :loading="loadingDistricts"
+              :disabled="!form.provinceId"
               :error="errors.districtId"
               required
             />
-            <FormInput :model-value="provinceName" label="Provincia" placeholder="Lima" disabled />
-            <FormInput :model-value="departmentName" label="Departamento" placeholder="Lima" disabled />
           </div>
           <FormTextarea
             v-model="form.description"
@@ -569,13 +609,13 @@ const handleSubmit = async () => {
               </dt>
               <dd :style="{ color: 'var(--color-text-primary)' }">{{ form.addressLine || '—' }}</dd>
             </div>
-            <div v-if="provinceName || departmentName">
+            <div v-if="form.provinceId || form.departmentId">
               <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
                 <AppIcon icon="lucide:globe" :size="13" />
                 Ubicación
               </dt>
               <dd :style="{ color: 'var(--color-text-primary)' }">
-                {{ [provinceName, departmentName].filter(Boolean).join(', ') || '—' }}
+                {{ [(provinces?.find(p => p.id === form.provinceId)?.name), (departments?.find(d => d.id === form.departmentId)?.name)].filter(Boolean).join(', ') || '—' }}
               </dd>
             </div>
             <div class="border-t pt-3" :style="{ borderColor: 'var(--color-border)' }">

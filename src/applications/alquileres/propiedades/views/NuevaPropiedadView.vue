@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
@@ -7,11 +7,13 @@ import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import {
   usePropertyTypes,
+  usePropertyDepartments,
+  usePropertyProvinces,
   usePropertyDistricts,
   usePropertyOwners,
   useCreateProperty,
 } from '../composables/useProperties'
-import type { PropertyType, District, OwnerOption } from '../services/properties.service'
+import type { PropertyType, OwnerOption } from '../services/properties.service'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,6 +22,8 @@ const form = ref({
   code: 'PROP-',
   propertyTypeId: '',
   addressLine: '',
+  departmentId: '',
+  provinceId: '',
   districtId: '',
   description: '',
   area: '' as string | number,
@@ -60,26 +64,40 @@ const schema = yup.object({
   depositMonths: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
 })
 
+const selectedDepartmentId = computed(() => form.value.departmentId || undefined)
+const selectedProvinceId = computed(() => form.value.provinceId || undefined)
+
 const { data: propertyTypes, isLoading: loadingTypes } = usePropertyTypes()
-const { data: districts, isLoading: loadingDistricts } = usePropertyDistricts()
+const { data: departments, isLoading: loadingDepartments } = usePropertyDepartments()
+const { data: provinces, isLoading: loadingProvinces } = usePropertyProvinces(selectedDepartmentId)
+const { data: districts, isLoading: loadingDistricts } = usePropertyDistricts(selectedProvinceId)
 const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = usePropertyOwners('alquileres')
 const createMutation = useCreateProperty()
 
 const loading = computed(
-  () => loadingTypes.value || loadingDistricts.value || loadingOwners.value
+  () => loadingTypes.value || loadingDepartments.value || loadingOwners.value
 )
 
-const selectedDistrict = computed(() =>
-  (districts.value ?? []).find((d: District) => d.id === form.value.districtId)
-)
-const provinceName = computed(() => selectedDistrict.value?.province?.name ?? '')
-const departmentName = computed(() => selectedDistrict.value?.province?.department?.name ?? '')
+watch(() => form.value.departmentId, () => {
+  form.value.provinceId = ''
+  form.value.districtId = ''
+})
+
+watch(() => form.value.provinceId, () => {
+  form.value.districtId = ''
+})
 
 const propertyTypeOptions = computed(() =>
   (propertyTypes.value ?? []).map((p: PropertyType) => ({ value: p.id, label: p.name }))
 )
+const departmentOptions = computed(() =>
+  (departments.value ?? []).map((d) => ({ value: d.id, label: d.name }))
+)
+const provinceOptions = computed(() =>
+  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name }))
+)
 const districtOptions = computed(() =>
-  (districts.value ?? []).map((d: District) => ({ value: d.id, label: d.name }))
+  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name }))
 )
 const ownerOptions = computed(() =>
   (owners.value ?? []).map((o: OwnerOption) => ({
@@ -253,15 +271,30 @@ const handleSubmit = async () => {
               required
             />
             <FormSelect
+              v-model="form.departmentId"
+              label="Departamento"
+              placeholder="Seleccionar departamento"
+              :options="departmentOptions"
+              :loading="loadingDepartments"
+            />
+            <FormSelect
+              v-model="form.provinceId"
+              label="Provincia"
+              placeholder="Seleccionar provincia"
+              :options="provinceOptions"
+              :loading="loadingProvinces"
+              :disabled="!form.departmentId"
+            />
+            <FormSelect
               v-model="form.districtId"
               label="Distrito"
               placeholder="Seleccionar distrito"
               :options="districtOptions"
+              :loading="loadingDistricts"
+              :disabled="!form.provinceId"
               :error="errors.districtId"
               required
             />
-            <FormInput :model-value="provinceName" label="Provincia" placeholder="Lima" disabled />
-            <FormInput :model-value="departmentName" label="Departamento" placeholder="Lima" disabled />
           </div>
           <FormTextarea
             v-model="form.description"
@@ -525,13 +558,13 @@ const handleSubmit = async () => {
               </dt>
               <dd :style="{ color: 'var(--color-text-primary)' }">{{ form.addressLine || '—' }}</dd>
             </div>
-            <div v-if="provinceName || departmentName">
+            <div v-if="form.provinceId || form.departmentId">
               <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
                 <AppIcon icon="lucide:globe" :size="13" />
                 Ubicación
               </dt>
               <dd :style="{ color: 'var(--color-text-primary)' }">
-                {{ [provinceName, departmentName].filter(Boolean).join(', ') || '—' }}
+                {{ [(provinces?.find(p => p.id === form.provinceId)?.name), (departments?.find(d => d.id === form.departmentId)?.name)].filter(Boolean).join(', ') || '—' }}
               </dd>
             </div>
             <div class="border-t pt-3" :style="{ borderColor: 'var(--color-border)' }">

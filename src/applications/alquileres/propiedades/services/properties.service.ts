@@ -7,6 +7,17 @@ export interface PropertyType {
   isActive: boolean
 }
 
+export interface Department {
+  id: string
+  name: string
+}
+
+export interface Province {
+  id: string
+  name: string
+  departmentId: string
+}
+
 export interface District {
   id: string
   name: string
@@ -59,6 +70,18 @@ export interface PropertyDetail {
   propertyTypeId: string
   addressLine: string
   districtId: string
+  district?: {
+    id: string
+    name: string
+    province: {
+      id: string
+      name: string
+      department: {
+        id: string
+        name: string
+      }
+    }
+  } | null
   description: string | null
   area: number | null
   bedrooms: number | null
@@ -125,6 +148,14 @@ export interface PropertyStats {
 export const propertiesService = {
   getPropertyTypes: () =>
     apiClient.get<PropertyType[]>('/properties/property-types').then((r) => r.data),
+
+  getDepartments: () =>
+    apiClient.get<Department[]>('/properties/departments').then((r) => r.data),
+
+  getProvinces: (departmentId?: string) => {
+    const params = departmentId ? { departmentId } : {}
+    return apiClient.get<Province[]>('/properties/provinces', { params }).then((r) => r.data)
+  },
 
   getDistricts: (provinceId?: string) => {
     const params = provinceId ? { provinceId } : {}

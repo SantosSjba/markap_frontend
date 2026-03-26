@@ -16,6 +16,7 @@ interface Props {
   label?: string
   error?: string
   disabled?: boolean
+  loading?: boolean
   required?: boolean
   id?: string
 }
@@ -23,6 +24,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Seleccionar...',
   disabled: false,
+  loading: false,
   required: false,
 })
 
@@ -56,7 +58,7 @@ const handleChange = (event: Event) => {
       <select
         :id="selectId"
         :value="modelValue"
-        :disabled="disabled"
+        :disabled="disabled || loading"
         :required="required"
         class="w-full px-4 py-2.5 rounded-lg border appearance-none pr-10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-60 disabled:cursor-not-allowed"
         :style="{
@@ -78,6 +80,18 @@ const handleChange = (event: Event) => {
       </select>
       <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
         <svg
+          v-if="loading"
+          class="animate-spin w-4 h-4"
+          :style="{ color: 'var(--color-primary)' }"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <svg
+          v-else
           class="w-5 h-5"
           :style="{ color: 'var(--color-text-muted)' }"
           fill="none"

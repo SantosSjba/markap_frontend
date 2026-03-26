@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useDocumentTypes, useDistricts, useCreateClient } from '../composables/useClients'
+import { useDocumentTypes, useDepartments, useProvinces, useDistricts, useCreateClient } from '../composables/useClients'
 import { propertyKeys } from '@applications/alquileres/propiedades/composables/useProperties'
 import { useQueryClient } from '@tanstack/vue-query'
-import type { DocumentType, District } from '../services/clients.service'
+import type { DocumentType } from '../services/clients.service'
 
 const route = useRoute()
 const router = useRouter()
@@ -39,6 +39,8 @@ const form = ref({
   primaryEmail: '',
   secondaryEmail: '',
   addressLine: '',
+  departmentId: '',
+  provinceId: '',
   districtId: '',
   reference: '',
   notes: '',
@@ -71,19 +73,25 @@ const schema = yup.object({
   notes: yup.string().trim(),
 })
 
+const selectedDepartmentId = computed(() => form.value.departmentId || undefined)
+const selectedProvinceId = computed(() => form.value.provinceId || undefined)
+
 const { data: documentTypes, isLoading: loadingDocs } = useDocumentTypes()
-const { data: districts, isLoading: loadingDistricts } = useDistricts()
+const { data: departments, isLoading: loadingDepartments } = useDepartments()
+const { data: provinces, isLoading: loadingProvinces } = useProvinces(selectedDepartmentId)
+const { data: districts, isLoading: loadingDistricts } = useDistricts(selectedProvinceId)
 const createMutation = useCreateClient()
 
-const loading = computed(() => loadingDocs.value || loadingDistricts.value)
+const loading = computed(() => loadingDocs.value || loadingDepartments.value)
 
-const selectedDistrict = computed(() =>
-  (districts.value ?? []).find((d: District) => d.id === form.value.districtId)
-)
-const provinceName = computed(() => selectedDistrict.value?.province?.name ?? '')
-const departmentName = computed(
-  () => selectedDistrict.value?.province?.department?.name ?? ''
-)
+watch(() => form.value.departmentId, () => {
+  form.value.provinceId = ''
+  form.value.districtId = ''
+})
+
+watch(() => form.value.provinceId, () => {
+  form.value.districtId = ''
+})
 
 const documentTypeOptions = computed(() =>
   (documentTypes.value ?? []).map((d: DocumentType) => ({
@@ -91,8 +99,14 @@ const documentTypeOptions = computed(() =>
     label: `${d.name} (${d.code})`,
   }))
 )
+const departmentOptions = computed(() =>
+  (departments.value ?? []).map((d) => ({ value: d.id, label: d.name }))
+)
+const provinceOptions = computed(() =>
+  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name }))
+)
 const districtOptions = computed(() =>
-  (districts.value ?? []).map((d: District) => ({ value: d.id, label: d.name }))
+  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name }))
 )
 
 const goBack = () => {
@@ -376,24 +390,29 @@ const handleSubmit = async () => {
             required
           />
           <FormSelect
+            v-model="form.departmentId"
+            label="Departamento"
+            placeholder="Seleccionar departamento"
+            :options="departmentOptions"
+            :loading="loadingDepartments"
+          />
+          <FormSelect
+            v-model="form.provinceId"
+            label="Provincia"
+            placeholder="Seleccionar provincia"
+            :options="provinceOptions"
+            :loading="loadingProvinces"
+            :disabled="!form.departmentId"
+          />
+          <FormSelect
             v-model="form.districtId"
             label="Distrito"
             placeholder="Seleccionar distrito"
             :options="districtOptions"
+            :loading="loadingDistricts"
+            :disabled="!form.provinceId"
             :error="errors.districtId"
             required
-          />
-          <FormInput
-            :model-value="provinceName"
-            label="Provincia"
-            placeholder="Lima"
-            disabled
-          />
-          <FormInput
-            :model-value="departmentName"
-            label="Departamento"
-            placeholder="Lima"
-            disabled
           />
         </div>
       </section>

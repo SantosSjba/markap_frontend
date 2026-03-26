@@ -13,6 +13,9 @@ export const clientKeys = {
   detail: (id: string) => [...clientKeys.all, 'detail', id] as const,
   stats: (slug?: string) => [...clientKeys.all, 'stats', slug ?? 'alquileres'] as const,
   documentTypes: () => [...clientKeys.all, 'document-types'] as const,
+  departments: () => [...clientKeys.all, 'departments'] as const,
+  provinces: (departmentId?: string) =>
+    [...clientKeys.all, 'provinces', departmentId ?? 'all'] as const,
   districts: (provinceId?: string) =>
     [...clientKeys.all, 'districts', provinceId ?? 'all'] as const,
 }
@@ -38,10 +41,27 @@ export function useDocumentTypes() {
   })
 }
 
-export function useDistricts(provinceId?: string) {
+export function useDepartments() {
   return useQuery({
-    queryKey: clientKeys.districts(provinceId),
-    queryFn: () => clientsService.getDistricts(provinceId),
+    queryKey: clientKeys.departments(),
+    queryFn: () => clientsService.getDepartments(),
+    staleTime: Infinity,
+  })
+}
+
+export function useProvinces(departmentId: Ref<string | undefined> | undefined) {
+  return useQuery({
+    queryKey: computed(() => clientKeys.provinces(unref(departmentId))),
+    queryFn: () => clientsService.getProvinces(unref(departmentId)),
+    enabled: computed(() => !!unref(departmentId)),
+  })
+}
+
+export function useDistricts(provinceId?: Ref<string | undefined> | string) {
+  return useQuery({
+    queryKey: computed(() => clientKeys.districts(unref(provinceId))),
+    queryFn: () => clientsService.getDistricts(unref(provinceId)),
+    enabled: computed(() => !!unref(provinceId)),
   })
 }
 
