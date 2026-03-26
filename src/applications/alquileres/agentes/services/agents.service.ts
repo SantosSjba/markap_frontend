@@ -82,4 +82,8 @@ export const agentsService = {
   update(id: string, payload: UpdateAgentPayload): Promise<AgentListItem> {
     return apiClient.patch(`${BASE}/${id}`, payload).then((r) => r.data)
   },
+
+  delete(id: string): Promise<{ message: string }> {
+    return apiClient.delete(`${BASE}/${id}`).then((r) => r.data)
+  },
 }

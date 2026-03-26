@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
-import { BaseButton } from '@shared/components'
+import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import {
   usePropertyTypes,
@@ -15,7 +15,6 @@ import type { PropertyType, District, OwnerOption } from '../services/properties
 
 const route = useRoute()
 const router = useRouter()
-const appColor = 'var(--color-primary)'
 
 const form = ref({
   code: 'PROP-',
@@ -74,15 +73,10 @@ const selectedDistrict = computed(() =>
   (districts.value ?? []).find((d: District) => d.id === form.value.districtId)
 )
 const provinceName = computed(() => selectedDistrict.value?.province?.name ?? '')
-const departmentName = computed(
-  () => selectedDistrict.value?.province?.department?.name ?? ''
-)
+const departmentName = computed(() => selectedDistrict.value?.province?.department?.name ?? '')
 
 const propertyTypeOptions = computed(() =>
-  (propertyTypes.value ?? []).map((p: PropertyType) => ({
-    value: p.id,
-    label: p.name,
-  }))
+  (propertyTypes.value ?? []).map((p: PropertyType) => ({ value: p.id, label: p.name }))
 )
 const districtOptions = computed(() =>
   (districts.value ?? []).map((d: District) => ({ value: d.id, label: d.name }))
@@ -94,8 +88,16 @@ const ownerOptions = computed(() =>
   }))
 )
 
-const goBack = () => router.push('/alquileres/propiedades')
+const selectedOwnerLabel = computed(() => {
+  const o = (owners.value ?? []).find((x: OwnerOption) => x.id === form.value.ownerId)
+  return o ? o.fullName : '—'
+})
+const selectedTypeLabel = computed(() => {
+  const t = (propertyTypes.value ?? []).find((x: PropertyType) => x.id === form.value.propertyTypeId)
+  return t ? t.name : '—'
+})
 
+const goBack = () => router.push('/alquileres/propiedades')
 const goToNewOwner = () => {
   router.push({
     name: 'alquileres-clientes-nuevo',
@@ -111,12 +113,8 @@ onMounted(async () => {
   }
 })
 
-const setError = (field: string, message: string) => {
-  errors.value[field] = message
-}
-const clearErrors = () => {
-  errors.value = {}
-}
+const setError = (field: string, message: string) => { errors.value[field] = message }
+const clearErrors = () => { errors.value = {} }
 
 const toNum = (v: string | number): number | null => {
   if (v === '' || v === undefined) return null
@@ -130,9 +128,7 @@ const handleSubmit = async () => {
     await schema.validate(form.value, { abortEarly: false })
   } catch (e) {
     if (e instanceof yup.ValidationError) {
-      e.inner.forEach((err) => {
-        if (err.path) setError(err.path, err.message)
-      })
+      e.inner.forEach((err) => { if (err.path) setError(err.path, err.message) })
       return
     }
     throw e
@@ -174,291 +170,432 @@ const handleSubmit = async () => {
 
 <template>
   <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
-    <div class="flex items-center gap-4 mb-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-6">
       <button
         type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
+        class="p-2 rounded-lg transition-colors hover:bg-[var(--color-hover)] shrink-0"
         :style="{ color: 'var(--color-text-secondary)' }"
+        title="Volver al listado"
         @click="goBack"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
+        <AppIcon icon="lucide:arrow-left" :size="20" />
       </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Nueva Propiedad
-        </h1>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+          <AppIcon icon="lucide:plus-circle" :size="18" color="var(--color-primary)" />
+          <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
+            Nueva Propiedad
+          </h1>
+        </div>
         <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
           Registrar un nuevo inmueble en alquiler
         </p>
       </div>
     </div>
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <svg
-        class="animate-spin h-8 w-8"
-        :style="{ color: appColor }"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+    <!-- Loading -->
+    <div v-if="loading" class="flex flex-col items-center justify-center py-24 gap-3">
+      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
+      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando opciones...</p>
     </div>
 
-    <form v-else @submit.prevent="handleSubmit" class="space-y-8">
-      <p v-if="errors._form" class="text-sm" :style="{ color: 'var(--color-error)' }">
-        {{ errors._form }}
-      </p>
-
-      <!-- Información de la Propiedad -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+    <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="handleSubmit">
+      <!-- Error global -->
+      <div
+        v-if="errors._form"
+        class="xl:col-span-3 flex items-center gap-3 px-4 py-3 rounded-lg"
+        :style="{ backgroundColor: 'var(--color-error)15', border: '1px solid var(--color-error)40', color: 'var(--color-error)' }"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Información de la Propiedad
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Datos básicos del inmueble
-        </p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput
-            v-model="form.code"
-            label="Código de Propiedad"
-            placeholder="PROP-001"
-            :error="errors.code"
-            required
-          />
-          <FormSelect
-            v-model="form.propertyTypeId"
-            label="Tipo de Propiedad"
-            placeholder="Seleccionar tipo"
-            :options="propertyTypeOptions"
-            :error="errors.propertyTypeId"
-            required
-          />
-          <FormInput
-            v-model="form.addressLine"
-            class="md:col-span-2"
-            label="Dirección Completa"
-            placeholder="Av. Principal 123, Dpto 501"
-            :error="errors.addressLine"
-            required
-          />
-          <FormSelect
-            v-model="form.districtId"
-            label="Distrito"
-            placeholder="Seleccionar distrito"
-            :options="districtOptions"
-            :error="errors.districtId"
-            required
-          />
-          <FormInput
-            :model-value="provinceName"
-            label="Provincia"
-            placeholder="Lima"
-            disabled
-          />
-          <FormInput
-            :model-value="departmentName"
-            label="Departamento"
-            placeholder="Lima"
-            disabled
-          />
-        </div>
-        <FormTextarea
-          v-model="form.description"
-          class="mt-4"
-          label="Descripción"
-          placeholder="Descripción detallada de la propiedad..."
-          :rows="3"
-        />
-      </section>
+        <AppIcon icon="lucide:alert-circle" :size="18" />
+        <span class="text-sm font-medium">{{ errors._form }}</span>
+      </div>
 
-      <!-- Características -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Características
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Superficie, habitaciones y detalles
-        </p>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <FormInput
-            v-model="form.area"
-            type="number"
-            min="0"
-            step="0.01"
-            label="Área (m²)"
-            placeholder="120"
-            :error="errors.area"
-          />
-          <FormInput
-            v-model="form.bedrooms"
-            type="number"
-            min="0"
-            label="Habitaciones"
-            placeholder="3"
-            :error="errors.bedrooms"
-          />
-          <FormInput
-            v-model="form.bathrooms"
-            type="number"
-            min="0"
-            label="Baños"
-            placeholder="2"
-            :error="errors.bathrooms"
-          />
-          <FormInput
-            v-model="form.ageYears"
-            type="number"
-            min="0"
-            label="Antigüedad (años)"
-            placeholder="5"
-            :error="errors.ageYears"
-          />
-          <FormInput
-            v-model="form.floorLevel"
-            label="Piso / Nivel"
-            placeholder="5to piso"
-            :error="errors.floorLevel"
-          />
-          <FormInput
-            v-model="form.parkingSpaces"
-            type="number"
-            min="0"
-            label="Estacionamientos"
-            placeholder="1"
-            :error="errors.parkingSpaces"
-          />
-        </div>
-      </section>
+      <!-- Columna principal -->
+      <div class="xl:col-span-2 space-y-5">
 
-      <!-- Números de partida (máx. 3) -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Números de partida
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Hasta 3 números de partida por propiedad (opcional)
-        </p>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormInput
-            v-model="form.partida1"
-            label="Número de partida 1"
-            placeholder="Ej. 12345678"
-            :error="errors.partida1"
-          />
-          <FormInput
-            v-model="form.partida2"
-            label="Número de partida 2"
-            placeholder="Ej. 12345679"
-            :error="errors.partida2"
-          />
-          <FormInput
-            v-model="form.partida3"
-            label="Número de partida 3"
-            placeholder="Ej. 12345680"
-            :error="errors.partida3"
-          />
-        </div>
-      </section>
-
-      <!-- Propietario -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Propietario
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Cliente propietario del inmueble
-        </p>
-        <div class="flex flex-wrap items-end gap-3">
-          <div class="flex-1 min-w-[200px]">
-            <FormSelect
-              v-model="form.ownerId"
-              label="Seleccionar Propietario (Cliente)"
-              placeholder="Buscar o seleccionar propietario"
-              :options="ownerOptions"
-              :error="errors.ownerId"
+        <!-- Información básica -->
+        <section
+          class="p-5 rounded-xl"
+          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        >
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+              <AppIcon icon="lucide:building-2" :size="17" color="var(--color-primary)" />
+            </div>
+            <div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Información de la Propiedad</h2>
+              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Datos básicos del inmueble</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormInput
+              v-model="form.code"
+              label="Código de Propiedad"
+              placeholder="PROP-001"
+              :error="errors.code"
               required
             />
+            <FormSelect
+              v-model="form.propertyTypeId"
+              label="Tipo de Propiedad"
+              placeholder="Seleccionar tipo"
+              :options="propertyTypeOptions"
+              :error="errors.propertyTypeId"
+              required
+            />
+            <FormInput
+              v-model="form.addressLine"
+              class="md:col-span-2"
+              label="Dirección Completa"
+              placeholder="Av. Principal 123, Dpto 501"
+              :error="errors.addressLine"
+              required
+            />
+            <FormSelect
+              v-model="form.districtId"
+              label="Distrito"
+              placeholder="Seleccionar distrito"
+              :options="districtOptions"
+              :error="errors.districtId"
+              required
+            />
+            <FormInput :model-value="provinceName" label="Provincia" placeholder="Lima" disabled />
+            <FormInput :model-value="departmentName" label="Departamento" placeholder="Lima" disabled />
           </div>
+          <FormTextarea
+            v-model="form.description"
+            class="mt-4"
+            label="Descripción"
+            placeholder="Descripción detallada de la propiedad..."
+            :rows="3"
+          />
+        </section>
+
+        <!-- Características -->
+        <section
+          class="p-5 rounded-xl"
+          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        >
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+              <AppIcon icon="lucide:layout-list" :size="17" color="var(--color-primary)" />
+            </div>
+            <div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Características</h2>
+              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Superficie, habitaciones y detalles</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:ruler" :size="13" />
+                <span class="text-xs font-medium">Área</span>
+              </div>
+              <FormInput
+                v-model="form.area"
+                type="number"
+                min="0"
+                step="0.01"
+                label="Área (m²)"
+                placeholder="120"
+                :error="errors.area"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:bed-double" :size="13" />
+                <span class="text-xs font-medium">Dormitorios</span>
+              </div>
+              <FormInput
+                v-model="form.bedrooms"
+                type="number"
+                min="0"
+                label="Habitaciones"
+                placeholder="3"
+                :error="errors.bedrooms"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:bath" :size="13" />
+                <span class="text-xs font-medium">Baños</span>
+              </div>
+              <FormInput
+                v-model="form.bathrooms"
+                type="number"
+                min="0"
+                label="Baños"
+                placeholder="2"
+                :error="errors.bathrooms"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:calendar-clock" :size="13" />
+                <span class="text-xs font-medium">Antigüedad</span>
+              </div>
+              <FormInput
+                v-model="form.ageYears"
+                type="number"
+                min="0"
+                label="Antigüedad (años)"
+                placeholder="5"
+                :error="errors.ageYears"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:layers" :size="13" />
+                <span class="text-xs font-medium">Piso</span>
+              </div>
+              <FormInput
+                v-model="form.floorLevel"
+                label="Piso / Nivel"
+                placeholder="5to piso"
+                :error="errors.floorLevel"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:car" :size="13" />
+                <span class="text-xs font-medium">Estacionamientos</span>
+              </div>
+              <FormInput
+                v-model="form.parkingSpaces"
+                type="number"
+                min="0"
+                label="Estacionamientos"
+                placeholder="1"
+                :error="errors.parkingSpaces"
+              />
+            </div>
+          </div>
+        </section>
+
+        <!-- Propietario -->
+        <section
+          class="p-5 rounded-xl"
+          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        >
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+              <AppIcon icon="lucide:briefcase" :size="17" color="var(--color-primary)" />
+            </div>
+            <div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Propietario</h2>
+              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Cliente propietario del inmueble</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[200px]">
+              <FormSelect
+                v-model="form.ownerId"
+                label="Seleccionar Propietario (Cliente)"
+                placeholder="Buscar o seleccionar propietario"
+                :options="ownerOptions"
+                :error="errors.ownerId"
+                required
+              />
+            </div>
+            <BaseButton type="button" variant="outline" class="flex items-center gap-1.5" @click="goToNewOwner">
+              <AppIcon icon="lucide:user-plus" :size="15" />
+              Nuevo Propietario
+            </BaseButton>
+          </div>
+          <p v-if="ownerOptions.length === 0" class="text-sm mt-3 flex items-center gap-2" :style="{ color: 'var(--color-text-muted)' }">
+            <AppIcon icon="lucide:info" :size="14" />
+            No hay propietarios registrados. Registra un cliente tipo «Propietario» desde Clientes.
+          </p>
+        </section>
+
+        <!-- Números de partida -->
+        <section
+          class="p-5 rounded-xl"
+          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        >
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+              <AppIcon icon="lucide:hash" :size="17" color="var(--color-primary)" />
+            </div>
+            <div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Números de partida</h2>
+              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Hasta 3 números de partida registral (opcional)</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormInput v-model="form.partida1" label="Partida 1" placeholder="Ej. 12345678" :error="errors.partida1" />
+            <FormInput v-model="form.partida2" label="Partida 2" placeholder="Ej. 12345679" :error="errors.partida2" />
+            <FormInput v-model="form.partida3" label="Partida 3" placeholder="Ej. 12345680" :error="errors.partida3" />
+          </div>
+        </section>
+
+        <!-- Información de Alquiler -->
+        <section
+          class="p-5 rounded-xl"
+          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        >
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+              <AppIcon icon="lucide:banknote" :size="17" color="var(--color-primary)" />
+            </div>
+            <div>
+              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Información de Alquiler</h2>
+              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Montos de referencia y garantía</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormInput
+              v-model="form.monthlyRent"
+              type="number"
+              min="0"
+              step="0.01"
+              label="Alquiler Mensual (S/)"
+              placeholder="2500"
+              :error="errors.monthlyRent"
+            />
+            <FormInput
+              v-model="form.maintenanceAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              label="Mantenimiento (S/)"
+              placeholder="200"
+              :error="errors.maintenanceAmount"
+            />
+            <FormInput
+              v-model="form.depositMonths"
+              type="number"
+              min="0"
+              label="Garantía (meses)"
+              placeholder="2"
+              :error="errors.depositMonths"
+            />
+          </div>
+        </section>
+
+        <!-- Botones móvil -->
+        <div class="xl:hidden flex gap-3">
           <BaseButton
-            type="button"
-            variant="outline"
-            @click="goToNewOwner"
+            type="submit"
+            variant="primary"
+            class="flex-1 flex items-center justify-center gap-2"
+            :loading="createMutation.isPending.value"
           >
-            Nuevo Propietario
+            <AppIcon icon="lucide:save" :size="16" />
+            Guardar Propiedad
+          </BaseButton>
+          <BaseButton type="button" variant="outline" class="flex items-center gap-2" @click="goBack">
+            <AppIcon icon="lucide:x" :size="16" />
+            Cancelar
           </BaseButton>
         </div>
-        <p v-if="ownerOptions.length === 0" class="text-sm mt-2" :style="{ color: 'var(--color-text-muted)' }">
-          No hay propietarios registrados. Registra un cliente tipo «Propietario» desde Clientes.
-        </p>
-      </section>
+      </div>
 
-      <!-- Información de Alquiler -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-      >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Información de Alquiler
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Montos y garantía
-        </p>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormInput
-            v-model="form.monthlyRent"
-            type="number"
-            min="0"
-            step="0.01"
-            label="Alquiler Mensual (S/)"
-            placeholder="2500"
-            :error="errors.monthlyRent"
-          />
-          <FormInput
-            v-model="form.maintenanceAmount"
-            type="number"
-            min="0"
-            step="0.01"
-            label="Mantenimiento (S/)"
-            placeholder="200"
-            :error="errors.maintenanceAmount"
-          />
-          <FormInput
-            v-model="form.depositMonths"
-            type="number"
-            min="0"
-            label="Garantía (meses)"
-            placeholder="2"
-            :error="errors.depositMonths"
-          />
+      <!-- Columna lateral -->
+      <div class="xl:col-span-1">
+        <div
+          class="p-5 rounded-xl border sticky top-4"
+          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        >
+          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
+            Resumen de la propiedad
+          </h2>
+          <dl class="space-y-3 text-sm mb-6">
+            <div>
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:hash" :size="13" />
+                Código
+              </dt>
+              <dd class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                {{ form.code || '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:home" :size="13" />
+                Tipo
+              </dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ selectedTypeLabel }}</dd>
+            </div>
+            <div>
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:map-pin" :size="13" />
+                Dirección
+              </dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ form.addressLine || '—' }}</dd>
+            </div>
+            <div v-if="provinceName || departmentName">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:globe" :size="13" />
+                Ubicación
+              </dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">
+                {{ [provinceName, departmentName].filter(Boolean).join(', ') || '—' }}
+              </dd>
+            </div>
+            <div class="border-t pt-3" :style="{ borderColor: 'var(--color-border)' }">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:briefcase" :size="13" />
+                Propietario
+              </dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ selectedOwnerLabel }}</dd>
+            </div>
+            <div v-if="form.monthlyRent !== ''">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="lucide:banknote" :size="13" />
+                Alquiler mensual
+              </dt>
+              <dd class="font-bold" :style="{ color: 'var(--color-primary)' }">
+                S/ {{ Number(form.monthlyRent).toLocaleString('es-PE', { minimumFractionDigits: 2 }) }}
+              </dd>
+            </div>
+          </dl>
+
+          <!-- Características resumen -->
+          <div
+            class="grid grid-cols-3 gap-2 mb-6 p-3 rounded-lg"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+          >
+            <div class="flex flex-col items-center gap-1 text-center">
+              <AppIcon icon="lucide:bed-double" :size="16" color="var(--color-text-muted)" />
+              <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                {{ form.bedrooms !== '' ? form.bedrooms : '—' }}
+              </span>
+              <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Dorm.</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 text-center">
+              <AppIcon icon="lucide:bath" :size="16" color="var(--color-text-muted)" />
+              <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                {{ form.bathrooms !== '' ? form.bathrooms : '—' }}
+              </span>
+              <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Baños</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 text-center">
+              <AppIcon icon="lucide:ruler" :size="16" color="var(--color-text-muted)" />
+              <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                {{ form.area !== '' ? `${form.area}m²` : '—' }}
+              </span>
+              <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Área</span>
+            </div>
+          </div>
+
+          <div class="hidden xl:flex flex-col gap-3">
+            <BaseButton
+              type="submit"
+              variant="primary"
+              class="w-full flex items-center justify-center gap-2"
+              :loading="createMutation.isPending.value"
+            >
+              <AppIcon icon="lucide:save" :size="16" />
+              Guardar Propiedad
+            </BaseButton>
+            <BaseButton type="button" variant="outline" class="w-full flex items-center justify-center gap-2" @click="goBack">
+              <AppIcon icon="lucide:x" :size="16" />
+              Cancelar
+            </BaseButton>
+          </div>
         </div>
-      </section>
-
-      <div class="flex justify-end gap-3">
-        <BaseButton variant="outline" type="button" @click="goBack">
-          Cancelar
-        </BaseButton>
-        <BaseButton type="submit" :loading="createMutation.isPending.value" variant="primary">
-          <svg v-if="!createMutation.isPending.value" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-          </svg>
-          Guardar Propiedad
-        </BaseButton>
       </div>
     </form>
   </div>

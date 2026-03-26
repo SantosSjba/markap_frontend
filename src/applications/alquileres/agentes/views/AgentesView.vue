@@ -12,8 +12,9 @@ import {
   AppIcon,
   ExcelIcon,
 } from '@shared/components'
+import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useExcelExport } from '@shared/composables'
-import { useAgentsList } from '../composables/useAgents'
+import { useAgentsList, useUpdateAgent, useDeleteAgent } from '../composables/useAgents'
 import type { AgentListItem, ListAgentsParams } from '../services/agents.service'
 import { agentsService } from '../services/agents.service'
 
@@ -51,13 +52,8 @@ watch(
   { immediate: true }
 )
 
-const onPageChange = (page: number) => {
-  listParams.value = { ...listParams.value, page }
-}
-
-const onPageSizeChange = (size: number) => {
-  listParams.value = { ...listParams.value, limit: size, page: 1 }
-}
+const onPageChange = (page: number) => { listParams.value = { ...listParams.value, page } }
+const onPageSizeChange = (size: number) => { listParams.value = { ...listParams.value, limit: size, page: 1 } }
 
 const tableColumns = [
   { key: 'agente', label: 'Agente', align: 'left' as const },
@@ -68,12 +64,63 @@ const tableColumns = [
 ]
 
 const goToNew = () => router.push('/alquileres/agentes/nuevo')
-const goToEdit = (agent: AgentListItem) =>
-  router.push(`/alquileres/agentes/${agent.id}/editar`)
+const goToEdit = (agent: AgentListItem) => router.push(`/alquileres/agentes/${agent.id}/editar`)
 
-const getActions = (agent: AgentListItem) => [
-  { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(agent) },
-]
+// ---- Modals confirm ----
+const showConfirmModal = ref(false)
+const confirmModal = ref<{
+  type: 'deactivate' | 'delete'
+  agent: AgentListItem
+} | null>(null)
+
+const updateMutation = useUpdateAgent()
+const deleteMutation = useDeleteAgent()
+
+const confirmActionPending = computed(
+  () => updateMutation.isPending.value || deleteMutation.isPending.value
+)
+
+function openConfirm(type: 'deactivate' | 'delete', agent: AgentListItem) {
+  confirmModal.value = { type, agent }
+  showConfirmModal.value = true
+}
+
+function closeConfirm() {
+  showConfirmModal.value = false
+  confirmModal.value = null
+}
+
+async function executeConfirm() {
+  if (!confirmModal.value) return
+  const { type, agent } = confirmModal.value
+  closeConfirm()
+  if (type === 'deactivate') {
+    await updateMutation.mutateAsync({ id: agent.id, data: { isActive: false } })
+    await updateMutation.invalidateList()
+  } else {
+    await deleteMutation.mutateAsync(agent.id)
+    await deleteMutation.invalidateList()
+  }
+}
+
+const getActions = (agent: AgentListItem): { label: string; icon: string; onClick: () => void }[] => {
+  const actions: { label: string; icon: string; onClick: () => void }[] = [
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => { goToEdit(agent) } },
+  ]
+  if (agent.isActive) {
+    actions.push({
+      label: 'Desactivar',
+      icon: 'lucide:user-x',
+      onClick: () => openConfirm('deactivate', agent),
+    })
+  }
+  actions.push({
+    label: 'Eliminar',
+    icon: 'lucide:trash-2',
+    onClick: () => openConfirm('delete', agent),
+  })
+  return actions
+}
 
 const paginationProps = computed(() => {
   const page = listParams.value.page ?? 1
@@ -185,18 +232,10 @@ async function handleExport() {
       </div>
       <div class="flex flex-wrap gap-3 flex-shrink-0 sm:flex-nowrap">
         <div class="w-full sm:w-[180px] min-w-0">
-          <FormSelect
-            v-model="filterType"
-            :options="typeOptions"
-            placeholder="Todos los tipos"
-          />
+          <FormSelect v-model="filterType" :options="typeOptions" placeholder="Todos los tipos" />
         </div>
         <div class="w-full sm:w-[180px] min-w-0">
-          <FormSelect
-            v-model="filterStatus"
-            :options="statusOptions"
-            placeholder="Todos los estados"
-          />
+          <FormSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
         </div>
       </div>
     </div>
@@ -213,12 +252,28 @@ async function handleExport() {
           <DataTable :columns="tableColumns" :data="agents" row-key="id">
             <template #row="{ row }">
               <td class="py-3 px-4">
-                <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                  {{ displayName(row as AgentListItem) }}
-                </p>
-                <p v-if="(row as AgentListItem).documentType" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
-                  {{ (row as AgentListItem).documentType?.code }}: {{ (row as AgentListItem).documentNumber ?? '–' }}
-                </p>
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                    :style="{
+                      backgroundColor: (row as AgentListItem).isActive ? 'var(--color-primary)1a' : 'var(--color-surface-elevated)',
+                    }"
+                  >
+                    <AppIcon
+                      :icon="(row as AgentListItem).type === 'INTERNAL' ? 'lucide:user-check' : 'lucide:user-round-cog'"
+                      :size="16"
+                      :color="(row as AgentListItem).isActive ? 'var(--color-primary)' : 'var(--color-text-muted)'"
+                    />
+                  </div>
+                  <div>
+                    <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                      {{ displayName(row as AgentListItem) }}
+                    </p>
+                    <p v-if="(row as AgentListItem).documentType" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+                      {{ (row as AgentListItem).documentType?.code }}: {{ (row as AgentListItem).documentNumber ?? '–' }}
+                    </p>
+                  </div>
+                </div>
               </td>
               <td class="py-3 px-4">
                 <Badge :variant="(row as AgentListItem).type === 'INTERNAL' ? 'info' : 'neutral'">
@@ -226,9 +281,17 @@ async function handleExport() {
                 </Badge>
               </td>
               <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-                <span v-if="(row as AgentListItem).phone">{{ (row as AgentListItem).phone }}</span>
-                <span v-else-if="(row as AgentListItem).email">{{ (row as AgentListItem).email }}</span>
-                <span v-else>–</span>
+                <div class="flex flex-col gap-0.5">
+                  <span v-if="(row as AgentListItem).phone" class="flex items-center gap-1.5">
+                    <AppIcon icon="lucide:phone" :size="12" color="var(--color-text-muted)" />
+                    {{ (row as AgentListItem).phone }}
+                  </span>
+                  <span v-if="(row as AgentListItem).email" class="flex items-center gap-1.5">
+                    <AppIcon icon="lucide:mail" :size="12" color="var(--color-text-muted)" />
+                    {{ (row as AgentListItem).email }}
+                  </span>
+                  <span v-if="!(row as AgentListItem).phone && !(row as AgentListItem).email">–</span>
+                </div>
               </td>
               <td class="py-3 px-4">
                 <Badge :variant="(row as AgentListItem).isActive ? 'success' : 'error'">
@@ -251,5 +314,69 @@ async function handleExport() {
         </template>
       </div>
     </div>
+
+    <!-- Modal confirmación -->
+    <BaseModal
+      v-model="showConfirmModal"
+      size="sm"
+      @close="closeConfirm"
+    >
+      <template #title>
+        <div class="flex items-center gap-2">
+          <AppIcon
+            :icon="confirmModal?.type === 'delete' ? 'lucide:trash-2' : 'lucide:user-x'"
+            :size="17"
+            :color="confirmModal?.type === 'delete' ? 'var(--color-error)' : '#f59e0b'"
+          />
+          <span>{{ confirmModal?.type === 'delete' ? 'Eliminar agente' : 'Desactivar agente' }}</span>
+        </div>
+      </template>
+      <template v-if="confirmModal">
+        <div class="flex items-start gap-3">
+          <div
+            class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+            :style="{
+              backgroundColor: confirmModal.type === 'delete' ? 'var(--color-error)15' : '#f59e0b15',
+            }"
+          >
+            <AppIcon
+              :icon="confirmModal.type === 'delete' ? 'lucide:trash-2' : 'lucide:user-x'"
+              :size="20"
+              :color="confirmModal.type === 'delete' ? 'var(--color-error)' : '#f59e0b'"
+            />
+          </div>
+          <div>
+            <p class="font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
+              {{ confirmModal.agent.fullName }}
+            </p>
+            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+              <template v-if="confirmModal.type === 'delete'">
+                Se realizará un <strong>soft delete</strong>: el agente no se eliminará de la base de datos pero no aparecerá en ningún listado ni podrá ser seleccionado.
+              </template>
+              <template v-else>
+                El agente pasará a estado <strong>inactivo</strong> y no aparecerá en búsquedas activas.
+              </template>
+            </p>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
+          <BaseButton
+            :variant="confirmModal?.type === 'delete' ? 'danger' : 'primary'"
+            :loading="confirmActionPending"
+            @click="executeConfirm"
+          >
+            <AppIcon
+              :icon="confirmModal?.type === 'delete' ? 'lucide:trash-2' : 'lucide:user-x'"
+              :size="16"
+            />
+            {{ confirmModal?.type === 'delete' ? 'Eliminar' : 'Desactivar' }}
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>

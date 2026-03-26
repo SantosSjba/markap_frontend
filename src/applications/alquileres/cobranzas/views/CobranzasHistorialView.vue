@@ -200,9 +200,7 @@ async function handleExport() {
         title="Promedio por pago"
       >
         <template #icon>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: '#f59e0b' }">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+          <AppIcon icon="lucide:trending-up" :size="20" color="#f59e0b" />
         </template>
       </StatsCard>
     </div>
@@ -223,10 +221,11 @@ async function handleExport() {
       </div>
       <button
         v-if="search || filterYear || filterMonth || filterMethod"
-        class="px-3 py-2 text-sm rounded-lg hover-surface transition-colors"
+        class="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg hover-surface transition-colors"
         :style="{ color: 'var(--color-text-muted)' }"
         @click="clearFilters"
       >
+        <AppIcon icon="lucide:x" :size="14" />
         Limpiar
       </button>
     </div>
@@ -310,7 +309,12 @@ async function handleExport() {
           </div>
 
           <!-- Método -->
-          <div>
+          <div class="flex items-center gap-1.5">
+            <AppIcon
+              :icon="item.paymentMethod === 'CASH' ? 'lucide:banknote' : item.paymentMethod === 'TRANSFER' || item.paymentMethod === 'DEPOSIT' ? 'lucide:arrow-right-left' : 'lucide:smartphone'"
+              :size="14"
+              color="var(--color-text-muted)"
+            />
             <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ methodLabels[item.paymentMethod] ?? item.paymentMethod }}</p>
           </div>
 

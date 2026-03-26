@@ -99,6 +99,18 @@ export function useUpsertRentalFinancialConfig() {
     onSuccess: (_, { rentalId }) => {
       queryClient.invalidateQueries({ queryKey: rentalKeys.financialConfig(rentalId) })
       queryClient.invalidateQueries({ queryKey: rentalKeys.financialBreakdown(rentalId) })
+      queryClient.invalidateQueries({ queryKey: rentalKeys.detail(rentalId) })
+    },
+  })
+}
+
+export function useCancelRental() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => rentalsService.cancel(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: rentalKeys.all })
+      queryClient.invalidateQueries({ queryKey: rentalKeys.detail(id) })
     },
   })
 }

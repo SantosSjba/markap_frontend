@@ -1,5 +1,12 @@
 import { apiClient } from '@app/api/apiClient'
 
+/** Construye la URL pública de un adjunto a partir de su filePath relativo */
+export function getAttachmentUrl(filePath: string): string {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+  const serverRoot = apiBase.replace(/\/api$/, '')
+  return `${serverRoot}/uploads/${filePath}`
+}
+
 export interface CreateRentalPayload {
   applicationSlug?: string
   propertyId: string
@@ -71,6 +78,13 @@ export interface RentalStats {
   vencidos: number
 }
 
+export interface RentalAttachment {
+  id: string
+  type: 'CONTRACT' | 'DELIVERY_ACT'
+  filePath: string
+  originalFileName: string
+}
+
 export interface RentalDetail {
   id: string
   applicationId: string
@@ -96,6 +110,7 @@ export interface RentalDetail {
   tenant: { id: string; fullName: string }
   hasContract: boolean
   hasDeliveryAct: boolean
+  attachments?: RentalAttachment[]
 }
 
 export interface UpdateRentalPayload {
@@ -226,6 +241,9 @@ export const rentalsService = {
     apiClient
       .put<RentalFinancialConfig>(`/rentals/${rentalId}/financial-config`, data)
       .then((r) => r.data),
+
+  cancel: (id: string): Promise<{ message: string }> =>
+    apiClient.delete(`/rentals/${id}`).then((r) => r.data),
 
   create: (
     data: CreateRentalPayload,

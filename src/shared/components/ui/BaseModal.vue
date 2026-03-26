@@ -107,17 +107,19 @@ watch(
           >
             <!-- Header -->
             <div
-              v-if="title || closable"
+              v-if="title || $slots.title || closable"
               class="flex items-center justify-between p-4 border-b"
               style="border-color: var(--color-border);"
             >
-              <h3 v-if="title" class="text-lg font-semibold" style="color: var(--color-text-primary);">
-                {{ title }}
-              </h3>
+              <slot name="title">
+                <h3 v-if="title" class="text-lg font-semibold" style="color: var(--color-text-primary);">
+                  {{ title }}
+                </h3>
+              </slot>
               <button
                 v-if="closable"
                 type="button"
-                class="p-1 rounded hover-surface transition-colors"
+                class="p-1 rounded hover-surface transition-colors ml-auto"
                 style="color: var(--color-text-muted);"
                 @click="close"
               >

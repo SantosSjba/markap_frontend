@@ -160,4 +160,7 @@ export const clientsService = {
 
   update: (id: string, data: UpdateClientPayload) =>
     apiClient.patch(`/clients/${id}`, data).then((r) => r.data),
+
+  delete: (id: string): Promise<{ message: string }> =>
+    apiClient.delete(`/clients/${id}`).then((r) => r.data),
 }

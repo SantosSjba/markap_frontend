@@ -20,6 +20,7 @@ import {
   usePropertyStats,
   usePropertyTypes,
   useUpdatePropertyListingStatus,
+  useDeleteProperty,
 } from '../composables/useProperties'
 import type { PropertyListItem, ListPropertiesParams } from '../services/properties.service'
 import { propertiesService } from '../services/properties.service'
@@ -123,6 +124,26 @@ const saveListingStatus = () => {
   )
 }
 
+// Confirm delete modal
+const showDeleteModal = ref(false)
+const propertyToDelete = ref<PropertyListItem | null>(null)
+const { mutate: deleteProperty, isPending: isDeletingProperty } = useDeleteProperty()
+
+const openDeleteModal = (row: PropertyListItem) => {
+  propertyToDelete.value = row
+  showDeleteModal.value = true
+}
+
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  propertyToDelete.value = null
+}
+
+const executeDeleteProperty = () => {
+  if (!propertyToDelete.value) return
+  deleteProperty(propertyToDelete.value.id, { onSuccess: closeDeleteModal })
+}
+
 const getActions = (row: PropertyListItem) => {
   const items: { label: string; icon: string; onClick: () => void }[] = [
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(row) },
@@ -134,6 +155,7 @@ const getActions = (row: PropertyListItem) => {
       onClick: () => openChangeStatusModal(row),
     })
   }
+  items.push({ label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteModal(row) })
   return items
 }
 
@@ -441,5 +463,33 @@ async function handleExport() {
         </div>
       </template>
     </BaseModal>
+
+  <!-- Confirm Delete Property Modal -->
+  <BaseModal v-model="showDeleteModal" :closable="true" size="sm" @close="closeDeleteModal">
+    <template #title>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
+          <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error);" />
+        </div>
+        <span class="text-base font-semibold" style="color: var(--color-text-primary);">Eliminar propiedad</span>
+      </div>
+    </template>
+    <div class="p-4 space-y-3">
+      <p class="text-sm" style="color: var(--color-text-secondary);">
+        ¿Estás seguro de que deseas eliminar la propiedad
+        <span class="font-semibold" style="color: var(--color-text-primary);">{{ propertyToDelete?.addressLine }}</span>?
+      </p>
+      <p class="text-xs px-3 py-2 rounded-lg" style="background: var(--color-warning-subtle); color: var(--color-warning);">
+        Esta acción desactivará la propiedad. Si tiene contratos activos, considera cancelarlos primero.
+      </p>
+    </div>
+    <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+      <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
+      <BaseButton variant="danger" :loading="isDeletingProperty" @click="executeDeleteProperty">
+        <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
+        Eliminar
+      </BaseButton>
+    </div>
+  </BaseModal>
   </div>
 </template>

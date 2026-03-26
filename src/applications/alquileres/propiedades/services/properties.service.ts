@@ -174,4 +174,7 @@ export const propertiesService = {
         listingStatus,
       })
       .then((r) => r.data),
+
+  delete: (id: string): Promise<{ message: string }> =>
+    apiClient.delete(`/properties/${encodeURIComponent(id)}`).then((r) => r.data),
 }

@@ -351,45 +351,99 @@ async function handleExport() {
     </div>
 
     <!-- Modal Registrar Pago -->
-    <BaseModal v-model="showModal" title="Registrar Pago" size="md" @close="closeModal">
+    <BaseModal v-model="showModal" size="md" @close="closeModal">
+      <template #title>
+        <div class="flex items-center gap-2">
+          <AppIcon icon="lucide:credit-card" :size="18" color="var(--color-primary)" />
+          <span>Registrar Pago</span>
+        </div>
+      </template>
+
       <template v-if="selectedPayment">
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Registrar el pago de alquiler de <strong :style="{ color: 'var(--color-text-primary)' }">{{ selectedPayment.tenantName }}</strong>
-        </p>
-
-        <!-- Resumen -->
-        <div class="flex items-center justify-between p-4 rounded-xl mb-5" :style="{ backgroundColor: 'var(--color-surface-elevated)' }">
-          <div>
-            <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">{{ selectedPayment.propertyAddress }}</p>
-            <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">{{ selectedPayment.periodLabel }}</p>
+        <!-- Resumen del cobro -->
+        <div
+          class="flex items-center gap-4 p-4 rounded-xl mb-5"
+          :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+        >
+          <div
+            class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+            :style="{ backgroundColor: getAvatarColor(selectedPayment.tenantName) }"
+          >
+            {{ getInitials(selectedPayment.tenantName) }}
           </div>
-          <p class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-            {{ formatCurrency(selectedPayment.amount, selectedPayment.currency) }}
-          </p>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">
+              {{ selectedPayment.tenantName }}
+            </p>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <AppIcon icon="lucide:map-pin" :size="12" color="var(--color-text-muted)" />
+              <p class="text-xs truncate" :style="{ color: 'var(--color-text-muted)' }">{{ selectedPayment.propertyAddress }}</p>
+            </div>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <AppIcon icon="lucide:calendar" :size="12" color="var(--color-text-muted)" />
+              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ selectedPayment.periodLabel }}</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto</p>
+            <p class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              {{ formatCurrency(selectedPayment.amount, selectedPayment.currency) }}
+            </p>
+          </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <FormInput v-model="form.paidDate" type="date" label="Fecha de Pago" required />
-          <FormInput v-model="form.paidAmount" type="number" label="Monto Pagado" required />
+        <!-- Sección: Datos del pago -->
+        <div class="flex items-center gap-2 mb-3">
+          <AppIcon icon="lucide:banknote" :size="15" color="var(--color-primary)" />
+          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Datos del pago</p>
         </div>
-        <div class="mt-4">
-          <FormSelect v-model="form.paymentMethod" :options="paymentMethodOptions" label="Método de Pago" required />
-        </div>
-        <div class="mt-4">
-          <FormInput v-model="(form.referenceNumber as string)" type="text" label="Número de Referencia / Operación" placeholder="Ej: 001234567890" />
-        </div>
-        <div class="mt-4">
-          <FormTextarea v-model="(form.notes as string)" label="Notas" placeholder="Observaciones adicionales..." :rows="3" />
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <FormInput v-model="form.paidDate" type="date" label="Fecha de pago" required />
+          <FormInput v-model="form.paidAmount" type="number" label="Monto pagado" required />
         </div>
 
-        <p v-if="modalError" class="mt-3 text-sm rounded-lg px-3 py-2" :style="{ color: 'var(--color-error)', backgroundColor: 'rgba(239,68,68,0.1)' }">
+        <!-- Método de pago -->
+        <div class="flex items-center gap-2 mb-3">
+          <AppIcon icon="lucide:wallet" :size="15" color="var(--color-primary)" />
+          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Método de pago</p>
+        </div>
+        <FormSelect v-model="form.paymentMethod" :options="paymentMethodOptions" label="" required class="mb-4" />
+
+        <!-- Sección: Referencia y notas -->
+        <div class="flex items-center gap-2 mb-3">
+          <AppIcon icon="lucide:notebook-pen" :size="15" color="var(--color-primary)" />
+          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Referencia y notas</p>
+        </div>
+        <FormInput
+          v-model="(form.referenceNumber as string)"
+          type="text"
+          label="N° Referencia / Operación"
+          placeholder="Ej: 001234567890"
+          class="mb-4"
+        />
+        <FormTextarea
+          v-model="(form.notes as string)"
+          label="Notas adicionales"
+          placeholder="Observaciones sobre el pago..."
+          :rows="2"
+        />
+
+        <div
+          v-if="modalError"
+          class="mt-3 flex items-center gap-2 text-sm rounded-lg px-3 py-2"
+          :style="{ color: 'var(--color-error)', backgroundColor: 'rgba(239,68,68,0.1)' }"
+        >
+          <AppIcon icon="lucide:alert-circle" :size="14" />
           {{ modalError }}
-        </p>
+        </div>
       </template>
 
       <template #footer>
         <div class="flex justify-end gap-3">
-          <BaseButton variant="ghost" @click="closeModal">Cancelar</BaseButton>
+          <BaseButton variant="ghost" @click="closeModal">
+            <AppIcon icon="lucide:x" :size="16" />
+            Cancelar
+          </BaseButton>
           <BaseButton variant="primary" :loading="registering" :disabled="registering" @click="submitPayment">
             <AppIcon icon="lucide:circle-check" :size="16" />
             Confirmar Pago

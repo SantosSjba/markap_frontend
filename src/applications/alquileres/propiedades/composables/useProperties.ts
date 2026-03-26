@@ -112,3 +112,13 @@ export function useUpdatePropertyListingStatus() {
     },
   })
 }
+
+export function useDeleteProperty() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => propertiesService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+    },
+  })
+}

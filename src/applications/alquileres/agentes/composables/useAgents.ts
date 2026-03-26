@@ -57,7 +57,21 @@ export function useUpdateAgent() {
   })
   return {
     ...mutation,
-    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
+    invalidateList: () =>
+      queryClient.refetchQueries({ queryKey: agentKeys.lists() }),
+  }
+}
+
+export function useDeleteAgent() {
+  const queryClient = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: (id: string) => agentsService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: agentKeys.lists() })
+    },
+  })
+  return {
+    ...mutation,
     invalidateList: () =>
       queryClient.refetchQueries({ queryKey: agentKeys.lists() }),
   }

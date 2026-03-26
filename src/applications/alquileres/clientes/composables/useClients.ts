@@ -63,7 +63,6 @@ export function useCreateClient() {
   })
   return {
     ...mutation,
-    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
     invalidateList: () => queryClient.refetchQueries({ queryKey: clientKeys.all }),
   }
 }
@@ -80,7 +79,16 @@ export function useUpdateClient() {
   })
   return {
     ...mutation,
-    /** Refresca el listado y espera a que termine (para usar antes de navegar). */
     invalidateList: () => queryClient.refetchQueries({ queryKey: clientKeys.all }),
   }
+}
+
+export function useDeleteClient() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => clientsService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: clientKeys.all })
+    },
+  })
 }

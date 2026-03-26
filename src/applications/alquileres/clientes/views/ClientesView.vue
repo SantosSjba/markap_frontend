@@ -15,9 +15,10 @@ import {
   ExcelIcon,
 } from '@shared/components'
 import { useExcelExport } from '@shared/composables'
-import { useClientsList, useClientStats } from '../composables/useClients'
+import { useClientsList, useClientStats, useDeleteClient } from '../composables/useClients'
 import type { ClientListItem, ListClientsParams } from '../services/clients.service'
 import { clientsService } from '../services/clients.service'
+import { BaseModal } from '@shared/components'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -76,8 +77,29 @@ const goToNew = () => router.push('/alquileres/clientes/nuevo')
 const goToEdit = (client: ClientListItem) =>
   router.push(`/alquileres/clientes/${client.id}/editar`)
 
-const getActions = (client: ClientListItem) => [
+// Confirm modal
+const showConfirmModal = ref(false)
+const confirmClient = ref<ClientListItem | null>(null)
+const { mutate: deleteClient, isPending: isDeletingClient } = useDeleteClient()
+
+const openDeleteConfirm = (client: ClientListItem) => {
+  confirmClient.value = client
+  showConfirmModal.value = true
+}
+
+const closeConfirm = () => {
+  showConfirmModal.value = false
+  confirmClient.value = null
+}
+
+const executeDelete = () => {
+  if (!confirmClient.value) return
+  deleteClient(confirmClient.value.id, { onSuccess: closeConfirm })
+}
+
+const getActions = (client: ClientListItem): { label: string; icon: string; onClick: () => void }[] => [
   { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(client) },
+  { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteConfirm(client) },
 ]
 
 const paginationProps = computed(() => {
@@ -322,4 +344,32 @@ async function handleExport() {
       </div>
     </div>
   </div>
+
+  <!-- Confirm Delete Modal -->
+  <BaseModal v-model="showConfirmModal" :closable="true" size="sm" @close="closeConfirm">
+    <template #title>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
+          <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error);" />
+        </div>
+        <span class="text-base font-semibold" style="color: var(--color-text-primary);">Eliminar cliente</span>
+      </div>
+    </template>
+    <div class="p-4 space-y-3">
+      <p class="text-sm" style="color: var(--color-text-secondary);">
+        ¿Estás seguro de que deseas eliminar al cliente
+        <span class="font-semibold" style="color: var(--color-text-primary);">{{ confirmClient?.fullName }}</span>?
+      </p>
+      <p class="text-xs px-3 py-2 rounded-lg" style="background: var(--color-warning-subtle); color: var(--color-warning);">
+        Esta acción desactivará al cliente. Los registros relacionados (propiedades, contratos) se conservarán.
+      </p>
+    </div>
+    <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+      <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
+      <BaseButton variant="danger" :loading="isDeletingClient" @click="executeDelete">
+        <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
+        Eliminar
+      </BaseButton>
+    </div>
+  </BaseModal>
 </template>

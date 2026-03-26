@@ -6,6 +6,7 @@ import * as yup from 'yup'
 import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
 import { useRental, useUpdateRental } from '../composables/useRentals'
+import { getAttachmentUrl } from '../services/rentals.service'
 
 const route = useRoute()
 const router = useRouter()
@@ -317,10 +318,11 @@ const handleSubmit = async () => {
             Reemplaza o agrega documentos al contrato (PDF, Word o imágenes, máx. 10 MB)
           </p>
 
-          <!-- Estado de adjuntos actuales -->
-          <div class="grid grid-cols-2 gap-2 mb-4">
+          <!-- Adjuntos actuales con descarga -->
+          <div class="space-y-2 mb-4">
+            <!-- Contrato actual -->
             <div
-              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+              class="flex items-center gap-3 p-3 rounded-lg text-sm"
               :style="{
                 backgroundColor: rental.hasContract ? 'var(--color-success, #16a34a)0f' : 'var(--color-surface-elevated)',
                 border: `1px solid ${rental.hasContract ? 'var(--color-success, #16a34a)33' : 'var(--color-border)'}`,
@@ -331,12 +333,31 @@ const handleSubmit = async () => {
                 :size="16"
                 :color="rental.hasContract ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)'"
               />
-              <span :style="{ color: rental.hasContract ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)' }">
-                Contrato: {{ rental.hasContract ? 'Adjunto' : 'Sin archivo' }}
-              </span>
+              <div class="flex-1 min-w-0">
+                <span class="font-medium block" :style="{ color: rental.hasContract ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }">
+                  Contrato firmado
+                </span>
+                <span v-if="rental.attachments?.find(a => a.type === 'CONTRACT')" class="text-xs truncate block" :style="{ color: 'var(--color-text-muted)' }">
+                  {{ rental.attachments.find(a => a.type === 'CONTRACT')!.originalFileName }}
+                </span>
+                <span v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Sin archivo — sube uno abajo</span>
+              </div>
+              <a
+                v-if="rental.attachments?.find(a => a.type === 'CONTRACT')"
+                :href="getAttachmentUrl(rental.attachments.find(a => a.type === 'CONTRACT')!.filePath)"
+                target="_blank"
+                download
+                class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md shrink-0"
+                :style="{ color: 'var(--color-primary)', background: 'var(--color-primary)1a' }"
+              >
+                <AppIcon icon="lucide:download" :size="12" />
+                Descargar
+              </a>
             </div>
+
+            <!-- Acta actual -->
             <div
-              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+              class="flex items-center gap-3 p-3 rounded-lg text-sm"
               :style="{
                 backgroundColor: rental.hasDeliveryAct ? 'var(--color-success, #16a34a)0f' : 'var(--color-surface-elevated)',
                 border: `1px solid ${rental.hasDeliveryAct ? 'var(--color-success, #16a34a)33' : 'var(--color-border)'}`,
@@ -347,11 +368,32 @@ const handleSubmit = async () => {
                 :size="16"
                 :color="rental.hasDeliveryAct ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)'"
               />
-              <span :style="{ color: rental.hasDeliveryAct ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)' }">
-                Acta: {{ rental.hasDeliveryAct ? 'Adjunto' : 'Sin archivo' }}
-              </span>
+              <div class="flex-1 min-w-0">
+                <span class="font-medium block" :style="{ color: rental.hasDeliveryAct ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }">
+                  Acta de entrega
+                </span>
+                <span v-if="rental.attachments?.find(a => a.type === 'DELIVERY_ACT')" class="text-xs truncate block" :style="{ color: 'var(--color-text-muted)' }">
+                  {{ rental.attachments.find(a => a.type === 'DELIVERY_ACT')!.originalFileName }}
+                </span>
+                <span v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Sin archivo — sube uno abajo</span>
+              </div>
+              <a
+                v-if="rental.attachments?.find(a => a.type === 'DELIVERY_ACT')"
+                :href="getAttachmentUrl(rental.attachments.find(a => a.type === 'DELIVERY_ACT')!.filePath)"
+                target="_blank"
+                download
+                class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md shrink-0"
+                :style="{ color: 'var(--color-primary)', background: 'var(--color-primary)1a' }"
+              >
+                <AppIcon icon="lucide:download" :size="12" />
+                Descargar
+              </a>
             </div>
           </div>
+
+          <p class="text-xs mb-3" :style="{ color: 'var(--color-text-muted)' }">
+            Subir un nuevo archivo reemplazará el existente.
+          </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <FileDropzone

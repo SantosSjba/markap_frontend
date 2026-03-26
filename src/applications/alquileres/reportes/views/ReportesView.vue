@@ -76,10 +76,10 @@ const rentalsByMonthParams = computed<RentalsByMonthParams>(() => {
 })
 
 const reportTabs = [
-  { id: 'contratos-por-vencer', label: 'Contratos por Vencer' },
-  { id: 'sin-contrato', label: 'Sin Contrato' },
-  { id: 'clientes-activos', label: 'Clientes Activos' },
-  { id: 'alquiler-por-mes', label: 'Alquiler por mes' },
+  { id: 'contratos-por-vencer', label: 'Contratos por Vencer', icon: 'lucide:calendar-clock' },
+  { id: 'sin-contrato', label: 'Sin Contrato', icon: 'lucide:building-2' },
+  { id: 'clientes-activos', label: 'Clientes Activos', icon: 'lucide:users' },
+  { id: 'alquiler-por-mes', label: 'Alquiler por mes', icon: 'lucide:bar-chart-2' },
 ]
 
 const days = computed(() => Math.min(365, Math.max(1, periodFilter.value)))
@@ -284,25 +284,14 @@ async function handleExportTab() {
           Análisis y exportación de datos
         </p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <AppIcon icon="lucide:filter" :size="15" color="var(--color-text-muted)" class="shrink-0" />
         <label class="text-sm shrink-0" style="color: var(--color-text-secondary);">Período:</label>
-        <select
+        <FormSelect
           v-model="periodFilter"
-          class="rounded-lg border px-3 py-2 text-sm min-w-[160px]"
-          style="
-            border-color: var(--color-border);
-            background-color: var(--color-surface);
-            color: var(--color-text-primary);
-          "
-        >
-          <option
-            v-for="opt in periodOptions"
-            :key="opt.value"
-            :value="opt.value"
-          >
-            {{ opt.label }}
-          </option>
-        </select>
+          :options="periodOptions"
+          class="min-w-[170px]"
+        />
       </div>
     </div>
 
@@ -392,13 +381,14 @@ async function handleExportTab() {
                 </tr>
               </tbody>
             </table>
-            <p
+            <div
               v-if="!contratosPorVencerRows.length"
-              class="py-8 text-center text-sm"
+              class="flex flex-col items-center gap-2 py-10"
               style="color: var(--color-text-muted);"
             >
-              No hay contratos por vencer en el período seleccionado.
-            </p>
+              <AppIcon icon="lucide:calendar-check" :size="40" />
+              <p class="text-sm">No hay contratos por vencer en el período seleccionado.</p>
+            </div>
           </div>
         </template>
 
@@ -443,13 +433,14 @@ async function handleExportTab() {
                 </tr>
               </tbody>
             </table>
-            <p
+            <div
               v-if="!propertiesWithoutContractRows.length"
-              class="py-8 text-center text-sm"
+              class="flex flex-col items-center gap-2 py-10"
               style="color: var(--color-text-muted);"
             >
-              No hay propiedades sin contrato.
-            </p>
+              <AppIcon icon="lucide:building-2" :size="40" />
+              <p class="text-sm">No hay propiedades sin contrato.</p>
+            </div>
           </div>
         </template>
 
@@ -492,13 +483,14 @@ async function handleExportTab() {
                 </tr>
               </tbody>
             </table>
-            <p
+            <div
               v-if="!activeClientsRows.length"
-              class="py-8 text-center text-sm"
+              class="flex flex-col items-center gap-2 py-10"
               style="color: var(--color-text-muted);"
             >
-              No hay clientes activos.
-            </p>
+              <AppIcon icon="lucide:users" :size="40" />
+              <p class="text-sm">No hay clientes activos.</p>
+            </div>
           </div>
         </template>
 
@@ -577,56 +569,74 @@ async function handleExportTab() {
             class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5"
           >
             <div
-              class="rounded-lg p-3 text-center"
+              class="rounded-xl p-3"
               :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
             >
-              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Ingreso (monto base)</p>
-              <p class="text-lg font-bold" :style="{ color: 'var(--color-primary)' }">
+              <div class="flex items-center gap-1.5 mb-1">
+                <AppIcon icon="lucide:circle-plus" :size="14" color="var(--color-primary)" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Ingreso</p>
+              </div>
+              <p class="text-base font-bold" :style="{ color: 'var(--color-primary)' }">
                 {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.companyRevenue, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-lg p-3 text-center"
+              class="rounded-xl p-3"
               :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
             >
-              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Gastos</p>
-              <p class="text-lg font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <div class="flex items-center gap-1.5 mb-1">
+                <AppIcon icon="lucide:minus-circle" :size="14" color="var(--color-text-muted)" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Gastos</p>
+              </div>
+              <p class="text-base font-bold" :style="{ color: 'var(--color-text-primary)' }">
                 − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExpense, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-lg p-3 text-center"
+              class="rounded-xl p-3"
               :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
             >
-              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Impuestos</p>
-              <p class="text-lg font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <div class="flex items-center gap-1.5 mb-1">
+                <AppIcon icon="lucide:receipt" :size="14" color="var(--color-text-muted)" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Impuestos</p>
+              </div>
+              <p class="text-base font-bold" :style="{ color: 'var(--color-text-primary)' }">
                 − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalTax, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-lg p-3 text-center"
+              class="rounded-xl p-3"
               :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
             >
-              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Comisión ag. externo</p>
-              <p class="text-lg font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <div class="flex items-center gap-1.5 mb-1">
+                <AppIcon icon="lucide:user-round-cog" :size="14" color="var(--color-text-muted)" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Com. externo</p>
+              </div>
+              <p class="text-base font-bold" :style="{ color: 'var(--color-text-primary)' }">
                 − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-lg p-3 text-center"
+              class="rounded-xl p-3"
               :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
             >
-              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Comisión ag. interno</p>
-              <p class="text-lg font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <div class="flex items-center gap-1.5 mb-1">
+                <AppIcon icon="lucide:user-check" :size="14" color="var(--color-text-muted)" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Com. interno</p>
+              </div>
+              <p class="text-base font-bold" :style="{ color: 'var(--color-text-primary)' }">
                 − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalInternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-lg p-3 text-center"
+              class="rounded-xl p-3"
               :style="{ backgroundColor: 'var(--color-primary-light)', border: '1px solid var(--color-primary)' }"
             >
-              <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-primary)' }">Utilidad neta</p>
-              <p class="text-lg font-bold" :style="{ color: 'var(--color-primary)' }">
+              <div class="flex items-center gap-1.5 mb-1">
+                <AppIcon icon="lucide:circle-check" :size="14" color="var(--color-primary)" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-primary)' }">Utilidad neta</p>
+              </div>
+              <p class="text-base font-bold" :style="{ color: 'var(--color-primary)' }">
                 {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalUtility, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
@@ -789,27 +799,51 @@ async function handleExportTab() {
               Métricas del Mes
             </h3>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
+          <div class="grid grid-cols-2 gap-3">
+            <div
+              class="rounded-lg p-3"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <div class="flex items-center gap-1.5 mb-2">
+                <AppIcon icon="lucide:home" :size="15" :color="metricasMes.tasaOcupacion >= 80 ? 'var(--color-success)' : '#f59e0b'" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Ocupación</p>
+              </div>
               <p class="text-2xl font-bold" style="color: var(--color-text-primary);">{{ metricasMes.tasaOcupacion }}%</p>
-              <p class="text-sm" style="color: var(--color-text-secondary);">Tasa de ocupación</p>
-              <span class="text-xs" :style="{ color: metricasMes.tasaOcupacion >= 80 ? 'var(--color-success)' : 'var(--color-warning)' }">
-                {{ metricasMes.tasaOcupacion >= 80 ? 'Bueno' : 'Regular' }}
+              <span class="text-xs font-medium" :style="{ color: metricasMes.tasaOcupacion >= 80 ? 'var(--color-success)' : '#f59e0b' }">
+                {{ metricasMes.tasaOcupacion >= 80 ? '✓ Bueno' : '⚠ Regular' }}
               </span>
             </div>
-            <div>
+            <div
+              class="rounded-lg p-3"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <div class="flex items-center gap-1.5 mb-2">
+                <AppIcon icon="lucide:wallet" :size="15" color="var(--color-primary)" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Cobranza</p>
+              </div>
               <p class="text-2xl font-bold" style="color: var(--color-text-primary);">{{ metricasMes.tasaCobranza }}%</p>
-              <p class="text-sm" style="color: var(--color-text-secondary);">Tasa de cobranza</p>
               <span class="text-xs" style="color: var(--color-text-muted);">En desarrollo</span>
             </div>
-            <div>
+            <div
+              class="rounded-lg p-3"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <div class="flex items-center gap-1.5 mb-2">
+                <AppIcon icon="lucide:refresh-cw" :size="15" color="#10b981" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Renovados</p>
+              </div>
               <p class="text-2xl font-bold" style="color: var(--color-text-primary);">{{ metricasMes.contratosRenovados }}</p>
-              <p class="text-sm" style="color: var(--color-text-secondary);">Contratos renovados</p>
               <span class="text-xs" style="color: var(--color-text-muted);">Este mes</span>
             </div>
-            <div>
+            <div
+              class="rounded-lg p-3"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <div class="flex items-center gap-1.5 mb-2">
+                <AppIcon icon="lucide:user-plus" :size="15" color="#6366f1" />
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Clientes nuevos</p>
+              </div>
               <p class="text-2xl font-bold" style="color: var(--color-text-primary);">{{ metricasMes.clientesNuevos }}</p>
-              <p class="text-sm" style="color: var(--color-text-secondary);">Clientes nuevos</p>
               <span class="text-xs" style="color: var(--color-text-muted);">Este mes</span>
             </div>
           </div>

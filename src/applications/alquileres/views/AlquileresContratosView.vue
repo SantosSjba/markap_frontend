@@ -14,9 +14,10 @@ import {
   ExcelIcon,
 } from '@shared/components'
 import { useExcelExport } from '@shared/composables'
-import { useRentalsList, useRentalStats } from '../composables/useRentals'
+import { useRentalsList, useRentalStats, useCancelRental } from '../composables/useRentals'
 import type { RentalListItem, ListRentalsParams } from '../services/rentals.service'
 import { rentalsService } from '../services/rentals.service'
+import { BaseModal } from '@shared/components'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -131,11 +132,37 @@ const goToDetail = (item: RentalListItem) => router.push(`/alquileres/contratos/
 const goToEdit = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}/editar`)
 const goToFinancialConfig = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}/distribucion-financiera`)
 
-const getActions = (item: RentalListItem) => [
-  { label: 'Ver detalle', icon: 'lucide:eye', onClick: () => goToDetail(item) },
-  { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(item) },
-  { label: 'Distribución financiera', icon: 'lucide:sliders-horizontal', onClick: () => goToFinancialConfig(item) },
-]
+// Cancel rental confirm modal
+const showCancelModal = ref(false)
+const rentalToCancel = ref<RentalListItem | null>(null)
+const { mutate: cancelRental, isPending: isCancellingRental } = useCancelRental()
+
+const openCancelModal = (item: RentalListItem) => {
+  rentalToCancel.value = item
+  showCancelModal.value = true
+}
+
+const closeCancelModal = () => {
+  showCancelModal.value = false
+  rentalToCancel.value = null
+}
+
+const executeCancelRental = () => {
+  if (!rentalToCancel.value) return
+  cancelRental(rentalToCancel.value.id, { onSuccess: closeCancelModal })
+}
+
+const getActions = (item: RentalListItem): { label: string; icon: string; onClick: () => void }[] => {
+  const actions: { label: string; icon: string; onClick: () => void }[] = [
+    { label: 'Ver detalle', icon: 'lucide:eye', onClick: () => goToDetail(item) },
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(item) },
+    { label: 'Distribución financiera', icon: 'lucide:sliders-horizontal', onClick: () => goToFinancialConfig(item) },
+  ]
+  if (item.status === 'ACTIVE') {
+    actions.push({ label: 'Cancelar contrato', icon: 'lucide:x-circle', onClick: () => openCancelModal(item) })
+  }
+  return actions
+}
 
 const paginationProps = computed(() => {
   const page = listParams.value.page ?? 1
@@ -404,4 +431,33 @@ async function handleExport() {
       </div>
     </div>
   </div>
+
+  <!-- Confirm Cancel Rental Modal -->
+  <BaseModal v-model="showCancelModal" :closable="true" size="sm" @close="closeCancelModal">
+    <template #title>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
+          <AppIcon icon="lucide:x-circle" :size="16" style="color: var(--color-error);" />
+        </div>
+        <span class="text-base font-semibold" style="color: var(--color-text-primary);">Cancelar contrato</span>
+      </div>
+    </template>
+    <div class="p-4 space-y-3">
+      <p class="text-sm" style="color: var(--color-text-secondary);">
+        ¿Estás seguro de que deseas cancelar el contrato de
+        <span class="font-semibold" style="color: var(--color-text-primary);">{{ rentalToCancel?.tenantName }}</span>
+        en <span class="font-semibold" style="color: var(--color-text-primary);">{{ rentalToCancel?.propertyAddress }}</span>?
+      </p>
+      <p class="text-xs px-3 py-2 rounded-lg" style="background: var(--color-warning-subtle); color: var(--color-warning);">
+        El contrato quedará marcado como <strong>Cancelado</strong>. Esta acción no se puede deshacer. El historial de pagos se conservará.
+      </p>
+    </div>
+    <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+      <BaseButton variant="ghost" @click="closeCancelModal">Cancelar</BaseButton>
+      <BaseButton variant="danger" :loading="isCancellingRental" @click="executeCancelRental">
+        <AppIcon icon="lucide:x-circle" :size="16" class="mr-1" />
+        Cancelar contrato
+      </BaseButton>
+    </div>
+  </BaseModal>
 </template>

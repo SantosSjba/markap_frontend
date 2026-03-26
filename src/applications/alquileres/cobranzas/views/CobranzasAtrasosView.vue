@@ -358,72 +358,129 @@ async function handleExport() {
     </div>
 
     <!-- Modal cobro -->
-    <BaseModal v-model="showModal" title="Registrar Cobro" size="md" @close="closeModal">
+    <BaseModal v-model="showModal" size="md" @close="closeModal">
+      <template #title>
+        <div class="flex items-center gap-2">
+          <AppIcon icon="lucide:circle-dollar-sign" :size="18" color="var(--color-error)" />
+          <span>Registrar Cobro</span>
+        </div>
+      </template>
+
       <template v-if="selectedOverdue">
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Cobrar a <strong :style="{ color: 'var(--color-text-primary)' }">{{ selectedOverdue.tenantName }}</strong>
-        </p>
+        <!-- Resumen del cliente en atraso -->
+        <div
+          class="flex items-center gap-4 p-4 rounded-xl mb-5"
+          :style="{ backgroundColor: 'var(--color-surface-elevated)', borderLeft: `4px solid ${getBorderColor(selectedOverdue.overdueLevel)}`, border: '1px solid var(--color-border)' }"
+        >
+          <div
+            class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+            :style="{ backgroundColor: getAvatarColor(selectedOverdue.tenantName) }"
+          >
+            {{ getInitials(selectedOverdue.tenantName) }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                {{ selectedOverdue.tenantName }}
+              </p>
+              <Badge :variant="getOverdueLevelBadge(selectedOverdue.overdueLevel).variant" :label="getOverdueLevelBadge(selectedOverdue.overdueLevel).label" />
+            </div>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <AppIcon icon="lucide:map-pin" :size="12" color="var(--color-text-muted)" />
+              <p class="text-xs truncate" :style="{ color: 'var(--color-text-muted)' }">{{ selectedOverdue.propertyAddress }}</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Total adeudado</p>
+            <p class="text-lg font-bold" :style="{ color: '#ef4444' }">
+              {{ formatCurrency(selectedOverdue.totalOwed, selectedOverdue.currency) }}
+            </p>
+          </div>
+        </div>
 
         <!-- Seleccionar período a pagar -->
+        <div class="flex items-center gap-2 mb-3">
+          <AppIcon icon="lucide:calendar-clock" :size="15" color="var(--color-primary)" />
+          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Período a regularizar</p>
+        </div>
         <div
-          class="p-3 rounded-lg mb-4"
-          :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+          class="p-3 rounded-xl mb-5"
+          :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
         >
-          <p class="text-xs font-semibold mb-2" :style="{ color: 'var(--color-text-muted)' }">Seleccionar período a regularizar:</p>
           <div class="flex flex-col gap-2">
             <label
               v-for="pending in tenantPendingPayments?.filter(p => p.rentalId === selectedOverdue?.rentalId)"
               :key="pending.paymentId"
-              class="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover-surface"
-              :style="selectedPaymentId === pending.paymentId ? { backgroundColor: 'var(--color-primary)', opacity: 0.15 } : {}"
+              class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+              :style="selectedPaymentId === pending.paymentId
+                ? { backgroundColor: 'var(--color-primary)15', border: '1px solid var(--color-primary)' }
+                : { border: '1px solid transparent' }"
             >
               <input
                 type="radio"
                 :value="pending.paymentId"
                 v-model="selectedPaymentId"
-                class="accent-primary"
+                class="accent-primary shrink-0"
               />
-              <span class="text-sm flex-1" :style="{ color: 'var(--color-text-primary)' }">
-                {{ pending.periodLabel }} — {{ formatCurrency(pending.amount, pending.currency) }}
-              </span>
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                  {{ pending.periodLabel }}
+                </span>
+                <span class="mx-2 text-sm" :style="{ color: 'var(--color-text-muted)' }">—</span>
+                <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                  {{ formatCurrency(pending.amount, pending.currency) }}
+                </span>
+              </div>
               <Badge variant="error" :label="`${pending.daysOverdue}d`" />
             </label>
-            <p
+            <div
               v-if="!tenantPendingPayments?.filter(p => p.rentalId === selectedOverdue?.rentalId).length"
-              class="text-xs"
+              class="flex items-center gap-2 py-2"
               :style="{ color: 'var(--color-text-muted)' }"
             >
-              Cargando períodos...
-            </p>
+              <AppIcon icon="svg-spinners:ring-resize" :size="16" color="var(--color-primary)" />
+              <span class="text-xs">Cargando períodos...</span>
+            </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <FormInput v-model="form.paidDate" type="date" label="Fecha de Pago" required />
-          <FormInput v-model="form.paidAmount" type="number" label="Monto Pagado" required />
+        <!-- Datos del pago -->
+        <div class="flex items-center gap-2 mb-3">
+          <AppIcon icon="lucide:banknote" :size="15" color="var(--color-primary)" />
+          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Datos del pago</p>
         </div>
-        <div class="mt-4">
-          <FormSelect v-model="form.paymentMethod" :options="paymentMethodOptions" label="Método de Pago" required />
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <FormInput v-model="form.paidDate" type="date" label="Fecha de pago" required />
+          <FormInput v-model="form.paidAmount" type="number" label="Monto pagado" required />
         </div>
-        <div class="mt-4">
-          <FormInput v-model="(form.referenceNumber as string)" type="text" label="Referencia / Operación" placeholder="Ej: 001234567890" />
-        </div>
-        <div class="mt-4">
-          <FormTextarea v-model="(form.notes as string)" label="Notas" placeholder="Observaciones..." :rows="2" />
-        </div>
+        <FormSelect v-model="form.paymentMethod" :options="paymentMethodOptions" label="Método de pago" required class="mb-4" />
+        <FormInput
+          v-model="(form.referenceNumber as string)"
+          type="text"
+          label="Referencia / Operación"
+          placeholder="Ej: 001234567890"
+          class="mb-4"
+        />
+        <FormTextarea v-model="(form.notes as string)" label="Notas" placeholder="Observaciones..." :rows="2" />
 
-        <p v-if="modalError" class="mt-3 text-sm rounded-lg px-3 py-2" :style="{ color: 'var(--color-error)', backgroundColor: 'rgba(239,68,68,0.1)' }">
+        <div
+          v-if="modalError"
+          class="mt-3 flex items-center gap-2 text-sm rounded-lg px-3 py-2"
+          :style="{ color: 'var(--color-error)', backgroundColor: 'rgba(239,68,68,0.1)' }"
+        >
+          <AppIcon icon="lucide:alert-circle" :size="14" />
           {{ modalError }}
-        </p>
+        </div>
       </template>
 
       <template #footer>
         <div class="flex justify-end gap-3">
-          <BaseButton variant="ghost" @click="closeModal">Cancelar</BaseButton>
+          <BaseButton variant="ghost" @click="closeModal">
+            <AppIcon icon="lucide:x" :size="16" />
+            Cancelar
+          </BaseButton>
           <BaseButton variant="primary" :loading="registering" :disabled="registering || !selectedPaymentId" @click="submitPayment">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <AppIcon icon="lucide:circle-check" :size="16" />
             Confirmar Cobro
           </BaseButton>
         </div>
