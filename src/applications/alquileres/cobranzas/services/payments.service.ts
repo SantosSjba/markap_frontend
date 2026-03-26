@@ -67,6 +67,8 @@ export interface OverduePaymentItem {
   tenantId: string
   tenantName: string
   tenantDocument: string | null
+  tenantPhone: string | null
+  tenantEmail: string | null
   overdueLevel: 'critical' | 'high' | 'moderate'
   totalOwed: number
   currency: string
@@ -74,6 +76,7 @@ export interface OverduePaymentItem {
   maxDaysOverdue: number
   lastPaymentDate: string | null
   lastCommunicationDate: string | null
+  lastCommunicationNote: string | null
   propertyAddress: string
   ownerName: string
   rentalId: string
@@ -144,4 +147,7 @@ export const paymentsService = {
       .get<OverduePaymentItem[]>(`/payments/overdue?${p.toString()}`)
       .then((r) => r.data)
   },
+
+  saveCommunicationNote: (rentalId: string, note: string): Promise<{ message: string }> =>
+    apiClient.patch(`/rentals/${rentalId}/communication-note`, { note }).then((r) => r.data),
 }

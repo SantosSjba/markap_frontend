@@ -13,7 +13,7 @@ import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
 import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
-import { useOverduePayments, useRegisterPayment, usePendingPayments } from '../composables/usePayments'
+import { useOverduePayments, useRegisterPayment, usePendingPayments, useSaveCommunicationNote } from '../composables/usePayments'
 import type { OverduePaymentItem, RegisterPaymentPayload } from '../services/payments.service'
 import { paymentsService } from '../services/payments.service'
 
@@ -104,6 +104,32 @@ async function submitPayment() {
   } finally {
     registering.value = false
   }
+}
+
+// ─── Nota de comunicación ─────────────────────────────────────────────────────
+const showNoteModal = ref(false)
+const noteItem = ref<OverduePaymentItem | null>(null)
+const noteText = ref('')
+const { mutate: doSaveNote, isPending: savingNote } = useSaveCommunicationNote()
+
+function openNoteModal(item: OverduePaymentItem) {
+  noteItem.value = item
+  noteText.value = item.lastCommunicationNote ?? ''
+  showNoteModal.value = true
+}
+
+function closeNoteModal() {
+  showNoteModal.value = false
+  noteItem.value = null
+  noteText.value = ''
+}
+
+function submitNote() {
+  if (!noteItem.value || !noteText.value.trim()) return
+  doSaveNote(
+    { rentalId: noteItem.value.rentalId, note: noteText.value.trim() },
+    { onSuccess: closeNoteModal },
+  )
 }
 
 function getOverdueLevelBadge(level: string): { variant: 'error' | 'warning' | 'info'; label: string } {
@@ -312,14 +338,51 @@ async function handleExport() {
               <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ item.monthsOverdue }} {{ item.monthsOverdue === 1 ? 'mes' : 'meses' }}</p>
             </div>
             <div class="flex flex-col gap-1.5">
-              <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
+              <a
+                v-if="item.tenantPhone"
+                :href="`tel:${item.tenantPhone}`"
+                target="_blank"
+                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors"
+                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)', textDecoration: 'none' }"
+              >
+                <AppIcon icon="lucide:phone" :size="14" /> Llamar
+              </a>
+              <button
+                v-else
+                disabled
+                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border opacity-40 cursor-not-allowed"
+                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }"
+                title="Sin teléfono registrado"
+              >
                 <AppIcon icon="lucide:phone" :size="14" /> Llamar
               </button>
-              <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
+
+              <a
+                v-if="item.tenantEmail"
+                :href="`mailto:${item.tenantEmail}`"
+                target="_blank"
+                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors"
+                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)', textDecoration: 'none' }"
+              >
+                <AppIcon icon="lucide:mail" :size="14" /> Email
+              </a>
+              <button
+                v-else
+                disabled
+                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border opacity-40 cursor-not-allowed"
+                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }"
+                title="Sin email registrado"
+              >
                 <AppIcon icon="lucide:mail" :size="14" /> Email
               </button>
-              <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
-                <AppIcon icon="lucide:pencil-line" :size="14" /> Nota
+
+              <button
+                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors"
+                :style="{ borderColor: item.lastCommunicationDate ? 'var(--color-primary)' : 'var(--color-border)', color: item.lastCommunicationDate ? 'var(--color-primary)' : 'var(--color-text-secondary)' }"
+                @click="openNoteModal(item)"
+              >
+                <AppIcon icon="lucide:pencil-line" :size="14" />
+                {{ item.lastCommunicationDate ? 'Ver nota' : 'Nota' }}
               </button>
               <div class="flex items-center gap-1">
                 <button
@@ -486,5 +549,57 @@ async function handleExport() {
         </div>
       </template>
     </BaseModal>
+
+  <!-- Modal: Nota de comunicación -->
+  <BaseModal v-model="showNoteModal" :closable="true" size="sm" @close="closeNoteModal">
+    <template #title>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background: var(--color-primary)1a;">
+          <AppIcon icon="lucide:pencil-line" :size="16" style="color: var(--color-primary);" />
+        </div>
+        <div>
+          <p class="text-base font-semibold" style="color: var(--color-text-primary);">Nota de comunicación</p>
+          <p v-if="noteItem" class="text-xs" style="color: var(--color-text-muted);">{{ noteItem.tenantName }}</p>
+        </div>
+      </div>
+    </template>
+
+    <div class="p-4 space-y-4">
+      <!-- Última nota guardada -->
+      <div
+        v-if="noteItem?.lastCommunicationDate && noteItem?.lastCommunicationNote"
+        class="px-3 py-2.5 rounded-lg text-sm space-y-1"
+        :style="{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+      >
+        <div class="flex items-center gap-1.5">
+          <AppIcon icon="lucide:history" :size="13" style="color: var(--color-text-muted);" />
+          <span class="text-xs font-medium" style="color: var(--color-text-muted);">
+            Última nota — {{ formatDate(noteItem.lastCommunicationDate) }}
+          </span>
+        </div>
+        <p class="text-sm" style="color: var(--color-text-secondary);">{{ noteItem.lastCommunicationNote }}</p>
+      </div>
+
+      <FormTextarea
+        v-model="noteText"
+        label="Nueva nota"
+        placeholder="Ej: Llamé al cliente, quedó en pagar el viernes..."
+        :rows="4"
+      />
+    </div>
+
+    <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+      <BaseButton variant="ghost" @click="closeNoteModal">Cancelar</BaseButton>
+      <BaseButton
+        variant="primary"
+        :loading="savingNote"
+        :disabled="!noteText.trim()"
+        @click="submitNote"
+      >
+        <AppIcon icon="lucide:save" :size="16" class="mr-1" />
+        Guardar nota
+      </BaseButton>
+    </div>
+  </BaseModal>
   </div>
 </template>

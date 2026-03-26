@@ -54,3 +54,14 @@ export function useRegisterPayment() {
     },
   })
 }
+
+export function useSaveCommunicationNote() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ rentalId, note }: { rentalId: string; note: string }) =>
+      paymentsService.saveCommunicationNote(rentalId, note),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: paymentKeys.overdue() })
+    },
+  })
+}
