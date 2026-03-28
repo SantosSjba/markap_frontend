@@ -6,6 +6,7 @@ import { applicationsRoutes } from '@features/applications/router'
 import { dashboardRoutes } from '@applications/shell/router'
 import { settingsRoutes } from '@applications/settings/router'
 import { alquileresRoutes } from '@applications/alquileres/router'
+import { ventasRoutes } from '@applications/ventas/router'
 
 const baseRoutes: RouteRecordRaw[] = [
   {
@@ -30,6 +31,7 @@ const routes: RouteRecordRaw[] = [
   ...authRoutes,
   ...applicationsRoutes,
   ...alquileresRoutes,
+  ...ventasRoutes,
   ...settingsRoutes,
   ...dashboardRoutes,
   ...baseRoutes,
