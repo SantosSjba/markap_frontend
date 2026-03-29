@@ -1,5 +1,7 @@
 /**
  * Form Components Exports
+ *
+ * Inputs de texto/número/fecha: solo `FormInput` (antes existía `BaseInput` en ui/, duplicado).
  */
 
 export { default as FormInput } from './FormInput.vue'

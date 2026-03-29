@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * FormInput - Componente de input reutilizable con props
+ * FormInput — único input de formulario de texto/número/fecha del design system.
+ * (Reemplaza el antiguo BaseInput, eliminado por duplicar esta misma funcionalidad.)
  */
 
 interface Props {
@@ -55,11 +56,12 @@ const handleInput = (event: Event) => {
       :placeholder="placeholder"
       :disabled="disabled"
       :required="required"
-      class="w-full px-4 py-2.5 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-60 disabled:cursor-not-allowed"
+      class="w-full px-4 py-2.5 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
       :style="{
         borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
         backgroundColor: 'var(--color-surface)',
         color: 'var(--color-text-primary)',
+        colorScheme: 'inherit',
       }"
       @input="handleInput"
       @blur="emit('blur', $event)"

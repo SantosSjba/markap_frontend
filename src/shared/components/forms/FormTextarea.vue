@@ -59,6 +59,7 @@ const handleInput = (event: Event) => {
         borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
         backgroundColor: 'var(--color-surface)',
         color: 'var(--color-text-primary)',
+        colorScheme: 'inherit',
       }"
       @input="handleInput"
       @blur="emit('blur', $event)"

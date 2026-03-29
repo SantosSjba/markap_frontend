@@ -67,6 +67,7 @@ const handleChange = (event: Event) => {
           borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
           color: 'var(--color-text-primary)',
+          colorScheme: 'inherit',
         }"
         @change="handleChange"
       >

@@ -3,8 +3,8 @@ import { watch } from 'vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**
- * BaseModal Component
- * Reusable modal/dialog component
+ * BaseModal — modal genérico (título, cuerpo, pie opcional con slot `footer`).
+ * Para flujos con Cancelar / Guardar, usa el slot `footer` con `BaseButton`.
  */
 
 interface Props {

@@ -2,7 +2,8 @@
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**
- * SearchInput - Input de búsqueda reutilizable con icono que no se superpone al texto
+ * SearchInput - Input de búsqueda con icono a la izquierda.
+ * El padding izquierdo va en :style (inline) para imponerse a main.css input[type="search"].
  */
 interface Props {
   modelValue: string
@@ -39,11 +40,16 @@ const handleInput = (e: Event) => {
       type="search"
       :placeholder="placeholder"
       :disabled="disabled"
-      class="w-full py-2.5 pl-11 pr-4 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-60 disabled:cursor-not-allowed"
+      class="w-full rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
       :style="{
         borderColor: 'var(--color-border)',
         backgroundColor: 'var(--color-surface)',
         color: 'var(--color-text-primary)',
+        colorScheme: 'inherit',
+        paddingTop: '0.625rem',
+        paddingBottom: '0.625rem',
+        paddingRight: '1rem',
+        paddingLeft: '2.75rem',
       }"
       @input="handleInput"
     />
