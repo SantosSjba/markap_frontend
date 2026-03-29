@@ -29,7 +29,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
             path: '',
             name: 'ventas-clientes',
             component: () => import('../views/VentasPlaceholderView.vue'),
-            meta: { title: 'Clientes' },
+            meta: { title: 'Listado de Clientes' },
           },
           {
             path: 'nuevo',
@@ -48,7 +48,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
             path: '',
             name: 'ventas-propiedades',
             component: () => import('../views/VentasPlaceholderView.vue'),
-            meta: { title: 'Propiedades' },
+            meta: { title: 'Listado de Propiedades' },
           },
           {
             path: 'nueva',
@@ -59,15 +59,54 @@ export const ventasRoutes: RouteRecordRaw[] = [
         ],
       },
       {
-        path: 'negociaciones',
+        path: 'procesos',
         component: SectionLayout,
-        meta: { title: 'Negociaciones' },
+        meta: { title: 'Procesos de Venta' },
         children: [
           {
             path: '',
-            name: 'ventas-negociaciones',
+            name: 'ventas-procesos',
             component: () => import('../views/VentasPlaceholderView.vue'),
-            meta: { title: 'Negociaciones' },
+            meta: { title: 'Procesos de Venta' },
+          },
+        ],
+      },
+      {
+        path: 'separaciones',
+        component: SectionLayout,
+        meta: { title: 'Separaciones' },
+        children: [
+          {
+            path: '',
+            name: 'ventas-separaciones',
+            component: () => import('../views/VentasPlaceholderView.vue'),
+            meta: { title: 'Separaciones' },
+          },
+        ],
+      },
+      {
+        path: 'cierres',
+        component: SectionLayout,
+        meta: { title: 'Cierres' },
+        children: [
+          {
+            path: '',
+            name: 'ventas-cierres',
+            component: () => import('../views/VentasPlaceholderView.vue'),
+            meta: { title: 'Cierres' },
+          },
+        ],
+      },
+      {
+        path: 'pagos',
+        component: SectionLayout,
+        meta: { title: 'Pagos' },
+        children: [
+          {
+            path: '',
+            name: 'ventas-pagos',
+            component: () => import('../views/VentasPlaceholderView.vue'),
+            meta: { title: 'Pagos' },
           },
         ],
       },
@@ -81,6 +120,19 @@ export const ventasRoutes: RouteRecordRaw[] = [
             name: 'ventas-comisiones',
             component: () => import('../views/VentasPlaceholderView.vue'),
             meta: { title: 'Comisiones' },
+          },
+        ],
+      },
+      {
+        path: 'costos-documentacion',
+        component: SectionLayout,
+        meta: { title: 'Costos de Documentación' },
+        children: [
+          {
+            path: '',
+            name: 'ventas-costos-documentacion',
+            component: () => import('../views/VentasPlaceholderView.vue'),
+            meta: { title: 'Costos de Documentación' },
           },
         ],
       },

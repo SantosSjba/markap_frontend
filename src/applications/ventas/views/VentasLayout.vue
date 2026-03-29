@@ -5,7 +5,7 @@ import { useAppLayout } from '../composables'
 
 /**
  * VentasLayout — mismo shell que Alquileres (`AppLayoutSidebar` + `AppHeader` en @widgets).
- * Menús: API por slug `ventas` (fallback local si la API viene vacía). Notificaciones: filtradas a ventas en el header.
+ * Menús: API por slug `ventas`. Notificaciones: filtradas a ventas en el header.
  */
 
 const { application, menus, menusLoading } = useAppLayout()
