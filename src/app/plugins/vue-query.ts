@@ -20,6 +20,7 @@ const vueQueryPluginOptions: VueQueryPluginOptions = {
   queryClient,
 }
 
+/** Registra Vue Query; el panel de depuración está en `App.vue` (`VueQueryDevtools`). */
 export function setupVueQuery(app: App) {
   app.use(VueQueryPlugin, vueQueryPluginOptions)
 }

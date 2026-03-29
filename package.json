@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tanstack/vue-query": "^5.92.9",
+    "@tanstack/vue-query-devtools": "^6.1.10",
     "axios": "^1.13.4",
     "exceljs": "^4.4.0",
     "pinia": "^3.0.4",
