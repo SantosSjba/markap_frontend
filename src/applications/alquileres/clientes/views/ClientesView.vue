@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import type { RowSelectionState } from '@tanstack/vue-table'
 import {
   BaseButton,
   BasePagination,
@@ -22,6 +23,8 @@ import { BaseModal } from '@shared/components'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
+
+const tableRowSelection = ref<RowSelectionState>({})
 
 const listParams = ref<ListClientsParams>({
   applicationSlug: 'alquileres',
@@ -64,12 +67,53 @@ const onPageSizeChange = (size: number) => {
 }
 
 const tableColumns = [
-  { key: 'cliente', label: 'Cliente', align: 'left' as const },
-  { key: 'contacto', label: 'Contacto', align: 'left' as const },
-  { key: 'tipo', label: 'Tipo', align: 'left' as const },
-  { key: 'propiedades', label: 'Propiedades', align: 'left' as const },
-  { key: 'contratos', label: 'Alquileres', align: 'left' as const },
-  { key: 'estado', label: 'Estado', align: 'left' as const },
+  {
+    key: 'cliente',
+    label: 'Cliente',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => (r as ClientListItem).fullName,
+  },
+  {
+    key: 'contacto',
+    label: 'Contacto',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => {
+      const c = r as ClientListItem
+      return `${c.primaryPhone} ${c.primaryEmail}`
+    },
+  },
+  {
+    key: 'tipo',
+    label: 'Tipo',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => (r as ClientListItem).clientType,
+  },
+  {
+    key: 'propiedades',
+    label: 'Propiedades',
+    align: 'left' as const,
+    sortable: true,
+    sortType: 'basic' as const,
+    sortAccessor: (r: unknown) => (r as ClientListItem).propertiesCount ?? 0,
+  },
+  {
+    key: 'contratos',
+    label: 'Alquileres',
+    align: 'left' as const,
+    sortable: true,
+    sortType: 'basic' as const,
+    sortAccessor: (r: unknown) => (r as ClientListItem).contractsCount ?? 0,
+  },
+  {
+    key: 'estado',
+    label: 'Estado',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => ((r as ClientListItem).isActive ? 1 : 0),
+  },
   { key: 'actions', label: '', align: 'right' as const },
 ]
 
@@ -229,52 +273,40 @@ async function handleExport() {
       </StatsCard>
     </div>
 
-    <!-- Search & Filters -->
-    <div
-      class="flex flex-col sm:flex-row gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-      }"
-    >
-      <div class="flex-1 min-w-0">
-        <SearchInput
-          v-model="searchInput"
-          placeholder="Buscar por nombre, documento o email..."
-        />
-      </div>
-      <div class="flex flex-wrap gap-3 flex-shrink-0 sm:flex-nowrap">
-        <div class="w-full sm:w-[180px] min-w-0">
-          <FormSelect
-            v-model="filterType"
-            :options="typeOptions"
-            placeholder="Todos los tipos"
-          />
-        </div>
-        <div class="w-full sm:w-[180px] min-w-0">
-          <FormSelect
-            v-model="filterStatus"
-            :options="statusOptions"
-            placeholder="Todos los estados"
-          />
-        </div>
-      </div>
-    </div>
-
     <!-- Table -->
     <div
-      class="rounded-xl border overflow-visible"
+      class="rounded-xl border overflow-hidden"
       :style="{
         backgroundColor: 'var(--color-surface)',
         borderColor: 'var(--color-border)',
       }"
     >
-      <div class="overflow-x-auto overflow-y-visible">
+      <div class="overflow-x-auto">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
         </div>
         <template v-else>
-        <DataTable :columns="tableColumns" :data="clients" row-key="id">
+        <DataTable
+          v-model:row-selection="tableRowSelection"
+          selectable
+          empty-text="No hay clientes en esta página."
+          :columns="tableColumns"
+          :data="clients"
+          row-key="id"
+        >
+          <template #toolbar>
+            <div class="flex-1 min-w-0">
+              <SearchInput v-model="searchInput" placeholder="Buscar por nombre, documento o email..." />
+            </div>
+            <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
+              <div class="w-full sm:w-[175px] min-w-0">
+                <FormSelect v-model="filterType" :options="typeOptions" placeholder="Todos los tipos" />
+              </div>
+              <div class="w-full sm:w-[175px] min-w-0">
+                <FormSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
+              </div>
+            </div>
+          </template>
           <template #row="{ row }">
             <td class="py-3 px-4">
               <div class="flex items-center gap-3">

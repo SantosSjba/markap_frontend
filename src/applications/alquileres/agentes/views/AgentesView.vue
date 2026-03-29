@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import type { RowSelectionState } from '@tanstack/vue-table'
 import {
   BaseButton,
   BasePagination,
@@ -20,6 +21,8 @@ import { agentsService } from '../services/agents.service'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
+
+const tableRowSelection = ref<RowSelectionState>({})
 
 const listParams = ref<ListAgentsParams>({
   applicationSlug: 'alquileres',
@@ -54,14 +57,6 @@ watch(
 
 const onPageChange = (page: number) => { listParams.value = { ...listParams.value, page } }
 const onPageSizeChange = (size: number) => { listParams.value = { ...listParams.value, limit: size, page: 1 } }
-
-const tableColumns = [
-  { key: 'agente', label: 'Agente', align: 'left' as const },
-  { key: 'tipo', label: 'Tipo', align: 'left' as const },
-  { key: 'contacto', label: 'Contacto', align: 'left' as const },
-  { key: 'estado', label: 'Estado', align: 'left' as const },
-  { key: 'actions', label: '', align: 'right' as const },
-]
 
 const goToNew = () => router.push('/alquileres/agentes/nuevo')
 const goToEdit = (agent: AgentListItem) => router.push(`/alquileres/agentes/${agent.id}/editar`)
@@ -154,6 +149,41 @@ function displayName(row: AgentListItem): string {
   return row.fullName
 }
 
+const tableColumns = [
+  {
+    key: 'agente',
+    label: 'Agente',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => displayName(r as AgentListItem),
+  },
+  {
+    key: 'tipo',
+    label: 'Tipo',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => (r as AgentListItem).type,
+  },
+  {
+    key: 'contacto',
+    label: 'Contacto',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => {
+      const a = r as AgentListItem
+      return `${a.phone ?? ''} ${a.email ?? ''}`
+    },
+  },
+  {
+    key: 'estado',
+    label: 'Estado',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => ((r as AgentListItem).isActive ? 1 : 0),
+  },
+  { key: 'actions', label: '', align: 'right' as const },
+]
+
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
@@ -221,27 +251,7 @@ async function handleExport() {
     </div>
 
     <div
-      class="flex flex-col sm:flex-row gap-3 p-4 rounded-xl border"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div class="flex-1 min-w-0">
-        <SearchInput
-          v-model="searchInput"
-          placeholder="Buscar por nombre, email o teléfono..."
-        />
-      </div>
-      <div class="flex flex-wrap gap-3 flex-shrink-0 sm:flex-nowrap">
-        <div class="w-full sm:w-[180px] min-w-0">
-          <FormSelect v-model="filterType" :options="typeOptions" placeholder="Todos los tipos" />
-        </div>
-        <div class="w-full sm:w-[180px] min-w-0">
-          <FormSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
-        </div>
-      </div>
-    </div>
-
-    <div
-      class="rounded-xl border overflow-visible"
+      class="rounded-xl border overflow-hidden"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
     >
       <div class="overflow-x-auto">
@@ -249,7 +259,27 @@ async function handleExport() {
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
         </div>
         <template v-else>
-          <DataTable :columns="tableColumns" :data="agents" row-key="id">
+          <DataTable
+            v-model:row-selection="tableRowSelection"
+            selectable
+            empty-text="No hay agentes en esta página."
+            :columns="tableColumns"
+            :data="agents"
+            row-key="id"
+          >
+            <template #toolbar>
+              <div class="flex-1 min-w-0">
+                <SearchInput v-model="searchInput" placeholder="Buscar por nombre, email o teléfono..." />
+              </div>
+              <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
+                <div class="w-full sm:w-[175px] min-w-0">
+                  <FormSelect v-model="filterType" :options="typeOptions" placeholder="Todos los tipos" />
+                </div>
+                <div class="w-full sm:w-[175px] min-w-0">
+                  <FormSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
+                </div>
+              </div>
+            </template>
             <template #row="{ row }">
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
