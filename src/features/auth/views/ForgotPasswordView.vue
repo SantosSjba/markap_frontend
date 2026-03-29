@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { useForgotPassword } from '../composables'
 import { isAxiosError } from 'axios'
 
@@ -52,15 +53,7 @@ const handleSubmit = async () => {
         class="w-16 h-16 rounded-xl flex items-center justify-center"
         style="background-color: var(--color-primary-light); border: 1px solid var(--color-primary);"
       >
-        <svg
-          class="w-8 h-8"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          style="color: var(--color-primary);"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-        </svg>
+        <AppIcon icon="lucide:key-round" :size="32" color="var(--color-primary)" />
       </div>
     </div>
 
@@ -74,9 +67,7 @@ const handleSubmit = async () => {
         class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
         style="background-color: var(--color-success-light); border: 1px solid var(--color-success);"
       >
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-success);">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
+        <AppIcon icon="lucide:check" :size="32" color="var(--color-success)" />
       </div>
       <p class="mb-6" style="color: var(--color-text-secondary);">
         Hemos enviado un código de recuperación a<br />
@@ -131,10 +122,7 @@ const handleSubmit = async () => {
         class="btn-primary w-full py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span v-if="isLoading" class="flex items-center justify-center gap-2">
-          <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+          <AppIcon icon="line-md:loading-loop" :size="20" color="currentColor" />
           Enviando...
         </span>
         <span v-else>Enviar código</span>

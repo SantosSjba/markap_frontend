@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { watch } from 'vue'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**
  * BaseModal Component
@@ -123,9 +124,7 @@ watch(
                 style="color: var(--color-text-muted);"
                 @click="close"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <AppIcon icon="lucide:x" :size="20" color="currentColor" />
               </button>
             </div>
 

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
 import { usePropertiesList } from '@applications/alquileres/propiedades/composables/useProperties'
 import { useClientsList } from '@applications/alquileres/clientes/composables/useClients'
@@ -204,9 +205,7 @@ const handleSubmit = async () => {
         :style="{ color: 'var(--color-text-secondary)' }"
         @click="goBack"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
+        <AppIcon icon="lucide:arrow-left" :size="20" color="currentColor" />
       </button>
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
@@ -219,16 +218,7 @@ const handleSubmit = async () => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-12">
-      <svg
-        class="animate-spin h-8 w-8"
-        :style="{ color: appColor }"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <AppIcon icon="line-md:loading-loop" :size="32" :color="appColor" />
     </div>
 
     <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -243,9 +233,7 @@ const handleSubmit = async () => {
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
         >
           <div class="flex items-center gap-2 mb-2">
-            <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <AppIcon icon="lucide:file-text" :size="20" color="var(--color-primary)" />
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Propiedad</h2>
           </div>
           <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
@@ -267,9 +255,7 @@ const handleSubmit = async () => {
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
         >
           <div class="flex items-center gap-2 mb-2">
-            <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+            <AppIcon icon="lucide:user" :size="20" color="var(--color-primary)" />
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Inquilino</h2>
           </div>
           <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
@@ -287,9 +273,7 @@ const handleSubmit = async () => {
               />
             </div>
             <BaseButton type="button" variant="outline" class="flex items-center gap-2" @click="goToNewTenant">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3z" />
-              </svg>
+              <AppIcon icon="lucide:user-plus" :size="20" color="currentColor" />
               Registrar nuevo Inquilino
             </BaseButton>
           </div>
@@ -301,9 +285,7 @@ const handleSubmit = async () => {
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
         >
           <div class="flex items-center gap-2 mb-2">
-            <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <AppIcon icon="lucide:calendar" :size="20" color="var(--color-primary)" />
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Fechas y Condiciones</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -384,9 +366,7 @@ const handleSubmit = async () => {
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
         >
           <div class="flex items-center gap-2 mb-1">
-            <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
+            <AppIcon icon="lucide:bell" :size="20" color="var(--color-primary)" />
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Alertas y Notificaciones</h2>
           </div>
           <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
@@ -463,9 +443,7 @@ const handleSubmit = async () => {
               class="w-full flex items-center justify-center gap-2"
               :loading="createRentalMutation.isPending.value"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-              </svg>
+              <AppIcon icon="lucide:save" :size="20" color="currentColor" />
               Guardar Contrato
             </BaseButton>
             <BaseButton type="button" variant="outline" class="w-full" @click="goBack">

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '@shared/components/ui/AppIcon.vue'
+
 /**
  * CustomModal - Modal reutilizable con encabezado por props, botones Cancelar/Guardar y slot para el contenido
  */
@@ -114,9 +116,7 @@ const handleBackdropClick = () => {
                 aria-label="Cerrar"
                 @click="close"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <AppIcon icon="lucide:x" :size="20" color="currentColor" />
               </button>
             </div>
 
@@ -151,10 +151,7 @@ const handleBackdropClick = () => {
                 @click="onSave"
               >
                 <span v-if="loading" class="inline-flex items-center gap-2">
-                  <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
+                  <AppIcon icon="line-md:loading-loop" :size="16" color="currentColor" />
                   {{ saveLabel }}...
                 </span>
                 <span v-else>{{ saveLabel }}</span>

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useDocumentTypes, useDepartments, useProvinces, useDistricts, useCreateClient } from '../composables/useClients'
 import { propertyKeys } from '@applications/alquileres/propiedades/composables/useProperties'
@@ -185,9 +186,7 @@ const handleSubmit = async () => {
         :style="{ color: 'var(--color-text-secondary)' }"
         @click="goBack"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
+        <AppIcon icon="lucide:arrow-left" :size="20" color="currentColor" />
       </button>
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
@@ -200,16 +199,7 @@ const handleSubmit = async () => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-12">
-      <svg
-        class="animate-spin h-8 w-8"
-        :style="{ color: appColor }"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <AppIcon icon="line-md:loading-loop" :size="32" :color="appColor" />
     </div>
 
     <form v-else @submit.prevent="handleSubmit" class="space-y-8">
@@ -239,9 +229,7 @@ const handleSubmit = async () => {
             @click="selectClientType('OWNER')"
           >
             <div class="flex items-center gap-3">
-              <svg class="w-8 h-8 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
+              <AppIcon icon="lucide:building-2" :size="32" color="currentColor" class="shrink-0" />
               <div>
                 <span class="font-medium block">Propietario</span>
                 <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
@@ -260,9 +248,7 @@ const handleSubmit = async () => {
             @click="selectClientType('TENANT')"
           >
             <div class="flex items-center gap-3">
-              <svg class="w-8 h-8 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+              <AppIcon icon="lucide:user" :size="32" color="currentColor" class="shrink-0" />
               <div>
                 <span class="font-medium block">Inquilino</span>
                 <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
@@ -441,9 +427,12 @@ const handleSubmit = async () => {
           Cancelar
         </BaseButton>
         <BaseButton type="submit" :loading="createMutation.isPending.value" variant="primary">
-          <svg v-if="!createMutation.isPending.value" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-          </svg>
+          <AppIcon
+            v-if="!createMutation.isPending.value"
+            icon="lucide:save"
+            :size="20"
+            color="currentColor"
+          />
           Guardar Cliente
         </BaseButton>
       </div>
