@@ -3,6 +3,11 @@ import { ref, computed } from 'vue'
 import { AppLayoutSidebar, AppHeader } from '@widgets/components'
 import { useAppLayout } from '../composables'
 
+/**
+ * VentasLayout — mismo shell que Alquileres (`AppLayoutSidebar` + `AppHeader` en @widgets).
+ * Menús: API por slug `ventas` (fallback local si la API viene vacía). Notificaciones: filtradas a ventas en el header.
+ */
+
 const { application, menus, menusLoading } = useAppLayout()
 
 const isSidebarCollapsed = ref(false)
@@ -34,6 +39,7 @@ const applicationInfo = computed(() =>
 
 <template>
   <div class="min-h-screen" style="background-color: var(--color-background);">
+    <!-- Sidebar (mismo widget que Alquileres; menús distintos vía prop) -->
     <AppLayoutSidebar
       :menus="menus"
       :application="applicationInfo"
@@ -43,6 +49,7 @@ const applicationInfo = computed(() =>
       @close-mobile="closeMobileSidebar"
     />
 
+    <!-- Contenido principal -->
     <div
       :class="[
         'transition-all duration-300 ease-in-out',
@@ -53,6 +60,7 @@ const applicationInfo = computed(() =>
         :is-sidebar-collapsed="isSidebarCollapsed"
         minimal-user-menu
         profile-to="/ventas/perfil"
+        notifications-application-slug="ventas"
         @toggle-sidebar="toggleSidebar"
         @toggle-mobile-sidebar="toggleMobileSidebar"
       />
@@ -85,6 +93,7 @@ const applicationInfo = computed(() =>
       </main>
     </div>
 
+    <!-- Mobile backdrop -->
     <Transition
       enter-active-class="transition-opacity duration-300"
       leave-active-class="transition-opacity duration-200"

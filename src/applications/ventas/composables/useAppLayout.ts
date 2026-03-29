@@ -18,10 +18,11 @@ export function useAppLayout() {
     () => applications.value?.find((a) => a.slug === slug.value) ?? null
   )
 
-  const { data: menus } = useApplicationMenus(slug)
+  const { data: menus, isLoading: menusLoading } = useApplicationMenus(slug)
 
   const menusEffective = computed(() => {
     const fromApi = menus.value ?? []
+    if (menusLoading.value) return fromApi
     return fromApi.length > 0 ? fromApi : VENTAS_FALLBACK_MENUS
   })
 
@@ -29,7 +30,6 @@ export function useAppLayout() {
     slug,
     application,
     menus: menusEffective,
-    /** No bloquear la vista: si la API viene vacía usamos menú local (misma estructura que el seed). */
-    menusLoading: false,
+    menusLoading,
   }
 }

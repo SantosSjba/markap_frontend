@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@features/auth/stores/auth.store'
 import { useNotificationsStore } from '@features/notifications/notifications.store'
+import type { NotificationItem } from '@features/notifications/notifications.service'
 import { ThemeToggle } from '@shared/components'
 
 /**
@@ -14,12 +15,25 @@ interface Props {
   isSidebarCollapsed: boolean
   minimalUserMenu?: boolean
   profileTo?: string
+  /**
+   * Slug de aplicación actual (ej. alquileres, ventas). Si se define, el listado y el
+   * contador del campanita solo incluyen notificaciones con data.applicationSlug igual
+   * o sin applicationSlug (avisos globales / legado).
+   */
+  notificationsApplicationSlug?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   minimalUserMenu: false,
   profileTo: '/settings/profile',
 })
+
+function notificationVisibleInApp(n: NotificationItem, appSlug: string | undefined) {
+  if (!appSlug) return true
+  const slug = n.data?.applicationSlug as string | undefined
+  if (slug === undefined || slug === null) return true
+  return slug === appSlug
+}
 
 const emit = defineEmits<{
   toggleSidebar: []
@@ -30,6 +44,19 @@ const authStore = useAuthStore()
 const notificationsStore = useNotificationsStore()
 const router = useRouter()
 const isUserMenuOpen = ref(false)
+
+const headerNotifications = computed(() =>
+  notificationsStore.list.filter((n) =>
+    notificationVisibleInApp(n, props.notificationsApplicationSlug),
+  ),
+)
+
+const headerUnreadCount = computed(() => {
+  if (!props.notificationsApplicationSlug) return notificationsStore.unreadCount
+  return headerNotifications.value.filter((n) => !n.readAt).length
+})
+
+const hasUnreadInContext = computed(() => headerUnreadCount.value > 0)
 
 onMounted(() => {
   notificationsStore.requestBrowserPermission()
@@ -129,10 +156,10 @@ function openNotification(n: { id: string; data?: Record<string, unknown> | null
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           <span
-            v-if="notificationsStore.hasUnread"
+            v-if="hasUnreadInContext"
             class="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold bg-red-500 text-white rounded-full"
           >
-            {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
+            {{ headerUnreadCount > 99 ? '99+' : headerUnreadCount }}
           </span>
         </button>
 
@@ -154,14 +181,14 @@ function openNotification(n: { id: string; data?: Record<string, unknown> | null
               <div v-if="notificationsStore.isLoading" class="p-4 text-center text-sm text-[var(--color-text-muted)]">
                 Cargando...
               </div>
-              <template v-else-if="notificationsStore.list.length === 0">
+              <template v-else-if="headerNotifications.length === 0">
                 <p class="p-4 text-center text-sm text-[var(--color-text-muted)]">
                   No hay notificaciones
                 </p>
               </template>
               <template v-else>
                 <button
-                  v-for="n in notificationsStore.list"
+                  v-for="n in headerNotifications"
                   :key="n.id"
                   type="button"
                   class="w-full text-left px-4 py-3 border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-surface-elevated)] transition-colors"

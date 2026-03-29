@@ -4,8 +4,8 @@ import { AppLayoutSidebar, AppHeader } from '@widgets/components'
 import { useAppLayout } from '../composables'
 
 /**
- * AlquileresLayout
- * Layout para la aplicación Alquileres con sidebar dinámico
+ * AlquileresLayout — mismo shell que Ventas (`AppLayoutSidebar` + `AppHeader` en @widgets).
+ * Menús: API por slug `alquileres`. Notificaciones: filtradas a esta app en el header.
  */
 
 const { application, menus, menusLoading } = useAppLayout()
@@ -60,6 +60,7 @@ const applicationInfo = computed(() =>
         :is-sidebar-collapsed="isSidebarCollapsed"
         minimal-user-menu
         profile-to="/alquileres/perfil"
+        notifications-application-slug="alquileres"
         @toggle-sidebar="toggleSidebar"
         @toggle-mobile-sidebar="toggleMobileSidebar"
       />
