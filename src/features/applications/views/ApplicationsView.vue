@@ -67,7 +67,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
           <div class="flex items-center">
-            <img src="/images/logo.jpg" alt="MARKAP Homes" class="h-12 w-auto object-contain" />
+            <img src="/images/logo_bg_removed.png" alt="MARKAP Homes" class="h-12 w-auto object-contain" />
           </div>
 
           <div class="flex items-center gap-2">

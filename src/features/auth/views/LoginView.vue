@@ -71,7 +71,7 @@ const togglePassword = () => {
     <!-- Logo -->
     <div class="flex justify-center mb-6">
       <img 
-        src="/images/logo.jpg" 
+        src="/images/logo_bg_removed.png" 
         alt="MARKAP Homes" 
         class="h-32 w-auto object-contain"
       />

@@ -79,7 +79,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
               <Icon icon="lucide:arrow-left" class="w-5 h-5" />
             </button>
             <div class="flex items-center gap-3">
-              <img src="/images/logo.jpg" alt="MARKAP Homes" class="h-10 w-auto object-contain" />
+              <img src="/images/logo_bg_removed.png" alt="MARKAP Homes" class="h-10 w-auto object-contain" />
               <div class="hidden sm:block">
                 <h1 class="font-semibold" style="color: var(--color-text-primary);">{{ pageTitle }}</h1>
               </div>
