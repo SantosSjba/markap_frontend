@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
   clientsService,
   type CreateClientPayload,
@@ -79,6 +81,10 @@ export function useCreateClient() {
     mutationFn: (data: CreateClientPayload) => clientsService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientKeys.all })
+      void markapAlert.toast.success('Cliente registrado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(err))
     },
   })
   return {
@@ -95,6 +101,10 @@ export function useUpdateClient() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: clientKeys.all })
       queryClient.invalidateQueries({ queryKey: clientKeys.detail(id) })
+      void markapAlert.toast.success('Cliente actualizado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(err))
     },
   })
   return {
@@ -109,6 +119,10 @@ export function useDeleteClient() {
     mutationFn: (id: string) => clientsService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientKeys.all })
+      void markapAlert.toast.success('Cliente eliminado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err))
     },
   })
 }

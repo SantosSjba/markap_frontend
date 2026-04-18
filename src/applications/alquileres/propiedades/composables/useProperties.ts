@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
   propertiesService,
   type CreatePropertyPayload,
@@ -90,6 +92,10 @@ export function useCreateProperty() {
     mutationFn: (data: CreatePropertyPayload) => propertiesService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      void markapAlert.toast.success('Propiedad registrada')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(err))
     },
   })
   return {
@@ -107,6 +113,10 @@ export function useUpdateProperty() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: propertyKeys.all })
       queryClient.invalidateQueries({ queryKey: propertyKeys.detail(variables.id) })
+      void markapAlert.toast.success('Propiedad actualizada')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(err))
     },
   })
   return {
@@ -129,6 +139,10 @@ export function useUpdatePropertyListingStatus() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: propertyKeys.all })
       queryClient.invalidateQueries({ queryKey: propertyKeys.detail(variables.id) })
+      void markapAlert.toast.success('Estado de publicación actualizado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo actualizar el estado', getApiErrorMessage(err))
     },
   })
 }
@@ -139,6 +153,10 @@ export function useDeleteProperty() {
     mutationFn: (id: string) => propertiesService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      void markapAlert.toast.success('Propiedad eliminada')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err))
     },
   })
 }

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
@@ -196,12 +195,8 @@ const handleSubmit = async () => {
     })
     await updateMutation.invalidateList()
     router.push('/alquileres/clientes')
-  } catch (error) {
-    const msg =
-      isAxiosError(error) && error.response?.data?.message
-        ? String(error.response.data.message)
-        : 'Error al actualizar el cliente'
-    setError('_form', msg)
+  } catch {
+    void 0
   }
 }
 </script>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
@@ -124,12 +123,8 @@ const handleSubmit = async () => {
     })
     await updateMutation.invalidateList()
     router.push(`/alquileres/contratos/${id.value}`)
-  } catch (error) {
-    const msg =
-      isAxiosError(error) && error.response?.data?.message
-        ? String(error.response.data.message)
-        : 'Error al actualizar el contrato'
-    setError('_form', msg)
+  } catch {
+    void 0
   }
 }
 </script>

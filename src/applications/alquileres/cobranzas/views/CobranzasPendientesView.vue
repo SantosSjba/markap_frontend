@@ -93,8 +93,8 @@ async function submitPayment() {
       },
     })
     closeModal()
-  } catch (e: any) {
-    modalError.value = e?.response?.data?.message ?? 'Error al registrar el pago'
+  } catch {
+    /* useRegisterPayment onError muestra toast */
   }
 }
 

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton, AppIcon, Badge } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
@@ -95,12 +94,8 @@ const handleSubmit = async () => {
     })
     await createMutation.invalidateList()
     router.push('/alquileres/agentes')
-  } catch (error) {
-    const msg =
-      isAxiosError(error) && (error as any).response?.data?.message
-        ? String((error as any).response.data.message)
-        : 'Error al crear el agente'
-    setError('_form', msg)
+  } catch {
+    void 0
   }
 }
 </script>

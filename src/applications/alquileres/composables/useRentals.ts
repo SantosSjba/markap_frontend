@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
   rentalsService,
   type CreateRentalPayload,
@@ -49,6 +51,10 @@ export function useCreateRental() {
     }) => rentalsService.create(params.data, params.files),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: rentalKeys.all })
+      void markapAlert.toast.success('Contrato de alquiler creado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo crear el contrato', getApiErrorMessage(err))
     },
   })
   return {
@@ -66,6 +72,10 @@ export function useUpdateRental() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: rentalKeys.all })
       queryClient.invalidateQueries({ queryKey: rentalKeys.detail(id) })
+      void markapAlert.toast.success('Contrato actualizado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo guardar el contrato', getApiErrorMessage(err))
     },
   })
   return {
@@ -100,6 +110,10 @@ export function useUpsertRentalFinancialConfig() {
       queryClient.invalidateQueries({ queryKey: rentalKeys.financialConfig(rentalId) })
       queryClient.invalidateQueries({ queryKey: rentalKeys.financialBreakdown(rentalId) })
       queryClient.invalidateQueries({ queryKey: rentalKeys.detail(rentalId) })
+      void markapAlert.toast.success('Distribución financiera guardada')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo guardar la distribución', getApiErrorMessage(err))
     },
   })
 }
@@ -111,6 +125,10 @@ export function useCancelRental() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: rentalKeys.all })
       queryClient.invalidateQueries({ queryKey: rentalKeys.detail(id) })
+      void markapAlert.toast.success('Contrato anulado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo anular el contrato', getApiErrorMessage(err))
     },
   })
 }

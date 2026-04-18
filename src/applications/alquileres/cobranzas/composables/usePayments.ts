@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
   paymentsService,
   type ListPendingParams,
@@ -51,6 +53,10 @@ export function useRegisterPayment() {
       paymentsService.registerPayment(paymentId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: paymentKeys.all })
+      void markapAlert.toast.success('Pago registrado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo registrar el pago', getApiErrorMessage(err))
     },
   })
 }
@@ -62,6 +68,10 @@ export function useSaveCommunicationNote() {
       paymentsService.saveCommunicationNote(rentalId, note),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: paymentKeys.overdue() })
+      void markapAlert.toast.success('Nota de comunicación guardada')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo guardar la nota', getApiErrorMessage(err))
     },
   })
 }

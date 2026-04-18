@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
@@ -186,12 +185,8 @@ const handleSubmit = async () => {
     })
     await createRentalMutation.invalidateList()
     router.push('/alquileres/contratos')
-  } catch (error) {
-    const msg =
-      isAxiosError(error) && error.response?.data?.message
-        ? String(error.response.data.message)
-        : 'Error al guardar el contrato'
-    setError('_form', msg)
+  } catch {
+    void 0
   }
 }
 </script>

@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
   agentsService,
   type ListAgentsParams,
@@ -35,6 +37,10 @@ export function useCreateAgent() {
     mutationFn: (payload: CreateAgentPayload) => agentsService.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: agentKeys.lists() })
+      void markapAlert.toast.success('Agente registrado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(err))
     },
   })
   return {
@@ -53,6 +59,10 @@ export function useUpdateAgent() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: agentKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: agentKeys.lists() })
+      void markapAlert.toast.success('Agente actualizado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(err))
     },
   })
   return {
@@ -68,6 +78,10 @@ export function useDeleteAgent() {
     mutationFn: (id: string) => agentsService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: agentKeys.lists() })
+      void markapAlert.toast.success('Agente eliminado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err))
     },
   })
   return {

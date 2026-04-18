@@ -89,12 +89,16 @@ async function executeConfirm() {
   if (!confirmModal.value) return
   const { type, agent } = confirmModal.value
   closeConfirm()
-  if (type === 'deactivate') {
-    await updateMutation.mutateAsync({ id: agent.id, data: { isActive: false } })
-    await updateMutation.invalidateList()
-  } else {
-    await deleteMutation.mutateAsync(agent.id)
-    await deleteMutation.invalidateList()
+  try {
+    if (type === 'deactivate') {
+      await updateMutation.mutateAsync({ id: agent.id, data: { isActive: false } })
+      await updateMutation.invalidateList()
+    } else {
+      await deleteMutation.mutateAsync(agent.id)
+      await deleteMutation.invalidateList()
+    }
+  } catch {
+    /* onError en useUpdateAgent / useDeleteAgent */
   }
 }
 

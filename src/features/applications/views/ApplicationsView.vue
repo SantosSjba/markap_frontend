@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { useAuthStore } from '@features/auth/stores'
 import { ThemeToggle } from '@shared/components'
 import { useMyApplications } from '../composables'
 import type { Application } from '../types'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const { data: applications, isLoading, error, refetch } = useMyApplications()
+
+watch(error, (err) => {
+  if (err != null) {
+    void markapAlert.toast.error('No se pudieron cargar las aplicaciones', getApiErrorMessage(err))
+  }
+})
 
 const isUserMenuOpen = ref(false)
 

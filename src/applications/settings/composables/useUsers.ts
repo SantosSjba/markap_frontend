@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { usersService } from '../services'
 import { useAuthStore } from '@features/auth/stores'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import type { CreateUserData, UpdateUserData } from '../types'
 
 /**
@@ -62,8 +64,11 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: (userData: CreateUserData) => usersService.create(userData),
     onSuccess: () => {
-      // Invalidate users list to refetch
       queryClient.invalidateQueries({ queryKey: userKeys.lists() })
+      void markapAlert.toast.success('Usuario creado', 'El listado se actualizará.')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo crear', getApiErrorMessage(err))
     },
   })
 }
@@ -79,11 +84,9 @@ export function useUpdateUser() {
     mutationFn: ({ id, data }: { id: string; data: UpdateUserData }) => 
       usersService.update(id, data),
     onSuccess: (updatedUser, variables) => {
-      // Invalidate specific user and list
       queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: userKeys.lists() })
 
-      // If updating current user, sync with auth store
       if (authStore.user?.id === variables.id) {
         authStore.updateCurrentUser({
           firstName: updatedUser.firstName,
@@ -91,6 +94,10 @@ export function useUpdateUser() {
           email: updatedUser.email,
         })
       }
+      void markapAlert.toast.success('Usuario actualizado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(err))
     },
   })
 }
@@ -104,9 +111,12 @@ export function useToggleUserActive() {
   return useMutation({
     mutationFn: (userId: string) => usersService.toggleActive(userId),
     onSuccess: (_, userId) => {
-      // Invalidate specific user and list
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) })
       queryClient.invalidateQueries({ queryKey: userKeys.lists() })
+      void markapAlert.toast.success('Estado del usuario actualizado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo cambiar el estado', getApiErrorMessage(err))
     },
   })
 }
@@ -121,9 +131,12 @@ export function useAssignRole() {
     mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) => 
       usersService.assignRole(userId, roleId),
     onSuccess: (_, variables) => {
-      // Invalidate specific user and list
       queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.userId) })
       queryClient.invalidateQueries({ queryKey: userKeys.lists() })
+      void markapAlert.toast.success('Rol asignado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo asignar el rol', getApiErrorMessage(err))
     },
   })
 }
@@ -138,9 +151,12 @@ export function useRevokeRole() {
     mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) => 
       usersService.revokeRole(userId, roleId),
     onSuccess: (_, variables) => {
-      // Invalidate specific user and list
       queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.userId) })
       queryClient.invalidateQueries({ queryKey: userKeys.lists() })
+      void markapAlert.toast.success('Rol quitado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo quitar el rol', getApiErrorMessage(err))
     },
   })
 }

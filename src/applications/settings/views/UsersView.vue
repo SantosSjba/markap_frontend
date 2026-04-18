@@ -12,6 +12,8 @@ import {
 } from '../composables'
 import { usePagination } from '@shared/composables'
 import { BasePagination } from '@shared/components'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils'
 import type { UserListItem, CreateUserData } from '../types'
 
 /**
@@ -22,8 +24,14 @@ import type { UserListItem, CreateUserData } from '../types'
 const ITEMS_PER_PAGE = 10
 
 // Queries
-const { data: users, isLoading, error, refetch } = useUsers()
+const { data: users, isLoading, isFetching, error, refetch } = useUsers()
 const { data: roles } = useRoles()
+
+watch(error, (err) => {
+  if (err != null) {
+    void markapAlert.toast.error('No se pudo cargar la lista de usuarios', getApiErrorMessage(err))
+  }
+})
 
 // Pagination
 const pagination = usePagination({
@@ -119,11 +127,16 @@ const closeCreateModal = () => {
 
 const handleCreate = async () => {
   if (!createForm.value.email || !createForm.value.password || !createForm.value.firstName || !createForm.value.lastName) {
+    void markapAlert.warning('Completa nombre, apellido, correo y contraseña.', 'Formulario')
     return
   }
 
-  await createUserMutation.mutateAsync(createForm.value)
-  closeCreateModal()
+  try {
+    await createUserMutation.mutateAsync(createForm.value)
+    closeCreateModal()
+  } catch {
+    /* onError en useCreateUser */
+  }
 }
 
 const openEditModal = (user: UserListItem) => {
@@ -144,15 +157,23 @@ const closeEditModal = () => {
 const handleEdit = async () => {
   if (!selectedUser.value) return
 
-  await updateUserMutation.mutateAsync({
-    id: selectedUser.value.id,
-    data: editForm.value,
-  })
-  closeEditModal()
+  try {
+    await updateUserMutation.mutateAsync({
+      id: selectedUser.value.id,
+      data: editForm.value,
+    })
+    closeEditModal()
+  } catch {
+    /* onError en useUpdateUser */
+  }
 }
 
 const toggleUserActive = async (user: UserListItem) => {
-  await toggleActiveMutation.mutateAsync(user.id)
+  try {
+    await toggleActiveMutation.mutateAsync(user.id)
+  } catch {
+    /* onError en useToggleUserActive */
+  }
 }
 
 const openRolesModal = (user: UserListItem) => {
@@ -172,23 +193,48 @@ const hasRole = (roleId: string): boolean => {
 const toggleRole = async (roleId: string) => {
   if (!selectedUser.value) return
 
-  if (hasRole(roleId)) {
-    await revokeRoleMutation.mutateAsync({ 
-      userId: selectedUser.value.id, 
-      roleId 
-    })
-  } else {
-    await assignRoleMutation.mutateAsync({ 
-      userId: selectedUser.value.id, 
-      roleId 
-    })
+  try {
+    if (hasRole(roleId)) {
+      await revokeRoleMutation.mutateAsync({
+        userId: selectedUser.value.id,
+        roleId,
+      })
+    } else {
+      await assignRoleMutation.mutateAsync({
+        userId: selectedUser.value.id,
+        roleId,
+      })
+    }
+  } catch {
+    /* onError en mutaciones de rol */
   }
 }
 
-// Computed for loading states
-const isSaving = computed(() => 
-  createUserMutation.isPending.value || updateUserMutation.isPending.value
-)
+const isCreating = computed(() => createUserMutation.isPending.value)
+const isUpdating = computed(() => updateUserMutation.isPending.value)
+
+const isTogglingActive = (userId: string) =>
+  toggleActiveMutation.isPending.value && toggleActiveMutation.variables.value === userId
+
+const isUserRowBusy = (userId: string) =>
+  isTogglingActive(userId) ||
+  (updateUserMutation.isPending.value && updateUserMutation.variables.value?.id === userId) ||
+  (assignRoleMutation.isPending.value && assignRoleMutation.variables.value?.userId === userId) ||
+  (revokeRoleMutation.isPending.value && revokeRoleMutation.variables.value?.userId === userId)
+
+const isRoleRowSaving = (roleId: string) => {
+  if (!selectedUser.value) return false
+  const uid = selectedUser.value.id
+  const assigning =
+    assignRoleMutation.isPending.value &&
+    assignRoleMutation.variables.value?.userId === uid &&
+    assignRoleMutation.variables.value?.roleId === roleId
+  const revoking =
+    revokeRoleMutation.isPending.value &&
+    revokeRoleMutation.variables.value?.userId === uid &&
+    revokeRoleMutation.variables.value?.roleId === roleId
+  return assigning || revoking
+}
 
 // Pagination props (unwrapped for BasePagination)
 const paginationProps = computed(() => ({
@@ -241,7 +287,19 @@ const paginationProps = computed(() => ({
     <!-- Error -->
     <div v-else-if="error" class="text-center py-12">
       <p style="color: var(--color-error);">Error al cargar los datos</p>
-      <button @click="() => refetch()" class="btn-primary mt-4 px-6 py-2 rounded-lg">Reintentar</button>
+      <button
+        type="button"
+        :disabled="isFetching"
+        class="btn-primary mt-4 px-6 py-2 rounded-lg inline-flex items-center justify-center gap-2 disabled:opacity-60"
+        @click="() => refetch()"
+      >
+        <Icon
+          v-if="isFetching"
+          icon="svg-spinners:ring-resize"
+          class="w-5 h-5"
+        />
+        Reintentar
+      </button>
     </div>
 
     <!-- Users table -->
@@ -294,25 +352,38 @@ const paginationProps = computed(() => ({
               <td>
                 <div class="flex items-center justify-end gap-2">
                   <button
-                    @click="openRolesModal(user)"
-                    class="p-2 rounded-lg hover-surface"
+                    type="button"
+                    :disabled="isUserRowBusy(user.id)"
+                    class="p-2 rounded-lg hover-surface disabled:opacity-50 disabled:pointer-events-none"
                     title="Gestionar roles"
+                    @click="openRolesModal(user)"
                   >
                     <Icon icon="lucide:shield-check" class="w-5 h-5" :style="{ color: 'var(--color-text-muted)' }" />
                   </button>
                   <button
-                    @click="openEditModal(user)"
-                    class="p-2 rounded-lg hover-surface"
+                    type="button"
+                    :disabled="isUserRowBusy(user.id)"
+                    class="p-2 rounded-lg hover-surface disabled:opacity-50 disabled:pointer-events-none"
                     title="Editar"
+                    @click="openEditModal(user)"
                   >
                     <Icon icon="lucide:pencil" class="w-5 h-5" :style="{ color: 'var(--color-text-muted)' }" />
                   </button>
                   <button
-                    @click="toggleUserActive(user)"
-                    class="p-2 rounded-lg hover-surface"
+                    type="button"
+                    :disabled="isUserRowBusy(user.id)"
+                    class="p-2 rounded-lg hover-surface disabled:opacity-50 disabled:pointer-events-none"
                     :title="user.isActive ? 'Desactivar' : 'Activar'"
+                    @click="toggleUserActive(user)"
                   >
                     <Icon
+                      v-if="isTogglingActive(user.id)"
+                      icon="svg-spinners:ring-resize"
+                      class="w-5 h-5"
+                      :style="{ color: 'var(--color-text-muted)' }"
+                    />
+                    <Icon
+                      v-else
                       :icon="user.isActive ? 'lucide:circle-x' : 'lucide:circle-check'"
                       class="w-5 h-5"
                       :style="{ color: user.isActive ? 'var(--color-error)' : 'var(--color-success)' }"
@@ -388,10 +459,15 @@ const paginationProps = computed(() => ({
                 </button>
                 <button
                   type="submit"
-                  :disabled="isSaving"
-                  class="btn-primary px-4 py-2 rounded-lg disabled:opacity-50"
+                  :disabled="isCreating"
+                  class="btn-primary px-4 py-2 rounded-lg disabled:opacity-50 inline-flex items-center justify-center gap-2"
                 >
-                  {{ isSaving ? 'Guardando...' : 'Crear Usuario' }}
+                  <Icon
+                    v-if="isCreating"
+                    icon="svg-spinners:ring-resize"
+                    class="w-4 h-4 shrink-0"
+                  />
+                  {{ isCreating ? 'Guardando...' : 'Crear Usuario' }}
                 </button>
               </div>
             </form>
@@ -441,10 +517,15 @@ const paginationProps = computed(() => ({
                 </button>
                 <button
                   type="submit"
-                  :disabled="isSaving"
-                  class="btn-primary px-4 py-2 rounded-lg disabled:opacity-50"
+                  :disabled="isUpdating"
+                  class="btn-primary px-4 py-2 rounded-lg disabled:opacity-50 inline-flex items-center justify-center gap-2"
                 >
-                  {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+                  <Icon
+                    v-if="isUpdating"
+                    icon="svg-spinners:ring-resize"
+                    class="w-4 h-4 shrink-0"
+                  />
+                  {{ isUpdating ? 'Guardando...' : 'Guardar Cambios' }}
                 </button>
               </div>
             </form>
@@ -471,32 +552,42 @@ const paginationProps = computed(() => ({
               <button
                 v-for="role in (roles ?? [])"
                 :key="role.id"
-                @click="toggleRole(role.id)"
+                type="button"
+                :disabled="isRoleRowSaving(role.id)"
                 :class="[
-                  'w-full flex items-center justify-between p-3 rounded-lg border transition-colors',
+                  'w-full flex items-center justify-between p-3 rounded-lg border transition-colors disabled:opacity-60',
                   hasRole(role.id) ? 'border-2' : 'hover-surface',
                 ]"
                 :style="{
                   borderColor: hasRole(role.id) ? 'var(--color-primary)' : 'var(--color-border)',
                   backgroundColor: hasRole(role.id) ? 'var(--color-primary-light)' : '',
                 }"
+                @click="toggleRole(role.id)"
               >
                 <div>
                   <p class="font-medium text-left" style="color: var(--color-text-primary);">{{ role.name }}</p>
                   <p class="text-sm text-left" style="color: var(--color-text-muted);">{{ role.code }}</p>
                 </div>
                 <Icon
-                  v-if="hasRole(role.id)"
-                  icon="lucide:circle-check"
-                  class="w-5 h-5"
+                  v-if="isRoleRowSaving(role.id)"
+                  icon="svg-spinners:ring-resize"
+                  class="w-5 h-5 shrink-0"
                   :style="{ color: 'var(--color-primary)' }"
-                />              </button>
+                />
+                <Icon
+                  v-else-if="hasRole(role.id)"
+                  icon="lucide:circle-check"
+                  class="w-5 h-5 shrink-0"
+                  :style="{ color: 'var(--color-primary)' }"
+                />
+              </button>
             </div>
 
             <div class="flex justify-end pt-4">
               <button
-                @click="closeRolesModal"
+                type="button"
                 class="btn-primary px-4 py-2 rounded-lg"
+                @click="closeRolesModal"
               >
                 Listo
               </button>
