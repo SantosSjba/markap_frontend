@@ -93,10 +93,9 @@ const pageSizeOptionsForSelect = computed(() =>
   props.pageSizeOptions.map((size) => ({ value: size, label: String(size) }))
 )
 
-const onPageSizeChange = (value: string | number | null) => {
-  if (value !== null && value !== '') {
-    emit('update:pageSize', Number(value))
-  }
+const onPageSizeChange = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined || value === '') return
+  emit('update:pageSize', Number(value))
 }
 </script>
 

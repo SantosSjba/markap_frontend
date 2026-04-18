@@ -5,6 +5,7 @@ import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
+import { useForm, toTypedSchema } from '@shared/forms'
 import {
   useClient,
   useDocumentTypes,
@@ -23,26 +24,6 @@ const id = computed(() => String(route.params.id ?? ''))
 
 const clientType = ref<'OWNER' | 'TENANT'>('OWNER')
 const isInitializing = ref(false)
-
-const form = ref({
-  documentTypeId: '',
-  documentNumber: '',
-  fullName: '',
-  legalRepresentativeName: '',
-  legalRepresentativePosition: '',
-  primaryPhone: '',
-  secondaryPhone: '',
-  primaryEmail: '',
-  secondaryEmail: '',
-  addressLine: '',
-  departmentId: '',
-  provinceId: '',
-  districtId: '',
-  reference: '',
-  notes: '',
-})
-
-const errors = ref<Record<string, string>>({})
 
 const schema = yup.object({
   documentTypeId: yup.string().required('Seleccione el tipo de documento'),
@@ -64,13 +45,51 @@ const schema = yup.object({
     .email('Email inválido')
     .optional(),
   addressLine: yup.string().required('La dirección es requerida').trim(),
+  departmentId: yup.string().trim(),
+  provinceId: yup.string().trim(),
   districtId: yup.string().required('Seleccione el distrito'),
   reference: yup.string().trim(),
   notes: yup.string().trim(),
 })
 
-const selectedDepartmentId = computed(() => form.value.departmentId || undefined)
-const selectedProvinceId = computed(() => form.value.provinceId || undefined)
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm({
+  validationSchema: toTypedSchema(schema),
+  initialValues: {
+    documentTypeId: '',
+    documentNumber: '',
+    fullName: '',
+    legalRepresentativeName: '',
+    legalRepresentativePosition: '',
+    primaryPhone: '',
+    secondaryPhone: '',
+    primaryEmail: '',
+    secondaryEmail: '',
+    addressLine: '',
+    departmentId: '',
+    provinceId: '',
+    districtId: '',
+    reference: '',
+    notes: '',
+  },
+})
+
+const documentTypeIdBinds = defineComponentBinds('documentTypeId')
+const documentNumberBinds = defineComponentBinds('documentNumber')
+const fullNameBinds = defineComponentBinds('fullName')
+const legalRepresentativeNameBinds = defineComponentBinds('legalRepresentativeName')
+const legalRepresentativePositionBinds = defineComponentBinds('legalRepresentativePosition')
+const primaryPhoneBinds = defineComponentBinds('primaryPhone')
+const secondaryPhoneBinds = defineComponentBinds('secondaryPhone')
+const primaryEmailBinds = defineComponentBinds('primaryEmail')
+const secondaryEmailBinds = defineComponentBinds('secondaryEmail')
+const addressLineBinds = defineComponentBinds('addressLine')
+const departmentIdBinds = defineComponentBinds('departmentId')
+const provinceIdBinds = defineComponentBinds('provinceId')
+const districtIdBinds = defineComponentBinds('districtId')
+const notesBinds = defineComponentBinds('notes')
+
+const selectedDepartmentId = computed(() => values.departmentId || undefined)
+const selectedProvinceId = computed(() => values.provinceId || undefined)
 
 const { data: client, isLoading: loadingClient, isError: clientError } = useClient(id)
 const { data: documentTypes, isLoading: loadingDocs } = useDocumentTypes()
@@ -81,16 +100,22 @@ const updateMutation = useUpdateClient()
 
 const loading = computed(() => loadingClient.value || loadingDocs.value || loadingDepartments.value)
 
-watch(() => form.value.departmentId, () => {
-  if (isInitializing.value) return
-  form.value.provinceId = ''
-  form.value.districtId = ''
-})
+watch(
+  () => values.departmentId,
+  () => {
+    if (isInitializing.value) return
+    setFieldValue('provinceId', '')
+    setFieldValue('districtId', '')
+  },
+)
 
-watch(() => form.value.provinceId, () => {
-  if (isInitializing.value) return
-  form.value.districtId = ''
-})
+watch(
+  () => values.provinceId,
+  () => {
+    if (isInitializing.value) return
+    setFieldValue('districtId', '')
+  },
+)
 
 const documentTypeOptions = computed(() =>
   (documentTypes.value ?? []).map((d: DocumentType) => ({
@@ -114,27 +139,30 @@ watch(
     if (!c) return
     isInitializing.value = true
     clientType.value = c.clientType
-    form.value = {
-      documentTypeId: c.documentTypeId,
-      documentNumber: c.documentNumber,
-      fullName: c.fullName,
-      legalRepresentativeName: c.legalRepresentativeName ?? '',
-      legalRepresentativePosition: c.legalRepresentativePosition ?? '',
-      primaryPhone: c.primaryPhone,
-      secondaryPhone: c.secondaryPhone ?? '',
-      primaryEmail: c.primaryEmail,
-      secondaryEmail: c.secondaryEmail ?? '',
-      addressLine: c.primaryAddress?.addressLine ?? '',
-      departmentId: c.primaryAddress?.district?.province?.department?.id ?? '',
-      provinceId: c.primaryAddress?.district?.province?.id ?? '',
-      districtId: c.primaryAddress?.districtId ?? '',
-      reference: c.primaryAddress?.reference ?? '',
-      notes: c.notes ?? '',
-    }
-    // allow watchers after this tick
-    setTimeout(() => { isInitializing.value = false }, 0)
+    resetForm({
+      values: {
+        documentTypeId: c.documentTypeId,
+        documentNumber: c.documentNumber,
+        fullName: c.fullName,
+        legalRepresentativeName: c.legalRepresentativeName ?? '',
+        legalRepresentativePosition: c.legalRepresentativePosition ?? '',
+        primaryPhone: c.primaryPhone,
+        secondaryPhone: c.secondaryPhone ?? '',
+        primaryEmail: c.primaryEmail,
+        secondaryEmail: c.secondaryEmail ?? '',
+        addressLine: c.primaryAddress?.addressLine ?? '',
+        departmentId: c.primaryAddress?.district?.province?.department?.id ?? '',
+        provinceId: c.primaryAddress?.district?.province?.id ?? '',
+        districtId: c.primaryAddress?.districtId ?? '',
+        reference: c.primaryAddress?.reference ?? '',
+        notes: c.notes ?? '',
+      },
+    })
+    setTimeout(() => {
+      isInitializing.value = false
+    }, 0)
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch(
@@ -149,47 +177,27 @@ const selectClientType = (type: 'OWNER' | 'TENANT') => {
   clientType.value = type
 }
 
-const setError = (field: string, message: string) => {
-  errors.value[field] = message
-}
-const clearErrors = () => {
-  errors.value = {}
-}
-
-const handleSubmit = async () => {
-  clearErrors()
-  try {
-    await schema.validate(form.value, { abortEarly: false })
-  } catch (e) {
-    if (e instanceof yup.ValidationError) {
-      e.inner.forEach((err) => {
-        if (err.path) setError(err.path, err.message)
-      })
-      return
-    }
-    throw e
-  }
-
+const onSubmit = handleSubmit(async (formValues) => {
   try {
     await updateMutation.mutateAsync({
       id: id.value,
       data: {
         clientType: clientType.value,
-        documentTypeId: form.value.documentTypeId,
-        documentNumber: form.value.documentNumber.trim(),
-        fullName: form.value.fullName.trim(),
-        legalRepresentativeName: form.value.legalRepresentativeName.trim() || null,
+        documentTypeId: formValues.documentTypeId,
+        documentNumber: formValues.documentNumber.trim(),
+        fullName: formValues.fullName.trim(),
+        legalRepresentativeName: formValues.legalRepresentativeName?.trim() || null,
         legalRepresentativePosition:
-          form.value.legalRepresentativePosition.trim() || null,
-        primaryPhone: form.value.primaryPhone.trim(),
-        secondaryPhone: form.value.secondaryPhone.trim() || null,
-        primaryEmail: form.value.primaryEmail.trim(),
-        secondaryEmail: form.value.secondaryEmail.trim() || null,
-        notes: form.value.notes.trim() || null,
+          formValues.legalRepresentativePosition?.trim() || null,
+        primaryPhone: formValues.primaryPhone.trim(),
+        secondaryPhone: formValues.secondaryPhone?.trim() || null,
+        primaryEmail: formValues.primaryEmail.trim(),
+        secondaryEmail: formValues.secondaryEmail?.trim() || null,
+        notes: formValues.notes?.trim() || null,
         address: {
-          addressLine: form.value.addressLine.trim(),
-          districtId: form.value.districtId,
-          reference: form.value.reference.trim() || null,
+          addressLine: formValues.addressLine.trim(),
+          districtId: formValues.districtId,
+          reference: formValues.reference?.trim() || null,
         },
       },
     })
@@ -198,7 +206,7 @@ const handleSubmit = async () => {
   } catch {
     void 0
   }
-}
+})
 </script>
 
 <template>
@@ -226,11 +234,7 @@ const handleSubmit = async () => {
       <AppIcon icon="line-md:loading-loop" :size="32" :color="appColor" />
     </div>
 
-    <form v-else-if="client" @submit.prevent="handleSubmit" class="space-y-8">
-      <p v-if="errors._form" class="text-sm" :style="{ color: 'var(--color-error)' }">
-        {{ errors._form }}
-      </p>
-
+    <form v-else-if="client" @submit.prevent="onSubmit" class="space-y-8">
       <!-- Tipo de Cliente -->
       <section
         class="p-5 rounded-xl"
@@ -297,7 +301,7 @@ const handleSubmit = async () => {
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormSelect
-            v-model="form.documentTypeId"
+            v-bind="documentTypeIdBinds"
             label="Tipo de Documento"
             placeholder="Seleccionar"
             :options="documentTypeOptions"
@@ -305,14 +309,14 @@ const handleSubmit = async () => {
             required
           />
           <FormInput
-            v-model="form.documentNumber"
+            v-bind="documentNumberBinds"
             label="Número de Documento"
             placeholder="12345678"
             :error="errors.documentNumber"
             required
           />
           <FormInput
-            v-model="form.fullName"
+            v-bind="fullNameBinds"
             class="md:col-span-2"
             label="Nombre Completo / Razón Social"
             placeholder="Juan Pérez / Empresa SAC"
@@ -320,13 +324,13 @@ const handleSubmit = async () => {
             required
           />
           <FormInput
-            v-model="form.legalRepresentativeName"
+            v-bind="legalRepresentativeNameBinds"
             label="Representante Legal (si aplica)"
             placeholder="Nombre del representante"
             :error="errors.legalRepresentativeName"
           />
           <FormInput
-            v-model="form.legalRepresentativePosition"
+            v-bind="legalRepresentativePositionBinds"
             label="Cargo"
             placeholder="Gerente General"
             :error="errors.legalRepresentativePosition"
@@ -347,7 +351,7 @@ const handleSubmit = async () => {
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
-            v-model="form.primaryPhone"
+            v-bind="primaryPhoneBinds"
             type="tel"
             label="Teléfono Principal"
             placeholder="999-888-777"
@@ -355,14 +359,14 @@ const handleSubmit = async () => {
             required
           />
           <FormInput
-            v-model="form.secondaryPhone"
+            v-bind="secondaryPhoneBinds"
             type="tel"
             label="Teléfono Secundario"
             placeholder="999-888-777"
             :error="errors.secondaryPhone"
           />
           <FormInput
-            v-model="form.primaryEmail"
+            v-bind="primaryEmailBinds"
             type="email"
             label="Email Principal"
             placeholder="correo@ejemplo.com"
@@ -370,7 +374,7 @@ const handleSubmit = async () => {
             required
           />
           <FormInput
-            v-model="form.secondaryEmail"
+            v-bind="secondaryEmailBinds"
             type="email"
             label="Email Secundario"
             placeholder="correo@ejemplo.com"
@@ -392,7 +396,7 @@ const handleSubmit = async () => {
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
-            v-model="form.addressLine"
+            v-bind="addressLineBinds"
             class="md:col-span-2"
             label="Dirección"
             placeholder="Av. Principal 123, Dpto 501"
@@ -400,27 +404,27 @@ const handleSubmit = async () => {
             required
           />
           <FormSelect
-            v-model="form.departmentId"
+            v-bind="departmentIdBinds"
             label="Departamento"
             placeholder="Seleccionar departamento"
             :options="departmentOptions"
             :loading="loadingDepartments"
           />
           <FormSelect
-            v-model="form.provinceId"
+            v-bind="provinceIdBinds"
             label="Provincia"
             placeholder="Seleccionar provincia"
             :options="provinceOptions"
             :loading="loadingProvinces"
-            :disabled="!form.departmentId"
+            :disabled="!values.departmentId"
           />
           <FormSelect
-            v-model="form.districtId"
+            v-bind="districtIdBinds"
             label="Distrito"
             placeholder="Seleccionar distrito"
             :options="districtOptions"
             :loading="loadingDistricts"
-            :disabled="!form.provinceId"
+            :disabled="!values.provinceId"
             :error="errors.districtId"
             required
           />
@@ -439,7 +443,7 @@ const handleSubmit = async () => {
           Información relevante sobre el cliente
         </p>
         <FormTextarea
-          v-model="form.notes"
+          v-bind="notesBinds"
           label="Notas"
           placeholder="Notas, observaciones, preferencias del cliente..."
           :rows="4"

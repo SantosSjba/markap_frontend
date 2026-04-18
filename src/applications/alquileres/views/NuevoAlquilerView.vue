@@ -5,11 +5,25 @@ import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
+import { useForm, toTypedSchema } from '@shared/forms'
 import { usePropertiesList } from '@applications/alquileres/propiedades/composables/useProperties'
 import { useClientsList } from '@applications/alquileres/clientes/composables/useClients'
 import { useCreateRental } from '../composables/useRentals'
 import type { PropertyListItem } from '@applications/alquileres/propiedades/services/properties.service'
 import type { ClientListItem } from '@applications/alquileres/clientes/services/clients.service'
+
+type NuevoRentalFormValues = {
+  propertyId: string
+  tenantId: string
+  startDate: string
+  endDate: string
+  currency: string
+  monthlyAmount: string | number
+  securityDeposit: string | number
+  paymentDueDay: number
+  notes: string
+  enableAlerts: boolean
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -28,22 +42,8 @@ const listTenantsParams = ref({
   clientType: 'TENANT' as const,
 })
 
-const form = ref({
-  propertyId: '',
-  tenantId: '',
-  startDate: '',
-  endDate: '',
-  currency: 'PEN',
-  monthlyAmount: '' as string | number,
-  securityDeposit: '' as string | number,
-  paymentDueDay: 5 as number,
-  notes: '',
-  enableAlerts: true,
-})
 const contractFile = ref<File | null>(null)
 const deliveryActFile = ref<File | null>(null)
-
-const errors = ref<Record<string, string>>({})
 
 const schema = yup.object({
   propertyId: yup.string().required('Seleccione la propiedad'),
@@ -53,9 +53,44 @@ const schema = yup.object({
   currency: yup.string().required(),
   monthlyAmount: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).required('El monto mensual es requerido'),
   securityDeposit: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
-  paymentDueDay: yup.number().min(1).max(28).required(),
+  paymentDueDay: yup
+    .number()
+    .transform((_v, originalValue) => {
+      if (originalValue === '' || originalValue === null || originalValue === undefined) return NaN
+      return Number(originalValue)
+    })
+    .min(1)
+    .max(28)
+    .required(),
   notes: yup.string().trim(),
+  enableAlerts: yup.boolean().required(),
 })
+
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm<NuevoRentalFormValues>({
+  validationSchema: toTypedSchema(schema) as never,
+  initialValues: {
+    propertyId: '',
+    tenantId: '',
+    startDate: '',
+    endDate: '',
+    currency: 'PEN',
+    monthlyAmount: '',
+    securityDeposit: '',
+    paymentDueDay: 5,
+    notes: '',
+    enableAlerts: true,
+  },
+})
+
+const propertyIdBinds = defineComponentBinds('propertyId')
+const tenantIdBinds = defineComponentBinds('tenantId')
+const startDateBinds = defineComponentBinds('startDate')
+const endDateBinds = defineComponentBinds('endDate')
+const currencyBinds = defineComponentBinds('currency')
+const monthlyAmountBinds = defineComponentBinds('monthlyAmount')
+const securityDepositBinds = defineComponentBinds('securityDeposit')
+const paymentDueDayBinds = defineComponentBinds('paymentDueDay')
+const notesBinds = defineComponentBinds('notes')
 
 const { data: propertiesData } = usePropertiesList(listPropertiesParams)
 const { data: tenantsData, refetch: refetchTenants } = useClientsList(listTenantsParams)
@@ -91,7 +126,7 @@ const paymentDueDayOptions = Array.from({ length: 28 }, (_, i) => ({
 }))
 
 const selectedProperty = computed(() =>
-  (properties.value as PropertyListItem[]).find((x) => x.id === form.value.propertyId)
+  (properties.value as PropertyListItem[]).find((x) => x.id === values.propertyId)
 )
 const selectedPropertyLabel = computed(() => {
   const p = selectedProperty.value
@@ -100,24 +135,24 @@ const selectedPropertyLabel = computed(() => {
 
 // Pre-llenar monto de alquiler (y garantía si hay datos) al elegir propiedad; el usuario puede modificar
 watch(
-  () => form.value.propertyId,
+  () => values.propertyId,
   (propertyId) => {
     const p = (properties.value as PropertyListItem[]).find((x) => x.id === propertyId)
-    if (p && p.monthlyRent != null) form.value.monthlyAmount = p.monthlyRent
-  }
+    if (p && p.monthlyRent != null) setFieldValue('monthlyAmount', p.monthlyRent)
+  },
 )
 const selectedTenantLabel = computed(() => {
-  const t = (tenants.value as ClientListItem[]).find((x) => x.id === form.value.tenantId)
+  const t = (tenants.value as ClientListItem[]).find((x) => x.id === values.tenantId)
   return t ? t.fullName : 'Sin seleccionar'
 })
 const vigenciaLabel = computed(() => {
-  if (!form.value.startDate || !form.value.endDate) return 'Sin definir'
-  return `${form.value.startDate} - ${form.value.endDate}`
+  if (!values.startDate || !values.endDate) return 'Sin definir'
+  return `${values.startDate} - ${values.endDate}`
 })
 const montoLabel = computed(() => {
-  const n = Number(form.value.monthlyAmount)
+  const n = Number(values.monthlyAmount)
   if (isNaN(n)) return 'S/ 0.00'
-  const sym = form.value.currency === 'USD' ? 'US$' : 'S/'
+  const sym = values.currency === 'USD' ? 'US$' : 'S/'
   return `${sym} ${n.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
 })
 
@@ -132,51 +167,31 @@ onMounted(async () => {
   const id = route.query.selectedClientId
   if (typeof id === 'string' && id) {
     await refetchTenants()
-    form.value.tenantId = id
+    setFieldValue('tenantId', id)
   }
 })
 
-const setError = (field: string, message: string) => {
-  errors.value[field] = message
-}
-const clearErrors = () => {
-  errors.value = {}
-}
-
-const toNum = (v: string | number): number | null => {
-  if (v === '' || v === undefined) return null
+const toNum = (v: string | number | null | undefined): number | null => {
+  if (v === '' || v === undefined || v === null) return null
   const n = Number(v)
   return isNaN(n) ? null : n
 }
 
-const handleSubmit = async () => {
-  clearErrors()
-  try {
-    await schema.validate(form.value, { abortEarly: false })
-  } catch (e) {
-    if (e instanceof yup.ValidationError) {
-      e.inner.forEach((err) => {
-        if (err.path) setError(err.path, err.message)
-      })
-      return
-    }
-    throw e
-  }
-
+const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
   try {
     await createRentalMutation.mutateAsync({
       data: {
         applicationSlug: 'alquileres',
-        propertyId: form.value.propertyId,
-        tenantId: form.value.tenantId,
-        startDate: form.value.startDate,
-        endDate: form.value.endDate,
-        currency: form.value.currency,
-        monthlyAmount: toNum(form.value.monthlyAmount) ?? 0,
-        securityDeposit: toNum(form.value.securityDeposit),
-        paymentDueDay: form.value.paymentDueDay,
-        notes: form.value.notes.trim() || null,
-        enableAlerts: form.value.enableAlerts,
+        propertyId: formValues.propertyId,
+        tenantId: formValues.tenantId,
+        startDate: formValues.startDate,
+        endDate: formValues.endDate,
+        currency: formValues.currency,
+        monthlyAmount: toNum(formValues.monthlyAmount) ?? 0,
+        securityDeposit: toNum(formValues.securityDeposit),
+        paymentDueDay: formValues.paymentDueDay,
+        notes: formValues.notes?.trim() || null,
+        enableAlerts: formValues.enableAlerts,
       },
       files: {
         contractFile: contractFile.value ?? undefined,
@@ -188,7 +203,7 @@ const handleSubmit = async () => {
   } catch {
     void 0
   }
-}
+})
 </script>
 
 <template>
@@ -216,11 +231,7 @@ const handleSubmit = async () => {
       <AppIcon icon="line-md:loading-loop" :size="32" :color="appColor" />
     </div>
 
-    <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <p v-if="errors._form" class="text-sm col-span-full" :style="{ color: 'var(--color-error)' }">
-        {{ errors._form }}
-      </p>
-
+    <form v-else @submit.prevent="onSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2 space-y-6">
         <!-- Propiedad -->
         <section
@@ -235,7 +246,7 @@ const handleSubmit = async () => {
             Selecciona la propiedad a alquilar
           </p>
           <FormSelect
-            v-model="form.propertyId"
+            v-bind="propertyIdBinds"
             label="Seleccionar propiedad"
             placeholder="Seleccionar propiedad"
             :options="propertyOptions"
@@ -259,7 +270,7 @@ const handleSubmit = async () => {
           <div class="flex flex-wrap items-end gap-3">
             <div class="flex-1 min-w-[200px]">
               <FormSelect
-                v-model="form.tenantId"
+                v-bind="tenantIdBinds"
                 label="Seleccionar Inquilino"
                 placeholder="Seleccionar Inquilino"
                 :options="tenantOptions"
@@ -285,26 +296,26 @@ const handleSubmit = async () => {
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <FormInput
-              v-model="form.startDate"
+              v-bind="startDateBinds"
               type="date"
               label="Fecha de Inicio"
               :error="errors.startDate"
               required
             />
             <FormInput
-              v-model="form.endDate"
+              v-bind="endDateBinds"
               type="date"
               label="Fecha de Fin"
               :error="errors.endDate"
               required
             />
             <FormSelect
-              v-model="form.currency"
+              v-bind="currencyBinds"
               label="Moneda"
               :options="currencyOptions"
             />
             <FormInput
-              v-model="form.monthlyAmount"
+              v-bind="monthlyAmountBinds"
               type="number"
               min="0"
               step="0.01"
@@ -314,7 +325,7 @@ const handleSubmit = async () => {
               required
             />
             <FormInput
-              v-model="form.securityDeposit"
+              v-bind="securityDepositBinds"
               type="number"
               min="0"
               step="0.01"
@@ -322,7 +333,7 @@ const handleSubmit = async () => {
               placeholder="0.00"
             />
             <FormSelect
-              v-model="form.paymentDueDay"
+              v-bind="paymentDueDayBinds"
               label="Día de Vencimiento de Pago"
               :options="paymentDueDayOptions"
             />
@@ -377,14 +388,14 @@ const handleSubmit = async () => {
             <button
               type="button"
               role="switch"
-              :aria-checked="form.enableAlerts"
+              :aria-checked="values.enableAlerts"
               class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-              :style="{ backgroundColor: form.enableAlerts ? 'var(--color-primary)' : 'var(--color-border)' }"
-              @click="form.enableAlerts = !form.enableAlerts"
+              :style="{ backgroundColor: values.enableAlerts ? 'var(--color-primary)' : 'var(--color-border)' }"
+              @click="setFieldValue('enableAlerts', !values.enableAlerts)"
             >
               <span
                 class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                :style="{ transform: form.enableAlerts ? 'translateX(20px)' : 'translateX(0)' }"
+                :style="{ transform: values.enableAlerts ? 'translateX(20px)' : 'translateX(0)' }"
               />
             </button>
           </div>
@@ -397,7 +408,7 @@ const handleSubmit = async () => {
         >
           <h2 class="text-base font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">Observaciones</h2>
           <FormTextarea
-            v-model="form.notes"
+            v-bind="notesBinds"
             placeholder="Notas adicionales sobre el contrato..."
             :rows="3"
           />

@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import * as yup from 'yup'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
+import FormInput from '@shared/components/forms/FormInput.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { markapAlert } from '@/shared/alert'
+import { useForm, toTypedSchema } from '@shared/forms'
 import { useResetPassword } from '../composables'
 import { isAxiosError } from 'axios'
 
@@ -15,64 +18,55 @@ const route = useRoute()
 const router = useRouter()
 const resetMutation = useResetPassword()
 
-const email = ref('')
-const code = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
-
 const emailFromQuery = computed(() => {
   const q = route.query.email
   return typeof q === 'string' ? q : ''
 })
 
+const resetSchema = yup.object({
+  email: yup.string().required('El correo electrónico es requerido').email('Ingrese un correo electrónico válido').trim(),
+  code: yup
+    .string()
+    .required('El código es requerido')
+    .length(6, 'El código debe tener exactamente 6 dígitos')
+    .matches(/^\d+$/, 'El código solo debe contener números'),
+  newPassword: yup.string().required('La contraseña es requerida').min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  confirmPassword: yup
+    .string()
+    .required('Confirma la contraseña')
+    .oneOf([yup.ref('newPassword')], 'Las contraseñas no coinciden'),
+})
+
+const { handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm({
+  validationSchema: toTypedSchema(resetSchema),
+  initialValues: {
+    email: '',
+    code: '',
+    newPassword: '',
+    confirmPassword: '',
+  },
+})
+
+const emailBinds = defineComponentBinds('email')
+const codeBinds = defineComponentBinds('code')
+const newPasswordBinds = defineComponentBinds('newPassword')
+const confirmPasswordBinds = defineComponentBinds('confirmPassword')
+
 onMounted(() => {
   if (emailFromQuery.value) {
-    email.value = emailFromQuery.value
+    setFieldValue('email', emailFromQuery.value)
   }
 })
 
 const isSuccess = computed(() => resetMutation.isSuccess.value)
 const isLoading = computed(() => resetMutation.isPending.value)
 
-const validateForm = (): boolean => {
-  const msgs: string[] = []
-
-  if (!email.value) {
-    msgs.push('El correo electrónico es requerido')
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-    msgs.push('Ingrese un correo electrónico válido')
-  }
-
-  if (!code.value || code.value.length !== 6) {
-    msgs.push('El código debe tener exactamente 6 dígitos')
-  } else if (!/^\d{6}$/.test(code.value)) {
-    msgs.push('El código solo debe contener números')
-  }
-
-  if (!newPassword.value || newPassword.value.length < 6) {
-    msgs.push('La contraseña debe tener al menos 6 caracteres')
-  }
-
-  if (newPassword.value !== confirmPassword.value) {
-    msgs.push('Las contraseñas no coinciden')
-  }
-
-  if (msgs.length) {
-    void markapAlert.warning(msgs.join(' '), 'Revisa el formulario')
-    return false
-  }
-
-  return true
-}
-
-const handleSubmit = async () => {
-  if (!validateForm()) return
-
+const onSubmit = handleSubmit((formValues) => {
   resetMutation.mutate(
     {
-      email: email.value.trim(),
-      code: code.value.trim(),
-      newPassword: newPassword.value,
+      email: formValues.email.trim(),
+      code: formValues.code.trim(),
+      newPassword: formValues.newPassword,
     },
     {
       onSuccess: () => {
@@ -96,7 +90,7 @@ const handleSubmit = async () => {
       },
     },
   )
-}
+})
 
 const goToLogin = () => {
   router.push('/auth/login')
@@ -147,73 +141,46 @@ const goToLogin = () => {
         Ingresa el código de 6 dígitos que recibiste por correo y tu nueva contraseña
       </p>
 
-      <form @submit.prevent="handleSubmit" class="space-y-5 text-left">
-        <!-- Email -->
-        <div>
-          <label
-            class="block text-sm font-medium mb-2"
-            style="color: var(--color-text-secondary);"
-          >
-            Correo electrónico
-          </label>
-          <input
-            v-model="email"
-            type="email"
-            placeholder="usuario@markap.com"
-            class="w-full"
-            :readonly="!!emailFromQuery"
-          />
-        </div>
+      <form @submit.prevent="onSubmit" class="space-y-5 text-left">
+        <FormInput
+          v-bind="emailBinds"
+          type="email"
+          label="Correo electrónico"
+          placeholder="usuario@markap.com"
+          :error="errors.email"
+          :disabled="!!emailFromQuery"
+          required
+        />
 
-        <!-- Code -->
-        <div>
-          <label
-            class="block text-sm font-medium mb-2"
-            style="color: var(--color-text-secondary);"
-          >
-            Código de recuperación
-          </label>
-          <input
-            v-model="code"
-            type="text"
-            inputmode="numeric"
-            maxlength="6"
-            placeholder="123456"
-            class="w-full text-center text-xl tracking-[0.5em] font-mono"
-          />
-        </div>
+        <FormInput
+          v-bind="codeBinds"
+          type="text"
+          label="Código de recuperación"
+          placeholder="123456"
+          input-class="text-center text-xl tracking-[0.5em] font-mono"
+          :error="errors.code"
+          required
+          inputmode="numeric"
+          maxlength="6"
+        />
 
-        <!-- New Password -->
-        <div>
-          <label
-            class="block text-sm font-medium mb-2"
-            style="color: var(--color-text-secondary);"
-          >
-            Nueva contraseña
-          </label>
-          <input
-            v-model="newPassword"
-            type="password"
-            placeholder="Mínimo 6 caracteres"
-            class="w-full"
-          />
-        </div>
+        <FormInput
+          v-bind="newPasswordBinds"
+          type="password"
+          label="Nueva contraseña"
+          placeholder="Mínimo 6 caracteres"
+          :error="errors.newPassword"
+          required
+        />
 
-        <!-- Confirm Password -->
-        <div>
-          <label
-            class="block text-sm font-medium mb-2"
-            style="color: var(--color-text-secondary);"
-          >
-            Confirmar contraseña
-          </label>
-          <input
-            v-model="confirmPassword"
-            type="password"
-            placeholder="Repite la contraseña"
-            class="w-full"
-          />
-        </div>
+        <FormInput
+          v-bind="confirmPasswordBinds"
+          type="password"
+          label="Confirmar contraseña"
+          placeholder="Repite la contraseña"
+          :error="errors.confirmPassword"
+          required
+        />
 
         <!-- Submit -->
         <button

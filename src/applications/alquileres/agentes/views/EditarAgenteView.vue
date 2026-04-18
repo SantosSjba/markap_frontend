@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
 import { BaseButton, AppIcon, Badge } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
+import { useForm, toTypedSchema } from '@shared/forms'
 import { useAgent, useUpdateAgent, useDeleteAgent } from '../composables/useAgents'
 import { useUsers } from '@applications/settings/composables/useUsers'
 import type { AgentType } from '../services/agents.service'
@@ -13,18 +14,6 @@ const router = useRouter()
 
 const id = computed(() => String(route.params.id ?? ''))
 
-const form = ref({
-  type: 'EXTERNAL' as AgentType,
-  userId: '' as string,
-  fullName: '',
-  email: '',
-  phone: '',
-  documentTypeId: '' as string,
-  documentNumber: '',
-  isActive: true,
-})
-
-const errors = ref<Record<string, string>>({})
 const showDeleteConfirm = ref(false)
 const showDeactivateConfirm = ref(false)
 
@@ -38,9 +27,30 @@ const schema = yup.object({
   fullName: yup.string().required('El nombre es requerido').trim(),
   email: yup.string().trim().email('Email inválido').optional(),
   phone: yup.string().trim().optional(),
+  documentTypeId: yup.string().trim().optional(),
   documentNumber: yup.string().trim().optional(),
   isActive: yup.boolean().required(),
 })
+
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm({
+  validationSchema: toTypedSchema(schema),
+  initialValues: {
+    type: 'EXTERNAL' as AgentType,
+    userId: '',
+    fullName: '',
+    email: '',
+    phone: '',
+    documentTypeId: '',
+    documentNumber: '',
+    isActive: true,
+  },
+})
+
+const userIdBinds = defineComponentBinds('userId')
+const fullNameBinds = defineComponentBinds('fullName')
+const emailBinds = defineComponentBinds('email')
+const phoneBinds = defineComponentBinds('phone')
+const documentNumberBinds = defineComponentBinds('documentNumber')
 
 const { data: agent, isLoading: loadingAgent, isError: agentError } = useAgent(id)
 const { data: usersList } = useUsers()
@@ -56,63 +66,64 @@ const userOptions = computed(() => {
 })
 
 const selectedUser = computed(() => {
-  if (form.value.type !== 'INTERNAL' || !form.value.userId) return null
-  return usersList.value?.find((u) => u.id === form.value.userId) ?? null
+  if (values.type !== 'INTERNAL' || !values.userId) return null
+  return usersList.value?.find((u) => u.id === values.userId) ?? null
 })
 
 function fillFromUser(userId: string) {
   const u = usersList.value?.find((x) => x.id === userId)
   if (!u) return
-  form.value.fullName = u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email
-  form.value.email = u.email ?? ''
+  setFieldValue(
+    'fullName',
+    u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email,
+  )
+  setFieldValue('email', u.email ?? '')
 }
 
 watch(agent, (a) => {
   if (!a) return
-  form.value = {
-    type: a.type,
-    userId: a.userId ?? '',
-    fullName: a.fullName ?? '',
-    email: a.email ?? '',
-    phone: a.phone ?? '',
-    documentTypeId: a.documentTypeId ?? '',
-    documentNumber: a.documentNumber ?? '',
-    isActive: a.isActive,
-  }
+  resetForm({
+    values: {
+      type: a.type,
+      userId: a.userId ?? '',
+      fullName: a.fullName ?? '',
+      email: a.email ?? '',
+      phone: a.phone ?? '',
+      documentTypeId: a.documentTypeId ?? '',
+      documentNumber: a.documentNumber ?? '',
+      isActive: a.isActive,
+    },
+  })
 }, { immediate: true })
 
-watch(() => form.value.userId, (uid) => {
-  if (form.value.type === 'INTERNAL' && uid) fillFromUser(uid)
-})
+watch(
+  () => values.type,
+  (t) => {
+    if (t === 'INTERNAL' && values.userId) fillFromUser(values.userId)
+  },
+)
+watch(
+  () => values.userId,
+  (uid) => {
+    if (values.type === 'INTERNAL' && uid) fillFromUser(uid)
+  },
+)
 
 const goBack = () => router.push('/alquileres/agentes')
-const setError = (field: string, message: string) => { errors.value[field] = message }
-const clearErrors = () => { errors.value = {} }
 
-const handleSubmit = async () => {
-  clearErrors()
-  try {
-    await schema.validate(form.value, { abortEarly: false })
-  } catch (e) {
-    if (e instanceof yup.ValidationError) {
-      e.inner.forEach((err) => { if (err.path) setError(err.path, err.message) })
-      return
-    }
-    throw e
-  }
-
+const onSubmit = handleSubmit(async (formValues) => {
   try {
     await updateMutation.mutateAsync({
       id: id.value,
       data: {
-        type: form.value.type,
-        userId: form.value.type === 'INTERNAL' && form.value.userId ? form.value.userId : null,
-        fullName: form.value.fullName.trim(),
-        email: form.value.email?.trim() || null,
-        phone: form.value.phone?.trim() || null,
-        documentTypeId: form.value.documentTypeId || null,
-        documentNumber: form.value.documentNumber?.trim() || null,
-        isActive: form.value.isActive,
+        type: formValues.type,
+        userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
+        fullName: formValues.fullName.trim(),
+        email: formValues.email?.trim() || null,
+        phone: formValues.phone?.trim() || null,
+        documentTypeId: formValues.documentTypeId || null,
+        documentNumber: formValues.documentNumber?.trim() || null,
+        isActive: formValues.isActive,
       },
     })
     await updateMutation.invalidateList()
@@ -120,10 +131,9 @@ const handleSubmit = async () => {
   } catch {
     void 0
   }
-}
+})
 
 const handleDeactivate = async () => {
-  clearErrors()
   showDeactivateConfirm.value = false
   try {
     await updateMutation.mutateAsync({
@@ -138,7 +148,6 @@ const handleDeactivate = async () => {
 }
 
 const handleDelete = async () => {
-  clearErrors()
   showDeleteConfirm.value = false
   try {
     await deleteMutation.mutateAsync(id.value)
@@ -190,17 +199,7 @@ const handleDelete = async () => {
       <span class="text-sm font-medium">No se encontró el agente o ocurrió un error.</span>
     </div>
 
-    <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="handleSubmit">
-      <!-- Error global -->
-      <div
-        v-if="errors._form"
-        class="xl:col-span-3 flex items-center gap-3 px-4 py-3 rounded-lg"
-        :style="{ backgroundColor: 'var(--color-error)15', border: '1px solid var(--color-error)40', color: 'var(--color-error)' }"
-      >
-        <AppIcon icon="lucide:alert-circle" :size="18" />
-        <span class="text-sm font-medium">{{ errors._form }}</span>
-      </div>
-
+    <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">
       <!-- Columna principal -->
       <div class="xl:col-span-2 space-y-5">
 
@@ -224,18 +223,18 @@ const handleDelete = async () => {
               type="button"
               class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
               :style="{
-                borderColor: form.type === 'EXTERNAL' ? 'var(--color-primary)' : 'var(--color-border)',
-                backgroundColor: form.type === 'EXTERNAL' ? 'var(--color-primary)0d' : 'var(--color-surface-elevated)',
+                borderColor: values.type === 'EXTERNAL' ? 'var(--color-primary)' : 'var(--color-border)',
+                backgroundColor: values.type === 'EXTERNAL' ? 'var(--color-primary)0d' : 'var(--color-surface-elevated)',
               }"
-              @click="form.type = 'EXTERNAL'"
+              @click="setFieldValue('type', 'EXTERNAL')"
             >
               <AppIcon
                 icon="lucide:user-round-cog"
                 :size="24"
-                :color="form.type === 'EXTERNAL' ? 'var(--color-primary)' : 'var(--color-text-muted)'"
+                :color="values.type === 'EXTERNAL' ? 'var(--color-primary)' : 'var(--color-text-muted)'"
               />
               <div class="text-center">
-                <p class="text-sm font-semibold" :style="{ color: form.type === 'EXTERNAL' ? 'var(--color-primary)' : 'var(--color-text-primary)' }">Externo</p>
+                <p class="text-sm font-semibold" :style="{ color: values.type === 'EXTERNAL' ? 'var(--color-primary)' : 'var(--color-text-primary)' }">Externo</p>
                 <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Tercero / inmobiliaria</p>
               </div>
             </button>
@@ -243,26 +242,26 @@ const handleDelete = async () => {
               type="button"
               class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
               :style="{
-                borderColor: form.type === 'INTERNAL' ? 'var(--color-primary)' : 'var(--color-border)',
-                backgroundColor: form.type === 'INTERNAL' ? 'var(--color-primary)0d' : 'var(--color-surface-elevated)',
+                borderColor: values.type === 'INTERNAL' ? 'var(--color-primary)' : 'var(--color-border)',
+                backgroundColor: values.type === 'INTERNAL' ? 'var(--color-primary)0d' : 'var(--color-surface-elevated)',
               }"
-              @click="form.type = 'INTERNAL'"
+              @click="setFieldValue('type', 'INTERNAL')"
             >
               <AppIcon
                 icon="lucide:user-check"
                 :size="24"
-                :color="form.type === 'INTERNAL' ? 'var(--color-primary)' : 'var(--color-text-muted)'"
+                :color="values.type === 'INTERNAL' ? 'var(--color-primary)' : 'var(--color-text-muted)'"
               />
               <div class="text-center">
-                <p class="text-sm font-semibold" :style="{ color: form.type === 'INTERNAL' ? 'var(--color-primary)' : 'var(--color-text-primary)' }">Interno</p>
+                <p class="text-sm font-semibold" :style="{ color: values.type === 'INTERNAL' ? 'var(--color-primary)' : 'var(--color-text-primary)' }">Interno</p>
                 <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Usuario del sistema</p>
               </div>
             </button>
           </div>
 
-          <div v-if="form.type === 'INTERNAL'" class="space-y-3">
+          <div v-if="values.type === 'INTERNAL'" class="space-y-3">
             <FormSelect
-              v-model="form.userId"
+              v-bind="userIdBinds"
               label="Seleccionar usuario del sistema"
               :options="userOptions"
               placeholder="Seleccionar usuario..."
@@ -298,7 +297,7 @@ const handleDelete = async () => {
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormInput
-              v-model="form.fullName"
+              v-bind="fullNameBinds"
               class="sm:col-span-2"
               label="Nombre completo"
               placeholder="Nombre o razón social"
@@ -306,20 +305,20 @@ const handleDelete = async () => {
               required
             />
             <FormInput
-              v-model="form.email"
+              v-bind="emailBinds"
               type="email"
               label="Email"
               placeholder="correo@ejemplo.com"
               :error="errors.email"
             />
             <FormInput
-              v-model="form.phone"
+              v-bind="phoneBinds"
               type="tel"
               label="Teléfono"
               placeholder="Ej. 999 888 777"
             />
             <FormInput
-              v-model="form.documentNumber"
+              v-bind="documentNumberBinds"
               label="N° Documento"
               placeholder="RUC / DNI"
             />
@@ -460,50 +459,50 @@ const handleDelete = async () => {
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-              :style="{ backgroundColor: form.isActive ? 'var(--color-primary)1a' : 'var(--color-surface-elevated)' }"
+              :style="{ backgroundColor: values.isActive ? 'var(--color-primary)1a' : 'var(--color-surface-elevated)' }"
             >
               <AppIcon
-                :icon="form.type === 'INTERNAL' ? 'lucide:user-check' : 'lucide:user-round-cog'"
+                :icon="values.type === 'INTERNAL' ? 'lucide:user-check' : 'lucide:user-round-cog'"
                 :size="22"
-                :color="form.isActive ? 'var(--color-primary)' : 'var(--color-text-muted)'"
+                :color="values.isActive ? 'var(--color-primary)' : 'var(--color-text-muted)'"
               />
             </div>
             <div class="min-w-0">
               <p class="font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">
-                {{ form.fullName || agent?.fullName || '—' }}
+                {{ values.fullName || agent?.fullName || '—' }}
               </p>
               <div class="flex flex-wrap gap-1 mt-1">
-                <Badge :variant="form.type === 'INTERNAL' ? 'info' : 'neutral'">
-                  {{ form.type === 'INTERNAL' ? 'Interno' : 'Externo' }}
+                <Badge :variant="values.type === 'INTERNAL' ? 'info' : 'neutral'">
+                  {{ values.type === 'INTERNAL' ? 'Interno' : 'Externo' }}
                 </Badge>
-                <Badge :variant="form.isActive ? 'success' : 'error'">
-                  {{ form.isActive ? 'Activo' : 'Inactivo' }}
+                <Badge :variant="values.isActive ? 'success' : 'error'">
+                  {{ values.isActive ? 'Activo' : 'Inactivo' }}
                 </Badge>
               </div>
             </div>
           </div>
 
           <dl class="space-y-2.5 text-sm mb-6">
-            <div v-if="form.email">
+            <div v-if="values.email">
               <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
                 <AppIcon icon="lucide:mail" :size="13" />
                 Email
               </dt>
-              <dd class="truncate" :style="{ color: 'var(--color-text-primary)' }">{{ form.email }}</dd>
+              <dd class="truncate" :style="{ color: 'var(--color-text-primary)' }">{{ values.email }}</dd>
             </div>
-            <div v-if="form.phone">
+            <div v-if="values.phone">
               <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
                 <AppIcon icon="lucide:phone" :size="13" />
                 Teléfono
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ form.phone }}</dd>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ values.phone }}</dd>
             </div>
-            <div v-if="form.documentNumber">
+            <div v-if="values.documentNumber">
               <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
                 <AppIcon icon="lucide:id-card" :size="13" />
                 Documento
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ form.documentNumber }}</dd>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ values.documentNumber }}</dd>
             </div>
           </dl>
 

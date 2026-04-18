@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import * as yup from 'yup'
 import { Icon } from '@iconify/vue'
 import { 
   useUsers, 
@@ -12,9 +13,11 @@ import {
 } from '../composables'
 import { usePagination } from '@shared/composables'
 import { BasePagination } from '@shared/components'
+import FormInput from '@shared/components/forms/FormInput.vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils'
-import type { UserListItem, CreateUserData } from '../types'
+import { useForm, toTypedSchema } from '@shared/forms'
+import type { UserListItem } from '../types'
 
 /**
  * UsersView
@@ -54,21 +57,49 @@ const isEditModalOpen = ref(false)
 const isRolesModalOpen = ref(false)
 const selectedUser = ref<UserListItem | null>(null)
 
-// Create form
-const createForm = ref<CreateUserData>({
-  email: '',
-  password: '',
-  firstName: '',
-  lastName: '',
-  roleIds: [],
+const createUserSchema = yup.object({
+  email: yup.string().email('Correo inválido').required('El correo es requerido').trim(),
+  password: yup.string().min(6, 'Mínimo 6 caracteres').required('La contraseña es requerida'),
+  firstName: yup.string().required('El nombre es requerido').trim(),
+  lastName: yup.string().required('El apellido es requerido').trim(),
 })
 
-// Edit form
-const editForm = ref({
-  firstName: '',
-  lastName: '',
-  email: '',
+const editUserSchema = yup.object({
+  email: yup.string().email('Correo inválido').required('El correo es requerido').trim(),
+  firstName: yup.string().required('El nombre es requerido').trim(),
+  lastName: yup.string().required('El apellido es requerido').trim(),
 })
+
+const createForm = useForm({
+  validationSchema: toTypedSchema(createUserSchema),
+  initialValues: {
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+  },
+})
+
+const editForm = useForm({
+  validationSchema: toTypedSchema(editUserSchema),
+  initialValues: {
+    firstName: '',
+    lastName: '',
+    email: '',
+  },
+})
+
+const createEmailBinds = createForm.defineComponentBinds('email')
+const createPasswordBinds = createForm.defineComponentBinds('password')
+const createFirstNameBinds = createForm.defineComponentBinds('firstName')
+const createLastNameBinds = createForm.defineComponentBinds('lastName')
+
+const createErrors = createForm.errors
+const editErrors = editForm.errors
+
+const editFirstNameBinds = editForm.defineComponentBinds('firstName')
+const editLastNameBinds = editForm.defineComponentBinds('lastName')
+const editEmailBinds = editForm.defineComponentBinds('email')
 
 const filteredUsers = computed(() => {
   if (!users.value) return []
@@ -111,13 +142,9 @@ watch(users, (newUsers) => {
 })
 
 const openCreateModal = () => {
-  createForm.value = {
-    email: '',
-    password: '',
-    firstName: '',
-    lastName: '',
-    roleIds: [],
-  }
+  createForm.resetForm({
+    values: { email: '', password: '', firstName: '', lastName: '' },
+  })
   isCreateModalOpen.value = true
 }
 
@@ -125,27 +152,30 @@ const closeCreateModal = () => {
   isCreateModalOpen.value = false
 }
 
-const handleCreate = async () => {
-  if (!createForm.value.email || !createForm.value.password || !createForm.value.firstName || !createForm.value.lastName) {
-    void markapAlert.warning('Completa nombre, apellido, correo y contraseña.', 'Formulario')
-    return
-  }
-
+const handleCreate = createForm.handleSubmit(async (vals) => {
   try {
-    await createUserMutation.mutateAsync(createForm.value)
+    await createUserMutation.mutateAsync({
+      email: vals.email.trim(),
+      password: vals.password,
+      firstName: vals.firstName.trim(),
+      lastName: vals.lastName.trim(),
+      roleIds: [],
+    })
     closeCreateModal()
   } catch {
     /* onError en useCreateUser */
   }
-}
+})
 
 const openEditModal = (user: UserListItem) => {
   selectedUser.value = user
-  editForm.value = {
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-  }
+  editForm.resetForm({
+    values: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    },
+  })
   isEditModalOpen.value = true
 }
 
@@ -154,19 +184,23 @@ const closeEditModal = () => {
   selectedUser.value = null
 }
 
-const handleEdit = async () => {
+const handleEdit = editForm.handleSubmit(async (vals) => {
   if (!selectedUser.value) return
 
   try {
     await updateUserMutation.mutateAsync({
       id: selectedUser.value.id,
-      data: editForm.value,
+      data: {
+        firstName: vals.firstName.trim(),
+        lastName: vals.lastName.trim(),
+        email: vals.email.trim(),
+      },
     })
     closeEditModal()
   } catch {
     /* onError en useUpdateUser */
   }
-}
+})
 
 const toggleUserActive = async (user: UserListItem) => {
   try {
@@ -428,25 +462,33 @@ const paginationProps = computed(() => ({
             
             <form @submit.prevent="handleCreate" class="space-y-4">
               <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium mb-1" style="color: var(--color-text-secondary);">Nombre</label>
-                  <input v-model="createForm.firstName" type="text" required class="w-full" />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1" style="color: var(--color-text-secondary);">Apellido</label>
-                  <input v-model="createForm.lastName" type="text" required class="w-full" />
-                </div>
+                <FormInput
+                  v-bind="createFirstNameBinds"
+                  label="Nombre"
+                  :error="createErrors.firstName"
+                  required
+                />
+                <FormInput
+                  v-bind="createLastNameBinds"
+                  label="Apellido"
+                  :error="createErrors.lastName"
+                  required
+                />
               </div>
-              
-              <div>
-                <label class="block text-sm font-medium mb-1" style="color: var(--color-text-secondary);">Email</label>
-                <input v-model="createForm.email" type="email" required class="w-full" />
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium mb-1" style="color: var(--color-text-secondary);">Contraseña</label>
-                <input v-model="createForm.password" type="password" required class="w-full" />
-              </div>
+              <FormInput
+                v-bind="createEmailBinds"
+                type="email"
+                label="Email"
+                :error="createErrors.email"
+                required
+              />
+              <FormInput
+                v-bind="createPasswordBinds"
+                type="password"
+                label="Contraseña"
+                :error="createErrors.password"
+                required
+              />
 
               <div class="flex justify-end gap-3 pt-4">
                 <button
@@ -491,20 +533,26 @@ const paginationProps = computed(() => ({
             
             <form @submit.prevent="handleEdit" class="space-y-4">
               <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium mb-1" style="color: var(--color-text-secondary);">Nombre</label>
-                  <input v-model="editForm.firstName" type="text" required class="w-full" />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1" style="color: var(--color-text-secondary);">Apellido</label>
-                  <input v-model="editForm.lastName" type="text" required class="w-full" />
-                </div>
+                <FormInput
+                  v-bind="editFirstNameBinds"
+                  label="Nombre"
+                  :error="editErrors.firstName"
+                  required
+                />
+                <FormInput
+                  v-bind="editLastNameBinds"
+                  label="Apellido"
+                  :error="editErrors.lastName"
+                  required
+                />
               </div>
-              
-              <div>
-                <label class="block text-sm font-medium mb-1" style="color: var(--color-text-secondary);">Email</label>
-                <input v-model="editForm.email" type="email" required class="w-full" />
-              </div>
+              <FormInput
+                v-bind="editEmailBinds"
+                type="email"
+                label="Email"
+                :error="editErrors.email"
+                required
+              />
 
               <div class="flex justify-end gap-3 pt-4">
                 <button

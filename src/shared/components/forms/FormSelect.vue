@@ -12,7 +12,7 @@ interface Option {
 }
 
 interface Props {
-  modelValue: string | number | null
+  modelValue?: string | number | null
   options: Option[]
   placeholder?: string
   label?: string
@@ -30,12 +30,15 @@ const props = withDefaults(defineProps<Props>(), {
   required: false,
 })
 
-const emit = defineEmits<{
-  'update:modelValue': [value: string | number | null]
-  change: [value: string | number | null]
-}>()
+const emit = defineEmits(['update:modelValue', 'change'])
 
 const selectId = props.id ?? `select-${Math.random().toString(36).slice(2, 11)}`
+
+const selectValue = () => {
+  const v = props.modelValue
+  if (v === null || v === undefined || v === '') return ''
+  return String(v)
+}
 
 const handleChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
@@ -59,7 +62,7 @@ const handleChange = (event: Event) => {
     <div class="relative">
       <select
         :id="selectId"
-        :value="modelValue"
+        :value="selectValue()"
         :disabled="disabled || loading"
         :required="required"
         class="w-full px-4 py-2.5 rounded-lg border appearance-none pr-10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-60 disabled:cursor-not-allowed"

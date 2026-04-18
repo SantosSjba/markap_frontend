@@ -4,7 +4,8 @@
  */
 
 interface Props {
-  modelValue: string
+  /** VeeValidate / bindings pueden enviar undefined hasta el primer input */
+  modelValue?: string | null
   placeholder?: string
   label?: string
   error?: string
@@ -22,13 +23,15 @@ const props = withDefaults(defineProps<Props>(), {
   rows: 4,
 })
 
-const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  blur: [event: FocusEvent]
-  focus: [event: FocusEvent]
-}>()
+const emit = defineEmits(['update:modelValue', 'blur', 'focus'])
 
 const textareaId = props.id ?? `textarea-${Math.random().toString(36).slice(2, 11)}`
+
+const displayValue = () => {
+  const v = props.modelValue
+  if (v === null || v === undefined) return ''
+  return String(v)
+}
 
 const handleInput = (event: Event) => {
   const target = event.target as HTMLTextAreaElement
@@ -49,7 +52,7 @@ const handleInput = (event: Event) => {
     </label>
     <textarea
       :id="textareaId"
-      :value="modelValue"
+      :value="displayValue()"
       :placeholder="placeholder"
       :disabled="disabled"
       :required="required"
