@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
 import {
   BaseButton,
@@ -22,6 +22,7 @@ import { clientsService } from '../services/clients.service'
 import { BaseModal } from '@shared/components'
 
 const router = useRouter()
+const route = useRoute()
 const ITEMS_PER_PAGE = 10
 
 const tableRowSelection = ref<RowSelectionState>({})
@@ -40,6 +41,18 @@ const { data: stats, isLoading: loadingStats } = useClientStats('alquileres')
 
 const clients = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
+
+watch(
+  () => route.name,
+  (name) => {
+    if (name === 'alquileres-clientes-propietarios') {
+      filterType.value = 'OWNER'
+    } else if (name === 'alquileres-clientes') {
+      filterType.value = 'ALL'
+    }
+  },
+  { immediate: true },
+)
 
 watch(
   [searchInput, filterType, filterStatus],
@@ -116,6 +129,15 @@ const tableColumns = [
   },
   { key: 'actions', label: '', align: 'right' as const },
 ]
+
+const pageTitle = computed(() =>
+  route.name === 'alquileres-clientes-propietarios' ? 'Propietarios' : 'Clientes',
+)
+const pageSubtitle = computed(() =>
+  route.name === 'alquileres-clientes-propietarios'
+    ? 'Titulares con inmuebles en Alquileres (inventario y contratos de esta app)'
+    : 'Gestión de propietarios e inquilinos',
+)
 
 const goToNew = () => router.push('/alquileres/clientes/nuevo')
 const goToEdit = (client: ClientListItem) =>
@@ -223,13 +245,13 @@ async function handleExport() {
           class="text-xl sm:text-2xl font-bold"
           :style="{ color: 'var(--color-text-primary)' }"
         >
-          Clientes
+          {{ pageTitle }}
         </h1>
         <p
           class="text-sm mt-1"
           :style="{ color: 'var(--color-text-secondary)' }"
         >
-          Gestión de propietarios e inquilinos
+          {{ pageSubtitle }}
         </p>
       </div>
       <div class="flex gap-2 w-full sm:w-auto">
@@ -300,7 +322,12 @@ async function handleExport() {
             </div>
             <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
               <div class="w-full sm:w-[175px] min-w-0">
-                <FormSelect v-model="filterType" :options="typeOptions" placeholder="Todos los tipos" />
+                <FormSelect
+                  v-model="filterType"
+                  :options="typeOptions"
+                  placeholder="Todos los tipos"
+                  :disabled="route.name === 'alquileres-clientes-propietarios'"
+                />
               </div>
               <div class="w-full sm:w-[175px] min-w-0">
                 <FormSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
@@ -343,15 +370,21 @@ async function handleExport() {
               <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
               <span class="inline-flex items-center gap-1">
                 <AppIcon icon="lucide:building-2" :size="16" />
-                {{ (row as ClientListItem).propertiesCount ?? '-' }}
+                {{
+                  (row as ClientListItem).clientType === 'OWNER'
+                    ? (row as ClientListItem).propertiesCount ?? 0
+                    : '—'
+                }}
               </span>
             </td>
             <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
               <span class="inline-flex items-center gap-1">
                 <AppIcon icon="lucide:file-text" :size="16" />
-                {{ (row as ClientListItem).contractsCount !== undefined && (row as ClientListItem).contractsCount > 0
-                  ? `${(row as ClientListItem).contractsCount} activo(s)`
-                  : 'Sin alquileres' }}
+                {{
+                  (row as ClientListItem).contractsCount > 0
+                    ? `${(row as ClientListItem).contractsCount} contrato(s)`
+                    : 'Sin contratos'
+                }}
               </span>
             </td>
             <td class="py-3 px-4">

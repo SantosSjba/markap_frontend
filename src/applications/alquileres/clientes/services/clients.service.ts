@@ -193,5 +193,7 @@ export const clientsService = {
     apiClient.patch(`/clients/${id}`, data).then((r) => r.data),
 
   delete: (id: string): Promise<{ message: string }> =>
-    apiClient.delete(`/clients/${id}`).then((r) => r.data),
+    apiClient
+      .delete(`/clients/${id}`, { params: { applicationSlug: 'alquileres' } })
+      .then((r) => r.data),
 }

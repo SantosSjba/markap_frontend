@@ -109,6 +109,7 @@ export interface CreateVentasClientPayload {
 }
 
 export interface UpdateVentasClientPayload {
+  clientType?: VentasClientType
   documentTypeId?: string
   documentNumber?: string
   fullName?: string

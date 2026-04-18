@@ -47,6 +47,8 @@ const appColor = 'var(--color-primary)'
 const id = computed(() => String(route.params.id ?? ''))
 
 const editKind = ref<'BUYER' | 'OWNER'>('BUYER')
+/** Evita sobrescribir el formulario y el tipo al revalidar la misma query. */
+const hydratedForClientId = ref<string | null>(null)
 
 const baseShape = {
   documentTypeId: yup.string().required('Seleccione el tipo de documento'),
@@ -210,14 +212,20 @@ watch(
   },
 )
 
+watch(id, () => {
+  hydratedForClientId.value = null
+})
+
 watch(
-  () => client.value,
-  (c) => {
-    if (!c) return
+  () => [id.value, client.value] as const,
+  ([routeId, c]) => {
+    if (!routeId || !c || c.id !== routeId) return
     if (c.applicationSlug !== 'ventas' || (c.clientType !== 'BUYER' && c.clientType !== 'OWNER')) {
       void router.replace('/ventas/clientes')
       return
     }
+    if (hydratedForClientId.value === routeId) return
+    hydratedForClientId.value = routeId
     editKind.value = c.clientType
     const addr = c.primaryAddress
     resetForm({
@@ -253,6 +261,14 @@ watch(
   },
 )
 
+function selectClientKind(kind: 'BUYER' | 'OWNER') {
+  if (kind === editKind.value) return
+  editKind.value = kind
+  if (kind === 'BUYER' && !values.salesStatus) {
+    setFieldValue('salesStatus', 'PROSPECT')
+  }
+}
+
 const goBack = () => router.push('/ventas/clientes')
 
 const onSubmit = handleSubmit(async (formValues) => {
@@ -261,6 +277,7 @@ const onSubmit = handleSubmit(async (formValues) => {
       await updateMutation.mutateAsync({
         id: id.value,
         data: {
+          clientType: 'BUYER',
           documentTypeId: formValues.documentTypeId,
           documentNumber: formValues.documentNumber.trim(),
           fullName: formValues.fullName.trim(),
@@ -281,6 +298,7 @@ const onSubmit = handleSubmit(async (formValues) => {
       await updateMutation.mutateAsync({
         id: id.value,
         data: {
+          clientType: 'OWNER',
           documentTypeId: formValues.documentTypeId,
           documentNumber: formValues.documentNumber.trim(),
           fullName: formValues.fullName.trim(),
@@ -292,6 +310,9 @@ const onSubmit = handleSubmit(async (formValues) => {
           primaryEmail: formValues.primaryEmail.trim(),
           secondaryEmail: formValues.secondaryEmail?.trim() || null,
           notes: formValues.notes?.trim() || null,
+          salesStatus: null,
+          leadOrigin: null,
+          assignedAgentId: null,
           address: {
             addressLine: formValues.addressLine.trim(),
             districtId: formValues.districtId,
@@ -328,6 +349,7 @@ const onSubmit = handleSubmit(async (formValues) => {
               ? 'Propietario — datos y dirección fiscal'
               : 'Comprador / lead — embudo y asignación'
           }}
+          · Puedes cambiar el tipo igual que al crear.
         </p>
       </div>
     </div>
@@ -337,6 +359,59 @@ const onSubmit = handleSubmit(async (formValues) => {
     </div>
 
     <form v-else-if="client" @submit.prevent="onSubmit" class="space-y-8">
+      <section
+        class="p-5 rounded-xl"
+        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      >
+        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
+          Tipo de cliente
+        </h2>
+        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+          Comprador / lead o propietario de inventario. Si es titular de propiedades, no podrás pasarlo a
+          comprador hasta liberar el inventario.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            type="button"
+            class="p-4 rounded-lg border-2 text-left transition-all"
+            :style="{
+              borderColor: editKind === 'BUYER' ? appColor : 'var(--color-border)',
+              color: editKind === 'BUYER' ? appColor : 'var(--color-text-primary)',
+            }"
+            @click="selectClientKind('BUYER')"
+          >
+            <div class="flex items-center gap-3">
+              <AppIcon icon="lucide:user-plus" :size="32" color="currentColor" class="shrink-0" />
+              <div>
+                <span class="font-medium block">Comprador / lead</span>
+                <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                  Embudo, origen del lead y asesor
+                </span>
+              </div>
+            </div>
+          </button>
+          <button
+            type="button"
+            class="p-4 rounded-lg border-2 text-left transition-all"
+            :style="{
+              borderColor: editKind === 'OWNER' ? appColor : 'var(--color-border)',
+              color: editKind === 'OWNER' ? appColor : 'var(--color-text-primary)',
+            }"
+            @click="selectClientKind('OWNER')"
+          >
+            <div class="flex items-center gap-3">
+              <AppIcon icon="lucide:building-2" :size="32" color="currentColor" class="shrink-0" />
+              <div>
+                <span class="font-medium block">Propietario</span>
+                <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                  Titular de propiedades en ventas (requiere dirección)
+                </span>
+              </div>
+            </div>
+          </button>
+        </div>
+      </section>
+
       <section
         class="p-5 rounded-xl"
         :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
@@ -363,6 +438,7 @@ const onSubmit = handleSubmit(async (formValues) => {
             v-bind="fullNameBinds"
             class="md:col-span-2"
             label="Nombre completo / Razón social"
+            :placeholder="editKind === 'OWNER' ? 'Nombre del propietario' : 'Nombre del lead o comprador'"
             :error="errors.fullName"
             required
           />
@@ -424,6 +500,9 @@ const onSubmit = handleSubmit(async (formValues) => {
         <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
           Dirección fiscal
         </h2>
+        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+          Obligatoria para propietarios (misma regla que en nuevo cliente).
+        </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <FormSelect
             v-bind="departmentIdBinds"
@@ -505,7 +584,16 @@ const onSubmit = handleSubmit(async (formValues) => {
         <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
           Notas
         </h2>
-        <FormTextarea v-bind="notesBinds" label="Observaciones" :rows="4" />
+        <FormTextarea
+          v-bind="notesBinds"
+          label="Observaciones"
+          :placeholder="
+            editKind === 'OWNER'
+              ? 'Datos del titular, segunda firma, etc.'
+              : 'Detalle de interés, presupuesto, propiedad buscada…'
+          "
+          :rows="4"
+        />
       </section>
 
       <div class="flex justify-end gap-3">
