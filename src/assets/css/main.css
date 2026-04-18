@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'sweetalert2/dist/sweetalert2.min.css';
 
 /* ============================================
    MARKAP - CUSTOM DESIGN SYSTEM
@@ -514,3 +515,6 @@ tr:hover td {
     padding: 0.625rem 0.75rem;
   }
 }
+
+/* Tema SweetAlert2 MARKAP: al final para ganar a Tailwind y al resto del sistema */
+@import './sweetalert2-markap.css';

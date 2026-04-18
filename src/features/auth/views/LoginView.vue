@@ -2,6 +2,7 @@
 import { ref, reactive } from 'vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { useRouter } from 'vue-router'
+import { markapAlert } from '@/shared/alert'
 import { useAuthStore } from '../stores'
 import type { LoginCredentials } from '../types'
 
@@ -18,34 +19,27 @@ const credentials = reactive<LoginCredentials>({
   password: '',
 })
 
-const errors = reactive({
-  email: '',
-  password: '',
-  general: '',
-})
-
 const showPassword = ref(false)
 
 const validateForm = (): boolean => {
-  let isValid = true
-  errors.email = ''
-  errors.password = ''
-  errors.general = ''
+  const msgs: string[] = []
 
   if (!credentials.email) {
-    errors.email = 'El correo electrónico es requerido'
-    isValid = false
+    msgs.push('El correo electrónico es requerido')
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email)) {
-    errors.email = 'Ingrese un correo electrónico válido'
-    isValid = false
+    msgs.push('Ingrese un correo electrónico válido')
   }
 
   if (!credentials.password) {
-    errors.password = 'La contraseña es requerida'
-    isValid = false
+    msgs.push('La contraseña es requerida')
   }
 
-  return isValid
+  if (msgs.length) {
+    void markapAlert.warning(msgs.join(' '), 'Revisa el formulario')
+    return false
+  }
+
+  return true
 }
 
 const handleSubmit = async () => {
@@ -54,10 +48,10 @@ const handleSubmit = async () => {
   const result = await authStore.login(credentials)
 
   if (result.success) {
-    // Always redirect to applications after login (ignore query redirect)
+    void markapAlert.toast.success('Bienvenido', 'Redirigiendo al panel…')
     router.push('/applications')
   } else {
-    errors.general = result.error || 'Credenciales inválidas'
+    void markapAlert.error(result.error || 'Credenciales inválidas', 'Error')
   }
 }
 
@@ -82,15 +76,6 @@ const togglePassword = () => {
 
     <!-- Form -->
     <form @submit.prevent="handleSubmit" class="space-y-5 text-left">
-      <!-- General error -->
-      <div
-        v-if="errors.general"
-        class="p-3 rounded-lg text-sm text-center"
-        style="background-color: var(--color-error-light); border: 1px solid var(--color-error); color: var(--color-error);"
-      >
-        {{ errors.general }}
-      </div>
-
       <!-- Email -->
       <div>
         <label 
@@ -103,12 +88,8 @@ const togglePassword = () => {
           v-model="credentials.email"
           type="email"
           placeholder="usuario@markap.com"
-          :style="errors.email ? 'border-color: var(--color-error);' : ''"
           class="w-full"
         />
-        <p v-if="errors.email" class="mt-1.5 text-sm" style="color: var(--color-error);">
-          {{ errors.email }}
-        </p>
       </div>
 
       <!-- Password -->
@@ -124,7 +105,6 @@ const togglePassword = () => {
             v-model="credentials.password"
             :type="showPassword ? 'text' : 'password'"
             placeholder="••••••••"
-            :style="errors.password ? 'border-color: var(--color-error);' : ''"
             class="w-full pr-12"
           />
           <button
@@ -139,9 +119,6 @@ const togglePassword = () => {
             <AppIcon v-else icon="lucide:eye-off" :size="20" color="currentColor" />
           </button>
         </div>
-        <p v-if="errors.password" class="mt-1.5 text-sm" style="color: var(--color-error);">
-          {{ errors.password }}
-        </p>
       </div>
 
       <!-- Forgot password link -->

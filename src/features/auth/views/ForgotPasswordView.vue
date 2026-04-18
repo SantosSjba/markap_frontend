@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
+import { markapAlert } from '@/shared/alert'
 import { useForgotPassword } from '../composables'
 import { isAxiosError } from 'axios'
 
@@ -12,33 +13,38 @@ import { isAxiosError } from 'axios'
 const forgotMutation = useForgotPassword()
 
 const email = ref('')
-const error = ref('')
 
 const isSubmitted = computed(() => forgotMutation.isSuccess.value)
 const isLoading = computed(() => forgotMutation.isPending.value)
 
 const handleSubmit = async () => {
-  error.value = ''
-
   if (!email.value) {
-    error.value = 'El correo electrónico es requerido'
+    void markapAlert.warning('El correo electrónico es requerido', 'Revisa el formulario')
     return
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-    error.value = 'Ingrese un correo electrónico válido'
+    void markapAlert.warning('Ingrese un correo electrónico válido', 'Revisa el formulario')
     return
   }
 
-  forgotMutation.mutate(email.value.trim(), {
+  const trimmed = email.value.trim()
+
+  forgotMutation.mutate(trimmed, {
     onSuccess: () => {
-      // isSubmitted is derived from isSuccess
+      void markapAlert.toast.success(
+        `Te enviamos un código de 6 dígitos a ${trimmed}`,
+        'Correo enviado',
+      )
     },
     onError: (err: unknown) => {
       if (isAxiosError(err) && err.response?.status === 404) {
-        error.value = 'No existe un usuario registrado con ese correo electrónico'
+        void markapAlert.error(
+          'No existe un usuario registrado con ese correo electrónico',
+          'Error',
+        )
       } else {
-        error.value = 'Error al enviar el código. Intente nuevamente.'
+        void markapAlert.error('Error al enviar el código. Intente nuevamente.', 'Error')
       }
     },
   })
@@ -107,12 +113,8 @@ const handleSubmit = async () => {
           v-model="email"
           type="email"
           placeholder="usuario@markap.com"
-          :style="error ? 'border-color: var(--color-error);' : ''"
           class="w-full"
         />
-        <p v-if="error" class="mt-1.5 text-sm" style="color: var(--color-error);">
-          {{ error }}
-        </p>
       </div>
 
       <!-- Submit button -->

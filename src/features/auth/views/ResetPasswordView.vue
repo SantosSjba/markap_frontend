@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { useRoute, useRouter } from 'vue-router'
+import { markapAlert } from '@/shared/alert'
 import { useResetPassword } from '../composables'
 import { isAxiosError } from 'axios'
 
@@ -18,7 +19,6 @@ const email = ref('')
 const code = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
-const error = ref('')
 
 const emailFromQuery = computed(() => {
   const q = route.query.email
@@ -34,38 +34,39 @@ onMounted(() => {
 const isSuccess = computed(() => resetMutation.isSuccess.value)
 const isLoading = computed(() => resetMutation.isPending.value)
 
-const handleSubmit = async () => {
-  error.value = ''
+const validateForm = (): boolean => {
+  const msgs: string[] = []
 
   if (!email.value) {
-    error.value = 'El correo electrónico es requerido'
-    return
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-    error.value = 'Ingrese un correo electrónico válido'
-    return
+    msgs.push('El correo electrónico es requerido')
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    msgs.push('Ingrese un correo electrónico válido')
   }
 
   if (!code.value || code.value.length !== 6) {
-    error.value = 'El código debe tener exactamente 6 dígitos'
-    return
-  }
-
-  if (!/^\d{6}$/.test(code.value)) {
-    error.value = 'El código solo debe contener números'
-    return
+    msgs.push('El código debe tener exactamente 6 dígitos')
+  } else if (!/^\d{6}$/.test(code.value)) {
+    msgs.push('El código solo debe contener números')
   }
 
   if (!newPassword.value || newPassword.value.length < 6) {
-    error.value = 'La contraseña debe tener al menos 6 caracteres'
-    return
+    msgs.push('La contraseña debe tener al menos 6 caracteres')
   }
 
   if (newPassword.value !== confirmPassword.value) {
-    error.value = 'Las contraseñas no coinciden'
-    return
+    msgs.push('Las contraseñas no coinciden')
   }
+
+  if (msgs.length) {
+    void markapAlert.warning(msgs.join(' '), 'Revisa el formulario')
+    return false
+  }
+
+  return true
+}
+
+const handleSubmit = async () => {
+  if (!validateForm()) return
 
   resetMutation.mutate(
     {
@@ -74,17 +75,26 @@ const handleSubmit = async () => {
       newPassword: newPassword.value,
     },
     {
+      onSuccess: () => {
+        void markapAlert.toast.success(
+          'Ya puedes iniciar sesión con tu nueva contraseña.',
+          'Contraseña actualizada',
+        )
+      },
       onError: (err: unknown) => {
         const res = isAxiosError(err) ? err.response : undefined
         if (res?.status === 400) {
-          error.value = (res.data as { message?: string })?.message || 'El código es inválido o ha expirado'
+          void markapAlert.error(
+            (res.data as { message?: string })?.message || 'El código es inválido o ha expirado',
+            'Error',
+          )
         } else if (res?.status === 404) {
-          error.value = 'No existe un usuario con ese correo electrónico'
+          void markapAlert.error('No existe un usuario con ese correo electrónico', 'Error')
         } else {
-          error.value = 'Error al restablecer la contraseña. Intente nuevamente.'
+          void markapAlert.error('Error al restablecer la contraseña. Intente nuevamente.', 'Error')
         }
       },
-    }
+    },
   )
 }
 
@@ -150,7 +160,6 @@ const goToLogin = () => {
             v-model="email"
             type="email"
             placeholder="usuario@markap.com"
-            :style="error ? 'border-color: var(--color-error);' : ''"
             class="w-full"
             :readonly="!!emailFromQuery"
           />
@@ -170,7 +179,6 @@ const goToLogin = () => {
             inputmode="numeric"
             maxlength="6"
             placeholder="123456"
-            :style="error ? 'border-color: var(--color-error);' : ''"
             class="w-full text-center text-xl tracking-[0.5em] font-mono"
           />
         </div>
@@ -187,7 +195,6 @@ const goToLogin = () => {
             v-model="newPassword"
             type="password"
             placeholder="Mínimo 6 caracteres"
-            :style="error ? 'border-color: var(--color-error);' : ''"
             class="w-full"
           />
         </div>
@@ -204,14 +211,9 @@ const goToLogin = () => {
             v-model="confirmPassword"
             type="password"
             placeholder="Repite la contraseña"
-            :style="error ? 'border-color: var(--color-error);' : ''"
             class="w-full"
           />
         </div>
-
-        <p v-if="error" class="text-sm" style="color: var(--color-error);">
-          {{ error }}
-        </p>
 
         <!-- Submit -->
         <button
