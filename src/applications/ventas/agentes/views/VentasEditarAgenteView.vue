@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import * as yup from 'yup'
 import { BaseButton, AppIcon, Badge } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/forms'
-import { useAgent, useUpdateAgent, useDeleteAgent } from '../composables/useAgents'
+import { markapAlert } from '@/shared/alert'
+import {
+  useVentasAgent,
+  useVentasUpdateAgent,
+  useVentasDeleteAgent,
+} from '../composables/useAgents'
 import { useUsers } from '@applications/settings/composables/useUsers'
 import type { AgentType } from '../services/agents.service'
+import { ventasAgentEditFormSchema } from '../schemas/agentFormSchema'
 
 const route = useRoute()
 const router = useRouter()
@@ -17,24 +22,14 @@ const id = computed(() => String(route.params.id ?? ''))
 const showDeleteConfirm = ref(false)
 const showDeactivateConfirm = ref(false)
 const showActivateConfirm = ref(false)
+const loadErrorAlerted = ref(false)
 
-const schema = yup.object({
-  type: yup.string().oneOf(['INTERNAL', 'EXTERNAL']).required(),
-  userId: yup.string().when('type', {
-    is: 'INTERNAL',
-    then: (s) => s.required('Seleccione el usuario'),
-    otherwise: (s) => s.trim(),
-  }),
-  fullName: yup.string().required('El nombre es requerido').trim(),
-  email: yup.string().trim().email('Email inválido').optional(),
-  phone: yup.string().trim().optional(),
-  documentTypeId: yup.string().trim().optional(),
-  documentNumber: yup.string().trim().optional(),
-  isActive: yup.boolean().required(),
+watch(id, () => {
+  loadErrorAlerted.value = false
 })
 
 const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm({
-  validationSchema: toTypedSchema(schema),
+  validationSchema: toTypedSchema(ventasAgentEditFormSchema),
   initialValues: {
     type: 'EXTERNAL' as AgentType,
     userId: '',
@@ -53,10 +48,10 @@ const emailBinds = defineComponentBinds('email')
 const phoneBinds = defineComponentBinds('phone')
 const documentNumberBinds = defineComponentBinds('documentNumber')
 
-const { data: agent, isLoading: loadingAgent, isError: agentError } = useAgent(id)
+const { data: agent, isLoading: loadingAgent, isError: agentError } = useVentasAgent(id)
 const { data: usersList } = useUsers()
-const updateMutation = useUpdateAgent()
-const deleteMutation = useDeleteAgent()
+const updateMutation = useVentasUpdateAgent()
+const deleteMutation = useVentasDeleteAgent()
 
 const userOptions = computed(() => {
   const list = usersList.value ?? []
@@ -98,6 +93,20 @@ watch(agent, (a) => {
 }, { immediate: true })
 
 watch(
+  () => ({ err: agentError.value, loading: loadingAgent.value }),
+  ({ err, loading }) => {
+    if (err && !loading && !loadErrorAlerted.value) {
+      loadErrorAlerted.value = true
+      void markapAlert.toast.error(
+        'No se pudo cargar el agente',
+        'Puede que no exista o no pertenezca al módulo de ventas.',
+      )
+    }
+  },
+  { immediate: true },
+)
+
+watch(
   () => values.type,
   (t) => {
     if (t === 'INTERNAL' && values.userId) fillFromUser(values.userId)
@@ -110,28 +119,38 @@ watch(
   },
 )
 
-const goBack = () => router.push('/alquileres/agentes')
+const goBack = () => router.push('/ventas/agentes')
 
-const onSubmit = handleSubmit(async (formValues) => {
-  try {
-    await updateMutation.mutateAsync({
-      id: id.value,
-      data: {
-        type: formValues.type,
-        userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
-        fullName: formValues.fullName.trim(),
-        email: formValues.email?.trim() || null,
-        phone: formValues.phone?.trim() || null,
-        documentTypeId: formValues.documentTypeId || null,
-        documentNumber: formValues.documentNumber?.trim() || null,
-        isActive: formValues.isActive,
-      },
-    })
-    router.push('/alquileres/agentes')
-  } catch {
-    void 0
-  }
-})
+function onInvalidSubmit() {
+  void markapAlert.toast.warning(
+    'Revisa el formulario',
+    'Corrige los campos marcados antes de guardar los cambios.',
+  )
+}
+
+const onSubmit = handleSubmit(
+  async (formValues) => {
+    try {
+      await updateMutation.mutateAsync({
+        id: id.value,
+        data: {
+          type: formValues.type,
+          userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
+          fullName: formValues.fullName.trim(),
+          email: formValues.email?.trim() || null,
+          phone: formValues.phone?.trim() || null,
+          documentTypeId: formValues.documentTypeId || null,
+          documentNumber: formValues.documentNumber?.trim() || null,
+          isActive: formValues.isActive,
+        },
+      })
+      router.push('/ventas/agentes')
+    } catch {
+      void 0
+    }
+  },
+  onInvalidSubmit,
+)
 
 const handleDeactivate = async () => {
   showDeactivateConfirm.value = false
@@ -140,7 +159,7 @@ const handleDeactivate = async () => {
       id: id.value,
       data: { isActive: false },
     })
-    router.push('/alquileres/agentes')
+    router.push('/ventas/agentes')
   } catch {
     void 0
   }
@@ -153,7 +172,7 @@ const handleActivate = async () => {
       id: id.value,
       data: { isActive: true },
     })
-    router.push('/alquileres/agentes')
+    router.push('/ventas/agentes')
   } catch {
     void 0
   }
@@ -163,7 +182,7 @@ const handleDelete = async () => {
   showDeleteConfirm.value = false
   try {
     await deleteMutation.mutateAsync(id.value)
-    router.push('/alquileres/agentes')
+    router.push('/ventas/agentes')
   } catch {
     void 0
   }
@@ -172,7 +191,6 @@ const handleDelete = async () => {
 
 <template>
   <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
-    <!-- Header -->
     <div class="flex items-center gap-3 mb-6">
       <button
         type="button"
@@ -195,12 +213,10 @@ const handleDelete = async () => {
       </div>
     </div>
 
-    <!-- Loading -->
     <div v-if="loadingAgent" class="flex justify-center py-16">
       <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
     </div>
 
-    <!-- Error -->
     <div
       v-else-if="agentError || !agent"
       class="flex items-center gap-3 px-4 py-4 rounded-xl"
@@ -211,10 +227,7 @@ const handleDelete = async () => {
     </div>
 
     <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">
-      <!-- Columna principal -->
       <div class="xl:col-span-2 space-y-5">
-
-        <!-- Tipo de agente -->
         <section
           class="p-5 rounded-xl"
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
@@ -292,7 +305,6 @@ const handleDelete = async () => {
           </div>
         </section>
 
-        <!-- Datos del agente -->
         <section
           class="p-5 rounded-xl"
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
@@ -336,7 +348,6 @@ const handleDelete = async () => {
           </div>
         </section>
 
-        <!-- Danger zone -->
         <section
           class="p-5 rounded-xl"
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-error)40' }"
@@ -352,7 +363,6 @@ const handleDelete = async () => {
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <!-- Desactivar -->
             <div
               v-if="agent.isActive"
               class="flex items-start gap-3 p-4 rounded-xl"
@@ -395,7 +405,6 @@ const handleDelete = async () => {
               </div>
             </div>
 
-            <!-- Reactivar -->
             <div
               v-else
               class="flex items-start gap-3 p-4 rounded-xl"
@@ -438,7 +447,6 @@ const handleDelete = async () => {
               </div>
             </div>
 
-            <!-- Eliminar (soft delete) -->
             <div
               class="flex items-start gap-3 p-4 rounded-xl"
               :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
@@ -482,7 +490,6 @@ const handleDelete = async () => {
           </div>
         </section>
 
-        <!-- Botones móvil -->
         <div class="xl:hidden flex gap-3">
           <BaseButton
             type="submit"
@@ -500,7 +507,6 @@ const handleDelete = async () => {
         </div>
       </div>
 
-      <!-- Sidebar -->
       <div class="xl:col-span-1">
         <div
           class="p-5 rounded-xl border sticky top-4"

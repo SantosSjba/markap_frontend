@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'sweetalert2/dist/sweetalert2.min.css';
 
 /* ============================================
    MARKAP - CUSTOM DESIGN SYSTEM
@@ -516,5 +515,10 @@ tr:hover td {
   }
 }
 
-/* Tema SweetAlert2 MARKAP: al final para ganar a Tailwind y al resto del sistema */
+/*
+ * SweetAlert2: la hoja base debe ir al final del bundle.
+ * Si se importa arriba, reglas posteriores (tipografía h1–h6, body, etc.)
+ * pisan los selectores :where() de SWAL v11 y los alerts/toasts quedan “sin CSS”.
+ */
+@import 'sweetalert2/dist/sweetalert2.min.css';
 @import './sweetalert2-markap.css';

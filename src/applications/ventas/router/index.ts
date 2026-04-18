@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
 import VentasLayout from '../views/VentasLayout.vue'
 import { SectionLayout } from '@widgets'
+import { ventasAgentesRoutes } from '@applications/ventas/agentes/router'
 
 export const ventasRoutes: RouteRecordRaw[] = [
   {
@@ -57,6 +58,12 @@ export const ventasRoutes: RouteRecordRaw[] = [
             meta: { title: 'Nueva Propiedad' },
           },
         ],
+      },
+      {
+        path: 'agentes',
+        component: SectionLayout,
+        meta: { title: 'Agentes' },
+        children: ventasAgentesRoutes,
       },
       {
         path: 'procesos',

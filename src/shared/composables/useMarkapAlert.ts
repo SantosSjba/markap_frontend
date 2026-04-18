@@ -169,7 +169,7 @@ const toastMixin = (defaults: MarkapToastDefaults = {}) =>
     position: defaults.position ?? 'top-end',
     theme: getSwalTheme(),
     grow: false,
-    backdrop: false,
+    // No usar `backdrop` aquí: SweetAlert2 lo marca como incompatible con toasts.
     showConfirmButton: false,
     timer: defaults.timer ?? 4000,
     timerProgressBar: true,
@@ -577,11 +577,14 @@ export const markapAlert = {
    * Toasts (esquina): título primero, texto opcional después — alineado con SweetAlert2.
    */
   toast: {
-    fire: (options: SweetAlertOptions, defaults?: MarkapToastDefaults) =>
-      toastMixin(defaults).fire({
-        ...options,
+    fire: (options: SweetAlertOptions, defaults?: MarkapToastDefaults) => {
+      const { backdrop, ...toastOptions } = options
+      void backdrop
+      return toastMixin(defaults).fire({
+        ...toastOptions,
         theme: options.theme ?? getSwalTheme(),
-      }),
+      })
+    },
     success: (title: string, text?: string, defaults?: MarkapToastDefaults) =>
       toastMixin(defaults).fire({
         icon: 'success',

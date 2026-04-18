@@ -1,32 +1,20 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import * as yup from 'yup'
 import { BaseButton, AppIcon, Badge } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/forms'
-import { useCreateAgent } from '../composables/useAgents'
+import { markapAlert } from '@/shared/alert'
+import { useVentasCreateAgent } from '../composables/useAgents'
 import { useUsers } from '@applications/settings/composables/useUsers'
 import type { AgentType } from '../services/agents.service'
+import { VENTAS_AGENTS_APPLICATION_SLUG } from '../services/agents.service'
+import { ventasAgentCreateFormSchema } from '../schemas/agentFormSchema'
 
 const router = useRouter()
 
-const schema = yup.object({
-  type: yup.string().oneOf(['INTERNAL', 'EXTERNAL']).required(),
-  userId: yup.string().when('type', {
-    is: 'INTERNAL',
-    then: (s) => s.required('Seleccione el usuario'),
-    otherwise: (s) => s.trim(),
-  }),
-  fullName: yup.string().required('El nombre es requerido').trim(),
-  email: yup.string().trim().email('Email inválido').optional(),
-  phone: yup.string().trim().optional(),
-  documentTypeId: yup.string().trim().optional(),
-  documentNumber: yup.string().trim().optional(),
-})
-
 const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm({
-  validationSchema: toTypedSchema(schema),
+  validationSchema: toTypedSchema(ventasAgentCreateFormSchema),
   initialValues: {
     type: 'EXTERNAL' as AgentType,
     userId: '',
@@ -45,7 +33,7 @@ const phoneBinds = defineComponentBinds('phone')
 const documentNumberBinds = defineComponentBinds('documentNumber')
 
 const { data: usersList } = useUsers()
-const createMutation = useCreateAgent()
+const createMutation = useVentasCreateAgent()
 
 const userOptions = computed(() => {
   const list = usersList.value ?? []
@@ -83,12 +71,20 @@ watch(
   },
 )
 
-const goBack = () => router.push('/alquileres/agentes')
+const goBack = () => router.push('/ventas/agentes')
 
-const onSubmit = handleSubmit(async (formValues) => {
-  try {
+function onInvalidSubmit() {
+  void markapAlert.toast.warning(
+    'Revisa el formulario',
+    'Corrige los campos marcados antes de guardar.',
+  )
+}
+
+const onSubmit = handleSubmit(
+  async (formValues) => {
+    try {
     await createMutation.mutateAsync({
-      applicationSlug: 'alquileres',
+      applicationSlug: VENTAS_AGENTS_APPLICATION_SLUG,
       type: formValues.type,
       userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
       fullName: formValues.fullName.trim(),
@@ -97,16 +93,17 @@ const onSubmit = handleSubmit(async (formValues) => {
       documentTypeId: formValues.documentTypeId || null,
       documentNumber: formValues.documentNumber?.trim() || null,
     })
-    router.push('/alquileres/agentes')
-  } catch {
-    void 0
-  }
-})
+    router.push('/ventas/agentes')
+    } catch {
+      void 0
+    }
+  },
+  onInvalidSubmit,
+)
 </script>
 
 <template>
   <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
-    <!-- Header -->
     <div class="flex items-center gap-3 mb-6">
       <button
         type="button"
@@ -124,16 +121,13 @@ const onSubmit = handleSubmit(async (formValues) => {
           </h1>
         </div>
         <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Registrar agente interno o externo
+          Registrar agente de ventas (interno o externo)
         </p>
       </div>
     </div>
 
     <form class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">
-      <!-- Columna principal -->
       <div class="xl:col-span-2 space-y-5">
-
-        <!-- Tipo de agente -->
         <section
           class="p-5 rounded-xl"
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
@@ -148,7 +142,6 @@ const onSubmit = handleSubmit(async (formValues) => {
             </div>
           </div>
 
-          <!-- Selector de tipo como botones -->
           <div class="grid grid-cols-2 gap-3 mb-4">
             <button
               type="button"
@@ -190,7 +183,6 @@ const onSubmit = handleSubmit(async (formValues) => {
             </button>
           </div>
 
-          <!-- Si es interno: selector de usuario -->
           <div v-if="values.type === 'INTERNAL'" class="space-y-3">
             <FormSelect
               v-bind="userIdBinds"
@@ -213,7 +205,6 @@ const onSubmit = handleSubmit(async (formValues) => {
           </div>
         </section>
 
-        <!-- Datos del agente -->
         <section
           class="p-5 rounded-xl"
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
@@ -257,7 +248,6 @@ const onSubmit = handleSubmit(async (formValues) => {
           </div>
         </section>
 
-        <!-- Botones móvil -->
         <div class="xl:hidden flex gap-3">
           <BaseButton
             type="submit"
@@ -275,7 +265,6 @@ const onSubmit = handleSubmit(async (formValues) => {
         </div>
       </div>
 
-      <!-- Sidebar -->
       <div class="xl:col-span-1">
         <div
           class="p-5 rounded-xl border sticky top-4"

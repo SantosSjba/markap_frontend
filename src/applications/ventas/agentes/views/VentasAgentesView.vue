@@ -15,9 +15,15 @@ import {
 } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useExcelExport } from '@shared/composables'
-import { useAgentsList, useUpdateAgent, useDeleteAgent } from '../composables/useAgents'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import {
+  useVentasAgentsList,
+  useVentasUpdateAgent,
+  useVentasDeleteAgent,
+} from '../composables/useAgents'
 import type { AgentListItem, ListAgentsParams } from '../services/agents.service'
-import { agentsService } from '../services/agents.service'
+import { ventasAgentsService, VENTAS_AGENTS_APPLICATION_SLUG } from '../services/agents.service'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -25,7 +31,7 @@ const ITEMS_PER_PAGE = 10
 const tableRowSelection = ref<RowSelectionState>({})
 
 const listParams = ref<ListAgentsParams>({
-  applicationSlug: 'alquileres',
+  applicationSlug: VENTAS_AGENTS_APPLICATION_SLUG,
   page: 1,
   limit: ITEMS_PER_PAGE,
 })
@@ -33,7 +39,7 @@ const searchInput = ref('')
 const filterType = ref<'ALL' | 'INTERNAL' | 'EXTERNAL'>('ALL')
 const filterStatus = ref<'ALL' | 'active' | 'inactive'>('ALL')
 
-const { data: listResult, isLoading: loadingList } = useAgentsList(listParams)
+const { data: listResult, isLoading: loadingList } = useVentasAgentsList(listParams)
 
 const agents = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
@@ -52,27 +58,30 @@ watch(
           : filterStatus.value === 'active',
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
-const onPageChange = (page: number) => { listParams.value = { ...listParams.value, page } }
-const onPageSizeChange = (size: number) => { listParams.value = { ...listParams.value, limit: size, page: 1 } }
+const onPageChange = (page: number) => {
+  listParams.value = { ...listParams.value, page }
+}
+const onPageSizeChange = (size: number) => {
+  listParams.value = { ...listParams.value, limit: size, page: 1 }
+}
 
-const goToNew = () => router.push('/alquileres/agentes/nuevo')
-const goToEdit = (agent: AgentListItem) => router.push(`/alquileres/agentes/${agent.id}/editar`)
+const goToNew = () => router.push('/ventas/agentes/nuevo')
+const goToEdit = (agent: AgentListItem) => router.push(`/ventas/agentes/${agent.id}/editar`)
 
-// ---- Modals confirm ----
 const showConfirmModal = ref(false)
 const confirmModal = ref<{
   type: 'deactivate' | 'activate' | 'delete'
   agent: AgentListItem
 } | null>(null)
 
-const updateMutation = useUpdateAgent()
-const deleteMutation = useDeleteAgent()
+const updateMutation = useVentasUpdateAgent()
+const deleteMutation = useVentasDeleteAgent()
 
 const confirmActionPending = computed(
-  () => updateMutation.isPending.value || deleteMutation.isPending.value
+  () => updateMutation.isPending.value || deleteMutation.isPending.value,
 )
 
 function openConfirm(type: 'deactivate' | 'activate' | 'delete', agent: AgentListItem) {
@@ -104,7 +113,7 @@ async function executeConfirm() {
 
 const getActions = (agent: AgentListItem): { label: string; icon: string; onClick: () => void }[] => {
   const actions: { label: string; icon: string; onClick: () => void }[] = [
-    { label: 'Editar', icon: 'lucide:pencil', onClick: () => { goToEdit(agent) } },
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(agent) },
   ]
   if (agent.isActive) {
     actions.push({
@@ -197,37 +206,48 @@ const tableColumns = [
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await agentsService.list({
-    applicationSlug: 'alquileres',
-    page: 1,
-    limit: 10000,
-    search: searchInput.value.trim() || undefined,
-    type: filterType.value === 'ALL' ? undefined : filterType.value,
-    isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
-  })
-  const now = new Date().toLocaleDateString('es-PE')
-  await exportToExcel({
-    fileName: `agentes_${now}`,
-    sheetName: 'Agentes',
-    columns: [
-      { header: 'Nombre', key: 'fullName', width: 28 },
-      { header: 'Tipo', key: 'type', width: 12 },
-      { header: 'Tipo doc.', key: 'documentTypeCode', width: 12 },
-      { header: 'N° documento', key: 'documentNumber', width: 16 },
-      { header: 'Email', key: 'email', width: 28 },
-      { header: 'Teléfono', key: 'phone', width: 16 },
-      { header: 'Estado', key: 'isActive', width: 10 },
-    ],
-    rows: result.data.map((a: AgentListItem) => ({
-      fullName: displayName(a),
-      type: a.type === 'INTERNAL' ? 'Interno' : 'Externo',
-      documentTypeCode: a.documentType?.code ?? '—',
-      documentNumber: a.documentNumber ?? '—',
-      email: a.email ?? '—',
-      phone: a.phone ?? '—',
-      isActive: a.isActive ? 'Activo' : 'Inactivo',
-    })),
-  })
+  try {
+    const result = await ventasAgentsService.list({
+      applicationSlug: VENTAS_AGENTS_APPLICATION_SLUG,
+      page: 1,
+      limit: 10000,
+      search: searchInput.value.trim() || undefined,
+      type: filterType.value === 'ALL' ? undefined : filterType.value,
+      isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
+    })
+    const now = new Date().toLocaleDateString('es-PE')
+    await exportToExcel({
+      fileName: `agentes_ventas_${now}`,
+      sheetName: 'Agentes Ventas',
+      columns: [
+        { header: 'Nombre', key: 'fullName', width: 28 },
+        { header: 'Tipo', key: 'type', width: 12 },
+        { header: 'Tipo doc.', key: 'documentTypeCode', width: 12 },
+        { header: 'N° documento', key: 'documentNumber', width: 16 },
+        { header: 'Email', key: 'email', width: 28 },
+        { header: 'Teléfono', key: 'phone', width: 16 },
+        { header: 'Estado', key: 'isActive', width: 10 },
+      ],
+      rows: result.data.map((a: AgentListItem) => ({
+        fullName: displayName(a),
+        type: a.type === 'INTERNAL' ? 'Interno' : 'Externo',
+        documentTypeCode: a.documentType?.code ?? '—',
+        documentNumber: a.documentNumber ?? '—',
+        email: a.email ?? '—',
+        phone: a.phone ?? '—',
+        isActive: a.isActive ? 'Activo' : 'Inactivo',
+      })),
+    })
+    void markapAlert.toast.success(
+      'Exportación lista',
+      `Se exportaron ${result.data.length} registro(s) a Excel.`,
+    )
+  } catch (err) {
+    void markapAlert.toast.error(
+      'No se pudo exportar',
+      getApiErrorMessage(err),
+    )
+  }
 }
 </script>
 
@@ -239,7 +259,7 @@ async function handleExport() {
           Agentes
         </h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Agentes internos (usuarios del sistema) y externos (terceros)
+          Agentes de ventas: internos (usuarios del sistema) y externos (terceros)
         </p>
       </div>
       <div class="flex gap-2 w-full sm:w-auto">
@@ -355,7 +375,6 @@ async function handleExport() {
       </div>
     </div>
 
-    <!-- Modal confirmación -->
     <BaseModal
       v-model="showConfirmModal"
       size="sm"
@@ -443,11 +462,7 @@ async function handleExport() {
         <div class="flex justify-end gap-3">
           <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
           <BaseButton
-            :variant="
-              confirmModal?.type === 'delete'
-                ? 'danger'
-                : 'primary'
-            "
+            :variant="confirmModal?.type === 'delete' ? 'danger' : 'primary'"
             :loading="confirmActionPending"
             @click="executeConfirm"
           >

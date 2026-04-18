@@ -3,7 +3,7 @@ import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
-  agentsService,
+  ventasAgentsService,
   type ListAgentsParams,
   type CreateAgentPayload,
   type UpdateAgentPayload,
@@ -31,38 +31,38 @@ function isActivateOnlyUpdate(data: UpdateAgentPayload): boolean {
   )
 }
 
-/** Incluye el slug en la raíz para que `invalidateQueries` no afecte a ventas (`['agents','ventas']`). */
-const agentKeys = {
-  all: ['agents', 'alquileres'] as const,
-  lists: () => [...agentKeys.all, 'list'] as const,
-  list: (params: ListAgentsParams) => [...agentKeys.lists(), params] as const,
-  detail: (id: string) => [...agentKeys.all, 'detail', id] as const,
+/** Claves separadas de alquileres para no mezclar caché entre aplicaciones */
+const ventasAgentKeys = {
+  all: ['agents', 'ventas'] as const,
+  lists: () => [...ventasAgentKeys.all, 'list'] as const,
+  list: (params: ListAgentsParams) => [...ventasAgentKeys.lists(), params] as const,
+  detail: (id: string) => [...ventasAgentKeys.all, 'detail', id] as const,
 }
 
-export function useAgentsList(params: Ref<ListAgentsParams>) {
+export function useVentasAgentsList(params: Ref<ListAgentsParams>) {
   return useQuery({
-    queryKey: computed(() => agentKeys.list(unref(params))),
-    queryFn: () => agentsService.list(unref(params)),
+    queryKey: computed(() => ventasAgentKeys.list(unref(params))),
+    queryFn: () => ventasAgentsService.list(unref(params)),
   })
 }
 
-export function useAgent(id: Ref<string> | string) {
+export function useVentasAgent(id: Ref<string> | string) {
   return useQuery({
-    queryKey: computed(() => agentKeys.detail(typeof id === 'string' ? id : unref(id))),
-    queryFn: () => agentsService.getById(typeof id === 'string' ? id : unref(id)),
+    queryKey: computed(() => ventasAgentKeys.detail(typeof id === 'string' ? id : unref(id))),
+    queryFn: () => ventasAgentsService.getById(typeof id === 'string' ? id : unref(id)),
     enabled: computed(() => !!unref(id)),
   })
 }
 
-export function useCreateAgent() {
+export function useVentasCreateAgent() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (payload: CreateAgentPayload) => agentsService.create(payload),
+    mutationFn: (payload: CreateAgentPayload) => ventasAgentsService.create(payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all })
+      void queryClient.invalidateQueries({ queryKey: ventasAgentKeys.all })
       void markapAlert.toast.success(
         'Agente registrado',
-        'Quedó asociado al módulo de alquileres y ya aparece en el listado.',
+        'Quedó asociado al módulo de ventas y ya aparece en el listado.',
       )
     },
     onError: (err) => {
@@ -75,21 +75,21 @@ export function useCreateAgent() {
   return {
     ...mutation,
     invalidateList: () =>
-      queryClient.invalidateQueries({ queryKey: agentKeys.all }),
+      queryClient.invalidateQueries({ queryKey: ventasAgentKeys.all }),
   }
 }
 
-export function useUpdateAgent() {
+export function useVentasUpdateAgent() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateAgentPayload }) =>
-      agentsService.update(id, data),
+      ventasAgentsService.update(id, data),
     onSuccess: (_, { data }) => {
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all })
+      void queryClient.invalidateQueries({ queryKey: ventasAgentKeys.all })
       if (isDeactivateOnlyUpdate(data)) {
         void markapAlert.toast.success(
           'Agente desactivado',
-          'Ya no se mostrará como activo en los listados de alquileres.',
+          'Ya no se mostrará como activo en los listados de ventas.',
         )
       } else if (isActivateOnlyUpdate(data)) {
         void markapAlert.toast.success(
@@ -113,16 +113,16 @@ export function useUpdateAgent() {
   return {
     ...mutation,
     invalidateList: () =>
-      queryClient.invalidateQueries({ queryKey: agentKeys.all }),
+      queryClient.invalidateQueries({ queryKey: ventasAgentKeys.all }),
   }
 }
 
-export function useDeleteAgent() {
+export function useVentasDeleteAgent() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (id: string) => agentsService.delete(id),
+    mutationFn: (id: string) => ventasAgentsService.delete(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all })
+      void queryClient.invalidateQueries({ queryKey: ventasAgentKeys.all })
       void markapAlert.toast.success(
         'Agente eliminado',
         'Se aplicó borrado lógico: dejará de mostrarse en el listado.',
@@ -138,6 +138,6 @@ export function useDeleteAgent() {
   return {
     ...mutation,
     invalidateList: () =>
-      queryClient.invalidateQueries({ queryKey: agentKeys.all }),
+      queryClient.invalidateQueries({ queryKey: ventasAgentKeys.all }),
   }
 }
