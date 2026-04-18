@@ -1,24 +1,27 @@
 import { apiClient } from '@app/api/apiClient'
 
-export interface PropertyType {
+/** Slug fijo: inventario de propiedades solo para la aplicación Ventas. */
+export const VENTAS_APP_SLUG = 'ventas' as const
+
+export interface VentasPropertyType {
   id: string
   name: string
   code: string
   isActive: boolean
 }
 
-export interface Department {
+export interface VentasDepartment {
   id: string
   name: string
 }
 
-export interface Province {
+export interface VentasProvince {
   id: string
   name: string
   departmentId: string
 }
 
-export interface District {
+export interface VentasDistrict {
   id: string
   name: string
   provinceId: string
@@ -32,7 +35,7 @@ export interface District {
   }
 }
 
-export interface OwnerOption {
+export interface VentasOwnerOption {
   id: string
   fullName: string
   documentNumber: string
@@ -40,10 +43,10 @@ export interface OwnerOption {
   primaryEmail: string
 }
 
-export type PropertyMediaItem = { url: string; kind: 'photo' | 'plan' }
+export type VentasPropertyMediaItem = { url: string; kind: 'photo' | 'plan' }
 
-export interface CreatePropertyPayload {
-  applicationSlug?: string
+/** Alta de propiedad en inventario Ventas (sin campos de alquiler). */
+export interface VentasCreatePropertyPayload {
   code: string
   propertyTypeId: string
   addressLine: string
@@ -59,17 +62,13 @@ export interface CreatePropertyPayload {
   partida2?: string | null
   partida3?: string | null
   ownerId: string
-  monthlyRent?: number | null
-  maintenanceAmount?: number | null
-  depositMonths?: number | null
   salePrice?: number | null
   projectName?: string | null
-  mediaItems?: PropertyMediaItem[] | null
+  mediaItems?: VentasPropertyMediaItem[] | null
   listingStatus?: string | null
 }
 
-/** Propiedad completa (para edición) - mismo shape que el backend PropertyData */
-export interface PropertyDetail {
+export interface VentasPropertyDetail {
   id: string
   applicationId: string
   code: string
@@ -104,14 +103,14 @@ export interface PropertyDetail {
   depositMonths: number | null
   salePrice: number | null
   projectName: string | null
-  mediaItems: PropertyMediaItem[] | null
+  mediaItems: VentasPropertyMediaItem[] | null
   listingStatus: string | null
   isActive: boolean
 }
 
-export type UpdatePropertyPayload = Omit<CreatePropertyPayload, 'applicationSlug'>
+export type VentasUpdatePropertyPayload = VentasCreatePropertyPayload
 
-export interface PropertyListItem {
+export interface VentasPropertyListItem {
   id: string
   code: string
   addressLine: string
@@ -120,20 +119,12 @@ export interface PropertyListItem {
   area: number | null
   ownerId: string
   ownerFullName: string
-  monthlyRent: number | null
   salePrice: number | null
   projectName: string | null
   listingStatus: string | null
-  /** true si tiene al menos un alquiler en vigencia (permite "Cambiar estado") */
-  hasActiveRental?: boolean
-  /** Fecha de vencimiento del alquiler vigente (ISO string), si tiene */
-  activeRentalEndDate?: string | null
-  /** Nombre del inquilino del alquiler vigente, si tiene */
-  activeRentalTenantName?: string | null
 }
 
-export interface ListPropertiesParams {
-  applicationSlug?: string
+export interface VentasListPropertiesParams {
   page?: number
   limit?: number
   search?: string
@@ -144,14 +135,14 @@ export interface ListPropertiesParams {
   maxSalePrice?: number
 }
 
-export interface ListPropertiesResponse {
-  data: PropertyListItem[]
+export interface VentasListPropertiesResponse {
+  data: VentasPropertyListItem[]
   total: number
   page: number
   limit: number
 }
 
-export interface PropertyStats {
+export interface VentasPropertyStats {
   total: number
   rented: number
   available: number
@@ -161,44 +152,41 @@ export interface PropertyStats {
   sold: number
 }
 
-export const propertiesService = {
+const ventasScope = { applicationSlug: VENTAS_APP_SLUG }
+
+export const ventasPropertiesService = {
   getPropertyTypes: () =>
-    apiClient.get<PropertyType[]>('/properties/property-types').then((r) => r.data),
+    apiClient.get<VentasPropertyType[]>('/properties/property-types').then((r) => r.data),
 
   getDepartments: () =>
-    apiClient.get<Department[]>('/properties/departments').then((r) => r.data),
+    apiClient.get<VentasDepartment[]>('/properties/departments').then((r) => r.data),
 
   getProvinces: (departmentId?: string) => {
     const params = departmentId ? { departmentId } : {}
-    return apiClient.get<Province[]>('/properties/provinces', { params }).then((r) => r.data)
+    return apiClient.get<VentasProvince[]>('/properties/provinces', { params }).then((r) => r.data)
   },
 
   getDistricts: (provinceId?: string) => {
     const params = provinceId ? { provinceId } : {}
-    return apiClient
-      .get<District[]>('/properties/districts', { params })
-      .then((r) => r.data)
+    return apiClient.get<VentasDistrict[]>('/properties/districts', { params }).then((r) => r.data)
   },
 
-  getOwners: (applicationSlug = 'alquileres', search?: string) => {
-    const params: Record<string, string> = { applicationSlug }
+  getOwners: (search?: string) => {
+    const params: Record<string, string> = { ...ventasScope }
     if (search?.trim()) params.search = search.trim()
-    return apiClient
-      .get<OwnerOption[]>('/properties/owners', { params })
-      .then((r) => r.data)
+    return apiClient.get<VentasOwnerOption[]>('/properties/owners', { params }).then((r) => r.data)
   },
 
-  create: (data: CreatePropertyPayload) =>
+  create: (data: VentasCreatePropertyPayload) =>
     apiClient
-      .post('/properties', {
+      .post<VentasPropertyDetail>('/properties', {
         ...data,
-        applicationSlug: data.applicationSlug ?? 'alquileres',
+        ...ventasScope,
       })
       .then((r) => r.data),
 
-  getList: (params: ListPropertiesParams) => {
+  getList: (params: VentasListPropertiesParams) => {
     const {
-      applicationSlug = 'alquileres',
       page = 1,
       limit = 10,
       search,
@@ -208,36 +196,48 @@ export const propertiesService = {
       minSalePrice,
       maxSalePrice,
     } = params
-    const query: Record<string, string | number> = { applicationSlug, page, limit }
+    const query: Record<string, string | number> = { ...ventasScope, page, limit }
     if (search?.trim()) query.search = search.trim()
     if (propertyTypeId) query.propertyTypeId = propertyTypeId
     if (districtId) query.districtId = districtId
     if (listingStatus) query.listingStatus = listingStatus
     if (minSalePrice != null && Number.isFinite(minSalePrice)) query.minSalePrice = minSalePrice
     if (maxSalePrice != null && Number.isFinite(maxSalePrice)) query.maxSalePrice = maxSalePrice
-    return apiClient.get<ListPropertiesResponse>('/properties', { params: query }).then((r) => r.data)
+    return apiClient
+      .get<VentasListPropertiesResponse>('/properties', { params: query })
+      .then((r) => r.data)
   },
 
-  getStats: (applicationSlug = 'alquileres') =>
-    apiClient.get<PropertyStats>('/properties/stats', { params: { applicationSlug } }).then((r) => r.data),
+  getStats: () =>
+    apiClient
+      .get<VentasPropertyStats>('/properties/stats', { params: ventasScope })
+      .then((r) => r.data),
 
   getById: (id: string) =>
-    apiClient.get<PropertyDetail>('/properties/' + encodeURIComponent(id)).then((r) => r.data),
-
-  update: (id: string, data: UpdatePropertyPayload) =>
-    apiClient.patch<PropertyDetail>('/properties/' + encodeURIComponent(id), data).then((r) => r.data),
-
-  /** Cambiar solo estado de listado (solo si la propiedad tiene alquiler en vigencia) */
-  updateListingStatus: (
-    id: string,
-    listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE',
-  ) =>
     apiClient
-      .patch<PropertyDetail>(`/properties/${encodeURIComponent(id)}/listing-status`, {
-        listingStatus,
+      .get<VentasPropertyDetail>('/properties/' + encodeURIComponent(id), {
+        params: ventasScope,
       })
       .then((r) => r.data),
 
+  update: (id: string, data: VentasUpdatePropertyPayload) =>
+    apiClient
+      .patch<VentasPropertyDetail>('/properties/' + encodeURIComponent(id), data, {
+        params: ventasScope,
+      })
+      .then((r) => r.data),
+
+  updateListingStatus: (id: string, listingStatus: 'AVAILABLE' | 'RESERVED' | 'SOLD') =>
+    apiClient
+      .patch<VentasPropertyDetail>(
+        `/properties/${encodeURIComponent(id)}/listing-status`,
+        { listingStatus },
+        { params: ventasScope },
+      )
+      .then((r) => r.data),
+
   delete: (id: string): Promise<{ message: string }> =>
-    apiClient.delete(`/properties/${encodeURIComponent(id)}`).then((r) => r.data),
+    apiClient
+      .delete(`/properties/${encodeURIComponent(id)}`, { params: ventasScope })
+      .then((r) => r.data),
 }

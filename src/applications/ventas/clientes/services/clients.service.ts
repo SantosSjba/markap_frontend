@@ -1,12 +1,39 @@
 import { apiClient } from '@app/api/apiClient'
-import type {
-  DocumentType,
-  Department,
-  Province,
-  District,
-} from '@applications/alquileres/clientes/services/clients.service'
 
-export const VENTAS_CLIENTS_APPLICATION_SLUG = 'ventas'
+/** Catálogos geográficos y de documento (misma forma que API; módulo Ventas sin depender de Alquileres). */
+export interface VentasDocumentType {
+  id: string
+  code: string
+  name: string
+  length: number | null
+}
+
+export interface VentasDepartment {
+  id: string
+  name: string
+}
+
+export interface VentasProvince {
+  id: string
+  name: string
+  departmentId: string
+}
+
+export interface VentasDistrict {
+  id: string
+  name: string
+  provinceId: string
+  province: {
+    id: string
+    name: string
+    department: {
+      id: string
+      name: string
+    }
+  }
+}
+
+export const VENTAS_CLIENTS_APPLICATION_SLUG = 'ventas' as const
 
 export type SalesPipelineStatus = 'PROSPECT' | 'INTERESTED' | 'CLIENT'
 
@@ -44,13 +71,13 @@ export interface VentasClientDetail {
   salesStatus: SalesPipelineStatus | null
   leadOrigin: string | null
   assignedAgentId: string | null
-  documentType: DocumentType
+  documentType: VentasDocumentType
   primaryAddress: {
     id: string
     addressLine: string
     reference: string | null
     districtId: string
-    district: District
+    district: VentasDistrict
   } | null
   assignedAgent: { id: string; fullName: string } | null
 }
@@ -88,7 +115,6 @@ export interface UpdateVentasClientPayload {
 }
 
 export interface ListVentasClientsParams {
-  applicationSlug?: string
   page?: number
   limit?: number
   search?: string
@@ -113,28 +139,30 @@ export interface VentasClientStats {
   salesClients?: number
 }
 
+const ventasScope = { applicationSlug: VENTAS_CLIENTS_APPLICATION_SLUG }
+
 export const ventasClientsService = {
   getDocumentTypes: () =>
-    apiClient.get<DocumentType[]>('/clients/document-types').then((r) => r.data),
+    apiClient.get<VentasDocumentType[]>('/clients/document-types').then((r) => r.data),
 
   getDepartments: () =>
-    apiClient.get<Department[]>('/clients/departments').then((r) => r.data),
+    apiClient.get<VentasDepartment[]>('/clients/departments').then((r) => r.data),
 
   getProvinces: (departmentId?: string) => {
     const params = departmentId ? { departmentId } : {}
-    return apiClient.get<Province[]>('/clients/provinces', { params }).then((r) => r.data)
+    return apiClient.get<VentasProvince[]>('/clients/provinces', { params }).then((r) => r.data)
   },
 
   getDistricts: (provinceId?: string) => {
     const params = provinceId ? { provinceId } : {}
     return apiClient
-      .get<District[]>('/clients/districts', { params })
+      .get<VentasDistrict[]>('/clients/districts', { params })
       .then((r) => r.data)
   },
 
   getList: (params: ListVentasClientsParams) => {
     const searchParams = new URLSearchParams()
-    searchParams.set('applicationSlug', params.applicationSlug ?? VENTAS_CLIENTS_APPLICATION_SLUG)
+    searchParams.set('applicationSlug', VENTAS_CLIENTS_APPLICATION_SLUG)
     searchParams.set('page', String(params.page ?? 1))
     searchParams.set('limit', String(params.limit ?? 10))
     if (params.search) searchParams.set('search', params.search)
@@ -145,26 +173,32 @@ export const ventasClientsService = {
       .then((r) => r.data)
   },
 
-  getStats: (applicationSlug = VENTAS_CLIENTS_APPLICATION_SLUG) =>
+  getStats: () =>
     apiClient
-      .get<VentasClientStats>(`/clients/stats?applicationSlug=${applicationSlug}`)
+      .get<VentasClientStats>(`/clients/stats`, { params: ventasScope })
       .then((r) => r.data),
 
   create: (data: CreateVentasClientPayload) =>
     apiClient
       .post('/clients', {
         ...data,
-        applicationSlug: VENTAS_CLIENTS_APPLICATION_SLUG,
+        ...ventasScope,
         clientType: 'BUYER',
       })
       .then((r) => r.data),
 
   getById: (id: string) =>
-    apiClient.get<VentasClientDetail>(`/clients/${id}`).then((r) => r.data),
+    apiClient
+      .get<VentasClientDetail>(`/clients/${encodeURIComponent(id)}`, { params: ventasScope })
+      .then((r) => r.data),
 
   update: (id: string, data: UpdateVentasClientPayload) =>
-    apiClient.patch(`/clients/${id}`, data).then((r) => r.data),
+    apiClient
+      .patch(`/clients/${encodeURIComponent(id)}`, data, { params: ventasScope })
+      .then((r) => r.data),
 
   delete: (id: string): Promise<{ message: string }> =>
-    apiClient.delete(`/clients/${id}`).then((r) => r.data),
+    apiClient
+      .delete(`/clients/${encodeURIComponent(id)}`, { params: ventasScope })
+      .then((r) => r.data),
 }

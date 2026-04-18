@@ -7,8 +7,7 @@ import { useForm, toTypedSchema } from '@shared/forms'
 import { markapAlert } from '@/shared/alert'
 import { useVentasCreateAgent } from '../composables/useAgents'
 import { useUsers } from '@applications/settings/composables/useUsers'
-import type { AgentType } from '../services/agents.service'
-import { VENTAS_AGENTS_APPLICATION_SLUG } from '../services/agents.service'
+import type { VentasAgentType } from '../services/agents.service'
 import { ventasAgentCreateFormSchema } from '../schemas/agentFormSchema'
 
 const router = useRouter()
@@ -16,7 +15,7 @@ const router = useRouter()
 const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm({
   validationSchema: toTypedSchema(ventasAgentCreateFormSchema),
   initialValues: {
-    type: 'EXTERNAL' as AgentType,
+    type: 'EXTERNAL' as VentasAgentType,
     userId: '',
     fullName: '',
     email: '',
@@ -84,7 +83,6 @@ const onSubmit = handleSubmit(
   async (formValues) => {
     try {
     await createMutation.mutateAsync({
-      applicationSlug: VENTAS_AGENTS_APPLICATION_SLUG,
       type: formValues.type,
       userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
       fullName: formValues.fullName.trim(),

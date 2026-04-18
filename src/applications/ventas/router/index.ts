@@ -54,14 +54,20 @@ export const ventasRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'ventas-propiedades',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../propiedades/views/VentasPropiedadesView.vue'),
             meta: { title: 'Listado de Propiedades' },
           },
           {
             path: 'nueva',
             name: 'ventas-propiedades-nueva',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../propiedades/views/VentasNuevaPropiedadView.vue'),
             meta: { title: 'Nueva Propiedad' },
+          },
+          {
+            path: ':id/editar',
+            name: 'ventas-propiedades-editar',
+            component: () => import('../propiedades/views/VentasEditarPropiedadView.vue'),
+            meta: { title: 'Editar Propiedad' },
           },
         ],
       },

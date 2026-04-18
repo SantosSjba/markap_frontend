@@ -4,23 +4,23 @@ import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
   ventasClientsService,
-  VENTAS_CLIENTS_APPLICATION_SLUG,
   type CreateVentasClientPayload,
   type UpdateVentasClientPayload,
   type ListVentasClientsParams,
 } from '../services/clients.service'
 
-const ventasClientKeys = {
-  all: ['clients', 'ventas'] as const,
-  list: (params: ListVentasClientsParams) => [...ventasClientKeys.all, 'list', params] as const,
-  detail: (id: string) => [...ventasClientKeys.all, 'detail', id] as const,
-  stats: () => [...ventasClientKeys.all, 'stats', VENTAS_CLIENTS_APPLICATION_SLUG] as const,
-  documentTypes: () => [...ventasClientKeys.all, 'document-types'] as const,
-  departments: () => [...ventasClientKeys.all, 'departments'] as const,
+/** Caché y invalidación solo para CRM / clientes Ventas (sin prefijo compartido con Alquileres). */
+export const ventasClientKeys = {
+  root: ['ventas-clients'] as const,
+  list: (params: ListVentasClientsParams) => [...ventasClientKeys.root, 'list', params] as const,
+  detail: (id: string) => [...ventasClientKeys.root, 'detail', id] as const,
+  stats: () => [...ventasClientKeys.root, 'stats'] as const,
+  documentTypes: () => [...ventasClientKeys.root, 'document-types'] as const,
+  departments: () => [...ventasClientKeys.root, 'departments'] as const,
   provinces: (departmentId?: string) =>
-    [...ventasClientKeys.all, 'provinces', departmentId ?? 'all'] as const,
+    [...ventasClientKeys.root, 'provinces', departmentId ?? 'all'] as const,
   districts: (provinceId?: string) =>
-    [...ventasClientKeys.all, 'districts', provinceId ?? 'all'] as const,
+    [...ventasClientKeys.root, 'districts', provinceId ?? 'all'] as const,
 }
 
 export function useVentasClientsList(params: Ref<ListVentasClientsParams>) {
@@ -81,7 +81,7 @@ export function useVentasCreateClient() {
   return useMutation({
     mutationFn: (data: CreateVentasClientPayload) => ventasClientsService.create(data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.all })
+      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.root })
       void markapAlert.toast.success('Cliente registrado', 'Lead guardado en ventas.')
     },
     onError: (err) => {
@@ -96,7 +96,7 @@ export function useVentasUpdateClient() {
     mutationFn: ({ id, data }: { id: string; data: UpdateVentasClientPayload }) =>
       ventasClientsService.update(id, data),
     onSuccess: (_, { id }) => {
-      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.all })
+      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.root })
       void queryClient.invalidateQueries({ queryKey: ventasClientKeys.detail(id) })
       void markapAlert.toast.success('Cliente actualizado')
     },
@@ -111,7 +111,7 @@ export function useVentasDeleteClient() {
   return useMutation({
     mutationFn: (id: string) => ventasClientsService.delete(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.all })
+      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.root })
       void markapAlert.toast.success('Cliente eliminado')
     },
     onError: (err) => {

@@ -23,7 +23,7 @@ import {
   useVentasDeleteClient,
 } from '../composables/useVentasClients'
 import type { VentasClientListItem, ListVentasClientsParams } from '../services/clients.service'
-import { ventasClientsService, VENTAS_CLIENTS_APPLICATION_SLUG } from '../services/clients.service'
+import { ventasClientsService } from '../services/clients.service'
 import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../constants/leadOrigins'
 
 const router = useRouter()
@@ -32,7 +32,6 @@ const ITEMS_PER_PAGE = 10
 const tableRowSelection = ref<RowSelectionState>({})
 
 const listParams = ref<ListVentasClientsParams>({
-  applicationSlug: VENTAS_CLIENTS_APPLICATION_SLUG,
   page: 1,
   limit: ITEMS_PER_PAGE,
 })
@@ -178,7 +177,6 @@ const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
   const result = await ventasClientsService.getList({
-    applicationSlug: VENTAS_CLIENTS_APPLICATION_SLUG,
     page: 1,
     limit: 10000,
     search: searchInput.value.trim() || undefined,

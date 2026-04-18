@@ -11,7 +11,7 @@ import {
   useVentasDeleteAgent,
 } from '../composables/useAgents'
 import { useUsers } from '@applications/settings/composables/useUsers'
-import type { AgentType } from '../services/agents.service'
+import type { VentasAgentType } from '../services/agents.service'
 import { ventasAgentEditFormSchema } from '../schemas/agentFormSchema'
 
 const route = useRoute()
@@ -31,7 +31,7 @@ watch(id, () => {
 const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm({
   validationSchema: toTypedSchema(ventasAgentEditFormSchema),
   initialValues: {
-    type: 'EXTERNAL' as AgentType,
+    type: 'EXTERNAL' as VentasAgentType,
     userId: '',
     fullName: '',
     email: '',

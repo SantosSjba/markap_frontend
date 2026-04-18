@@ -161,7 +161,7 @@ function toggleRow(row: Row<unknown>, e: Event) { row.getToggleSelectedHandler()
     <!-- ── Toolbar ── -->
     <div
       v-if="showToolbar"
-      class="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3.5"
+      class="flex flex-col sm:flex-row sm:items-start sm:gap-x-3 sm:gap-y-3 gap-3 px-4 py-3.5"
       :style="{
         borderBottom: '1px solid var(--color-border)',
         backgroundColor: 'var(--color-surface)',

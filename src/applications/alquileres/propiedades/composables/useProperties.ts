@@ -13,7 +13,19 @@ export const propertyKeys = {
   all: ['properties'] as const,
   detail: (id: string) => [...propertyKeys.all, 'detail', id] as const,
   list: (params: ListPropertiesParams) =>
-    [...propertyKeys.all, 'list', params?.applicationSlug ?? 'alquileres', params?.page ?? 1, params?.limit ?? 10, params?.search ?? '', params?.propertyTypeId ?? '', params?.listingStatus ?? ''] as const,
+    [
+      ...propertyKeys.all,
+      'list',
+      params?.applicationSlug ?? 'alquileres',
+      params?.page ?? 1,
+      params?.limit ?? 10,
+      params?.search ?? '',
+      params?.propertyTypeId ?? '',
+      params?.districtId ?? '',
+      params?.listingStatus ?? '',
+      params?.minSalePrice ?? '',
+      params?.maxSalePrice ?? '',
+    ] as const,
   propertyTypes: () => [...propertyKeys.all, 'property-types'] as const,
   departments: () => [...propertyKeys.all, 'departments'] as const,
   provinces: (departmentId?: string) =>

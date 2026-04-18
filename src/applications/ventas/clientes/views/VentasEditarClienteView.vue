@@ -12,8 +12,7 @@ import {
   useVentasUpdateClient,
 } from '../composables/useVentasClients'
 import { useVentasAgentsList } from '@applications/ventas/agentes/composables/useAgents'
-import { VENTAS_AGENTS_APPLICATION_SLUG } from '@applications/ventas/agentes/services/agents.service'
-import type { DocumentType } from '@applications/alquileres/clientes/services/clients.service'
+import type { VentasDocumentType } from '../services/clients.service'
 import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../constants/leadOrigins'
 import type { VentasLeadOriginCode } from '../constants/leadOrigins'
 
@@ -89,7 +88,6 @@ const { data: documentTypes, isLoading: loadingDocs } = useVentasClientDocumentT
 const updateMutation = useVentasUpdateClient()
 
 const agentsListParams = ref({
-  applicationSlug: VENTAS_AGENTS_APPLICATION_SLUG,
   page: 1,
   limit: 500,
   isActive: true,
@@ -99,7 +97,7 @@ const { data: agentsResult, isLoading: loadingAgents } = useVentasAgentsList(age
 const loading = computed(() => loadingClient.value || loadingDocs.value || loadingAgents.value)
 
 const documentTypeOptions = computed(() =>
-  (documentTypes.value ?? []).map((d: DocumentType) => ({
+  (documentTypes.value ?? []).map((d: VentasDocumentType) => ({
     value: d.id,
     label: `${d.name} (${d.code})`,
   })),

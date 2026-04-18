@@ -22,16 +22,15 @@ import {
   useVentasUpdateAgent,
   useVentasDeleteAgent,
 } from '../composables/useAgents'
-import type { AgentListItem, ListAgentsParams } from '../services/agents.service'
-import { ventasAgentsService, VENTAS_AGENTS_APPLICATION_SLUG } from '../services/agents.service'
+import type { VentasAgentListItem, ListVentasAgentsParams } from '../services/agents.service'
+import { ventasAgentsService } from '../services/agents.service'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
 
 const tableRowSelection = ref<RowSelectionState>({})
 
-const listParams = ref<ListAgentsParams>({
-  applicationSlug: VENTAS_AGENTS_APPLICATION_SLUG,
+const listParams = ref<ListVentasAgentsParams>({
   page: 1,
   limit: ITEMS_PER_PAGE,
 })
@@ -69,12 +68,12 @@ const onPageSizeChange = (size: number) => {
 }
 
 const goToNew = () => router.push('/ventas/agentes/nuevo')
-const goToEdit = (agent: AgentListItem) => router.push(`/ventas/agentes/${agent.id}/editar`)
+const goToEdit = (agent: VentasAgentListItem) => router.push(`/ventas/agentes/${agent.id}/editar`)
 
 const showConfirmModal = ref(false)
 const confirmModal = ref<{
   type: 'deactivate' | 'activate' | 'delete'
-  agent: AgentListItem
+  agent: VentasAgentListItem
 } | null>(null)
 
 const updateMutation = useVentasUpdateAgent()
@@ -84,7 +83,7 @@ const confirmActionPending = computed(
   () => updateMutation.isPending.value || deleteMutation.isPending.value,
 )
 
-function openConfirm(type: 'deactivate' | 'activate' | 'delete', agent: AgentListItem) {
+function openConfirm(type: 'deactivate' | 'activate' | 'delete', agent: VentasAgentListItem) {
   confirmModal.value = { type, agent }
   showConfirmModal.value = true
 }
@@ -111,7 +110,7 @@ async function executeConfirm() {
   }
 }
 
-const getActions = (agent: AgentListItem): { label: string; icon: string; onClick: () => void }[] => {
+const getActions = (agent: VentasAgentListItem): { label: string; icon: string; onClick: () => void }[] => {
   const actions: { label: string; icon: string; onClick: () => void }[] = [
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(agent) },
   ]
@@ -161,7 +160,7 @@ const statusOptions = [
   { value: 'inactive', label: 'Inactivo' },
 ]
 
-function displayName(row: AgentListItem): string {
+function displayName(row: VentasAgentListItem): string {
   if (row.type === 'INTERNAL' && row.user) {
     return `${row.user.firstName} ${row.user.lastName}`.trim() || row.fullName
   }
@@ -174,14 +173,14 @@ const tableColumns = [
     label: 'Agente',
     align: 'left' as const,
     sortable: true,
-    sortAccessor: (r: unknown) => displayName(r as AgentListItem),
+    sortAccessor: (r: unknown) => displayName(r as VentasAgentListItem),
   },
   {
     key: 'tipo',
     label: 'Tipo',
     align: 'left' as const,
     sortable: true,
-    sortAccessor: (r: unknown) => (r as AgentListItem).type,
+    sortAccessor: (r: unknown) => (r as VentasAgentListItem).type,
   },
   {
     key: 'contacto',
@@ -189,7 +188,7 @@ const tableColumns = [
     align: 'left' as const,
     sortable: true,
     sortAccessor: (r: unknown) => {
-      const a = r as AgentListItem
+      const a = r as VentasAgentListItem
       return `${a.phone ?? ''} ${a.email ?? ''}`
     },
   },
@@ -198,7 +197,7 @@ const tableColumns = [
     label: 'Estado',
     align: 'left' as const,
     sortable: true,
-    sortAccessor: (r: unknown) => ((r as AgentListItem).isActive ? 1 : 0),
+    sortAccessor: (r: unknown) => ((r as VentasAgentListItem).isActive ? 1 : 0),
   },
   { key: 'actions', label: '', align: 'right' as const },
 ]
@@ -208,7 +207,6 @@ const { isExporting, exportToExcel } = useExcelExport()
 async function handleExport() {
   try {
     const result = await ventasAgentsService.list({
-      applicationSlug: VENTAS_AGENTS_APPLICATION_SLUG,
       page: 1,
       limit: 10000,
       search: searchInput.value.trim() || undefined,
@@ -228,7 +226,7 @@ async function handleExport() {
         { header: 'Teléfono', key: 'phone', width: 16 },
         { header: 'Estado', key: 'isActive', width: 10 },
       ],
-      rows: result.data.map((a: AgentListItem) => ({
+      rows: result.data.map((a: VentasAgentListItem) => ({
         fullName: displayName(a),
         type: a.type === 'INTERNAL' ? 'Interno' : 'Externo',
         documentTypeCode: a.documentType?.code ?? '—',
@@ -316,50 +314,50 @@ async function handleExport() {
                   <div
                     class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
                     :style="{
-                      backgroundColor: (row as AgentListItem).isActive ? 'var(--color-primary)1a' : 'var(--color-surface-elevated)',
+                      backgroundColor: (row as VentasAgentListItem).isActive ? 'var(--color-primary)1a' : 'var(--color-surface-elevated)',
                     }"
                   >
                     <AppIcon
-                      :icon="(row as AgentListItem).type === 'INTERNAL' ? 'lucide:user-check' : 'lucide:user-round-cog'"
+                      :icon="(row as VentasAgentListItem).type === 'INTERNAL' ? 'lucide:user-check' : 'lucide:user-round-cog'"
                       :size="16"
-                      :color="(row as AgentListItem).isActive ? 'var(--color-primary)' : 'var(--color-text-muted)'"
+                      :color="(row as VentasAgentListItem).isActive ? 'var(--color-primary)' : 'var(--color-text-muted)'"
                     />
                   </div>
                   <div>
                     <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                      {{ displayName(row as AgentListItem) }}
+                      {{ displayName(row as VentasAgentListItem) }}
                     </p>
-                    <p v-if="(row as AgentListItem).documentType" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
-                      {{ (row as AgentListItem).documentType?.code }}: {{ (row as AgentListItem).documentNumber ?? '–' }}
+                    <p v-if="(row as VentasAgentListItem).documentType" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+                      {{ (row as VentasAgentListItem).documentType?.code }}: {{ (row as VentasAgentListItem).documentNumber ?? '–' }}
                     </p>
                   </div>
                 </div>
               </td>
               <td class="py-3 px-4">
-                <Badge :variant="(row as AgentListItem).type === 'INTERNAL' ? 'info' : 'neutral'">
-                  {{ (row as AgentListItem).type === 'INTERNAL' ? 'Interno' : 'Externo' }}
+                <Badge :variant="(row as VentasAgentListItem).type === 'INTERNAL' ? 'info' : 'neutral'">
+                  {{ (row as VentasAgentListItem).type === 'INTERNAL' ? 'Interno' : 'Externo' }}
                 </Badge>
               </td>
               <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
                 <div class="flex flex-col gap-0.5">
-                  <span v-if="(row as AgentListItem).phone" class="flex items-center gap-1.5">
+                  <span v-if="(row as VentasAgentListItem).phone" class="flex items-center gap-1.5">
                     <AppIcon icon="lucide:phone" :size="12" color="var(--color-text-muted)" />
-                    {{ (row as AgentListItem).phone }}
+                    {{ (row as VentasAgentListItem).phone }}
                   </span>
-                  <span v-if="(row as AgentListItem).email" class="flex items-center gap-1.5">
+                  <span v-if="(row as VentasAgentListItem).email" class="flex items-center gap-1.5">
                     <AppIcon icon="lucide:mail" :size="12" color="var(--color-text-muted)" />
-                    {{ (row as AgentListItem).email }}
+                    {{ (row as VentasAgentListItem).email }}
                   </span>
-                  <span v-if="!(row as AgentListItem).phone && !(row as AgentListItem).email">–</span>
+                  <span v-if="!(row as VentasAgentListItem).phone && !(row as VentasAgentListItem).email">–</span>
                 </div>
               </td>
               <td class="py-3 px-4">
-                <Badge :variant="(row as AgentListItem).isActive ? 'success' : 'error'">
-                  {{ (row as AgentListItem).isActive ? 'Activo' : 'Inactivo' }}
+                <Badge :variant="(row as VentasAgentListItem).isActive ? 'success' : 'error'">
+                  {{ (row as VentasAgentListItem).isActive ? 'Activo' : 'Inactivo' }}
                 </Badge>
               </td>
               <td class="py-3 px-4 text-right">
-                <ActionsDropdown :items="getActions(row as AgentListItem)" />
+                <ActionsDropdown :items="getActions(row as VentasAgentListItem)" />
               </td>
             </template>
           </DataTable>
