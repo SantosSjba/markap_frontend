@@ -37,6 +37,8 @@ export const VENTAS_CLIENTS_APPLICATION_SLUG = 'ventas' as const
 
 export type SalesPipelineStatus = 'PROSPECT' | 'INTERESTED' | 'CLIENT'
 
+export type VentasClientType = 'BUYER' | 'OWNER'
+
 export interface VentasClientListItem {
   id: string
   fullName: string
@@ -44,7 +46,7 @@ export interface VentasClientListItem {
   documentNumber: string
   primaryPhone: string
   primaryEmail: string
-  clientType: 'BUYER'
+  clientType: VentasClientType
   isActive: boolean
   propertiesCount: number
   contractsCount: number
@@ -56,7 +58,7 @@ export interface VentasClientListItem {
 export interface VentasClientDetail {
   id: string
   applicationSlug: string
-  clientType: 'BUYER'
+  clientType: VentasClientType
   documentTypeId: string
   documentNumber: string
   fullName: string
@@ -83,6 +85,7 @@ export interface VentasClientDetail {
 }
 
 export interface CreateVentasClientPayload {
+  clientType: VentasClientType
   documentTypeId: string
   documentNumber: string
   fullName: string
@@ -93,9 +96,16 @@ export interface CreateVentasClientPayload {
   primaryEmail: string
   secondaryEmail?: string | null
   notes?: string | null
+  /** Solo compradores / leads (BUYER) */
   salesStatus?: SalesPipelineStatus
   leadOrigin?: string | null
   assignedAgentId?: string | null
+  /** Obligatorio si clientType es OWNER (misma regla que Alquileres) */
+  address?: {
+    addressLine: string
+    districtId: string
+    reference?: string | null
+  }
 }
 
 export interface UpdateVentasClientPayload {
@@ -112,12 +122,19 @@ export interface UpdateVentasClientPayload {
   salesStatus?: SalesPipelineStatus | null
   leadOrigin?: string | null
   assignedAgentId?: string | null
+  address?: {
+    addressLine?: string
+    districtId?: string
+    reference?: string | null
+  }
 }
 
 export interface ListVentasClientsParams {
   page?: number
   limit?: number
   search?: string
+  /** BUYER | OWNER; omitir para ambos */
+  clientType?: VentasClientType
   salesStatus?: SalesPipelineStatus
   isActive?: boolean
 }
@@ -166,6 +183,7 @@ export const ventasClientsService = {
     searchParams.set('page', String(params.page ?? 1))
     searchParams.set('limit', String(params.limit ?? 10))
     if (params.search) searchParams.set('search', params.search)
+    if (params.clientType) searchParams.set('clientType', params.clientType)
     if (params.salesStatus) searchParams.set('salesStatus', params.salesStatus)
     if (params.isActive !== undefined) searchParams.set('isActive', String(params.isActive))
     return apiClient
@@ -178,14 +196,30 @@ export const ventasClientsService = {
       .get<VentasClientStats>(`/clients/stats`, { params: ventasScope })
       .then((r) => r.data),
 
-  create: (data: CreateVentasClientPayload) =>
-    apiClient
-      .post('/clients', {
-        ...data,
-        ...ventasScope,
-        clientType: 'BUYER',
-      })
-      .then((r) => r.data),
+  create: (data: CreateVentasClientPayload) => {
+    const {
+      clientType,
+      address,
+      salesStatus,
+      leadOrigin,
+      assignedAgentId,
+      ...rest
+    } = data
+    const body: Record<string, unknown> = {
+      ...rest,
+      ...ventasScope,
+      clientType,
+    }
+    if (clientType === 'BUYER') {
+      body.salesStatus = salesStatus ?? 'PROSPECT'
+      body.leadOrigin = leadOrigin ?? null
+      body.assignedAgentId = assignedAgentId?.trim() || null
+    }
+    if (clientType === 'OWNER' && address) {
+      body.address = address
+    }
+    return apiClient.post<VentasClientDetail>('/clients', body).then((r) => r.data)
+  },
 
   getById: (id: string) =>
     apiClient

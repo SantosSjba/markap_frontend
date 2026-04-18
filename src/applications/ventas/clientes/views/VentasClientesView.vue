@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
 import {
   BaseButton,
@@ -27,6 +27,7 @@ import { ventasClientsService } from '../services/clients.service'
 import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../constants/leadOrigins'
 
 const router = useRouter()
+const route = useRoute()
 const ITEMS_PER_PAGE = 10
 
 const tableRowSelection = ref<RowSelectionState>({})
@@ -36,6 +37,7 @@ const listParams = ref<ListVentasClientsParams>({
   limit: ITEMS_PER_PAGE,
 })
 const searchInput = ref('')
+const filterKind = ref<'ALL' | 'BUYER' | 'OWNER'>('ALL')
 const filterPipeline = ref<'ALL' | 'PROSPECT' | 'INTERESTED' | 'CLIENT'>('ALL')
 
 const { data: listResult, isLoading: loadingList } = useVentasClientsList(listParams)
@@ -45,13 +47,31 @@ const clients = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
 
 watch(
-  [searchInput, filterPipeline],
+  () => route.name,
+  (name) => {
+    if (name === 'ventas-clientes-propietarios') {
+      filterKind.value = 'OWNER'
+    } else if (name === 'ventas-clientes') {
+      filterKind.value = 'ALL'
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  [searchInput, filterKind, filterPipeline],
   () => {
     listParams.value = {
       ...listParams.value,
       page: 1,
       search: searchInput.value.trim() || undefined,
-      salesStatus: filterPipeline.value === 'ALL' ? undefined : filterPipeline.value,
+      clientType: filterKind.value === 'ALL' ? undefined : filterKind.value,
+      salesStatus:
+        filterKind.value === 'OWNER'
+          ? undefined
+          : filterPipeline.value === 'ALL'
+            ? undefined
+            : filterPipeline.value,
     }
   },
   { immediate: true },
@@ -82,7 +102,18 @@ function leadOriginLabel(code: string | null) {
   return VENTAS_LEAD_ORIGIN_OPTIONS.find((o) => o.value === code)?.label ?? code
 }
 
+function clientKindLabel(t: string) {
+  return t === 'OWNER' ? 'Propietario' : 'Comprador / lead'
+}
+
 const tableColumns = [
+  {
+    key: 'tipo',
+    label: 'Tipo',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => (r as VentasClientListItem).clientType,
+  },
   {
     key: 'cliente',
     label: 'Cliente',
@@ -99,6 +130,14 @@ const tableColumns = [
       const c = r as VentasClientListItem
       return `${c.primaryPhone} ${c.primaryEmail}`
     },
+  },
+  {
+    key: 'inventario',
+    label: 'Propiedades',
+    align: 'left' as const,
+    sortable: true,
+    sortType: 'basic' as const,
+    sortAccessor: (r: unknown) => (r as VentasClientListItem).propertiesCount,
   },
   {
     key: 'estado',
@@ -123,6 +162,15 @@ const tableColumns = [
   },
   { key: 'actions', label: '', align: 'right' as const },
 ]
+
+const pageTitle = computed(() =>
+  route.name === 'ventas-clientes-propietarios' ? 'Propietarios' : 'Clientes',
+)
+const pageSubtitle = computed(() =>
+  route.name === 'ventas-clientes-propietarios'
+    ? 'Titulares registrados en Ventas (vinculados al inventario)'
+    : 'Compradores / leads y propietarios de inventario (misma idea que en Alquileres)',
+)
 
 const goToNew = () => router.push('/ventas/clientes/nuevo')
 const goToEdit = (client: VentasClientListItem) =>
@@ -168,8 +216,14 @@ const paginationProps = computed(() => {
   }
 })
 
+const kindFilterOptions = [
+  { value: 'ALL', label: 'Todos los tipos' },
+  { value: 'BUYER', label: 'Compradores / leads' },
+  { value: 'OWNER', label: 'Propietarios' },
+]
+
 const pipelineOptions = [
-  { value: 'ALL', label: 'Todos los estados' },
+  { value: 'ALL', label: 'Todos los estados (embudo)' },
   ...VENTAS_SALES_STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
 ]
 
@@ -180,31 +234,41 @@ async function handleExport() {
     page: 1,
     limit: 10000,
     search: searchInput.value.trim() || undefined,
-    salesStatus: filterPipeline.value === 'ALL' ? undefined : filterPipeline.value,
+    clientType: filterKind.value === 'ALL' ? undefined : filterKind.value,
+    salesStatus:
+      filterKind.value === 'OWNER'
+        ? undefined
+        : filterPipeline.value === 'ALL'
+          ? undefined
+          : filterPipeline.value,
   })
   const now = new Date().toLocaleDateString('es-PE')
   await exportToExcel({
     fileName: `clientes_ventas_${now}`,
     sheetName: 'Clientes',
     columns: [
+      { header: 'Tipo cliente', key: 'clientKind', width: 18 },
       { header: 'Nombre', key: 'fullName', width: 28 },
       { header: 'Tipo doc.', key: 'documentTypeCode', width: 12 },
       { header: 'N° documento', key: 'documentNumber', width: 16 },
       { header: 'Teléfono', key: 'primaryPhone', width: 16 },
       { header: 'Email', key: 'primaryEmail', width: 28 },
+      { header: 'Propiedades', key: 'propertiesCount', width: 12 },
       { header: 'Estado embudo', key: 'salesStatus', width: 14 },
       { header: 'Origen', key: 'leadOrigin', width: 18 },
       { header: 'Asesor', key: 'assignedAgentName', width: 22 },
     ],
     rows: result.data.map((c) => ({
+      clientKind: clientKindLabel(c.clientType),
       fullName: c.fullName,
       documentTypeCode: c.documentTypeCode,
       documentNumber: c.documentNumber,
       primaryPhone: c.primaryPhone,
       primaryEmail: c.primaryEmail,
-      salesStatus: salesStatusLabel(c.salesStatus),
-      leadOrigin: leadOriginLabel(c.leadOrigin),
-      assignedAgentName: c.assignedAgentName ?? '—',
+      propertiesCount: c.clientType === 'OWNER' ? String(c.propertiesCount) : '—',
+      salesStatus: c.clientType === 'BUYER' ? salesStatusLabel(c.salesStatus) : '—',
+      leadOrigin: c.clientType === 'BUYER' ? leadOriginLabel(c.leadOrigin) : '—',
+      assignedAgentName: c.clientType === 'BUYER' ? (c.assignedAgentName ?? '—') : '—',
     })),
   })
 }
@@ -218,10 +282,10 @@ async function handleExport() {
           class="text-xl sm:text-2xl font-bold"
           :style="{ color: 'var(--color-text-primary)' }"
         >
-          Clientes
+          {{ pageTitle }}
         </h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Gestión de leads y compradores
+          {{ pageSubtitle }}
         </p>
       </div>
       <div class="flex gap-2 w-full sm:w-auto">
@@ -246,11 +310,16 @@ async function handleExport() {
       </div>
     </div>
 
-    <div v-if="loadingStats" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20" />
-    <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div v-if="loadingStats" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 h-20" />
+    <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
       <StatsCard :title="'Total'" :value="stats?.total ?? 0">
         <template #icon>
           <AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" />
+        </template>
+      </StatsCard>
+      <StatsCard :title="'Propietarios'" :value="stats?.owners ?? 0">
+        <template #icon>
+          <AppIcon icon="lucide:building-2" :size="20" color="#64748b" />
         </template>
       </StatsCard>
       <StatsCard :title="'Prospectos'" :value="stats?.prospects ?? 0">
@@ -300,14 +369,28 @@ async function handleExport() {
               <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
                 <div class="w-full sm:w-[200px] min-w-0">
                   <FormSelect
+                    v-model="filterKind"
+                    :options="kindFilterOptions"
+                    placeholder="Tipo de cliente"
+                    :disabled="route.name === 'ventas-clientes-propietarios'"
+                  />
+                </div>
+                <div class="w-full sm:w-[220px] min-w-0">
+                  <FormSelect
                     v-model="filterPipeline"
                     :options="pipelineOptions"
-                    placeholder="Estado del cliente"
+                    placeholder="Embudo (compradores)"
+                    :disabled="filterKind === 'OWNER'"
                   />
                 </div>
               </div>
             </template>
             <template #row="{ row }">
+              <td class="py-3 px-4">
+                <Badge :variant="(row as VentasClientListItem).clientType === 'OWNER' ? 'neutral' : 'info'">
+                  {{ clientKindLabel((row as VentasClientListItem).clientType) }}
+                </Badge>
+              </td>
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
                   <Avatar :name="(row as VentasClientListItem).fullName" size="md" />
@@ -334,19 +417,34 @@ async function handleExport() {
                   </span>
                 </div>
               </td>
-              <td class="py-3 px-4">
-                <Badge :variant="salesStatusVariant((row as VentasClientListItem).salesStatus)">
-                  {{ salesStatusLabel((row as VentasClientListItem).salesStatus) }}
-                </Badge>
+              <td class="py-3 px-4 text-sm tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+                <template v-if="(row as VentasClientListItem).clientType === 'OWNER'">
+                  {{ (row as VentasClientListItem).propertiesCount }}
+                </template>
+                <span v-else :style="{ color: 'var(--color-text-muted)' }">—</span>
               </td>
-              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-                {{ leadOriginLabel((row as VentasClientListItem).leadOrigin) }}
+              <td class="py-3 px-4">
+                <template v-if="(row as VentasClientListItem).clientType === 'BUYER'">
+                  <Badge :variant="salesStatusVariant((row as VentasClientListItem).salesStatus)">
+                    {{ salesStatusLabel((row as VentasClientListItem).salesStatus) }}
+                  </Badge>
+                </template>
+                <span v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">—</span>
               </td>
               <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
                 {{
-                  (row as VentasClientListItem).assignedAgentName
+                  (row as VentasClientListItem).clientType === 'BUYER'
+                    ? leadOriginLabel((row as VentasClientListItem).leadOrigin)
+                    : '—'
+                }}
+              </td>
+              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+                {{
+                  (row as VentasClientListItem).clientType === 'BUYER'
                     ? (row as VentasClientListItem).assignedAgentName
-                    : 'Sin asignar'
+                      ? (row as VentasClientListItem).assignedAgentName
+                      : 'Sin asignar'
+                    : '—'
                 }}
               </td>
               <td class="py-3 px-4 text-right">

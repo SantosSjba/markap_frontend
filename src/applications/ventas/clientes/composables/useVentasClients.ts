@@ -82,7 +82,10 @@ export function useVentasCreateClient() {
     mutationFn: (data: CreateVentasClientPayload) => ventasClientsService.create(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ventasClientKeys.root })
-      void markapAlert.toast.success('Cliente registrado', 'Lead guardado en ventas.')
+      void markapAlert.toast.success(
+        'Cliente registrado',
+        'El registro quedó guardado en el módulo Ventas.',
+      )
     },
     onError: (err) => {
       void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(err))

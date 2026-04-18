@@ -33,6 +33,12 @@ export const ventasRoutes: RouteRecordRaw[] = [
             meta: { title: 'Listado de Clientes' },
           },
           {
+            path: 'propietarios',
+            name: 'ventas-clientes-propietarios',
+            component: () => import('../clientes/views/VentasClientesView.vue'),
+            meta: { title: 'Propietarios' },
+          },
+          {
             path: 'nuevo',
             name: 'ventas-clientes-nuevo',
             component: () => import('../clientes/views/VentasNuevoClienteView.vue'),

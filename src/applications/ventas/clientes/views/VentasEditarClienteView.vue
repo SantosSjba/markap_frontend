@@ -10,11 +10,35 @@ import {
   useVentasClient,
   useVentasClientDocumentTypes,
   useVentasUpdateClient,
+  useVentasClientDepartments,
+  useVentasClientProvinces,
+  useVentasClientDistricts,
 } from '../composables/useVentasClients'
 import { useVentasAgentsList } from '@applications/ventas/agentes/composables/useAgents'
 import type { VentasDocumentType } from '../services/clients.service'
 import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../constants/leadOrigins'
 import type { VentasLeadOriginCode } from '../constants/leadOrigins'
+
+interface VentasClienteFormValues {
+  documentTypeId: string
+  documentNumber: string
+  fullName: string
+  legalRepresentativeName: string
+  legalRepresentativePosition: string
+  primaryPhone: string
+  secondaryPhone: string
+  primaryEmail: string
+  secondaryEmail: string
+  salesStatus: 'PROSPECT' | 'INTERESTED' | 'CLIENT'
+  leadOrigin: VentasLeadOriginCode | ''
+  assignedAgentId: string
+  notes: string
+  addressLine: string
+  departmentId: string
+  provinceId: string
+  districtId: string
+  reference: string
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -22,7 +46,9 @@ const appColor = 'var(--color-primary)'
 
 const id = computed(() => String(route.params.id ?? ''))
 
-const schema = yup.object({
+const editKind = ref<'BUYER' | 'OWNER'>('BUYER')
+
+const baseShape = {
   documentTypeId: yup.string().required('Seleccione el tipo de documento'),
   documentNumber: yup.string().required('El DNI / documento es requerido').trim(),
   fullName: yup.string().required('El nombre es requerido').trim(),
@@ -41,17 +67,35 @@ const schema = yup.object({
     .transform((v) => (v === '' ? undefined : v))
     .email('Email inválido')
     .optional(),
+  notes: yup.string().trim(),
+}
+
+const buyerSchema = yup.object({
+  ...baseShape,
   salesStatus: yup
     .string()
     .oneOf(['PROSPECT', 'INTERESTED', 'CLIENT'])
     .required('Seleccione el estado del cliente'),
   leadOrigin: yup.string().required('Seleccione el origen del lead'),
   assignedAgentId: yup.string().trim(),
-  notes: yup.string().trim(),
 })
 
-const { handleSubmit, errors, defineComponentBinds, resetForm } = useForm({
-  validationSchema: toTypedSchema(schema),
+const ownerSchema = yup.object({
+  ...baseShape,
+  addressLine: yup.string().required('La dirección es requerida').trim(),
+  departmentId: yup.string().trim(),
+  provinceId: yup.string().trim(),
+  districtId: yup.string().required('Seleccione el distrito'),
+  reference: yup.string().trim(),
+})
+
+const validationSchema = computed(() =>
+  toTypedSchema(editKind.value === 'OWNER' ? ownerSchema : buyerSchema),
+)
+
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } =
+  useForm<VentasClienteFormValues>({
+  validationSchema,
   initialValues: {
     documentTypeId: '',
     documentNumber: '',
@@ -66,8 +110,13 @@ const { handleSubmit, errors, defineComponentBinds, resetForm } = useForm({
     leadOrigin: '' as VentasLeadOriginCode | '',
     assignedAgentId: '',
     notes: '',
+    addressLine: '',
+    departmentId: '',
+    provinceId: '',
+    districtId: '',
+    reference: '',
   },
-})
+  })
 
 const documentTypeIdBinds = defineComponentBinds('documentTypeId')
 const documentNumberBinds = defineComponentBinds('documentNumber')
@@ -82,9 +131,22 @@ const salesStatusBinds = defineComponentBinds('salesStatus')
 const leadOriginBinds = defineComponentBinds('leadOrigin')
 const assignedAgentIdBinds = defineComponentBinds('assignedAgentId')
 const notesBinds = defineComponentBinds('notes')
+const addressLineBinds = defineComponentBinds('addressLine')
+const departmentIdBinds = defineComponentBinds('departmentId')
+const provinceIdBinds = defineComponentBinds('provinceId')
+const districtIdBinds = defineComponentBinds('districtId')
+const referenceBinds = defineComponentBinds('reference')
+
+const selectedDepartmentId = computed(() => values.departmentId || undefined)
+const selectedProvinceId = computed(() => values.provinceId || undefined)
 
 const { data: client, isLoading: loadingClient, isError: clientError } = useVentasClient(id)
 const { data: documentTypes, isLoading: loadingDocs } = useVentasClientDocumentTypes()
+const { data: departments, isLoading: loadingDepartments } = useVentasClientDepartments()
+const { data: provinces, isLoading: loadingProvinces } =
+  useVentasClientProvinces(selectedDepartmentId)
+const { data: districts, isLoading: loadingDistricts } =
+  useVentasClientDistricts(selectedProvinceId)
 const updateMutation = useVentasUpdateClient()
 
 const agentsListParams = ref({
@@ -94,13 +156,31 @@ const agentsListParams = ref({
 })
 const { data: agentsResult, isLoading: loadingAgents } = useVentasAgentsList(agentsListParams)
 
-const loading = computed(() => loadingClient.value || loadingDocs.value || loadingAgents.value)
+const loading = computed(
+  () =>
+    loadingClient.value ||
+    loadingDocs.value ||
+    loadingDepartments.value ||
+    (editKind.value === 'BUYER' && loadingAgents.value) ||
+    (editKind.value === 'OWNER' &&
+      (loadingProvinces.value || loadingDistricts.value)),
+)
 
 const documentTypeOptions = computed(() =>
   (documentTypes.value ?? []).map((d: VentasDocumentType) => ({
     value: d.id,
     label: `${d.name} (${d.code})`,
   })),
+)
+
+const departmentOptions = computed(() =>
+  (departments.value ?? []).map((d) => ({ value: d.id, label: d.name })),
+)
+const provinceOptions = computed(() =>
+  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name })),
+)
+const districtOptions = computed(() =>
+  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name })),
 )
 
 const agentOptions = computed(() => [
@@ -112,13 +192,34 @@ const agentOptions = computed(() => [
 ])
 
 watch(
+  () => values.departmentId,
+  (next, prev) => {
+    if (next === prev) return
+    if (prev === '' || prev === undefined) return
+    setFieldValue('provinceId', '')
+    setFieldValue('districtId', '')
+  },
+)
+
+watch(
+  () => values.provinceId,
+  (next, prev) => {
+    if (next === prev) return
+    if (prev === '' || prev === undefined) return
+    setFieldValue('districtId', '')
+  },
+)
+
+watch(
   () => client.value,
   (c) => {
     if (!c) return
-    if (c.clientType !== 'BUYER' || c.applicationSlug !== 'ventas') {
+    if (c.applicationSlug !== 'ventas' || (c.clientType !== 'BUYER' && c.clientType !== 'OWNER')) {
       void router.replace('/ventas/clientes')
       return
     }
+    editKind.value = c.clientType
+    const addr = c.primaryAddress
     resetForm({
       values: {
         documentTypeId: c.documentTypeId,
@@ -134,6 +235,11 @@ watch(
         leadOrigin: (c.leadOrigin ?? '') as VentasLeadOriginCode | '',
         assignedAgentId: c.assignedAgentId ?? '',
         notes: c.notes ?? '',
+        addressLine: addr?.addressLine ?? '',
+        departmentId: addr?.district?.province?.department?.id ?? '',
+        provinceId: addr?.district?.province?.id ?? '',
+        districtId: addr?.districtId ?? '',
+        reference: addr?.reference ?? '',
       },
     })
   },
@@ -151,26 +257,50 @@ const goBack = () => router.push('/ventas/clientes')
 
 const onSubmit = handleSubmit(async (formValues) => {
   try {
-    await updateMutation.mutateAsync({
-      id: id.value,
-      data: {
-        documentTypeId: formValues.documentTypeId,
-        documentNumber: formValues.documentNumber.trim(),
-        fullName: formValues.fullName.trim(),
-        legalRepresentativeName: formValues.legalRepresentativeName?.trim() || null,
-        legalRepresentativePosition:
-          formValues.legalRepresentativePosition?.trim() || null,
-        primaryPhone: formValues.primaryPhone.trim(),
-        secondaryPhone: formValues.secondaryPhone?.trim() || null,
-        primaryEmail: formValues.primaryEmail.trim(),
-        secondaryEmail: formValues.secondaryEmail?.trim() || null,
-        notes: formValues.notes?.trim() || null,
-        salesStatus: formValues.salesStatus,
-        leadOrigin: formValues.leadOrigin || null,
-        assignedAgentId: formValues.assignedAgentId?.trim() || null,
-      },
-    })
-    router.push('/ventas/clientes')
+    if (editKind.value === 'BUYER') {
+      await updateMutation.mutateAsync({
+        id: id.value,
+        data: {
+          documentTypeId: formValues.documentTypeId,
+          documentNumber: formValues.documentNumber.trim(),
+          fullName: formValues.fullName.trim(),
+          legalRepresentativeName: formValues.legalRepresentativeName?.trim() || null,
+          legalRepresentativePosition:
+            formValues.legalRepresentativePosition?.trim() || null,
+          primaryPhone: formValues.primaryPhone.trim(),
+          secondaryPhone: formValues.secondaryPhone?.trim() || null,
+          primaryEmail: formValues.primaryEmail.trim(),
+          secondaryEmail: formValues.secondaryEmail?.trim() || null,
+          notes: formValues.notes?.trim() || null,
+          salesStatus: formValues.salesStatus as 'PROSPECT' | 'INTERESTED' | 'CLIENT',
+          leadOrigin: formValues.leadOrigin || null,
+          assignedAgentId: formValues.assignedAgentId?.trim() || null,
+        },
+      })
+    } else {
+      await updateMutation.mutateAsync({
+        id: id.value,
+        data: {
+          documentTypeId: formValues.documentTypeId,
+          documentNumber: formValues.documentNumber.trim(),
+          fullName: formValues.fullName.trim(),
+          legalRepresentativeName: formValues.legalRepresentativeName?.trim() || null,
+          legalRepresentativePosition:
+            formValues.legalRepresentativePosition?.trim() || null,
+          primaryPhone: formValues.primaryPhone.trim(),
+          secondaryPhone: formValues.secondaryPhone?.trim() || null,
+          primaryEmail: formValues.primaryEmail.trim(),
+          secondaryEmail: formValues.secondaryEmail?.trim() || null,
+          notes: formValues.notes?.trim() || null,
+          address: {
+            addressLine: formValues.addressLine.trim(),
+            districtId: formValues.districtId,
+            reference: formValues.reference?.trim() || null,
+          },
+        },
+      })
+    }
+    void router.push('/ventas/clientes')
   } catch {
     void 0
   }
@@ -190,10 +320,14 @@ const onSubmit = handleSubmit(async (formValues) => {
       </button>
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Editar Cliente
+          Editar cliente
         </h1>
         <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Actualiza datos del lead o comprador
+          {{
+            editKind === 'OWNER'
+              ? 'Propietario — datos y dirección fiscal'
+              : 'Comprador / lead — embudo y asignación'
+          }}
         </p>
       </div>
     </div>
@@ -283,6 +417,56 @@ const onSubmit = handleSubmit(async (formValues) => {
       </section>
 
       <section
+        v-if="editKind === 'OWNER'"
+        class="p-5 rounded-xl"
+        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      >
+        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
+          Dirección fiscal
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <FormSelect
+            v-bind="departmentIdBinds"
+            label="Departamento"
+            placeholder="Seleccionar"
+            :options="departmentOptions"
+            :error="errors.departmentId"
+          />
+          <FormSelect
+            v-bind="provinceIdBinds"
+            label="Provincia"
+            placeholder="Seleccionar"
+            :options="provinceOptions"
+            :disabled="!values.departmentId"
+            :error="errors.provinceId"
+          />
+          <FormSelect
+            v-bind="districtIdBinds"
+            label="Distrito"
+            placeholder="Seleccionar"
+            :options="districtOptions"
+            :disabled="!values.provinceId"
+            :error="errors.districtId"
+            required
+          />
+          <FormInput
+            v-bind="addressLineBinds"
+            class="md:col-span-2"
+            label="Dirección completa"
+            :error="errors.addressLine"
+            required
+          />
+          <FormInput
+            v-bind="referenceBinds"
+            class="md:col-span-2"
+            label="Referencia (opcional)"
+            :error="errors.reference"
+          />
+        </div>
+      </section>
+
+      <section
+        v-if="editKind === 'BUYER'"
         class="p-5 rounded-xl"
         :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
       >
