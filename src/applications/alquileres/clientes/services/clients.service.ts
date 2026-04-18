@@ -56,7 +56,7 @@ export interface CreateClientPayload {
 export interface ClientDetail {
   id: string
   applicationSlug: string
-  clientType: 'OWNER' | 'TENANT'
+  clientType: 'OWNER' | 'TENANT' | 'BUYER'
   documentTypeId: string
   documentNumber: string
   fullName: string
@@ -68,6 +68,9 @@ export interface ClientDetail {
   secondaryEmail: string | null
   notes: string | null
   isActive: boolean
+  salesStatus?: 'PROSPECT' | 'INTERESTED' | 'CLIENT' | null
+  leadOrigin?: string | null
+  assignedAgentId?: string | null
   documentType: DocumentType
   primaryAddress: {
     id: string
@@ -76,6 +79,7 @@ export interface ClientDetail {
     districtId: string
     district: District
   } | null
+  assignedAgent?: { id: string; fullName: string } | null
 }
 
 /** Payload para PATCH /clients/:id (todos opcionales) */
@@ -105,10 +109,13 @@ export interface ClientListItem {
   documentNumber: string
   primaryPhone: string
   primaryEmail: string
-  clientType: 'OWNER' | 'TENANT'
+  clientType: 'OWNER' | 'TENANT' | 'BUYER'
   isActive: boolean
   propertiesCount: number
   contractsCount: number
+  salesStatus?: 'PROSPECT' | 'INTERESTED' | 'CLIENT' | null
+  leadOrigin?: string | null
+  assignedAgentName?: string | null
 }
 
 export interface ClientStats {
@@ -116,6 +123,9 @@ export interface ClientStats {
   owners: number
   tenants: number
   active: number
+  prospects?: number
+  interested?: number
+  salesClients?: number
 }
 
 export interface ListClientsParams {
@@ -123,7 +133,8 @@ export interface ListClientsParams {
   page?: number
   limit?: number
   search?: string
-  clientType?: 'OWNER' | 'TENANT'
+  clientType?: 'OWNER' | 'TENANT' | 'BUYER'
+  salesStatus?: 'PROSPECT' | 'INTERESTED' | 'CLIENT'
   isActive?: boolean
 }
 
@@ -160,6 +171,7 @@ export const clientsService = {
     searchParams.set('limit', String(params.limit ?? 10))
     if (params.search) searchParams.set('search', params.search)
     if (params.clientType) searchParams.set('clientType', params.clientType)
+    if (params.salesStatus) searchParams.set('salesStatus', params.salesStatus)
     if (params.isActive !== undefined) searchParams.set('isActive', String(params.isActive))
     return apiClient
       .get<ListClientsResponse>(`/clients?${searchParams.toString()}`)

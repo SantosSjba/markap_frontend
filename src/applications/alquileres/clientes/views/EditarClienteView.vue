@@ -137,6 +137,10 @@ watch(
   client,
   (c) => {
     if (!c) return
+    if (c.clientType === 'BUYER') {
+      void router.replace('/alquileres/clientes')
+      return
+    }
     isInitializing.value = true
     clientType.value = c.clientType
     resetForm({

@@ -10,7 +10,7 @@ import {
 } from '../services/clients.service'
 
 export const clientKeys = {
-  all: ['clients'] as const,
+  all: ['clients', 'alquileres'] as const,
   list: (params: ListClientsParams) => [...clientKeys.all, 'list', params] as const,
   detail: (id: string) => [...clientKeys.all, 'detail', id] as const,
   stats: (slug?: string) => [...clientKeys.all, 'stats', slug ?? 'alquileres'] as const,
