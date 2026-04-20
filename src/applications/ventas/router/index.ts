@@ -194,7 +194,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'ventas-configuracion',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../ventas-configuracion/views/VentasConfiguracionView.vue'),
             meta: { title: 'Configuración' },
           },
         ],

@@ -16,14 +16,16 @@ import { ventasClientsService } from '../../clientes/services/clients.service'
 import { ventasPropertiesService } from '../../propiedades/services/ventasProperties.service'
 import { useVentasAgentsList } from '../../agentes/composables/useAgents'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
-import {
-  PIPELINE_STAGE_OPTIONS,
-  PROCESS_STATUS_OPTIONS,
-  pipelineStageLabel,
-  processStatusLabel,
-} from '../constants/pipeline'
+import { useVentasPipelineStages } from '../../ventas-configuracion/composables/useVentasConfig'
+import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../constants/pipeline'
 
 const router = useRouter()
+const { stageOptions, labelFor: pipelineStageLabel } = useVentasPipelineStages()
+const pipelineFilterOptions = computed(() => [
+  { value: '', label: 'Todas las etapas' },
+  ...stageOptions.value,
+])
+
 const ITEMS = 10
 const listParams = ref({
   page: 1,
@@ -193,7 +195,7 @@ function goDetail(row: SaleProcessListRow) {
             <div class="w-full sm:w-[200px]">
               <FormSelect
                 v-model="listParams.pipelineStage"
-                :options="[{ value: '', label: 'Todas las etapas' }, ...PIPELINE_STAGE_OPTIONS]"
+                :options="pipelineFilterOptions"
                 placeholder="Etapa"
                 @update:model-value="listParams.page = 1"
               />
@@ -266,7 +268,7 @@ function goDetail(row: SaleProcessListRow) {
           required
         />
         <FormSelect v-model="form.agentId" label="Asesor" :options="agentOptions" />
-        <FormSelect v-model="form.pipelineStage" label="Etapa inicial" :options="[...PIPELINE_STAGE_OPTIONS]" />
+        <FormSelect v-model="form.pipelineStage" label="Etapa inicial" :options="stageOptions" />
         <div>
           <label class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Título (opcional)</label>
           <input

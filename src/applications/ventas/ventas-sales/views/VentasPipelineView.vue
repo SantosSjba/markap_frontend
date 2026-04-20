@@ -7,10 +7,9 @@ import { BaseButton, Badge, AppIcon } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import SaleProcessFollowUpPanel from '../components/SaleProcessFollowUpPanel.vue'
 import { useVentasPipelineBoard, useVentasUpdateProcessQuiet } from '../composables/useVentasSales'
+import { useVentasPipelineStages } from '../../ventas-configuracion/composables/useVentasConfig'
 import type { SaleProcessListRow } from '../services/ventasSales.service'
 import {
-  PIPELINE_STAGE_OPTIONS,
-  pipelineStageLabel,
   processStatusLabel,
   normalizePipelineStage,
   type PipelineStageValue,
@@ -34,44 +33,64 @@ function onFollowUpModalClosed() {
   followUpCode.value = ''
 }
 
-const boards = reactive<Record<PipelineStageValue, SaleProcessListRow[]>>({
-  PROSPECT: [],
-  VISIT: [],
-  NEGOTIATION: [],
-  SEPARATION: [],
-  CLOSING: [],
-})
+const boards = reactive<Record<string, SaleProcessListRow[]>>({})
 
+function boardList(stage: string): SaleProcessListRow[] {
+  let list = boards[stage]
+  if (!list) {
+    list = []
+    boards[stage] = list
+  }
+  return list
+}
+
+const { stageOptions, orderedCodes, query: configQuery } = useVentasPipelineStages()
 const { data: listResult, isLoading, isFetching } = useVentasPipelineBoard()
 const { mutate: patchQuiet, isPending: savingMove } = useVentasUpdateProcessQuiet()
 
 function rebuildBoard(rows: SaleProcessListRow[]) {
-  for (const o of PIPELINE_STAGE_OPTIONS) {
-    boards[o.value].length = 0
+  const codes = orderedCodes.value
+  for (const c of codes) {
+    boardList(c).length = 0
+  }
+  for (const key of Object.keys(boards)) {
+    if (!codes.includes(key)) delete boards[key]
   }
   for (const p of rows) {
     const st = normalizePipelineStage(p.pipelineStage)
-    boards[st].push(p)
+    boardList(st).push(p)
   }
 }
 
 watch(
-  () => listResult.value?.data,
-  (rows) => {
-    if (!rows) return
-    rebuildBoard(rows)
+  orderedCodes,
+  (codes) => {
+    for (const c of codes) {
+      if (!boards[c]) boards[c] = []
+    }
   },
   { immediate: true },
 )
 
-function onCardAdded(
-  targetStage: PipelineStageValue,
-  evt: DraggableEvent<SaleProcessListRow>,
-) {
-  const row = boards[targetStage][evt.newIndex ?? -1]
+watch(
+  () => [orderedCodes.value, listResult.value?.data] as const,
+  () => {
+    const rows = listResult.value?.data
+    if (!rows) return
+    rebuildBoard(rows)
+  },
+  { immediate: true, deep: true },
+)
+
+function onUpdateBoardColumn(stage: string, v: SaleProcessListRow[]) {
+  boards[stage] = v
+}
+
+function onCardAdded(targetStage: string, evt: DraggableEvent<SaleProcessListRow>) {
+  const row = boardList(targetStage)[evt.newIndex ?? -1]
   if (!row?.id) return
   if (normalizePipelineStage(row.pipelineStage) === targetStage) return
-  patchQuiet({ id: row.id, body: { pipelineStage: targetStage } })
+  patchQuiet({ id: row.id, body: { pipelineStage: targetStage as PipelineStageValue } })
 }
 
 function goDetail(p: SaleProcessListRow) {
@@ -105,7 +124,7 @@ const group = { name: 'ventas-pipeline', pull: true, put: true }
     </div>
 
     <div
-      v-if="isLoading"
+      v-if="isLoading || configQuery.isLoading.value"
       class="flex justify-center py-24 rounded-xl border"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
     >
@@ -118,7 +137,7 @@ const group = { name: 'ventas-pipeline', pull: true, put: true }
       :class="{ 'opacity-70 pointer-events-none': isFetching || savingMove }"
     >
       <div
-        v-for="col in PIPELINE_STAGE_OPTIONS"
+        v-for="col in stageOptions"
         :key="col.value"
         class="flex flex-col w-[min(100%,280px)] shrink-0 rounded-xl border min-h-[360px] max-h-[calc(100vh-220px)]"
         :style="{ backgroundColor: 'var(--color-surface-elevated)', borderColor: 'var(--color-border)' }"
@@ -136,21 +155,22 @@ const group = { name: 'ventas-pipeline', pull: true, put: true }
               color: 'var(--color-text-secondary)',
               backgroundColor: 'var(--color-hover)',
             }"
-            >{{ boards[col.value].length }}</span
+            >{{ boardList(col.value).length }}</span
           >
         </div>
         <VueDraggable
-          v-model="boards[col.value]"
+          :model-value="boardList(col.value)"
           :group="group"
           :animation="200"
           :empty-insert-threshold="24"
           class="flex-1 overflow-y-auto p-2 space-y-2 min-h-[120px]"
           ghost-class="opacity-50"
           drag-class="cursor-grabbing"
+          @update:model-value="(v: SaleProcessListRow[]) => onUpdateBoardColumn(col.value, v)"
           @add="(e: DraggableEvent<SaleProcessListRow>) => onCardAdded(col.value, e)"
         >
           <div
-            v-for="p in boards[col.value]"
+            v-for="p in boardList(col.value)"
             :key="p.id"
             class="rounded-lg border p-3 cursor-grab active:cursor-grabbing shadow-sm transition hover:shadow-md flex flex-col"
             :style="{
@@ -198,8 +218,8 @@ const group = { name: 'ventas-pipeline', pull: true, put: true }
       </div>
     </div>
 
-    <p v-if="!isLoading" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
-      Etapas: {{ PIPELINE_STAGE_OPTIONS.map((o) => pipelineStageLabel(o.value)).join(' → ') }}. Use
+    <p v-if="!isLoading && !configQuery.isLoading.value" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+      Etapas: {{ stageOptions.map((o) => o.label).join(' → ') }}. Use
       <strong>Seguimiento</strong> para notas, actividades y recordatorios sin salir del pipeline.
     </p>
 

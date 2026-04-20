@@ -4,17 +4,15 @@ import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, AppIcon, FormSelect } from '@shared/components'
 import { useVentasProcessDetail, useVentasUpdateProcess } from '../composables/useVentasSales'
 import type { SaleProcessDetail } from '../services/ventasSales.service'
-import {
-  PIPELINE_STAGE_OPTIONS,
-  PROCESS_STATUS_OPTIONS,
-  pipelineStageLabel,
-  processStatusLabel,
-} from '../constants/pipeline'
+import { useVentasPipelineStages } from '../../ventas-configuracion/composables/useVentasConfig'
+import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../constants/pipeline'
 import SaleProcessFollowUpPanel from '../components/SaleProcessFollowUpPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
+
+const { stageOptions, labelFor: pipelineStageLabel } = useVentasPipelineStages()
 
 const { data: proc, isLoading } = useVentasProcessDetail(id)
 
@@ -77,7 +75,7 @@ function saveStage() {
       >
         <div class="flex flex-wrap gap-4 items-end">
           <div class="min-w-[200px]">
-            <FormSelect v-model="stageEdit" label="Etapa" :options="[...PIPELINE_STAGE_OPTIONS]" />
+            <FormSelect v-model="stageEdit" label="Etapa" :options="stageOptions" />
           </div>
           <div class="min-w-[180px]">
             <FormSelect v-model="statusEdit" label="Estado" :options="[...PROCESS_STATUS_OPTIONS]" />
