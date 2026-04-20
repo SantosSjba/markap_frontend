@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
-import { setupVueQuery } from '@app/plugins'
+import { setupVueQuery } from '@core/plugins'
 import { initTheme } from '@shared/composables'
 
 // Styles
@@ -24,7 +24,7 @@ app.use(router)
 setupVueQuery(app)
 
 // Initialize auth state from localStorage before mounting
-import { useAuthStore } from '@features/auth/stores'
+import { useAuthStore } from '@modules/auth'
 const authStore = useAuthStore()
 authStore.initializeAuth()
 

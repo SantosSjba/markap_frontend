@@ -8,11 +8,11 @@ Esta guía describe los pasos para extender el frontend siguiendo la **Arquitect
 
 | Quiero agregar… | Dónde | Pasos clave |
 |-----------------|--------|-------------|
-| Una **funcionalidad transversal** (ej. exportar PDF, firma digital) | `features/` | Nuevo slice, api + ui/composables, exportar en `index.ts`, registrar rutas si aplica en `app/routes`. |
+| Una **funcionalidad transversal** (ej. exportar PDF, firma digital) | Nuevo slice bajo `src/features/` o `src/modules/` e import `@modules/...` | api + capas, exportar en `index.ts`, registrar rutas en `app/routes`. |
 | Una **nueva aplicación** (ej. Ventas, Contabilidad) | `applications/` | Nueva carpeta con layout, páginas, router; registrar en `app/routes`. |
 | Una **nueva función dentro de una app** (ej. Cobranzas en Alquileres) | `applications/<app>/<funcion>/` | Carpeta con services, composables, views, router; integrar en el router de la app. |
 | Un **componente reutilizable sin negocio** | `shared/` | Componente en `shared/components`, exportar en el index correspondiente. |
-| Un **layout o bloque grande reutilizable** | `widgets/` | Nuevo componente en `widgets/`, exportar en `widgets/index.ts`. |
+| Un **layout o bloque grande reutilizable** | `shared/layouts/` (`@layouts`) | Nuevo componente ahí, exportar en `shared/layouts/index.ts`. |
 
 ---
 
@@ -32,15 +32,15 @@ Las aplicaciones son productos/áreas de negocio (Alquileres, Ventas, etc.). Cad
    ```
 
 2. **Definir el layout** (si aplica)  
-   Crear `VentasLayout.vue` en `applications/ventas/views/` (o en `views/`) usando `@widgets` (sidebar, header) y el composable de menú de aplicaciones si ya existe uno por app.
+   Crear `VentasLayout.vue` en `applications/ventas/views/` (o en `views/`) usando `@layouts` (sidebar, header) y el composable de menú de aplicaciones si ya existe uno por app.
 
 3. **Crear el router**  
    En `applications/ventas/router/index.ts`:
    - Exportar un array de rutas (ej. `ventasRoutes`) con `path: '/ventas'`, `component: VentasLayout`, y `children` para cada sección.
 
 4. **Registrar en el router principal**  
-   En `app/routes/index.ts`:
-   - Importar `ventasRoutes` desde `@applications/ventas/router`.
+   En `src/router/index.ts`:
+   - Importar `ventasRoutes` desde `@modules/ventas` (barrel) o `@modules/ventas/presentation/router`.
    - Añadir `...ventasRoutes` al array `routes` (orden según criterio de negocio).
 
 5. **Backend y menú**  
@@ -77,7 +77,7 @@ Son subdominios dentro de una app: clientes, propiedades, contratos, reportes, *
 
 4. **Integrar en el router de la aplicación**  
    En `applications/alquileres/router/index.ts`:
-   - Importar `cobranzasRoutes` desde `@applications/alquileres/cobranzas/router`.
+   - Importar `cobranzasRoutes` desde `@modules/alquileres/features/cobranzas` (barrel) o `./presentation/router` dentro del feature.
    - Añadir un `children` bajo el path que corresponda (ej. `path: 'cobranzas'`, `component: SectionLayout`, `children: cobranzasRoutes`).
 
 5. **Menú**  
@@ -104,14 +104,14 @@ Features reutilizables en varias aplicaciones: auth, selector de aplicaciones, n
    ```
 
 2. **Regla de dependencias**  
-   El feature puede usar `@shared` y `@widgets`. No debe importar de `@applications`. Para llamadas HTTP usar `@app/api/apiClient`.
+   El módulo puede usar `@shared` y `@layouts`. No debe importar de otro módulo de producto (`@modules/ventas` ↔ `@modules/alquileres`). Para HTTP usar `@core/api/apiClient`.
 
 3. **Public API**  
    En `index.ts` exportar solo lo que otras capas necesiten (composables, componentes, tipos). Evitar exportar detalles internos.
 
 4. **Uso en una aplicación**  
    En una vista o composable de `applications/alquileres/...` (o cualquier app):  
-   `import { useExportPdf } from '@features/export-pdf'`.
+   `import { useExportPdf } from '@modules/export-pdf'`.
 
 5. **Rutas**  
    Si el feature tiene páginas propias (poco común), definir un array de rutas en `features/export-pdf/router/index.ts` y registrarlo en `app/routes/index.ts`.
@@ -126,25 +126,25 @@ Features reutilizables en varias aplicaciones: auth, selector de aplicaciones, n
 
 - **Página nueva a nivel de aplicación**  
   Añadir el `.vue` en `applications/<app>/views/` y la ruta en `applications/<app>/router/index.ts`.  
-  Ejemplo: “Dashboard de Ventas” → nueva ruta en `ventas/router/index.ts`.
+  Ejemplo: “Dashboard de Ventas” → nueva ruta en `modules/ventas/presentation/router/index.ts`.
 
 ---
 
-## 5. Agregar **componentes reutilizables** (shared / widgets)
+## 5. Agregar **componentes reutilizables** (shared / layouts)
 
 - **Sin lógica de negocio** (botón, input, tabla, card):  
   Crear en `shared/components/` (ui o forms) y exportar en el `index.ts` correspondiente.  
-  No importar desde `features` ni `applications`.
+  No importar otros `@modules/*` de negocio salvo contrato en `shared`.
 
 - **Bloques grandes o layouts** (cabecera, sidebar, layout de sección):  
-  Crear en `widgets/` y exportar en `widgets/index.ts`.  
-  Pueden usar `@shared` y, si hace falta, `@features` (ej. auth para usuario).
+  Crear en `shared/layouts/` y exportar en `shared/layouts/index.ts`.  
+  Pueden usar `@shared` y, si hace falta, `@modules/auth` (ej. usuario en cabecera).
 
 ---
 
 ## 6. Checklist al agregar algo nuevo
 
-- [ ] Código en la capa correcta (shared / features / applications / widgets / app).
+- [ ] Código en la capa correcta (shared / layouts / platform / applications / app).
 - [ ] Imports solo desde capas inferiores (ver ARCHITECTURE.md).
 - [ ] Servicios usan `@app/api/apiClient` para HTTP.
 - [ ] Rutas nuevas registradas en `app/routes` (si es app o feature con páginas) o en el router de la aplicación (si es función dentro de una app).

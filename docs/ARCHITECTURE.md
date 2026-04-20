@@ -5,9 +5,9 @@ Este documento describe la arquitectura del proyecto frontend MARKAP, basada en 
 ## Principios
 
 - **Organización por características (features)**: El código se agrupa por dominio de negocio y por aplicación, no por tipo técnico.
-- **Capas y dependencias**: Las dependencias solo apuntan hacia abajo (capas inferiores). Shared no conoce Features; Features no conoce Applications.
+- **Capas y dependencias**: Las dependencias solo apuntan hacia abajo. `shared` no importa `@modules/*`. Los módulos de producto no se cruzan (p. ej. Ventas ⟂ Alquileres) salvo contratos explícitos en `shared`.
 - **API pública por módulo**: Cada feature/application expone solo lo necesario vía `index.ts` (public API).
-- **Escalabilidad por aplicaciones**: El backend define aplicaciones (Alquileres, Ventas, Interiorismo, etc.); cada una tiene sus propias funciones. El frontend refleja esa estructura en la capa `applications`.
+- **Escalabilidad por aplicaciones**: El backend define aplicaciones (Alquileres, Ventas, etc.); el frontend las refleja como **`@modules/ventas`**, **`@modules/alquileres`**, etc.
 
 ## Capas (de abajo a arriba)
 
@@ -15,13 +15,11 @@ Este documento describe la arquitectura del proyecto frontend MARKAP, basada en 
   ┌─────────────────────────────────────────────────────────┐
   │  app          → Entrada, router, guards, plugins, estilos │
   ├─────────────────────────────────────────────────────────┤
-  │  applications → Aplicaciones de negocio (shell, alquileres, settings) │
+  │  modules (@modules/*) → Ventas, Alquileres, shell, settings, auth, selector apps, notificaciones │
   ├─────────────────────────────────────────────────────────┤
-  │  features     → Funcionalidades transversales (auth, applications, notifications) │
+  │  layouts      → Shell global (MainLayout, AuthLayout, header, sidebar) en `shared/layouts`, alias `@layouts` │
   ├─────────────────────────────────────────────────────────┤
-  │  widgets      → Bloques de UI reutilizables (layouts, header, sidebar) │
-  ├─────────────────────────────────────────────────────────┤
-  │  shared       → UI kit, API client, config, lib, composables, types │
+  │  shared       → UI kit, config, utils, composables, types (+ layouts físicos) │
   └─────────────────────────────────────────────────────────┘
 ```
 
@@ -37,85 +35,60 @@ Base reutilizable, sin lógica de negocio específica.
 | `composables/` | Hooks reutilizables (paginación, tema, notificaciones). |
 | `types/`  | Tipos e interfaces comunes. |
 
-**Regla**: No importar desde `features`, `applications` ni `app`.
+**Regla**: Evitar acoplar `shared` a reglas de negocio de una app. Excepciones puntuales (p. ej. componentes de perfil que leen sesión vía `@modules/auth`) deben mantenerse acotadas.
 
 ---
 
-### 2. `widgets/`
+### 2. `shared/layouts/` (alias `@layouts`)
 
-Bloques grandes de UI reutilizables (layouts, cabecera, barra lateral).
+Layouts y piezas del marco visual global (post-login hub y auth).
 
-| Widget / archivo | Uso |
-|------------------|-----|
-| `MainLayout`    | Layout principal con sidebar. |
-| `SectionLayout` | Sección con título y contenido. |
-| `AuthLayout`    | Layout para login/recuperar contraseña. |
-| `AppHeader`, `AppSidebar` | Partes del layout. |
+| Archivo / carpeta | Uso |
+|-------------------|-----|
+| `MainLayout`      | Layout principal con sidebar. |
+| `SectionLayout`   | Sección con título y contenido. |
+| `AuthLayout`      | Login / recuperar contraseña. |
+| `components/`     | `AppHeader`, `AppSidebar`, `AppLayoutSidebar`. |
 
-**Regla**: Pueden usar `shared` y, si hace falta, `features` (por ejemplo auth para usuario en header). No depender de `applications`.
-
----
-
-### 3. `features/`
-
-Funcionalidades transversales reutilizables en varias aplicaciones.
-
-| Feature         | Responsabilidad |
-|-----------------|------------------|
-| `auth/`        | Login, logout, recuperar contraseña, store de sesión, guard. |
-| `applications/`| Selector de aplicaciones, menús por aplicación, datos de apps. |
-| `notifications/`| Notificaciones en tiempo real (store, servicio, socket). |
-
-Estructura típica por feature:
-
-- `api/` — llamadas al backend.
-- `model/` o `stores/` — estado (Pinia).
-- `composables/` — lógica reutilizable.
-- `ui/` — vistas (login, selector de apps, etc.).
-- `router/` — rutas del feature.
-
-**Regla**: Pueden usar `shared` y `widgets`. No importar de `applications`.
+**Regla**: Pueden usar `shared` y, si hace falta, `@modules/auth` o `@modules/notifications` en header. No acoplar a otra app de negocio.
 
 ---
 
-### 4. `applications/`
+### 3. Módulos de producto y plataforma — alias `@modules/*`
 
-Cada “aplicación” del negocio (como en el backend). Agrupa páginas, subfunciones y router.
+Todo el dominio (Ventas, Alquileres, shell, settings, login, selector de apps, notificaciones) se importa como **`@modules/...`**. El mapa **carpeta física ↔ alias** está en [CLEAN_MODULES.md](./CLEAN_MODULES.md).
 
-| Aplicación   | Contenido |
-|-------------|-----------|
-| `shell/`    | Selector de aplicaciones, dashboard global, páginas 401/404. |
-| `alquileres/`| App Alquileres: home, perfil, clientes, propiedades, agentes, contratos, reportes, etc. Cada subfunción puede tener `api/`, `model/`, `ui/`, `router/`. |
-| `settings/` | Configuración global: perfil, usuarios, roles, roles por aplicación. |
-
-Estructura recomendada por aplicación (ej. `alquileres/`):
-
-- `layout/` — layout específico de la app (ej. `AlquileresLayout.vue`).
-- `pages/` — vistas propias de la app (home, perfil, placeholders).
-- `clientes/`, `propiedades/`, `agentes/`, `contratos/`, `reportes/` — una carpeta por función, cada una con:
-  - `api/` o `services/`
-  - `composables/` o `model/`
-  - `ui/` (vistas)
-  - y rutas que se integran en el router de la aplicación.
-- `router/` — `index.ts` que monta todas las rutas de la aplicación (incluidas las de clientes, propiedades, etc.).
-
-**Regla**: Pueden usar `shared`, `widgets` y `features`. No importar de otra aplicación (salvo convenios explícitos vía `shared` o `features`).
+**Regla**: Pueden usar `shared` y `@layouts`. No importar `alquileres` desde `ventas` (ni al revés), salvo `shared` explícito.
 
 ---
 
-### 5. `app/`
+### 4. Estructura por aplicación
 
-Todo lo que hace arrancar la aplicación.
+- **Ventas** y **Alquileres**: submódulos de negocio bajo `modules/<app>/features/`, con capas **domain / application / infrastructure / presentation** por slice (ver [CLEAN_MODULES.md](./CLEAN_MODULES.md) y [ARCHITECTURE.md](../ARCHITECTURE.md) en la raíz del frontend).
+
+#### Ventas — submódulos y alias `@ventas/*`
+
+| Alias | Carpeta física |
+|-------|----------------|
+| `@ventas/sales/...` | `src/modules/ventas/features/ventas-sales/...` |
+| `@ventas/finanzas/...` | `src/modules/ventas/features/ventas-finanzas/...` |
+| `@ventas/reportes/...` | `src/modules/ventas/features/ventas-reportes/...` |
+| `@ventas/configuracion/...` | `src/modules/ventas/features/ventas-configuracion/...` |
+
+---
+
+### 5. `core/` y `router/`
+
+Arranque y ensamblaje global.
 
 | Segmento      | Contenido |
 |---------------|-----------|
-| `api/`        | Cliente HTTP (axios) con interceptores y token de auth. |
-| `routes/`     | Router principal: combinación de rutas de `features` y `applications`, guards. |
-| `guards/`     | Guards de navegación (auth). |
-| `plugins/`    | Plugins globales (Pinia, Vue Query, etc.). |
-| `styles/`     | Estilos globales (opcional; también en `assets/`). |
+| `core/api/`   | Cliente HTTP (axios) con interceptores y token de auth. |
+| `src/router/` | Router principal: rutas de módulos + guards. |
+| `core/guards/` | Guards de navegación (auth). |
+| `core/plugins/` | Plugins globales (Pinia, Vue Query, etc.). |
 
-El punto de entrada (`main.ts`) sigue en `src/` y usa el router y los plugins desde `app/`.
+El punto de entrada (`main.ts`) está en `src/` y usa `router` y `@core/plugins`.
 
 **Regla**: Conoce todas las capas; ensambla la aplicación.
 
@@ -126,31 +99,34 @@ El punto de entrada (`main.ts`) sigue en `src/` y usa el router y los plugins de
 | Alias          | Ruta        |
 |----------------|------------|
 | `@/`           | `src/`     |
-| `@app/`       | `src/app/` |
+| `@core/`      | `src/core/` |
 | `@shared/`    | `src/shared/` |
-| `@features/`  | `src/features/` |
-| `@applications/` | `src/applications/` |
-| `@widgets/`   | `src/widgets/` |
-
-No se usan `@core` ni `@modules`; todo el código vive en las capas anteriores.
+| `@layouts/`   | `src/shared/layouts/` |
+| `@modules/ventas/*`, `@modules/alquileres/*`, `@modules/shell/*`, `@modules/settings/*` | Ver [CLEAN_MODULES.md](./CLEAN_MODULES.md) |
+| `@modules/auth/*`, `@modules/applications/*` | `src/modules/auth`, `src/modules/applications` |
+| `@shared/notifications` | `src/shared/notifications` |
+| `@ventas/sales`, … | Submódulos Ventas (tabla arriba) |
 
 ---
 
 ## Regla de dependencias
 
 - **shared** ← nadie (base).
-- **widgets** ← shared (y opcionalmente features para datos globales).
-- **features** ← shared, widgets.
-- **applications** ← shared, widgets, features.
-- **app** ← shared, widgets, features, applications.
+- **layouts** (`@layouts`) ← shared (y opcionalmente `@modules/auth` / `@modules/notifications` en header).
+- **modules** (`@modules/*`) ← shared, `@layouts` (y entre sí solo según reglas de dominio).
+- **app** ← shared, `@layouts`, `@modules/*`.
 
-Nunca: `shared` → `features` o `applications`; `features` → `applications`.
+Nunca: `shared` → `@modules/*` para lógica de negocio; un módulo de app no importa otro módulo de app salvo `shared`.
 
 ---
 
 ## Cómo extender el proyecto
 
 Para agregar nuevas aplicaciones, funciones dentro de una app o features transversales, sigue la guía **[Cómo agregar nuevas funcionalidades](./ADDING_FEATURES.md)**.
+
+## Módulos con capas (Clean + feature-driven)
+
+Para el modelo **domain / application / infrastructure / presentation** dentro de cada subdominio (y la independencia **Ventas ⟂ Alquileres**), ver **[CLEAN_MODULES.md](./CLEAN_MODULES.md)**. **Ventas `agentes` y `clientes`** ya siguen ese esquema.
 
 ## Referencias
 

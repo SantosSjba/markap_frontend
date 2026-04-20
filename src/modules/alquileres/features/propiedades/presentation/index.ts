@@ -1,0 +1,1 @@
+export { propiedadesRoutes } from './router'

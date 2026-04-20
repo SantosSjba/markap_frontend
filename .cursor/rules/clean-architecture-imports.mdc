@@ -1,0 +1,36 @@
+---
+description: Reglas de importación — módulos Markap (frontend)
+globs: src/**/*.ts,src/**/*.vue
+---
+
+# Clean Architecture — disciplina de imports
+
+## Dirección de dependencias
+
+| Capa | Puede importar |
+|------|----------------|
+| **domain** | Nada del resto del módulo (solo tipos/const puras; sin Vue, sin `@core/api`). |
+| **infrastructure** | **domain**, `@core/api`, librerías técnicas. No **presentation**. |
+| **application** | **domain**, **infrastructure** (implementaciones de puertos / adaptadores por defecto), `@tanstack/vue-query`, utilidades puras. No **presentation**. Evitar **Vue Router** aquí: la navegación va en **presentation**. |
+| **presentation** | **application**, **composables** propios del módulo que usen Vue Router. **`import type`** desde **domain** solo para tipar. No **infrastructure** (usar casos de uso / barrel del módulo). |
+
+## Objetivo
+
+`presentation → application → infrastructure → domain` y **domain** sin frameworks.
+
+## Puertos (repositorios)
+
+- Contratos (`*Repository`, interfaces) viven en **domain**.
+- Implementación HTTP (`*ApiRepository`, `*Service` adaptado) en **infrastructure**.
+- **application** depende del **tipo** del puerto; la instancia concreta sale de **infrastructure** (o inyección manual en el futuro).
+
+## Barrels
+
+- Consumir APIs públicas desde `@modules/...` o `@shared/...` **index.ts** del módulo, no rutas profundas (`.../application/useX`), salvo código interno del mismo slice.
+
+## Estructura física
+
+- **composables** ligados a Vue Router / UI → `presentation/composables/`.
+- **schemas** (Yup/Zod) → `infrastructure/schemas/`.
+- **views** → `presentation/views/`.
+- En **Ventas** y **Alquileres**, los slices de negocio viven bajo **`modules/<app>/features/<slice>/`** con las cuatro capas e `index.ts` por capa cuando aplique; la cáscara de la app queda en `modules/<app>/presentation` (y en Alquileres también `application`/`domain`/`infrastructure` raíz para contratos globales).

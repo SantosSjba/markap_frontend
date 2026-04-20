@@ -4,23 +4,26 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "types": ["vite/client"],
 
-    /* Path aliases */
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@app": ["src/app"],
-      "@app/*": ["src/app/*"],
+      "@core": ["src/core"],
+      "@core/*": ["src/core/*"],
       "@shared": ["src/shared"],
       "@shared/*": ["src/shared/*"],
-      "@features": ["src/features"],
-      "@features/*": ["src/features/*"],
-      "@applications": ["src/applications"],
-      "@applications/*": ["src/applications/*"],
-      "@widgets": ["src/widgets"],
-      "@widgets/*": ["src/widgets/*"]
+      "@layouts": ["src/shared/layouts"],
+      "@layouts/*": ["src/shared/layouts/*"],
+      "@modules/*": ["src/modules/*"],
+      "@ventas/sales": ["src/modules/ventas/features/ventas-sales/index.ts"],
+      "@ventas/sales/*": ["src/modules/ventas/features/ventas-sales/*"],
+      "@ventas/finanzas": ["src/modules/ventas/features/ventas-finanzas/index.ts"],
+      "@ventas/finanzas/*": ["src/modules/ventas/features/ventas-finanzas/*"],
+      "@ventas/reportes": ["src/modules/ventas/features/ventas-reportes/index.ts"],
+      "@ventas/reportes/*": ["src/modules/ventas/features/ventas-reportes/*"],
+      "@ventas/configuracion": ["src/modules/ventas/features/ventas-configuracion/index.ts"],
+      "@ventas/configuracion/*": ["src/modules/ventas/features/ventas-configuracion/*"]
     },
 
-    /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

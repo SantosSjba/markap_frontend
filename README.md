@@ -1,6 +1,6 @@
 # Markap Frontend
 
-El proyecto usa **Arquitectura por Features (Clean + Modular)**. El código se organiza en capas: `app`, `applications`, `features`, `widgets`, `shared`.
+El proyecto usa **arquitectura modular (Clean + FSD)**. **Imports de dominio**: alias `@modules/*` (ver `docs/CLEAN_MODULES.md` para el mapa físico). Core en `app/`, layouts en `shared/layouts` (`@layouts`), UI compartida en `shared`.
 
 - **[Arquitectura](docs/ARCHITECTURE.md)** — Capas, dependencias y convenciones.
 - **[Cómo agregar funcionalidades](docs/ADDING_FEATURES.md)** — Pasos para nuevas aplicaciones, funciones o features.

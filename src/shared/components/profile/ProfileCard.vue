@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAuthStore } from '@features/auth/stores'
+import { useAuthStore } from '@modules/auth'
 
 /**
  * ProfileCard - Componente reutilizable para mostrar datos del perfil
