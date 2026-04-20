@@ -9,7 +9,7 @@ import { useSlots, computed } from 'vue'
 interface Props {
   /** VeeValidate / bindings pueden enviar undefined hasta el primer input */
   modelValue?: string | number | null
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date'
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date' | 'datetime-local'
   placeholder?: string
   label?: string
   error?: string

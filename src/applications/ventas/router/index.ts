@@ -91,8 +91,20 @@ export const ventasRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'ventas-procesos',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../ventas-sales/views/VentasProcesosView.vue'),
             meta: { title: 'Procesos de Venta' },
+          },
+          {
+            path: 'pipeline',
+            name: 'ventas-procesos-pipeline',
+            component: () => import('../ventas-sales/views/VentasPipelineView.vue'),
+            meta: { title: 'Pipeline de ventas' },
+          },
+          {
+            path: ':id',
+            name: 'ventas-proceso-detalle',
+            component: () => import('../ventas-sales/views/VentasProcesoDetalleView.vue'),
+            meta: { title: 'Detalle proceso' },
           },
         ],
       },
@@ -104,7 +116,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'ventas-separaciones',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../ventas-sales/views/VentasSeparacionesView.vue'),
             meta: { title: 'Separaciones' },
           },
         ],
@@ -117,7 +129,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'ventas-cierres',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../ventas-sales/views/VentasCierresView.vue'),
             meta: { title: 'Cierres' },
           },
         ],
