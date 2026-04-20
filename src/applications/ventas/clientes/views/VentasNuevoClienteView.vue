@@ -16,6 +16,7 @@ import {
 } from '../composables/useVentasClients'
 import { useVentasAgentsList } from '@applications/ventas/agentes/composables/useAgents'
 import { ventasPropertyKeys } from '@applications/ventas/propiedades/composables/useVentasProperties'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { VentasDocumentType } from '../services/clients.service'
 import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../constants/leadOrigins'
 import type { VentasLeadOriginCode } from '../constants/leadOrigins'
@@ -250,7 +251,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         assignedAgentId: formValues.assignedAgentId?.trim() || null,
       })
       if (returnTo.value && data?.id) {
-        await queryClient.invalidateQueries({ queryKey: ventasPropertyKeys.root })
+        await invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
         void router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
       } else {
         void router.push('/ventas/clientes')
@@ -278,7 +279,7 @@ const onSubmit = handleSubmit(async (formValues) => {
       },
     })
     if (returnTo.value && data?.id) {
-      await queryClient.invalidateQueries({ queryKey: ventasPropertyKeys.root })
+      await invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
       void router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
     } else {
       void router.push('/ventas/clientes')

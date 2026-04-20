@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { alertConfigService } from '../services/alert-config.service'
 import type { UpsertAlertConfigPayload } from '../services/alert-config.service'
 
@@ -22,7 +23,7 @@ export function useAlertConfig(applicationSlug = 'alquileres') {
     mutationFn: (payload: UpsertAlertConfigPayload) =>
       alertConfigService.upsert(applicationSlug, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey })
+      void invalidateQuerySubtree(queryClient, queryKey)
       saveSuccess.value = true
       saveError.value = null
       void markapAlert.toast.success('Configuración de alertas guardada')

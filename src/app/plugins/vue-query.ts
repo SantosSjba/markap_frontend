@@ -8,7 +8,8 @@ const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 30,
       retry: 1,
       refetchOnWindowFocus: true,
-      refetchOnMount: false,
+      /** Tras invalidar mutaciones, al volver a una vista los datos obsoletos se refrescan. */
+      refetchOnMount: true,
     },
     mutations: {
       retry: 0,

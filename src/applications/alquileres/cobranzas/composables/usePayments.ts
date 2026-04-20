@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import {
   paymentsService,
   type ListPendingParams,
@@ -52,7 +53,7 @@ export function useRegisterPayment() {
     mutationFn: ({ paymentId, data }: { paymentId: string; data: RegisterPaymentPayload }) =>
       paymentsService.registerPayment(paymentId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.all })
+      invalidateQuerySubtree(queryClient, paymentKeys.all)
       void markapAlert.toast.success('Pago registrado')
     },
     onError: (err) => {
@@ -67,7 +68,7 @@ export function useSaveCommunicationNote() {
     mutationFn: ({ rentalId, note }: { rentalId: string; note: string }) =>
       paymentsService.saveCommunicationNote(rentalId, note),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.overdue() })
+      invalidateQuerySubtree(queryClient, paymentKeys.all)
       void markapAlert.toast.success('Nota de comunicación guardada')
     },
     onError: (err) => {

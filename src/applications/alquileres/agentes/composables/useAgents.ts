@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import {
   agentsService,
   type ListAgentsParams,
@@ -59,7 +60,7 @@ export function useCreateAgent() {
   const mutation = useMutation({
     mutationFn: (payload: CreateAgentPayload) => agentsService.create(payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all })
+      invalidateQuerySubtree(queryClient, agentKeys.all)
       void markapAlert.toast.success(
         'Agente registrado',
         'Quedó asociado al módulo de alquileres y ya aparece en el listado.',
@@ -74,8 +75,7 @@ export function useCreateAgent() {
   })
   return {
     ...mutation,
-    invalidateList: () =>
-      queryClient.invalidateQueries({ queryKey: agentKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, agentKeys.all),
   }
 }
 
@@ -85,7 +85,7 @@ export function useUpdateAgent() {
     mutationFn: ({ id, data }: { id: string; data: UpdateAgentPayload }) =>
       agentsService.update(id, data),
     onSuccess: (_, { data }) => {
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all })
+      invalidateQuerySubtree(queryClient, agentKeys.all)
       if (isDeactivateOnlyUpdate(data)) {
         void markapAlert.toast.success(
           'Agente desactivado',
@@ -112,8 +112,7 @@ export function useUpdateAgent() {
   })
   return {
     ...mutation,
-    invalidateList: () =>
-      queryClient.invalidateQueries({ queryKey: agentKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, agentKeys.all),
   }
 }
 
@@ -122,7 +121,7 @@ export function useDeleteAgent() {
   const mutation = useMutation({
     mutationFn: (id: string) => agentsService.delete(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all })
+      invalidateQuerySubtree(queryClient, agentKeys.all)
       void markapAlert.toast.success(
         'Agente eliminado',
         'Se aplicó borrado lógico: dejará de mostrarse en el listado.',
@@ -137,7 +136,6 @@ export function useDeleteAgent() {
   })
   return {
     ...mutation,
-    invalidateList: () =>
-      queryClient.invalidateQueries({ queryKey: agentKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, agentKeys.all),
   }
 }

@@ -8,6 +8,7 @@ import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/forms'
 import { useDocumentTypes, useDepartments, useProvinces, useDistricts, useCreateClient } from '../composables/useClients'
 import { propertyKeys } from '@applications/alquileres/propiedades/composables/useProperties'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { DocumentType } from '../services/clients.service'
 
@@ -166,7 +167,7 @@ const onSubmit = handleSubmit(async (formValues) => {
     })
     await createMutation.invalidateList()
     if (returnTo.value && data?.id) {
-      await queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      await invalidateQuerySubtree(queryClient, propertyKeys.all)
       router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
     } else {
       router.push('/alquileres/clientes')

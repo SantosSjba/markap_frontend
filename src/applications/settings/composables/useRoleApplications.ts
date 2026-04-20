@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { roleApplicationsService } from '../services'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { ApplicationItem } from '../services/role-applications.service'
 import type { RoleInfo } from '../types'
 
@@ -59,9 +60,8 @@ export function useAssignRoleApplication() {
   return useMutation({
     mutationFn: ({ roleId, applicationId }: { roleId: string; applicationId: string }) =>
       roleApplicationsService.assignApplication(roleId, applicationId),
-    onSuccess: (_, { roleId }) => {
-      queryClient.invalidateQueries({ queryKey: roleApplicationKeys.page() })
-      queryClient.invalidateQueries({ queryKey: roleApplicationKeys.roleApps(roleId) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, roleApplicationKeys.all)
       void markapAlert.toast.success('Acceso concedido a la aplicación')
     },
     onError: (err) => {
@@ -79,9 +79,8 @@ export function useRevokeRoleApplication() {
   return useMutation({
     mutationFn: ({ roleId, applicationId }: { roleId: string; applicationId: string }) =>
       roleApplicationsService.revokeApplication(roleId, applicationId),
-    onSuccess: (_, { roleId }) => {
-      queryClient.invalidateQueries({ queryKey: roleApplicationKeys.page() })
-      queryClient.invalidateQueries({ queryKey: roleApplicationKeys.roleApps(roleId) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, roleApplicationKeys.all)
       void markapAlert.toast.success('Acceso a la aplicación revocado')
     },
     onError: (err) => {

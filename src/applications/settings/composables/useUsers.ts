@@ -3,6 +3,7 @@ import { usersService } from '../services'
 import { useAuthStore } from '@features/auth/stores'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { CreateUserData, UpdateUserData } from '../types'
 
 /**
@@ -64,7 +65,7 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: (userData: CreateUserData) => usersService.create(userData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() })
+      invalidateQuerySubtree(queryClient, userKeys.all)
       void markapAlert.toast.success('Usuario creado', 'El listado se actualizará.')
     },
     onError: (err) => {
@@ -84,8 +85,7 @@ export function useUpdateUser() {
     mutationFn: ({ id, data }: { id: string; data: UpdateUserData }) => 
       usersService.update(id, data),
     onSuccess: (updatedUser, variables) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) })
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() })
+      invalidateQuerySubtree(queryClient, userKeys.all)
 
       if (authStore.user?.id === variables.id) {
         authStore.updateCurrentUser({
@@ -110,9 +110,8 @@ export function useToggleUserActive() {
 
   return useMutation({
     mutationFn: (userId: string) => usersService.toggleActive(userId),
-    onSuccess: (_, userId) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) })
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, userKeys.all)
       void markapAlert.toast.success('Estado del usuario actualizado')
     },
     onError: (err) => {
@@ -130,9 +129,8 @@ export function useAssignRole() {
   return useMutation({
     mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) => 
       usersService.assignRole(userId, roleId),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.userId) })
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, userKeys.all)
       void markapAlert.toast.success('Rol asignado')
     },
     onError: (err) => {
@@ -150,9 +148,8 @@ export function useRevokeRole() {
   return useMutation({
     mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) => 
       usersService.revokeRole(userId, roleId),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.userId) })
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, userKeys.all)
       void markapAlert.toast.success('Rol quitado')
     },
     onError: (err) => {

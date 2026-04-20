@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import {
   clientsService,
   type CreateClientPayload,
@@ -80,7 +81,7 @@ export function useCreateClient() {
   const mutation = useMutation({
     mutationFn: (data: CreateClientPayload) => clientsService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: clientKeys.all })
+      invalidateQuerySubtree(queryClient, clientKeys.all)
       void markapAlert.toast.success('Cliente registrado')
     },
     onError: (err) => {
@@ -89,7 +90,7 @@ export function useCreateClient() {
   })
   return {
     ...mutation,
-    invalidateList: () => queryClient.refetchQueries({ queryKey: clientKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, clientKeys.all),
   }
 }
 
@@ -98,9 +99,8 @@ export function useUpdateClient() {
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateClientPayload }) =>
       clientsService.update(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: clientKeys.all })
-      queryClient.invalidateQueries({ queryKey: clientKeys.detail(id) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, clientKeys.all)
       void markapAlert.toast.success('Cliente actualizado')
     },
     onError: (err) => {
@@ -109,7 +109,7 @@ export function useUpdateClient() {
   })
   return {
     ...mutation,
-    invalidateList: () => queryClient.refetchQueries({ queryKey: clientKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, clientKeys.all),
   }
 }
 
@@ -118,7 +118,7 @@ export function useDeleteClient() {
   return useMutation({
     mutationFn: (id: string) => clientsService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: clientKeys.all })
+      invalidateQuerySubtree(queryClient, clientKeys.all)
       void markapAlert.toast.success('Cliente eliminado')
     },
     onError: (err) => {

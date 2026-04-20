@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import {
   rentalsService,
   type CreateRentalPayload,
@@ -50,7 +51,7 @@ export function useCreateRental() {
       files?: { contractFile?: File; deliveryActFile?: File }
     }) => rentalsService.create(params.data, params.files),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: rentalKeys.all })
+      invalidateQuerySubtree(queryClient, rentalKeys.all)
       void markapAlert.toast.success('Contrato de alquiler creado')
     },
     onError: (err) => {
@@ -60,7 +61,7 @@ export function useCreateRental() {
   return {
     ...mutation,
     /** Refresca el listado y espera a que termine (para usar antes de navegar). */
-    invalidateList: () => queryClient.refetchQueries({ queryKey: rentalKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, rentalKeys.all),
   }
 }
 
@@ -69,9 +70,8 @@ export function useUpdateRental() {
   const mutation = useMutation({
     mutationFn: ({ id, data, files }: { id: string; data: UpdateRentalPayload; files?: { contractFile?: File; deliveryActFile?: File } }) =>
       rentalsService.update(id, data, files),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: rentalKeys.all })
-      queryClient.invalidateQueries({ queryKey: rentalKeys.detail(id) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, rentalKeys.all)
       void markapAlert.toast.success('Contrato actualizado')
     },
     onError: (err) => {
@@ -81,7 +81,7 @@ export function useUpdateRental() {
   return {
     ...mutation,
     /** Refresca el listado y espera a que termine (para usar antes de navegar). */
-    invalidateList: () => queryClient.refetchQueries({ queryKey: rentalKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, rentalKeys.all),
   }
 }
 
@@ -106,10 +106,8 @@ export function useUpsertRentalFinancialConfig() {
   return useMutation({
     mutationFn: ({ rentalId, data }: { rentalId: string; data: UpsertRentalFinancialConfigPayload }) =>
       rentalsService.upsertFinancialConfig(rentalId, data),
-    onSuccess: (_, { rentalId }) => {
-      queryClient.invalidateQueries({ queryKey: rentalKeys.financialConfig(rentalId) })
-      queryClient.invalidateQueries({ queryKey: rentalKeys.financialBreakdown(rentalId) })
-      queryClient.invalidateQueries({ queryKey: rentalKeys.detail(rentalId) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, rentalKeys.all)
       void markapAlert.toast.success('Distribución financiera guardada')
     },
     onError: (err) => {
@@ -122,9 +120,8 @@ export function useCancelRental() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => rentalsService.cancel(id),
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: rentalKeys.all })
-      queryClient.invalidateQueries({ queryKey: rentalKeys.detail(id) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, rentalKeys.all)
       void markapAlert.toast.success('Contrato anulado')
     },
     onError: (err) => {

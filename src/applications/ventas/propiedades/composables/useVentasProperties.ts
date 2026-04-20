@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import {
   ventasPropertiesService,
   type VentasCreatePropertyPayload,
@@ -106,7 +107,7 @@ export function useVentasCreateProperty() {
   const mutation = useMutation({
     mutationFn: (data: VentasCreatePropertyPayload) => ventasPropertiesService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ventasPropertyKeys.root })
+      invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
       void markapAlert.toast.success('Propiedad registrada')
     },
     onError: (err) => {
@@ -115,7 +116,7 @@ export function useVentasCreateProperty() {
   })
   return {
     ...mutation,
-    invalidateList: () => queryClient.refetchQueries({ queryKey: ventasPropertyKeys.root }),
+    invalidateList: () => refetchQuerySubtree(queryClient, ventasPropertyKeys.root),
   }
 }
 
@@ -124,9 +125,8 @@ export function useVentasUpdateProperty() {
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: VentasUpdatePropertyPayload }) =>
       ventasPropertiesService.update(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ventasPropertyKeys.root })
-      queryClient.invalidateQueries({ queryKey: ventasPropertyKeys.detail(variables.id) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
       void markapAlert.toast.success('Propiedad actualizada')
     },
     onError: (err) => {
@@ -135,7 +135,7 @@ export function useVentasUpdateProperty() {
   })
   return {
     ...mutation,
-    invalidateList: () => queryClient.refetchQueries({ queryKey: ventasPropertyKeys.root }),
+    invalidateList: () => refetchQuerySubtree(queryClient, ventasPropertyKeys.root),
   }
 }
 
@@ -149,9 +149,8 @@ export function useVentasUpdatePropertyListingStatus() {
       id: string
       listingStatus: 'AVAILABLE' | 'RESERVED' | 'SOLD'
     }) => ventasPropertiesService.updateListingStatus(id, listingStatus),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ventasPropertyKeys.root })
-      queryClient.invalidateQueries({ queryKey: ventasPropertyKeys.detail(variables.id) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
       void markapAlert.toast.success('Estado comercial actualizado')
     },
     onError: (err) => {
@@ -165,7 +164,7 @@ export function useVentasDeleteProperty() {
   return useMutation({
     mutationFn: (id: string) => ventasPropertiesService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ventasPropertyKeys.root })
+      invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
       void markapAlert.toast.success('Propiedad eliminada')
     },
     onError: (err) => {

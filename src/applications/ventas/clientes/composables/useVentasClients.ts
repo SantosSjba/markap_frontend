@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import {
   ventasClientsService,
   type CreateVentasClientPayload,
@@ -81,7 +82,7 @@ export function useVentasCreateClient() {
   return useMutation({
     mutationFn: (data: CreateVentasClientPayload) => ventasClientsService.create(data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.root })
+      invalidateQuerySubtree(queryClient, ventasClientKeys.root)
       void markapAlert.toast.success(
         'Cliente registrado',
         'El registro quedó guardado en el módulo Ventas.',
@@ -98,9 +99,8 @@ export function useVentasUpdateClient() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateVentasClientPayload }) =>
       ventasClientsService.update(id, data),
-    onSuccess: (_, { id }) => {
-      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.root })
-      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.detail(id) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, ventasClientKeys.root)
       void markapAlert.toast.success('Cliente actualizado')
     },
     onError: (err) => {
@@ -114,7 +114,7 @@ export function useVentasDeleteClient() {
   return useMutation({
     mutationFn: (id: string) => ventasClientsService.delete(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ventasClientKeys.root })
+      invalidateQuerySubtree(queryClient, ventasClientKeys.root)
       void markapAlert.toast.success('Cliente eliminado')
     },
     onError: (err) => {

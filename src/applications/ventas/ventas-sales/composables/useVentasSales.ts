@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { ventasSalesService } from '../services/ventasSales.service'
 
 export const ventasSalesKeys = {
@@ -12,9 +13,11 @@ export const ventasSalesKeys = {
   closings: (params: object) => [...ventasSalesKeys.root, 'closings', params] as const,
 }
 
-function invalidateVentasFollowUpQueries(qc: QueryClient, processId: string) {
-  void qc.invalidateQueries({ queryKey: ventasSalesKeys.processDetail(processId) })
-  void qc.invalidateQueries({ queryKey: [...ventasSalesKeys.root, 'pipeline-board'] })
+/**
+ * Invalida todo el módulo ventas-sales (listados, pipeline, detalle, separaciones, cierres).
+ */
+export function invalidateVentasSalesCache(qc: QueryClient) {
+  invalidateQuerySubtree(qc, ventasSalesKeys.root)
 }
 
 export function useVentasProcessesList(
@@ -45,7 +48,7 @@ export function useVentasCreateProcess() {
   return useMutation({
     mutationFn: ventasSalesService.createProcess,
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ventasSalesKeys.root })
+      invalidateVentasSalesCache(qc)
       void markapAlert.toast.success('Proceso creado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo crear', getApiErrorMessage(e)),
@@ -57,9 +60,8 @@ export function useVentasUpdateProcess() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: Parameters<typeof ventasSalesService.updateProcess>[1] }) =>
       ventasSalesService.updateProcess(id, body),
-    onSuccess: (_, { id }) => {
-      void qc.invalidateQueries({ queryKey: ventasSalesKeys.root })
-      void qc.invalidateQueries({ queryKey: ventasSalesKeys.processDetail(id) })
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
       void markapAlert.toast.success('Proceso actualizado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -72,9 +74,8 @@ export function useVentasUpdateProcessQuiet() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: Parameters<typeof ventasSalesService.updateProcess>[1] }) =>
       ventasSalesService.updateProcess(id, body),
-    onSuccess: (_, { id }) => {
-      void qc.invalidateQueries({ queryKey: ventasSalesKeys.root })
-      void qc.invalidateQueries({ queryKey: ventasSalesKeys.processDetail(id) })
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
     },
     onError: (e) => void markapAlert.toast.error('No se pudo mover la tarjeta', getApiErrorMessage(e)),
   })
@@ -97,8 +98,8 @@ export function useVentasAddProcessNote() {
   return useMutation({
     mutationFn: ({ processId, text }: { processId: string; text: string }) =>
       ventasSalesService.addNote(processId, text),
-    onSuccess: (_, { processId }) => {
-      invalidateVentasFollowUpQueries(qc, processId)
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
       void markapAlert.toast.success('Nota agregada')
     },
     onError: (e) => void markapAlert.toast.error('Error', getApiErrorMessage(e)),
@@ -115,8 +116,8 @@ export function useVentasAddActivity() {
       processId: string
       body: Parameters<typeof ventasSalesService.addActivity>[1]
     }) => ventasSalesService.addActivity(processId, body),
-    onSuccess: (_, { processId }) => {
-      invalidateVentasFollowUpQueries(qc, processId)
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
       void markapAlert.toast.success('Actividad registrada')
     },
     onError: (e) => void markapAlert.toast.error('Error', getApiErrorMessage(e)),
@@ -133,8 +134,8 @@ export function useVentasAddReminder() {
       processId: string
       body: { title: string; dueAt: string }
     }) => ventasSalesService.addReminder(processId, body),
-    onSuccess: (_, { processId }) => {
-      invalidateVentasFollowUpQueries(qc, processId)
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
       void markapAlert.toast.success('Recordatorio creado')
     },
     onError: (e) => void markapAlert.toast.error('Error', getApiErrorMessage(e)),
@@ -146,8 +147,8 @@ export function useVentasCompleteReminder() {
   return useMutation({
     mutationFn: ({ reminderId }: { reminderId: string; processId: string }) =>
       ventasSalesService.completeReminder(reminderId),
-    onSuccess: (_, { processId }) => {
-      invalidateVentasFollowUpQueries(qc, processId)
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
       void markapAlert.toast.success('Recordatorio completado')
     },
     onError: (e) => void markapAlert.toast.error('Error', getApiErrorMessage(e)),
@@ -168,7 +169,7 @@ export function useVentasCreateSeparation() {
   return useMutation({
     mutationFn: ventasSalesService.createSeparation,
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ventasSalesKeys.root })
+      invalidateVentasSalesCache(qc)
       void markapAlert.toast.success('Separación registrada — propiedad en estado Separada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
@@ -187,7 +188,7 @@ export function useVentasCreateClosing() {
   return useMutation({
     mutationFn: ventasSalesService.createClosing,
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ventasSalesKeys.root })
+      invalidateVentasSalesCache(qc)
       void markapAlert.toast.success('Cierre registrado — propiedad vendida y comisión pendiente')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar el cierre', getApiErrorMessage(e)),
