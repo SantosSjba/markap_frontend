@@ -3,6 +3,7 @@ import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { ventasFinanzasKeys } from '../../ventas-finanzas/composables/useVentasFinanzas'
 import { ventasSalesService } from '../services/ventasSales.service'
 
 export const ventasSalesKeys = {
@@ -189,6 +190,7 @@ export function useVentasCreateClosing() {
     mutationFn: ventasSalesService.createClosing,
     onSuccess: () => {
       invalidateVentasSalesCache(qc)
+      void invalidateQuerySubtree(qc, ventasFinanzasKeys.root)
       void markapAlert.toast.success('Cierre registrado — propiedad vendida y comisión pendiente')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar el cierre', getApiErrorMessage(e)),

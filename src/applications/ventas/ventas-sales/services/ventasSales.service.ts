@@ -202,8 +202,9 @@ export const ventasSalesService = {
     paymentType: string
     notes?: string | null
     commissionAgentId?: string | null
-    commissionAmount: number
+    commissionAmount?: number
     commissionPercent?: number | null
+    commissionAutoFromProfile?: boolean
   }) =>
     apiClient
       .post(`/ventas-sales/closings?${qs({ ...scope })}`, body)

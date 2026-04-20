@@ -142,7 +142,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'ventas-pagos',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../ventas-finanzas/views/VentasPagosView.vue'),
             meta: { title: 'Pagos' },
           },
         ],
@@ -155,7 +155,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'ventas-comisiones',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../ventas-finanzas/views/VentasComisionesView.vue'),
             meta: { title: 'Comisiones' },
           },
         ],
@@ -168,7 +168,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'ventas-costos-documentacion',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../ventas-finanzas/views/VentasCostosDocumentacionView.vue'),
             meta: { title: 'Costos de Documentación' },
           },
         ],
