@@ -4,6 +4,7 @@ import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { ventasFinanzasService } from '../services/ventasFinanzas.service'
+import { invalidateVentasReportesCache } from '../../ventas-reportes/composables/useVentasReportes'
 
 export const ventasFinanzasKeys = {
   root: ['ventas-finanzas'] as const,
@@ -24,6 +25,7 @@ function invalidateVentasSalesAndFinanzas(qc: QueryClient) {
   return Promise.all([
     invalidateQuerySubtree(qc, ['ventas-sales']),
     invalidateVentasFinanzasCache(qc),
+    invalidateVentasReportesCache(qc),
   ]).then(() => undefined)
 }
 

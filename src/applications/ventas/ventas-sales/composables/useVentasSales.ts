@@ -4,6 +4,7 @@ import { markapAlert } from '@/shared/alert'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { ventasFinanzasKeys } from '../../ventas-finanzas/composables/useVentasFinanzas'
+import { invalidateVentasReportesCache } from '../../ventas-reportes/composables/useVentasReportes'
 import { ventasSalesService } from '../services/ventasSales.service'
 
 export const ventasSalesKeys = {
@@ -19,6 +20,10 @@ export const ventasSalesKeys = {
  */
 export function invalidateVentasSalesCache(qc: QueryClient) {
   invalidateQuerySubtree(qc, ventasSalesKeys.root)
+}
+
+function touchVentasReportes(qc: QueryClient) {
+  void invalidateVentasReportesCache(qc)
 }
 
 export function useVentasProcessesList(
@@ -50,6 +55,7 @@ export function useVentasCreateProcess() {
     mutationFn: ventasSalesService.createProcess,
     onSuccess: () => {
       invalidateVentasSalesCache(qc)
+      touchVentasReportes(qc)
       void markapAlert.toast.success('Proceso creado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo crear', getApiErrorMessage(e)),
@@ -63,6 +69,7 @@ export function useVentasUpdateProcess() {
       ventasSalesService.updateProcess(id, body),
     onSuccess: () => {
       invalidateVentasSalesCache(qc)
+      touchVentasReportes(qc)
       void markapAlert.toast.success('Proceso actualizado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -77,6 +84,7 @@ export function useVentasUpdateProcessQuiet() {
       ventasSalesService.updateProcess(id, body),
     onSuccess: () => {
       invalidateVentasSalesCache(qc)
+      touchVentasReportes(qc)
     },
     onError: (e) => void markapAlert.toast.error('No se pudo mover la tarjeta', getApiErrorMessage(e)),
   })
@@ -171,6 +179,7 @@ export function useVentasCreateSeparation() {
     mutationFn: ventasSalesService.createSeparation,
     onSuccess: () => {
       invalidateVentasSalesCache(qc)
+      touchVentasReportes(qc)
       void markapAlert.toast.success('Separación registrada — propiedad en estado Separada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
@@ -191,6 +200,7 @@ export function useVentasCreateClosing() {
     onSuccess: () => {
       invalidateVentasSalesCache(qc)
       void invalidateQuerySubtree(qc, ventasFinanzasKeys.root)
+      touchVentasReportes(qc)
       void markapAlert.toast.success('Cierre registrado — propiedad vendida y comisión pendiente')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar el cierre', getApiErrorMessage(e)),

@@ -181,7 +181,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
           {
             path: '',
             name: 'ventas-reportes',
-            component: () => import('../views/VentasPlaceholderView.vue'),
+            component: () => import('../ventas-reportes/views/VentasReportesView.vue'),
             meta: { title: 'Reportes' },
           },
         ],
