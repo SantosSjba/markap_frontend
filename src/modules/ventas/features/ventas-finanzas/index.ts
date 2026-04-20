@@ -16,7 +16,9 @@ export {
   useVentasCreateDocumentationCost,
   useVentasClosingProfitability,
 } from './application/useVentasFinanzas'
-export { ventasFinanzasService } from './infrastructure/ventasFinanzas.service'
+export type { VentasFinanzasRepository } from './domain/repositories/ventas-finanzas.repository'
+export { ventasFinanzasApiRepository as ventasFinanzasRepository } from './infrastructure/repositories/ventas-finanzas.api.repository'
+export { ventasFinanzasApiRepository } from './infrastructure/repositories/ventas-finanzas.api.repository'
 export type {
   BuyerPaymentRow,
   CommissionRow,

@@ -6,7 +6,7 @@ import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/forms'
+import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
   useVentasClientDocumentTypes,
   useVentasCreateClient,

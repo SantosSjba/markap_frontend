@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/vue-query'
-import { authService } from '../infrastructure/auth.service'
+import { authApiRepository } from '../infrastructure/repositories/auth.api.repository'
 
 export const authKeys = {
   all: ['auth'] as const,
@@ -8,7 +8,7 @@ export const authKeys = {
 export function useForgotPassword() {
   return useMutation({
     mutationKey: [...authKeys.all, 'forgot-password'],
-    mutationFn: (email: string) => authService.forgotPassword(email),
+    mutationFn: (email: string) => authApiRepository.forgotPassword(email),
   })
 }
 
@@ -23,6 +23,6 @@ export function useResetPassword() {
       email: string
       code: string
       newPassword: string
-    }) => authService.resetPassword(email, code, newPassword),
+    }) => authApiRepository.resetPassword(email, code, newPassword),
   })
 }

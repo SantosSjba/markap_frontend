@@ -1,13 +1,5 @@
 /**
- * Shared config - env and constants
+ * Config técnica (env, constantes de build). Reglas de negocio → `shared/domain`.
  */
 
 export * from './env.config'
-export {
-  APPLICATION_SLUGS,
-  ROLE_CODES,
-  ROLE_APPLICATION_ACCESS,
-  roleCanAccessApp,
-  getApplicationSlugsForRoles,
-} from './roleApplications'
-export type { ApplicationSlug, RoleCode } from './roleApplications'

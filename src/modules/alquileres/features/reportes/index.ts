@@ -13,7 +13,9 @@ export {
   useRentalsByMonth,
   useFinancialDistributionReport,
 } from './application/useReportes'
-export { reportesService } from './infrastructure/reportes.service'
+export type { ReportesRepository } from './domain/repositories/reportes.repository'
+export { reportesApiRepository as reportesRepository } from './infrastructure/repositories/reportes.api.repository'
+export { reportesApiRepository } from './infrastructure/repositories/reportes.api.repository'
 export { ALQUILERES_REPORTS_SLUG } from './domain/reportes.types'
 export type {
   ReportsSummary,

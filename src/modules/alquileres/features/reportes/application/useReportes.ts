@@ -5,7 +5,7 @@ import {
   type FinancialDistributionParams,
   type RentalsByMonthParams,
 } from '../domain/reportes.types'
-import { reportesService } from '../infrastructure/reportes.service'
+import { reportesApiRepository as reportesRepository } from '../infrastructure/repositories/reportes.api.repository'
 
 export const reportKeys = {
   all: ['reports'] as const,
@@ -32,7 +32,7 @@ export function useReportsSummary(
   const daysVal = computed(() => toValue(days))
   return useQuery({
     queryKey: computed(() => reportKeys.summary(slugVal.value, daysVal.value)),
-    queryFn: () => reportesService.getSummary(slugVal.value, daysVal.value),
+    queryFn: () => reportesRepository.getSummary(slugVal.value, daysVal.value),
   })
 }
 
@@ -44,35 +44,35 @@ export function useContractsExpiring(
   const daysVal = computed(() => toValue(days))
   return useQuery({
     queryKey: computed(() => reportKeys.contractsExpiring(slugVal.value, daysVal.value)),
-    queryFn: () => reportesService.getContractsExpiring(slugVal.value, daysVal.value),
+    queryFn: () => reportesRepository.getContractsExpiring(slugVal.value, daysVal.value),
   })
 }
 
 export function usePropertiesWithoutContract(applicationSlug: string = ALQUILERES_REPORTS_SLUG) {
   return useQuery({
     queryKey: reportKeys.propertiesWithoutContract(applicationSlug),
-    queryFn: () => reportesService.getPropertiesWithoutContract(applicationSlug),
+    queryFn: () => reportesRepository.getPropertiesWithoutContract(applicationSlug),
   })
 }
 
 export function useActiveClientsReport(applicationSlug: string = ALQUILERES_REPORTS_SLUG) {
   return useQuery({
     queryKey: reportKeys.activeClients(applicationSlug),
-    queryFn: () => reportesService.getActiveClients(applicationSlug),
+    queryFn: () => reportesRepository.getActiveClients(applicationSlug),
   })
 }
 
 export function useContractStatusSummary(applicationSlug: string = ALQUILERES_REPORTS_SLUG) {
   return useQuery({
     queryKey: reportKeys.contractStatusSummary(applicationSlug),
-    queryFn: () => reportesService.getContractStatusSummary(applicationSlug),
+    queryFn: () => reportesRepository.getContractStatusSummary(applicationSlug),
   })
 }
 
 export function useMonthlyMetrics(applicationSlug: string = ALQUILERES_REPORTS_SLUG) {
   return useQuery({
     queryKey: reportKeys.monthlyMetrics(applicationSlug),
-    queryFn: () => reportesService.getMonthlyMetrics(applicationSlug),
+    queryFn: () => reportesRepository.getMonthlyMetrics(applicationSlug),
   })
 }
 
@@ -93,7 +93,7 @@ export function useRentalsByMonth(
       ),
     ),
     queryFn: () =>
-      reportesService.getRentalsByMonth(
+      reportesRepository.getRentalsByMonth(
         slugVal.value,
         paramsVal.value.year ?? new Date().getFullYear(),
         paramsVal.value.month,
@@ -117,7 +117,7 @@ export function useFinancialDistributionReport(
       ),
     ),
     queryFn: () =>
-      reportesService.getFinancialDistribution(
+      reportesRepository.getFinancialDistribution(
         slugVal.value,
         paramsVal.value.status,
         paramsVal.value.startDate,

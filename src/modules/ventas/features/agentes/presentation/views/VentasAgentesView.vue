@@ -15,7 +15,7 @@ import {
 } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useExcelExport } from '@shared/composables'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
   useVentasAgentsList,
@@ -23,7 +23,7 @@ import {
   useVentasDeleteAgent,
 } from '../../application/useAgents'
 import type { VentasAgentListItem, ListVentasAgentsParams } from '../../domain/agent.types'
-import { ventasAgentsService } from '../../infrastructure/agents.service'
+import { ventasAgentsRepository } from '@modules/ventas/features/agentes'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -206,7 +206,7 @@ const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
   try {
-    const result = await ventasAgentsService.list({
+    const result = await ventasAgentsRepository.list({
       page: 1,
       limit: 10000,
       search: searchInput.value.trim() || undefined,

@@ -1,5 +1,7 @@
 import * as yup from 'yup'
 
+/** Tipos de valores alineados: `domain/sale-process-follow-up-form.types.ts`. */
+
 export const saleProcessNoteFormSchema = yup.object({
   text: yup.string().required('La nota es obligatoria').trim(),
 })

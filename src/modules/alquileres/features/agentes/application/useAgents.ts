@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { CreateAgentPayload, ListAgentsParams, UpdateAgentPayload } from '../domain/agent.types'
-import { agentsService } from '../infrastructure/agents.service'
+import { agentsApiRepository as agentsRepository } from '../infrastructure/repositories/agents.api.repository'
 
 function isDeactivateOnlyUpdate(data: UpdateAgentPayload): boolean {
   const entries = Object.entries(data).filter(([, v]) => v !== undefined)
@@ -39,14 +39,14 @@ const agentKeys = {
 export function useAgentsList(params: Ref<ListAgentsParams>) {
   return useQuery({
     queryKey: computed(() => agentKeys.list(unref(params))),
-    queryFn: () => agentsService.list(unref(params)),
+    queryFn: () => agentsRepository.list(unref(params)),
   })
 }
 
 export function useAgent(id: Ref<string> | string) {
   return useQuery({
     queryKey: computed(() => agentKeys.detail(typeof id === 'string' ? id : unref(id))),
-    queryFn: () => agentsService.getById(typeof id === 'string' ? id : unref(id)),
+    queryFn: () => agentsRepository.getById(typeof id === 'string' ? id : unref(id)),
     enabled: computed(() => !!unref(id)),
   })
 }
@@ -54,7 +54,7 @@ export function useAgent(id: Ref<string> | string) {
 export function useCreateAgent() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (payload: CreateAgentPayload) => agentsService.create(payload),
+    mutationFn: (payload: CreateAgentPayload) => agentsRepository.create(payload),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, agentKeys.all)
       void markapAlert.toast.success(
@@ -76,7 +76,7 @@ export function useUpdateAgent() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateAgentPayload }) =>
-      agentsService.update(id, data),
+      agentsRepository.update(id, data),
     onSuccess: (_, { data }) => {
       invalidateQuerySubtree(queryClient, agentKeys.all)
       if (isDeactivateOnlyUpdate(data)) {
@@ -109,7 +109,7 @@ export function useUpdateAgent() {
 export function useDeleteAgent() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (id: string) => agentsService.delete(id),
+    mutationFn: (id: string) => agentsRepository.delete(id),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, agentKeys.all)
       void markapAlert.toast.success(

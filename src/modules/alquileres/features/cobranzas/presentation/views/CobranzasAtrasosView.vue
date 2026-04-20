@@ -14,7 +14,7 @@ import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
 import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
-import { useForm, toTypedSchema } from '@shared/forms'
+import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
   useOverduePayments,
   useRegisterPayment,
@@ -22,7 +22,7 @@ import {
   useSaveCommunicationNote,
 } from '../../application/usePayments'
 import type { OverduePaymentItem, PaymentMethod } from '../../domain/payment.types'
-import { paymentsService } from '../../infrastructure/payments.service'
+import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 
 const router = useRouter()
 
@@ -240,7 +240,7 @@ function getOverdueActions(item: OverduePaymentItem) {
 }
 
 async function handleExport() {
-  const data = await paymentsService.listOverdue('alquileres', search.value || undefined)
+  const data = await paymentsRepository.listOverdue('alquileres', search.value || undefined)
   const now = new Date().toLocaleDateString('es-PE')
   await exportToExcel({
     fileName: `cobranzas_atrasos_${now}`,

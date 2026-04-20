@@ -18,7 +18,7 @@ import { useExcelExport } from '@shared/composables'
 import { useRentalsList, useRentalStats, useCancelRental } from '../../application/useRentals'
 import type { RentalListItem, ListRentalsParams } from '../../domain/rental.types'
 import { ALQUILERES_APP_SLUG } from '../../../../config/app.constants'
-import { rentalsRepository } from '../../infrastructure/rentals.repository'
+import { rentalsRepository } from '@modules/alquileres/features/alquileres'
 import { BaseModal } from '@shared/components'
 
 const router = useRouter()

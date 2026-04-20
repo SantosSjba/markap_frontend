@@ -4,8 +4,8 @@ import * as yup from 'yup'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import { useRouter } from 'vue-router'
-import { markapAlert } from '@/shared/alert'
-import { useForm, toTypedSchema } from '@shared/forms'
+import { markapAlert } from '@/shared/composables'
+import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useAuthStore } from '@modules/auth'
 
 /**

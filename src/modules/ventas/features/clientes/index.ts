@@ -4,4 +4,6 @@
 export * from './domain'
 export * from './application'
 export * from './presentation'
-export { ventasClientsService } from './infrastructure/clients.service'
+export type { VentasClientsRepository } from './domain/repositories/ventas-clients.repository'
+export { ventasClientsApiRepository as ventasClientsRepository } from './infrastructure/repositories/ventas-clients.api.repository'
+export { ventasClientsApiRepository } from './infrastructure/repositories/ventas-clients.api.repository'

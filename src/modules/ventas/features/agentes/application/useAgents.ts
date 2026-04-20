@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type {
@@ -8,7 +8,7 @@ import type {
   ListVentasAgentsParams,
   UpdateVentasAgentPayload,
 } from '../domain/agent.types'
-import { ventasAgentsService } from '../infrastructure/agents.service'
+import { ventasAgentsApiRepository as ventasAgentsRepository } from '../infrastructure/repositories/ventas-agents.api.repository'
 
 function isDeactivateOnlyUpdate(data: UpdateVentasAgentPayload): boolean {
   const entries = Object.entries(data).filter(([, v]) => v !== undefined)
@@ -42,14 +42,14 @@ export const ventasAgentKeys = {
 export function useVentasAgentsList(params: Ref<ListVentasAgentsParams>) {
   return useQuery({
     queryKey: computed(() => ventasAgentKeys.list(unref(params))),
-    queryFn: () => ventasAgentsService.list(unref(params)),
+    queryFn: () => ventasAgentsRepository.list(unref(params)),
   })
 }
 
 export function useVentasAgent(id: Ref<string> | string) {
   return useQuery({
     queryKey: computed(() => ventasAgentKeys.detail(typeof id === 'string' ? id : unref(id))),
-    queryFn: () => ventasAgentsService.getById(typeof id === 'string' ? id : unref(id)),
+    queryFn: () => ventasAgentsRepository.getById(typeof id === 'string' ? id : unref(id)),
     enabled: computed(() => !!unref(id)),
   })
 }
@@ -57,7 +57,7 @@ export function useVentasAgent(id: Ref<string> | string) {
 export function useVentasCreateAgent() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (payload: CreateVentasAgentPayload) => ventasAgentsService.create(payload),
+    mutationFn: (payload: CreateVentasAgentPayload) => ventasAgentsRepository.create(payload),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasAgentKeys.root)
       void markapAlert.toast.success(
@@ -83,7 +83,7 @@ export function useVentasUpdateAgent() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateVentasAgentPayload }) =>
-      ventasAgentsService.update(id, data),
+      ventasAgentsRepository.update(id, data),
     onSuccess: (_, { data }) => {
       invalidateQuerySubtree(queryClient, ventasAgentKeys.root)
       if (isDeactivateOnlyUpdate(data)) {
@@ -120,7 +120,7 @@ export function useVentasUpdateAgent() {
 export function useVentasDeleteAgent() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (id: string) => ventasAgentsService.delete(id),
+    mutationFn: (id: string) => ventasAgentsRepository.delete(id),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasAgentKeys.root)
       void markapAlert.toast.success(

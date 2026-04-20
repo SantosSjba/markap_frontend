@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type {
@@ -10,7 +10,7 @@ import type {
   UpsertRentalFinancialConfigPayload,
 } from '../domain/rental.types'
 import { ALQUILERES_APP_SLUG } from '../../../config/app.constants'
-import { rentalsRepository } from '../infrastructure/rentals.repository'
+import { rentalsApiRepository as rentalsRepository } from '../infrastructure/repositories/rentals.api.repository'
 
 export const rentalKeys = {
   all: ['rentals'] as const,

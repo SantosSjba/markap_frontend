@@ -9,6 +9,8 @@ export {
   useVentasSavePipelineStages,
   useVentasSaveNumbering,
 } from './application/useVentasConfig'
-export { ventasConfigService } from './infrastructure/ventasConfig.service'
+export type { VentasConfigRepository } from './domain/repositories/ventas-config.repository'
+export { ventasConfigApiRepository as ventasConfigRepository } from './infrastructure/repositories/ventas-config.api.repository'
+export { ventasConfigApiRepository } from './infrastructure/repositories/ventas-config.api.repository'
 export type { VentasPipelineStageDTO, VentasConfigBootstrap } from './domain/config.types'
 export { ventasConfiguracionRoutes } from './presentation/router'

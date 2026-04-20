@@ -1,10 +1,10 @@
 import { useQuery, type QueryClient } from '@tanstack/vue-query'
 import { computed, watch, type Ref } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { VentasReportesRangeParams } from '../domain/reportes.types'
-import { ventasReportesService } from '../infrastructure/ventasReportes.service'
+import { ventasReportesApiRepository as ventasReportesRepository } from '../infrastructure/repositories/ventas-reportes.api.repository'
 
 function toastReportLoadError(error: Ref<unknown>) {
   watch(
@@ -39,7 +39,7 @@ export function useVentasSalesByPeriodReport(params: Ref<VentasReportesRangePara
       }),
     ),
     queryFn: () =>
-      ventasReportesService.salesByPeriod({
+      ventasReportesRepository.salesByPeriod({
         startDate: params.value.startDate,
         endDate: params.value.endDate,
         granularity: params.value.granularity ?? 'month',
@@ -62,7 +62,7 @@ export function useVentasAgentPerformanceReport(
       }),
     ),
     queryFn: () =>
-      ventasReportesService.agentPerformance({
+      ventasReportesRepository.agentPerformance({
         startDate: params.value.startDate,
         endDate: params.value.endDate,
       }),
@@ -82,7 +82,7 @@ export function useVentasConversionReport(params: Ref<{ startDate: string; endDa
       }),
     ),
     queryFn: () =>
-      ventasReportesService.conversion({
+      ventasReportesRepository.conversion({
         startDate: params.value.startDate,
         endDate: params.value.endDate,
       }),
@@ -102,7 +102,7 @@ export function useVentasFinancialFlowReport(params: Ref<{ startDate: string; en
       }),
     ),
     queryFn: () =>
-      ventasReportesService.financialFlow({
+      ventasReportesRepository.financialFlow({
         startDate: params.value.startDate,
         endDate: params.value.endDate,
       }),

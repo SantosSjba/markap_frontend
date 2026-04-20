@@ -3,8 +3,8 @@
  */
 export * from './application'
 export type { VentasSalesRepository } from './domain/repositories/ventas-sales.repository'
-export { ventasSalesRepository } from './infrastructure/ventasSales.repository'
-export { ventasSalesApiRepository, ventasSalesService } from './infrastructure/repositories/ventas-sales.api.repository'
+export { ventasSalesApiRepository as ventasSalesRepository } from './infrastructure/repositories/ventas-sales.api.repository'
+export { ventasSalesApiRepository, ventasSalesService } from './infrastructure'
 export type {
   SaleProcessListRow,
   SaleSeparationRow,

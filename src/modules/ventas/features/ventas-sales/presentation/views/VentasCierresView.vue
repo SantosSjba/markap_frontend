@@ -4,8 +4,8 @@ import { DataTable, BaseButton, FormSelect, AppIcon, BasePagination, Badge } fro
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useVentasClosingsList, useVentasCreateClosing } from '../../application/useVentasSales'
 import type { SaleClosingRow } from '../../domain/sales.types'
-import { ventasClientsService } from '@modules/ventas/features/clientes'
-import { ventasPropertiesService } from '@modules/ventas/features/propiedades'
+import { ventasClientsRepository } from '@modules/ventas/features/clientes'
+import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import { PAYMENT_TYPE_OPTIONS } from '../../domain/pipeline.constants'
 
@@ -62,8 +62,8 @@ const { mutate: createClosing, isPending } = useVentasCreateClosing()
 
 async function openModal() {
   const [buyers, props] = await Promise.all([
-    ventasClientsService.getList({ clientType: 'BUYER', page: 1, limit: 500 }),
-    ventasPropertiesService.getList({ page: 1, limit: 500 }),
+    ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 }),
+    ventasPropertiesRepository.getList({ page: 1, limit: 500 }),
   ])
   buyerOptions.value = buyers.data.map((c) => ({
     value: c.id,

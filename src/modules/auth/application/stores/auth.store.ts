@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { authService } from '../../infrastructure/auth.service'
+import { authApiRepository } from '../../infrastructure/repositories/auth.api.repository'
 import type { User, LoginCredentials } from '../../domain/auth.types'
 
 const TOKEN_KEY = 'markap_token'
@@ -54,7 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = true
 
     try {
-      const response = await authService.login(credentials)
+      const response = await authApiRepository.login(credentials)
       setAuth(response.user, response.accessToken, response.expiresIn)
       return { success: true }
     } catch (error: unknown) {
@@ -78,13 +78,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = () => {
-    authService.logout()
+    authApiRepository.logout()
     clearAuth()
   }
 
   const fetchProfile = async (): Promise<boolean> => {
     try {
-      const userData = await authService.getProfile()
+      const userData = await authApiRepository.getProfile()
       user.value = userData
       localStorage.setItem(USER_KEY, JSON.stringify(userData))
       return true

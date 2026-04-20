@@ -17,7 +17,7 @@ import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useExcelExport } from '@shared/composables'
 import { useAgentsList, useUpdateAgent, useDeleteAgent } from '../../application/useAgents'
 import type { AgentListItem, ListAgentsParams } from '../../domain/agent.types'
-import { agentsService } from '../../infrastructure/agents.service'
+import { agentsRepository } from '@modules/alquileres/features/agentes'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -197,7 +197,7 @@ const tableColumns = [
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await agentsService.list({
+  const result = await agentsRepository.list({
     applicationSlug: 'alquileres',
     page: 1,
     limit: 10000,

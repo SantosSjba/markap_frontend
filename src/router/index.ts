@@ -16,13 +16,13 @@ const baseRoutes: RouteRecordRaw[] = [
   {
     path: '/unauthorized',
     name: 'unauthorized',
-    component: () => import('@modules/shell/ui/UnauthorizedView.vue'),
+    component: () => import('@modules/shell/presentation/views/UnauthorizedView.vue'),
     meta: { title: 'Acceso Denegado' },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
-    component: () => import('@modules/shell/ui/NotFoundView.vue'),
+    component: () => import('@modules/shell/presentation/views/NotFoundView.vue'),
     meta: { title: 'Página no encontrada' },
   },
 ]

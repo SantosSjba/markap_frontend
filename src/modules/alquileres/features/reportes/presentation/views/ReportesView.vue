@@ -19,7 +19,7 @@ import {
   useMonthlyMetrics,
   useRentalsByMonth,
 } from '../../application/useReportes'
-import { reportesService } from '../../infrastructure/reportes.service'
+import { reportesRepository } from '@modules/alquileres/features/reportes'
 import type {
   ContractExpiringItem,
   PropertyWithoutContractItem,
@@ -174,7 +174,7 @@ const { isExporting, exportToExcel } = useExcelExport()
 async function handleExportTab() {
   const now = new Date().toLocaleDateString('es-PE')
   if (activeTab.value === 'contratos-por-vencer') {
-    const data = await reportesService.getContractsExpiring(APPLICATION_SLUG, days.value)
+    const data = await reportesRepository.getContractsExpiring(APPLICATION_SLUG, days.value)
     await exportToExcel({
       fileName: `contratos_por_vencer_${now}`,
       sheetName: 'Contratos por Vencer',
@@ -196,7 +196,7 @@ async function handleExportTab() {
       })),
     })
   } else if (activeTab.value === 'sin-contrato') {
-    const data = await reportesService.getPropertiesWithoutContract(APPLICATION_SLUG)
+    const data = await reportesRepository.getPropertiesWithoutContract(APPLICATION_SLUG)
     await exportToExcel({
       fileName: `propiedades_sin_contrato_${now}`,
       sheetName: 'Sin Contrato',
@@ -212,7 +212,7 @@ async function handleExportTab() {
       })),
     })
   } else if (activeTab.value === 'clientes-activos') {
-    const data = await reportesService.getActiveClients(APPLICATION_SLUG)
+    const data = await reportesRepository.getActiveClients(APPLICATION_SLUG)
     await exportToExcel({
       fileName: `clientes_activos_${now}`,
       sheetName: 'Clientes Activos',
@@ -227,7 +227,7 @@ async function handleExportTab() {
     })
   } else if (activeTab.value === 'alquiler-por-mes') {
     const p = rentalsByMonthParams.value
-    const data = await reportesService.getRentalsByMonth(
+    const data = await reportesRepository.getRentalsByMonth(
       APPLICATION_SLUG,
       p.year ?? yearFilter.value,
       p.month,

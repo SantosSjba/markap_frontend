@@ -14,9 +14,9 @@ import {
 import { usePagination } from '@shared/composables'
 import { BasePagination } from '@shared/components'
 import FormInput from '@shared/components/forms/FormInput.vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils'
-import { useForm, toTypedSchema } from '@shared/forms'
+import { useForm, toTypedSchema } from '@shared/components/forms'
 import type { UserListItem } from '../../domain/settings.types'
 
 /**

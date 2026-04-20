@@ -112,3 +112,6 @@ export const rentalsApiRepository: RentalsRepository = {
       .then((r) => mapRentalCreated(r.data))
   },
 }
+
+/** Instancia por defecto del puerto (misma referencia que el adaptador HTTP). */
+export const rentalsRepository = rentalsApiRepository

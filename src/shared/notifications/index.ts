@@ -5,7 +5,8 @@ export type {
   NotificationPayload,
   OnNotificationCallback,
 } from './domain/notification.types'
-export { notificationsService } from './infrastructure/notifications.api'
+export type { NotificationsRepository } from './domain/repositories/notifications.repository'
+export { notificationsApiRepository } from './infrastructure/repositories/notifications.api.repository'
 export {
   connectNotificationsSocket,
   disconnectNotificationsSocket,

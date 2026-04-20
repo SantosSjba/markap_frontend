@@ -12,8 +12,8 @@ import {
 } from '@shared/components'
 import { useVentasProcessesList, useVentasCreateProcess } from '../../application/useVentasSales'
 import type { SaleProcessListRow } from '../../domain/sales.types'
-import { ventasClientsService } from '@modules/ventas/features/clientes'
-import { ventasPropertiesService } from '@modules/ventas/features/propiedades'
+import { ventasClientsRepository } from '@modules/ventas/features/clientes'
+import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useVentasPipelineStages } from '@ventas/configuracion'
@@ -102,8 +102,8 @@ const { mutate: createProcess, isPending: creating } = useVentasCreateProcess()
 
 async function openNewModal() {
   const [buyers, props] = await Promise.all([
-    ventasClientsService.getList({ clientType: 'BUYER', page: 1, limit: 500 }),
-    ventasPropertiesService.getList({ page: 1, limit: 500, listingStatus: 'AVAILABLE' }),
+    ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 }),
+    ventasPropertiesRepository.getList({ page: 1, limit: 500, listingStatus: 'AVAILABLE' }),
   ])
   buyerOptions.value = buyers.data.map((c) => ({
     value: c.id,

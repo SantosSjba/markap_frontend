@@ -6,7 +6,7 @@ import {
   useAssignRoleApplication,
   useRevokeRoleApplication,
 } from '../../application/useRoleApplications'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils'
 
 /**

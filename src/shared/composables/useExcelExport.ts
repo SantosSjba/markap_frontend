@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import ExcelJS from 'exceljs'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 
 export type ExcelColumn = {
   header: string

@@ -6,8 +6,10 @@ export type {
   AssignRoleData,
   ApplicationItem,
 } from './domain/settings.types'
-export { usersService } from './infrastructure/users.service'
-export { roleApplicationsService } from './infrastructure/role-applications.service'
+export type { UsersRepository } from './domain/repositories/users.repository'
+export type { RoleApplicationsRepository } from './domain/repositories/role-applications.repository'
+export { usersApiRepository } from './infrastructure/repositories/users.api.repository'
+export { roleApplicationsApiRepository } from './infrastructure/repositories/role-applications.api.repository'
 export {
   userKeys,
   roleKeys,

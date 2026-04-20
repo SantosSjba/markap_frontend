@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type {
@@ -8,7 +8,7 @@ import type {
   ListVentasClientsParams,
   UpdateVentasClientPayload,
 } from '../domain/client.types'
-import { ventasClientsService } from '../infrastructure/clients.service'
+import { ventasClientsApiRepository as ventasClientsRepository } from '../infrastructure/repositories/ventas-clients.api.repository'
 
 /** Caché e invalidación CRM clientes Ventas (sin prefijo compartido con Alquileres). */
 export const ventasClientKeys = {
@@ -27,28 +27,28 @@ export const ventasClientKeys = {
 export function useVentasClientsList(params: Ref<ListVentasClientsParams>) {
   return useQuery({
     queryKey: computed(() => ventasClientKeys.list(params.value)),
-    queryFn: () => ventasClientsService.getList(params.value),
+    queryFn: () => ventasClientsRepository.getList(params.value),
   })
 }
 
 export function useVentasClientStats() {
   return useQuery({
     queryKey: ventasClientKeys.stats(),
-    queryFn: () => ventasClientsService.getStats(),
+    queryFn: () => ventasClientsRepository.getStats(),
   })
 }
 
 export function useVentasClientDocumentTypes() {
   return useQuery({
     queryKey: ventasClientKeys.documentTypes(),
-    queryFn: () => ventasClientsService.getDocumentTypes(),
+    queryFn: () => ventasClientsRepository.getDocumentTypes(),
   })
 }
 
 export function useVentasClientDepartments() {
   return useQuery({
     queryKey: ventasClientKeys.departments(),
-    queryFn: () => ventasClientsService.getDepartments(),
+    queryFn: () => ventasClientsRepository.getDepartments(),
     staleTime: Infinity,
   })
 }
@@ -56,7 +56,7 @@ export function useVentasClientDepartments() {
 export function useVentasClientProvinces(departmentId: Ref<string | undefined> | undefined) {
   return useQuery({
     queryKey: computed(() => ventasClientKeys.provinces(unref(departmentId))),
-    queryFn: () => ventasClientsService.getProvinces(unref(departmentId)),
+    queryFn: () => ventasClientsRepository.getProvinces(unref(departmentId)),
     enabled: computed(() => !!unref(departmentId)),
   })
 }
@@ -64,7 +64,7 @@ export function useVentasClientProvinces(departmentId: Ref<string | undefined> |
 export function useVentasClientDistricts(provinceId?: Ref<string | undefined> | string) {
   return useQuery({
     queryKey: computed(() => ventasClientKeys.districts(unref(provinceId))),
-    queryFn: () => ventasClientsService.getDistricts(unref(provinceId)),
+    queryFn: () => ventasClientsRepository.getDistricts(unref(provinceId)),
     enabled: computed(() => !!unref(provinceId)),
   })
 }
@@ -72,7 +72,7 @@ export function useVentasClientDistricts(provinceId?: Ref<string | undefined> | 
 export function useVentasClient(id: Ref<string> | string) {
   return useQuery({
     queryKey: computed(() => ventasClientKeys.detail(unref(id))),
-    queryFn: () => ventasClientsService.getById(unref(id)),
+    queryFn: () => ventasClientsRepository.getById(unref(id)),
     enabled: computed(() => !!unref(id)),
   })
 }
@@ -80,7 +80,7 @@ export function useVentasClient(id: Ref<string> | string) {
 export function useVentasCreateClient() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateVentasClientPayload) => ventasClientsService.create(data),
+    mutationFn: (data: CreateVentasClientPayload) => ventasClientsRepository.create(data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasClientKeys.root)
       void markapAlert.toast.success(
@@ -98,7 +98,7 @@ export function useVentasUpdateClient() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateVentasClientPayload }) =>
-      ventasClientsService.update(id, data),
+      ventasClientsRepository.update(id, data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasClientKeys.root)
       void markapAlert.toast.success('Cliente actualizado')
@@ -112,7 +112,7 @@ export function useVentasUpdateClient() {
 export function useVentasDeleteClient() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => ventasClientsService.delete(id),
+    mutationFn: (id: string) => ventasClientsRepository.delete(id),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasClientKeys.root)
       void markapAlert.toast.success('Cliente eliminado')

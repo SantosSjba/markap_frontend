@@ -3,8 +3,8 @@ import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import * as yup from 'yup'
 import { BaseButton, AppIcon, DataTable, FormInput, BaseTabs } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/forms'
-import { markapAlert } from '@/shared/alert'
+import { useForm, toTypedSchema } from '@shared/components/forms'
+import { markapAlert } from '@/shared/composables'
 import {
   useVentasConfigBootstrap,
   useVentasSavePipelineStages,

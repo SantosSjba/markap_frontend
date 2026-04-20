@@ -3,8 +3,8 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, AppIcon, Badge } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/forms'
-import { markapAlert } from '@/shared/alert'
+import { useForm, toTypedSchema } from '@shared/components/forms'
+import { markapAlert } from '@/shared/composables'
 import {
   useVentasAgent,
   useVentasUpdateAgent,

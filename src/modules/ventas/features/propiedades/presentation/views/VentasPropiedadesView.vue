@@ -28,7 +28,7 @@ import {
   useVentasDeleteProperty,
 } from '../../application/useVentasProperties'
 import type { VentasPropertyListItem, VentasListPropertiesParams } from '../../domain/property.types'
-import { ventasPropertiesService } from '../../infrastructure/ventasProperties.service'
+import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -312,7 +312,7 @@ function formatSalePrice(salePrice: number | null): string {
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await ventasPropertiesService.getList({
+  const result = await ventasPropertiesRepository.getList({
     page: 1,
     limit: 10000,
     search: searchInput.value.trim() || undefined,

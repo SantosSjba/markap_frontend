@@ -22,7 +22,7 @@ globs: src/**/*.ts,src/**/*.vue
 
 - Contratos (`*Repository`, interfaces) viven en **domain**.
 - Implementación HTTP (`*ApiRepository`, `*Service` adaptado) en **infrastructure**.
-- **application** depende del **tipo** del puerto; la instancia concreta sale de **infrastructure** (o inyección manual en el futuro).
+- **application** depende del **tipo** del puerto; la instancia concreta (`*ApiRepository`) se importa en **useX** / store desde **infrastructure/repositories/** (o provide/inject), no en un archivo intermedio en application.
 
 ## Barrels
 

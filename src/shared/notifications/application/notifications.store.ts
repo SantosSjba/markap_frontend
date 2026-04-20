@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@modules/auth'
-import { notificationsService } from '../infrastructure/notifications.api'
+import { notificationsApiRepository } from '../infrastructure/repositories/notifications.api.repository'
 import type { NotificationItem, NotificationPayload } from '../domain/notification.types'
 import {
   connectNotificationsSocket,
@@ -73,7 +73,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
     if (!authStore.accessToken) return
     isLoading.value = true
     try {
-      const res = await notificationsService.list({
+      const res = await notificationsApiRepository.list({
         unreadOnly,
         limit: 30,
         offset: 0,
@@ -91,7 +91,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
   async function fetchUnreadCount() {
     if (!authStore.accessToken) return
     try {
-      const res = await notificationsService.unreadCount()
+      const res = await notificationsApiRepository.unreadCount()
       unreadCount.value = res.count
     } catch {
       unreadCount.value = 0
@@ -100,7 +100,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
   async function markAsRead(id: string) {
     try {
-      await notificationsService.markAsRead(id)
+      await notificationsApiRepository.markAsRead(id)
       const item = list.value.find((n) => n.id === id)
       if (item) item.readAt = new Date().toISOString()
       if (unreadCount.value > 0) unreadCount.value -= 1

@@ -6,7 +6,7 @@ import { useAuthStore } from '@modules/auth'
 import { ThemeToggle } from '@shared/components'
 import { useMyApplications } from '../../application/useApplications'
 import type { Application } from '../../domain/application.types'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils'
 
 const router = useRouter()

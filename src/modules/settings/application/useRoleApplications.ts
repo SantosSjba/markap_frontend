@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { roleApplicationsService } from '../infrastructure/role-applications.service'
-import { markapAlert } from '@/shared/alert'
+import { roleApplicationsApiRepository } from '../infrastructure/repositories/role-applications.api.repository'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { ApplicationItem, RoleInfo } from '../domain/settings.types'
@@ -20,12 +20,12 @@ export interface RoleApplicationsPageData {
 
 function fetchRoleApplicationsPage(): Promise<RoleApplicationsPageData> {
   return Promise.all([
-    roleApplicationsService.getRoles(),
-    roleApplicationsService.getAllApplications(),
+    roleApplicationsApiRepository.getRoles(),
+    roleApplicationsApiRepository.getAllApplications(),
   ]).then(async ([roles, applications]) => {
     const entries = await Promise.all(
       roles.map(async (r) => {
-        const apps = await roleApplicationsService.getRoleApplications(r.id)
+        const apps = await roleApplicationsApiRepository.getRoleApplications(r.id)
         return [r.id, apps.map((a) => a.id)] as const
       }),
     )
@@ -49,7 +49,7 @@ export function useAssignRoleApplication() {
 
   return useMutation({
     mutationFn: ({ roleId, applicationId }: { roleId: string; applicationId: string }) =>
-      roleApplicationsService.assignApplication(roleId, applicationId),
+      roleApplicationsApiRepository.assignApplication(roleId, applicationId),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, roleApplicationKeys.all)
       void markapAlert.toast.success('Acceso concedido a la aplicación')
@@ -65,7 +65,7 @@ export function useRevokeRoleApplication() {
 
   return useMutation({
     mutationFn: ({ roleId, applicationId }: { roleId: string; applicationId: string }) =>
-      roleApplicationsService.revokeApplication(roleId, applicationId),
+      roleApplicationsApiRepository.revokeApplication(roleId, applicationId),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, roleApplicationKeys.all)
       void markapAlert.toast.success('Acceso a la aplicación revocado')

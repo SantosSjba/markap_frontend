@@ -56,15 +56,15 @@ Las funcionalidades de negocio viven bajo **`modules/ventas/features/`**: `agent
 - Contrato: `features/ventas-sales/domain/repositories/ventas-sales.repository.ts` → `VentasSalesRepository`.
 - Implementación HTTP: `features/ventas-sales/infrastructure/repositories/ventas-sales.api.repository.ts`.
 - Mapeo API → dominio: `features/ventas-sales/infrastructure/mappers/ventas-sales-api.mapper.ts`.
-- Registro del puerto: `features/ventas-sales/infrastructure/ventasSales.repository.ts`.
-- Casos de uso: `features/ventas-sales/application/useVentasSales.ts` usa `ventasSalesRepository`.
+- Registro: `ventasSalesApiRepository` / `ventasSalesRepository` en `ventas-sales.api.repository.ts` (barrel opcional en `index.ts`).
+- Casos de uso: `useVentasSales` instancia/importa el adaptador desde `infrastructure/repositories/ventas-sales.api.repository`.
 
 ## Ejemplo de puerto (Alquileres — contratos)
 
 - Contrato: `modules/alquileres/features/alquileres/domain/repositories/rentals.repository.ts` → `RentalsRepository`.
 - Implementación HTTP: `modules/alquileres/features/alquileres/infrastructure/repositories/rentals.api.repository.ts`.
 - Mapeo: `modules/alquileres/features/alquileres/infrastructure/mappers/rental.mapper.ts`.
-- Registro: `modules/alquileres/features/alquileres/infrastructure/rentals.repository.ts`.
+- Registro del puerto: mismo archivo que la implementación (`rentalsRepository` exportado en `rentals.api.repository.ts`).
 - URLs de adjuntos (HTTP puro): `modules/alquileres/features/alquileres/infrastructure/http/rental-attachment-url.ts`.
 
 ## Shared / notifications

@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { ventasFinanzasKeys } from '@ventas/finanzas'
 import { invalidateVentasReportesCache } from '@ventas/reportes'
-import { ventasSalesRepository } from '../infrastructure/ventasSales.repository'
+import { ventasSalesApiRepository as ventasSalesRepository } from '../infrastructure/repositories/ventas-sales.api.repository'
 
 export const ventasSalesKeys = {
   root: ['ventas-sales'] as const,

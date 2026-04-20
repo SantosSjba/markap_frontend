@@ -12,7 +12,7 @@ import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
 import { usePaymentHistory } from '../../application/usePayments'
 import type { PaymentHistoryItem } from '../../domain/payment.types'
-import { paymentsService } from '../../infrastructure/payments.service'
+import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 
 const router = useRouter()
 
@@ -111,7 +111,7 @@ function getHistoryActions(item: PaymentHistoryItem) {
 }
 
 async function handleExport() {
-  const result = await paymentsService.listHistory({
+  const result = await paymentsRepository.listHistory({
     applicationSlug: 'alquileres',
     page: 1,
     limit: 10000,

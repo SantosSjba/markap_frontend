@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { invalidateVentasReportesCache } from '@ventas/reportes'
-import { ventasFinanzasService } from '../infrastructure/ventasFinanzas.service'
+import { ventasFinanzasApiRepository as ventasFinanzasRepository } from '../infrastructure/repositories/ventas-finanzas.api.repository'
 
 export const ventasFinanzasKeys = {
   root: ['ventas-finanzas'] as const,
@@ -40,14 +40,14 @@ export function useVentasBuyerPaymentsList(
 ) {
   return useQuery({
     queryKey: computed(() => ventasFinanzasKeys.buyerPayments(params.value)),
-    queryFn: () => ventasFinanzasService.listBuyerPayments(params.value),
+    queryFn: () => ventasFinanzasRepository.listBuyerPayments(params.value),
   })
 }
 
 export function useVentasCreateBuyerPayment() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ventasFinanzasService.createBuyerPayment,
+    mutationFn: ventasFinanzasRepository.createBuyerPayment,
     onSuccess: () => {
       void invalidateVentasSalesAndFinanzas(qc)
       void markapAlert.toast.success('Pago registrado')
@@ -60,7 +60,7 @@ export function useVentasMarkBuyerPaymentPaid() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, paidAt }: { id: string; paidAt?: string | null }) =>
-      ventasFinanzasService.markBuyerPaymentPaid(id, paidAt !== undefined ? { paidAt } : {}),
+      ventasFinanzasRepository.markBuyerPaymentPaid(id, paidAt !== undefined ? { paidAt } : {}),
     onSuccess: () => {
       void invalidateVentasSalesAndFinanzas(qc)
       void markapAlert.toast.success('Pago marcado como pagado')
@@ -74,21 +74,21 @@ export function useVentasCommissionsList(
 ) {
   return useQuery({
     queryKey: computed(() => ventasFinanzasKeys.commissions(params.value)),
-    queryFn: () => ventasFinanzasService.listCommissions(params.value),
+    queryFn: () => ventasFinanzasRepository.listCommissions(params.value),
   })
 }
 
 export function useVentasCommissionProfiles() {
   return useQuery({
     queryKey: ventasFinanzasKeys.profiles(),
-    queryFn: () => ventasFinanzasService.listCommissionProfiles(),
+    queryFn: () => ventasFinanzasRepository.listCommissionProfiles(),
   })
 }
 
 export function useVentasMarkCommissionPaid() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => ventasFinanzasService.markCommissionPaid(id),
+    mutationFn: (id: string) => ventasFinanzasRepository.markCommissionPaid(id),
     onSuccess: () => {
       void invalidateVentasSalesAndFinanzas(qc)
       void markapAlert.toast.success('Comisión marcada como pagada')
@@ -100,7 +100,7 @@ export function useVentasMarkCommissionPaid() {
 export function useVentasRecalculateCommission() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => ventasFinanzasService.recalculateCommission(id),
+    mutationFn: (id: string) => ventasFinanzasRepository.recalculateCommission(id),
     onSuccess: () => {
       void invalidateVentasSalesAndFinanzas(qc)
       void markapAlert.toast.success('Comisión recalculada según perfil del asesor')
@@ -112,7 +112,7 @@ export function useVentasRecalculateCommission() {
 export function useVentasUpsertCommissionProfile() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ventasFinanzasService.upsertCommissionProfile,
+    mutationFn: ventasFinanzasRepository.upsertCommissionProfile,
     onSuccess: () => {
       void invalidateVentasFinanzasCache(qc)
       void markapAlert.toast.success('Porcentaje guardado')
@@ -131,14 +131,14 @@ export function useVentasDocumentationCostsList(
 ) {
   return useQuery({
     queryKey: computed(() => ventasFinanzasKeys.docCosts(params.value)),
-    queryFn: () => ventasFinanzasService.listDocumentationCosts(params.value),
+    queryFn: () => ventasFinanzasRepository.listDocumentationCosts(params.value),
   })
 }
 
 export function useVentasCreateDocumentationCost() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ventasFinanzasService.createDocumentationCost,
+    mutationFn: ventasFinanzasRepository.createDocumentationCost,
     onSuccess: () => {
       void invalidateVentasSalesAndFinanzas(qc)
       void markapAlert.toast.success('Costo registrado')
@@ -150,7 +150,7 @@ export function useVentasCreateDocumentationCost() {
 export function useVentasClosingProfitability(closingId: Ref<string> | string) {
   return useQuery({
     queryKey: computed(() => ventasFinanzasKeys.profitability(unref(closingId))),
-    queryFn: () => ventasFinanzasService.getProfitability(unref(closingId)),
+    queryFn: () => ventasFinanzasRepository.getProfitability(unref(closingId)),
     enabled: computed(() => !!unref(closingId)),
   })
 }

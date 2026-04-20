@@ -156,3 +156,6 @@ export const ventasSalesApiRepository = api
 
 /** @deprecated Preferir `ventasSalesRepository` o `ventasSalesApiRepository`. */
 export const ventasSalesService = ventasSalesApiRepository
+
+/** Instancia por defecto del puerto (misma referencia que el adaptador HTTP). */
+export const ventasSalesRepository = ventasSalesApiRepository

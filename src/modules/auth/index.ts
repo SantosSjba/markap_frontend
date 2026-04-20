@@ -1,5 +1,6 @@
 export * from './domain/auth.types'
-export * from './infrastructure/auth.service'
+export type { AuthRepository } from './domain/repositories/auth.repository'
+export { authApiRepository } from './infrastructure/repositories/auth.api.repository'
 export * from './application/stores'
 export { authKeys, useForgotPassword, useResetPassword } from './application/useAuthMutations'
 export { authRoutes } from './presentation/router'

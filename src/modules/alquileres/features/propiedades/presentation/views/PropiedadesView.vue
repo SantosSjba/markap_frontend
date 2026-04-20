@@ -24,7 +24,7 @@ import {
   useDeleteProperty,
 } from '../../application/useProperties'
 import type { PropertyListItem, ListPropertiesParams } from '../../domain/property.types'
-import { propertiesService } from '../../infrastructure/properties.service'
+import { propertiesRepository } from '@modules/alquileres/features/propiedades'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -273,7 +273,7 @@ function formatDate(d: string | null | undefined): string {
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await propertiesService.getList({
+  const result = await propertiesRepository.getList({
     applicationSlug: 'alquileres',
     page: 1,
     limit: 10000,

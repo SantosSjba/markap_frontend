@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { usersService } from '../infrastructure/users.service'
+import { usersApiRepository } from '../infrastructure/repositories/users.api.repository'
 import { useAuthStore } from '@modules/auth'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { CreateUserData, UpdateUserData } from '../domain/settings.types'
@@ -22,14 +22,14 @@ export const roleKeys = {
 export function useUsers() {
   return useQuery({
     queryKey: userKeys.list(),
-    queryFn: () => usersService.getAll(),
+    queryFn: () => usersApiRepository.getAll(),
   })
 }
 
 export function useUser(userId: string) {
   return useQuery({
     queryKey: userKeys.detail(userId),
-    queryFn: () => usersService.getById(userId),
+    queryFn: () => usersApiRepository.getById(userId),
     enabled: !!userId,
   })
 }
@@ -37,7 +37,7 @@ export function useUser(userId: string) {
 export function useRoles() {
   return useQuery({
     queryKey: roleKeys.list(),
-    queryFn: () => usersService.getRoles(),
+    queryFn: () => usersApiRepository.getRoles(),
   })
 }
 
@@ -45,7 +45,7 @@ export function useCreateUser() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (userData: CreateUserData) => usersService.create(userData),
+    mutationFn: (userData: CreateUserData) => usersApiRepository.create(userData),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, userKeys.all)
       void markapAlert.toast.success('Usuario creado', 'El listado se actualizará.')
@@ -61,7 +61,7 @@ export function useUpdateUser() {
   const authStore = useAuthStore()
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateUserData }) => usersService.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateUserData }) => usersApiRepository.update(id, data),
     onSuccess: (updatedUser, variables) => {
       invalidateQuerySubtree(queryClient, userKeys.all)
 
@@ -84,7 +84,7 @@ export function useToggleUserActive() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (userId: string) => usersService.toggleActive(userId),
+    mutationFn: (userId: string) => usersApiRepository.toggleActive(userId),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, userKeys.all)
       void markapAlert.toast.success('Estado del usuario actualizado')
@@ -100,7 +100,7 @@ export function useAssignRole() {
 
   return useMutation({
     mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) =>
-      usersService.assignRole(userId, roleId),
+      usersApiRepository.assignRole(userId, roleId),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, userKeys.all)
       void markapAlert.toast.success('Rol asignado')
@@ -116,7 +116,7 @@ export function useRevokeRole() {
 
   return useMutation({
     mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) =>
-      usersService.revokeRole(userId, roleId),
+      usersApiRepository.revokeRole(userId, roleId),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, userKeys.all)
       void markapAlert.toast.success('Rol quitado')

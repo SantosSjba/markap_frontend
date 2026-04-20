@@ -9,6 +9,7 @@ const optionalTrim = () =>
 
 /**
  * Esquema Yup para formularios de agentes (Ventas), con VeeValidate (`toTypedSchema`).
+ * Tipos de valores alineados: `domain/agent-form.types.ts`.
  */
 export const ventasAgentCreateFormSchema = yup.object({
   type: yup

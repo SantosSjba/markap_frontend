@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useForm, toTypedSchema } from '@shared/forms'
+import { useForm, toTypedSchema } from '@shared/components/forms'
 import { BaseButton, Badge, AppIcon, FormInput, FormSelect, FormTextarea } from '@shared/components'
 import {
   useVentasProcessDetail,

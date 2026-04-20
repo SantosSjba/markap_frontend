@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { computed } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { PIPELINE_STAGE_OPTIONS, pipelineStageLabel } from '@ventas/sales'
 import type { VentasPipelineStageDTO } from '../domain/config.types'
-import { ventasConfigService } from '../infrastructure/ventasConfig.service'
+import { ventasConfigApiRepository as ventasConfigRepository } from '../infrastructure/repositories/ventas-config.api.repository'
 
 export const ventasConfigKeys = {
   root: ['ventas-config'] as const,
@@ -19,7 +19,7 @@ export function invalidateVentasConfigCache(qc: QueryClient) {
 export function useVentasConfigBootstrap() {
   return useQuery({
     queryKey: ventasConfigKeys.bootstrap(),
-    queryFn: () => ventasConfigService.bootstrap(),
+    queryFn: () => ventasConfigRepository.bootstrap(),
     staleTime: 30_000,
   })
 }
@@ -52,7 +52,7 @@ export function useVentasPipelineStages() {
 export function useVentasSavePipelineStages() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (stages: VentasPipelineStageDTO[]) => ventasConfigService.replacePipelineStages(stages),
+    mutationFn: (stages: VentasPipelineStageDTO[]) => ventasConfigRepository.replacePipelineStages(stages),
     onSuccess: () => {
       void invalidateVentasConfigCache(qc)
       void invalidateQuerySubtree(qc, ['ventas-sales'])
@@ -66,7 +66,7 @@ export function useVentasSaveNumbering() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: { prefix?: string; lastNumber?: number }) =>
-      ventasConfigService.patchSaleProcessNumbering(body),
+      ventasConfigRepository.patchSaleProcessNumbering(body),
     onSuccess: () => {
       void invalidateVentasConfigCache(qc)
       void markapAlert.toast.success('Numeración actualizada')

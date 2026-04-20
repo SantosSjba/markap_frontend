@@ -23,7 +23,7 @@ import {
   useVentasDeleteClient,
 } from '../../application/useVentasClients'
 import type { VentasClientListItem, ListVentasClientsParams } from '../../domain/client.types'
-import { ventasClientsService } from '../../infrastructure/clients.service'
+import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../../domain/leadOrigins.constants'
 
 const router = useRouter()
@@ -230,7 +230,7 @@ const pipelineOptions = [
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await ventasClientsService.getList({
+  const result = await ventasClientsRepository.getList({
     page: 1,
     limit: 10000,
     search: searchInput.value.trim() || undefined,

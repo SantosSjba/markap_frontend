@@ -14,10 +14,10 @@ import FormInput from '@shared/components/forms/FormInput.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
 import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
-import { useForm, toTypedSchema } from '@shared/forms'
+import { useForm, toTypedSchema } from '@shared/components/forms'
 import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../../application/usePayments'
 import type { PendingPaymentItem, PaymentMethod } from '../../domain/payment.types'
-import { paymentsService } from '../../infrastructure/payments.service'
+import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 
 const router = useRouter()
 
@@ -194,7 +194,7 @@ function getPaymentActions(item: PendingPaymentItem) {
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const data = await paymentsService.listPending({
+  const data = await paymentsRepository.listPending({
     applicationSlug: 'alquileres',
     search: search.value || undefined,
     status: statusFilter.value !== 'ALL' ? (statusFilter.value as any) : undefined,

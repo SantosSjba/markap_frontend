@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
 import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/forms'
+import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
   usePropertyById,
   usePropertyTypes,

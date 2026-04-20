@@ -11,9 +11,9 @@ import {
   FormInput,
   FormSelect,
 } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/forms'
+import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useExcelExport } from '@shared/composables'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import {
   useVentasSalesByPeriodReport,
   useVentasAgentPerformanceReport,

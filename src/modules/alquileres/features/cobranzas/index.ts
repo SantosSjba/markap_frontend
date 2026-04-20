@@ -11,7 +11,9 @@ export {
   useRegisterPayment,
   useSaveCommunicationNote,
 } from './application/usePayments'
-export { paymentsService } from './infrastructure/payments.service'
+export type { PaymentsRepository } from './domain/repositories/payments.repository'
+export { paymentsApiRepository as paymentsRepository } from './infrastructure/repositories/payments.api.repository'
+export { paymentsApiRepository } from './infrastructure/repositories/payments.api.repository'
 export type {
   PaymentStatus,
   PaymentMethod,

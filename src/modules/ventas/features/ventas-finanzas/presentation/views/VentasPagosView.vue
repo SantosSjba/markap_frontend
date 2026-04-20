@@ -12,8 +12,8 @@ import {
   Badge,
 } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
-import { useForm, toTypedSchema } from '@shared/forms'
-import { ventasClientsService } from '@modules/ventas/features/clientes'
+import { useForm, toTypedSchema } from '@shared/components/forms'
+import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { ventasSalesRepository } from '@ventas/sales'
 import type { BuyerPaymentRow } from '../../domain/finanzas.types'
 import {
@@ -59,7 +59,7 @@ const paginationProps = computed(() => {
 const buyerFilterOptions = ref<{ value: string; label: string }[]>([{ value: '', label: 'Todos los clientes' }])
 
 async function loadBuyers() {
-  const res = await ventasClientsService.getList({ clientType: 'BUYER', page: 1, limit: 500 })
+  const res = await ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 })
   buyerFilterOptions.value = [
     { value: '', label: 'Todos los clientes' },
     ...res.data.map((c) => ({ value: c.id, label: `${c.fullName} (${c.documentNumber})` })),

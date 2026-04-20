@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { CreatePropertyPayload, ListPropertiesParams, UpdatePropertyPayload } from '../domain/property.types'
-import { propertiesService } from '../infrastructure/properties.service'
+import { propertiesApiRepository as propertiesRepository } from '../infrastructure/repositories/properties.api.repository'
 
 export const propertyKeys = {
   all: ['properties'] as const,
@@ -37,14 +37,14 @@ export const propertyKeys = {
 export function usePropertyTypes() {
   return useQuery({
     queryKey: propertyKeys.propertyTypes(),
-    queryFn: () => propertiesService.getPropertyTypes(),
+    queryFn: () => propertiesRepository.getPropertyTypes(),
   })
 }
 
 export function usePropertyDepartments() {
   return useQuery({
     queryKey: propertyKeys.departments(),
-    queryFn: () => propertiesService.getDepartments(),
+    queryFn: () => propertiesRepository.getDepartments(),
     staleTime: Infinity,
   })
 }
@@ -52,7 +52,7 @@ export function usePropertyDepartments() {
 export function usePropertyProvinces(departmentId: Ref<string | undefined> | undefined) {
   return useQuery({
     queryKey: computed(() => propertyKeys.provinces(unref(departmentId))),
-    queryFn: () => propertiesService.getProvinces(unref(departmentId)),
+    queryFn: () => propertiesRepository.getProvinces(unref(departmentId)),
     enabled: computed(() => !!unref(departmentId)),
   })
 }
@@ -60,7 +60,7 @@ export function usePropertyProvinces(departmentId: Ref<string | undefined> | und
 export function usePropertyDistricts(provinceId?: Ref<string | undefined> | string) {
   return useQuery({
     queryKey: computed(() => propertyKeys.districts(unref(provinceId))),
-    queryFn: () => propertiesService.getDistricts(unref(provinceId)),
+    queryFn: () => propertiesRepository.getDistricts(unref(provinceId)),
     enabled: computed(() => !!unref(provinceId)),
   })
 }
@@ -68,7 +68,7 @@ export function usePropertyDistricts(provinceId?: Ref<string | undefined> | stri
 export function usePropertyOwners(applicationSlug = 'alquileres', search?: string) {
   return useQuery({
     queryKey: propertyKeys.owners(applicationSlug, search),
-    queryFn: () => propertiesService.getOwners(applicationSlug, search),
+    queryFn: () => propertiesRepository.getOwners(applicationSlug, search),
   })
 }
 
@@ -76,21 +76,21 @@ export function usePropertiesList(params: Ref<ListPropertiesParams> | ListProper
   const resolved = computed(() => (typeof params === 'object' && 'value' in params ? params.value : params))
   return useQuery({
     queryKey: computed(() => propertyKeys.list(resolved.value)),
-    queryFn: () => propertiesService.getList(resolved.value),
+    queryFn: () => propertiesRepository.getList(resolved.value),
   })
 }
 
 export function usePropertyStats(applicationSlug = 'alquileres') {
   return useQuery({
     queryKey: propertyKeys.stats(applicationSlug),
-    queryFn: () => propertiesService.getStats(applicationSlug),
+    queryFn: () => propertiesRepository.getStats(applicationSlug),
   })
 }
 
 export function usePropertyById(id: Ref<string> | string) {
   return useQuery({
     queryKey: computed(() => propertyKeys.detail(unref(id))),
-    queryFn: () => propertiesService.getById(unref(id)),
+    queryFn: () => propertiesRepository.getById(unref(id)),
     enabled: computed(() => !!unref(id)),
   })
 }
@@ -98,7 +98,7 @@ export function usePropertyById(id: Ref<string> | string) {
 export function useCreateProperty() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (data: CreatePropertyPayload) => propertiesService.create(data),
+    mutationFn: (data: CreatePropertyPayload) => propertiesRepository.create(data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, propertyKeys.all)
       void markapAlert.toast.success('Propiedad registrada')
@@ -117,7 +117,7 @@ export function useUpdateProperty() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdatePropertyPayload }) =>
-      propertiesService.update(id, data),
+      propertiesRepository.update(id, data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, propertyKeys.all)
       void markapAlert.toast.success('Propiedad actualizada')
@@ -141,7 +141,7 @@ export function useUpdatePropertyListingStatus() {
     }: {
       id: string
       listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE'
-    }) => propertiesService.updateListingStatus(id, listingStatus),
+    }) => propertiesRepository.updateListingStatus(id, listingStatus),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, propertyKeys.all)
       void markapAlert.toast.success('Estado de publicación actualizado')
@@ -155,7 +155,7 @@ export function useUpdatePropertyListingStatus() {
 export function useDeleteProperty() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => propertiesService.delete(id),
+    mutationFn: (id: string) => propertiesRepository.delete(id),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, propertyKeys.all)
       void markapAlert.toast.success('Propiedad eliminada')

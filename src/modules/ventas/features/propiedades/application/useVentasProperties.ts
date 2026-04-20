@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
-import { markapAlert } from '@/shared/alert'
+import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type {
@@ -8,7 +8,7 @@ import type {
   VentasListPropertiesParams,
   VentasUpdatePropertyPayload,
 } from '../domain/property.types'
-import { ventasPropertiesService } from '../infrastructure/ventasProperties.service'
+import { ventasPropertiesApiRepository as ventasPropertiesRepository } from '../infrastructure/repositories/ventas-properties.api.repository'
 
 /** Query keys solo para inventario Ventas — no comparten caché con Alquileres. */
 export const ventasPropertyKeys = {
@@ -40,14 +40,14 @@ export const ventasPropertyKeys = {
 export function useVentasPropertyTypes() {
   return useQuery({
     queryKey: ventasPropertyKeys.propertyTypes(),
-    queryFn: () => ventasPropertiesService.getPropertyTypes(),
+    queryFn: () => ventasPropertiesRepository.getPropertyTypes(),
   })
 }
 
 export function useVentasPropertyDepartments() {
   return useQuery({
     queryKey: ventasPropertyKeys.departments(),
-    queryFn: () => ventasPropertiesService.getDepartments(),
+    queryFn: () => ventasPropertiesRepository.getDepartments(),
     staleTime: Infinity,
   })
 }
@@ -55,7 +55,7 @@ export function useVentasPropertyDepartments() {
 export function useVentasPropertyProvinces(departmentId: Ref<string | undefined> | undefined) {
   return useQuery({
     queryKey: computed(() => ventasPropertyKeys.provinces(unref(departmentId))),
-    queryFn: () => ventasPropertiesService.getProvinces(unref(departmentId)),
+    queryFn: () => ventasPropertiesRepository.getProvinces(unref(departmentId)),
     enabled: computed(() => !!unref(departmentId)),
   })
 }
@@ -63,7 +63,7 @@ export function useVentasPropertyProvinces(departmentId: Ref<string | undefined>
 export function useVentasPropertyDistricts(provinceId?: Ref<string | undefined> | string) {
   return useQuery({
     queryKey: computed(() => ventasPropertyKeys.districts(unref(provinceId))),
-    queryFn: () => ventasPropertiesService.getDistricts(unref(provinceId)),
+    queryFn: () => ventasPropertiesRepository.getDistricts(unref(provinceId)),
     enabled: computed(() => !!unref(provinceId)),
   })
 }
@@ -71,7 +71,7 @@ export function useVentasPropertyDistricts(provinceId?: Ref<string | undefined> 
 export function useVentasPropertyOwners(search?: string) {
   return useQuery({
     queryKey: ventasPropertyKeys.owners(search),
-    queryFn: () => ventasPropertiesService.getOwners(search),
+    queryFn: () => ventasPropertiesRepository.getOwners(search),
   })
 }
 
@@ -83,21 +83,21 @@ export function useVentasPropertiesList(
   )
   return useQuery({
     queryKey: computed(() => ventasPropertyKeys.list(resolved.value)),
-    queryFn: () => ventasPropertiesService.getList(resolved.value),
+    queryFn: () => ventasPropertiesRepository.getList(resolved.value),
   })
 }
 
 export function useVentasPropertyStats() {
   return useQuery({
     queryKey: ventasPropertyKeys.stats(),
-    queryFn: () => ventasPropertiesService.getStats(),
+    queryFn: () => ventasPropertiesRepository.getStats(),
   })
 }
 
 export function useVentasPropertyById(id: Ref<string> | string) {
   return useQuery({
     queryKey: computed(() => ventasPropertyKeys.detail(unref(id))),
-    queryFn: () => ventasPropertiesService.getById(unref(id)),
+    queryFn: () => ventasPropertiesRepository.getById(unref(id)),
     enabled: computed(() => !!unref(id)),
   })
 }
@@ -105,7 +105,7 @@ export function useVentasPropertyById(id: Ref<string> | string) {
 export function useVentasCreateProperty() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (data: VentasCreatePropertyPayload) => ventasPropertiesService.create(data),
+    mutationFn: (data: VentasCreatePropertyPayload) => ventasPropertiesRepository.create(data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
       void markapAlert.toast.success('Propiedad registrada')
@@ -124,7 +124,7 @@ export function useVentasUpdateProperty() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: VentasUpdatePropertyPayload }) =>
-      ventasPropertiesService.update(id, data),
+      ventasPropertiesRepository.update(id, data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
       void markapAlert.toast.success('Propiedad actualizada')
@@ -148,7 +148,7 @@ export function useVentasUpdatePropertyListingStatus() {
     }: {
       id: string
       listingStatus: 'AVAILABLE' | 'RESERVED' | 'SOLD'
-    }) => ventasPropertiesService.updateListingStatus(id, listingStatus),
+    }) => ventasPropertiesRepository.updateListingStatus(id, listingStatus),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
       void markapAlert.toast.success('Estado comercial actualizado')
@@ -162,7 +162,7 @@ export function useVentasUpdatePropertyListingStatus() {
 export function useVentasDeleteProperty() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => ventasPropertiesService.delete(id),
+    mutationFn: (id: string) => ventasPropertiesRepository.delete(id),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
       void markapAlert.toast.success('Propiedad eliminada')

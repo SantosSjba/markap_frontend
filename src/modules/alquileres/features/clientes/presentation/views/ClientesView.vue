@@ -18,7 +18,7 @@ import {
 import { useExcelExport } from '@shared/composables'
 import { useClientsList, useClientStats, useDeleteClient } from '../../application/useClients'
 import type { ClientListItem, ListClientsParams } from '../../domain/client.types'
-import { clientsService } from '../../infrastructure/clients.service'
+import { clientsRepository } from '@modules/alquileres/features/clientes'
 import { BaseModal } from '@shared/components'
 
 const router = useRouter()
@@ -197,7 +197,7 @@ const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
   // Traer todos los clientes sin paginación
-  const result = await clientsService.getList({
+  const result = await clientsRepository.getList({
     applicationSlug: 'alquileres',
     page: 1,
     limit: 10000,

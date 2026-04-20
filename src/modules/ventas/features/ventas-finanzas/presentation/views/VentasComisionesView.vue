@@ -11,7 +11,7 @@ import {
   Badge,
 } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
-import { useForm, toTypedSchema } from '@shared/forms'
+import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import type { CommissionRow, CommissionProfileRow } from '../../domain/finanzas.types'
 import {

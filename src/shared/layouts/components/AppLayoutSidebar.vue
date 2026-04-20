@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import type { MenuItem } from '@shared/types'
+import type { MenuItem } from '@shared/domain'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**

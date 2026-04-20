@@ -9,7 +9,9 @@ export {
   useUpdateAgent,
   useDeleteAgent,
 } from './application/useAgents'
-export { agentsService } from './infrastructure/agents.service'
+export type { AgentsRepository } from './domain/repositories/agents.repository'
+export { agentsApiRepository as agentsRepository } from './infrastructure/repositories/agents.api.repository'
+export { agentsApiRepository } from './infrastructure/repositories/agents.api.repository'
 export type {
   AgentType,
   AgentListItem,
