@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import {
   clientsService,
   type CreateClientPayload,
@@ -8,7 +11,7 @@ import {
 } from '../services/clients.service'
 
 export const clientKeys = {
-  all: ['clients'] as const,
+  all: ['clients', 'alquileres'] as const,
   list: (params: ListClientsParams) => [...clientKeys.all, 'list', params] as const,
   detail: (id: string) => [...clientKeys.all, 'detail', id] as const,
   stats: (slug?: string) => [...clientKeys.all, 'stats', slug ?? 'alquileres'] as const,
@@ -78,12 +81,16 @@ export function useCreateClient() {
   const mutation = useMutation({
     mutationFn: (data: CreateClientPayload) => clientsService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: clientKeys.all })
+      invalidateQuerySubtree(queryClient, clientKeys.all)
+      void markapAlert.toast.success('Cliente registrado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(err))
     },
   })
   return {
     ...mutation,
-    invalidateList: () => queryClient.refetchQueries({ queryKey: clientKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, clientKeys.all),
   }
 }
 
@@ -92,14 +99,17 @@ export function useUpdateClient() {
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateClientPayload }) =>
       clientsService.update(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: clientKeys.all })
-      queryClient.invalidateQueries({ queryKey: clientKeys.detail(id) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, clientKeys.all)
+      void markapAlert.toast.success('Cliente actualizado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(err))
     },
   })
   return {
     ...mutation,
-    invalidateList: () => queryClient.refetchQueries({ queryKey: clientKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, clientKeys.all),
   }
 }
 
@@ -108,7 +118,11 @@ export function useDeleteClient() {
   return useMutation({
     mutationFn: (id: string) => clientsService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: clientKeys.all })
+      invalidateQuerySubtree(queryClient, clientKeys.all)
+      void markapAlert.toast.success('Cliente eliminado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err))
     },
   })
 }

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
+import { useForm, toTypedSchema } from '@shared/forms'
 import {
   usePropertyById,
   usePropertyTypes,
@@ -16,41 +16,41 @@ import {
 } from '../composables/useProperties'
 import type { PropertyType, OwnerOption } from '../services/properties.service'
 
+type PropertyFormValues = {
+  code: string
+  propertyTypeId: string
+  addressLine: string
+  departmentId: string
+  provinceId: string
+  districtId: string
+  description: string
+  area: string | number
+  bedrooms: string | number
+  bathrooms: string | number
+  ageYears: string | number
+  floorLevel: string
+  parkingSpaces: string | number
+  partida1: string
+  partida2: string
+  partida3: string
+  ownerId: string
+  monthlyRent: string | number
+  maintenanceAmount: string | number
+  depositMonths: string | number
+}
+
 const route = useRoute()
 const router = useRouter()
 
 const id = computed(() => String(route.params.id ?? ''))
 const isInitializing = ref(false)
 
-const form = ref({
-  code: '',
-  propertyTypeId: '',
-  addressLine: '',
-  departmentId: '',
-  provinceId: '',
-  districtId: '',
-  description: '',
-  area: '' as string | number,
-  bedrooms: '' as string | number,
-  bathrooms: '' as string | number,
-  ageYears: '' as string | number,
-  floorLevel: '',
-  parkingSpaces: '' as string | number,
-  partida1: '',
-  partida2: '',
-  partida3: '',
-  ownerId: '',
-  monthlyRent: '' as string | number,
-  maintenanceAmount: '' as string | number,
-  depositMonths: '' as string | number,
-})
-
-const errors = ref<Record<string, string>>({})
-
 const schema = yup.object({
   code: yup.string().required('El código es requerido').trim(),
   propertyTypeId: yup.string().required('Seleccione el tipo de propiedad'),
   addressLine: yup.string().required('La dirección es requerida').trim(),
+  departmentId: yup.string().trim(),
+  provinceId: yup.string().trim(),
   districtId: yup.string().required('Seleccione el distrito'),
   description: yup.string().trim(),
   area: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
@@ -68,8 +68,55 @@ const schema = yup.object({
   depositMonths: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
 })
 
-const selectedDepartmentId = computed(() => form.value.departmentId || undefined)
-const selectedProvinceId = computed(() => form.value.provinceId || undefined)
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm<PropertyFormValues>({
+  validationSchema: toTypedSchema(schema) as never,
+  initialValues: {
+    code: '',
+    propertyTypeId: '',
+    addressLine: '',
+    departmentId: '',
+    provinceId: '',
+    districtId: '',
+    description: '',
+    area: '',
+    bedrooms: '',
+    bathrooms: '',
+    ageYears: '',
+    floorLevel: '',
+    parkingSpaces: '',
+    partida1: '',
+    partida2: '',
+    partida3: '',
+    ownerId: '',
+    monthlyRent: '',
+    maintenanceAmount: '',
+    depositMonths: '',
+  },
+})
+
+const codeBinds = defineComponentBinds('code')
+const propertyTypeIdBinds = defineComponentBinds('propertyTypeId')
+const addressLineBinds = defineComponentBinds('addressLine')
+const departmentIdBinds = defineComponentBinds('departmentId')
+const provinceIdBinds = defineComponentBinds('provinceId')
+const districtIdBinds = defineComponentBinds('districtId')
+const descriptionBinds = defineComponentBinds('description')
+const areaBinds = defineComponentBinds('area')
+const bedroomsBinds = defineComponentBinds('bedrooms')
+const bathroomsBinds = defineComponentBinds('bathrooms')
+const ageYearsBinds = defineComponentBinds('ageYears')
+const floorLevelBinds = defineComponentBinds('floorLevel')
+const parkingSpacesBinds = defineComponentBinds('parkingSpaces')
+const partida1Binds = defineComponentBinds('partida1')
+const partida2Binds = defineComponentBinds('partida2')
+const partida3Binds = defineComponentBinds('partida3')
+const ownerIdBinds = defineComponentBinds('ownerId')
+const monthlyRentBinds = defineComponentBinds('monthlyRent')
+const maintenanceAmountBinds = defineComponentBinds('maintenanceAmount')
+const depositMonthsBinds = defineComponentBinds('depositMonths')
+
+const selectedDepartmentId = computed(() => values.departmentId || undefined)
+const selectedProvinceId = computed(() => values.provinceId || undefined)
 
 const { data: property, isLoading: loadingProperty, isError: propertyError } = usePropertyById(id)
 const { data: propertyTypes, isLoading: loadingTypes } = usePropertyTypes()
@@ -83,16 +130,22 @@ const loading = computed(
   () => loadingProperty.value || loadingTypes.value || loadingDepartments.value || loadingOwners.value
 )
 
-watch(() => form.value.departmentId, () => {
-  if (isInitializing.value) return
-  form.value.provinceId = ''
-  form.value.districtId = ''
-})
+watch(
+  () => values.departmentId,
+  () => {
+    if (isInitializing.value) return
+    setFieldValue('provinceId', '')
+    setFieldValue('districtId', '')
+  },
+)
 
-watch(() => form.value.provinceId, () => {
-  if (isInitializing.value) return
-  form.value.districtId = ''
-})
+watch(
+  () => values.provinceId,
+  () => {
+    if (isInitializing.value) return
+    setFieldValue('districtId', '')
+  },
+)
 
 watch(
   property,
@@ -101,31 +154,35 @@ watch(
     isInitializing.value = true
     const selectedId = route.query.selectedClientId
     const ownerId = typeof selectedId === 'string' && selectedId ? selectedId : p.ownerId
-    form.value = {
-      code: p.code,
-      propertyTypeId: p.propertyTypeId,
-      addressLine: p.addressLine,
-      departmentId: p.district?.province?.department?.id ?? '',
-      provinceId: p.district?.province?.id ?? '',
-      districtId: p.districtId,
-      description: p.description ?? '',
-      area: p.area ?? '',
-      bedrooms: p.bedrooms ?? '',
-      bathrooms: p.bathrooms ?? '',
-      ageYears: p.ageYears ?? '',
-      floorLevel: p.floorLevel ?? '',
-      parkingSpaces: p.parkingSpaces ?? '',
-      partida1: p.partida1 ?? '',
-      partida2: p.partida2 ?? '',
-      partida3: p.partida3 ?? '',
-      ownerId,
-      monthlyRent: p.monthlyRent ?? '',
-      maintenanceAmount: p.maintenanceAmount ?? '',
-      depositMonths: p.depositMonths ?? '',
-    }
-    setTimeout(() => { isInitializing.value = false }, 0)
+    resetForm({
+      values: {
+        code: p.code,
+        propertyTypeId: p.propertyTypeId,
+        addressLine: p.addressLine,
+        departmentId: p.district?.province?.department?.id ?? '',
+        provinceId: p.district?.province?.id ?? '',
+        districtId: p.districtId,
+        description: p.description ?? '',
+        area: p.area ?? '',
+        bedrooms: p.bedrooms ?? '',
+        bathrooms: p.bathrooms ?? '',
+        ageYears: p.ageYears ?? '',
+        floorLevel: p.floorLevel ?? '',
+        parkingSpaces: p.parkingSpaces ?? '',
+        partida1: p.partida1 ?? '',
+        partida2: p.partida2 ?? '',
+        partida3: p.partida3 ?? '',
+        ownerId,
+        monthlyRent: p.monthlyRent ?? '',
+        maintenanceAmount: p.maintenanceAmount ?? '',
+        depositMonths: p.depositMonths ?? '',
+      },
+    })
+    setTimeout(() => {
+      isInitializing.value = false
+    }, 0)
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 onMounted(async () => {
@@ -153,11 +210,11 @@ const ownerOptions = computed(() =>
 )
 
 const selectedOwnerLabel = computed(() => {
-  const o = (owners.value ?? []).find((x: OwnerOption) => x.id === form.value.ownerId)
+  const o = (owners.value ?? []).find((x: OwnerOption) => x.id === values.ownerId)
   return o ? o.fullName : '—'
 })
 const selectedTypeLabel = computed(() => {
-  const t = (propertyTypes.value ?? []).find((x: PropertyType) => x.id === form.value.propertyTypeId)
+  const t = (propertyTypes.value ?? []).find((x: PropertyType) => x.id === values.propertyTypeId)
   return t ? t.name : '—'
 })
 
@@ -172,61 +229,43 @@ const goToNewOwner = () => {
   })
 }
 
-const setError = (field: string, message: string) => { errors.value[field] = message }
-const clearErrors = () => { errors.value = {} }
-
-const toNum = (v: string | number): number | null => {
-  if (v === '' || v === undefined) return null
+const toNum = (v: string | number | null | undefined): number | null => {
+  if (v === '' || v === undefined || v === null) return null
   const n = Number(v)
   return isNaN(n) ? null : n
 }
 
-const handleSubmit = async () => {
-  clearErrors()
-  try {
-    await schema.validate(form.value, { abortEarly: false })
-  } catch (e) {
-    if (e instanceof yup.ValidationError) {
-      e.inner.forEach((err) => { if (err.path) setError(err.path, err.message) })
-      return
-    }
-    throw e
-  }
-
+const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
   try {
     await updateMutation.mutateAsync({
       id: id.value,
       data: {
-        code: form.value.code.trim(),
-        propertyTypeId: form.value.propertyTypeId,
-        addressLine: form.value.addressLine.trim(),
-        districtId: form.value.districtId,
-        description: form.value.description.trim() || null,
-        area: toNum(form.value.area),
-        bedrooms: toNum(form.value.bedrooms),
-        bathrooms: toNum(form.value.bathrooms),
-        ageYears: toNum(form.value.ageYears),
-        floorLevel: form.value.floorLevel.trim() || null,
-        parkingSpaces: toNum(form.value.parkingSpaces),
-        partida1: form.value.partida1.trim() || null,
-        partida2: form.value.partida2.trim() || null,
-        partida3: form.value.partida3.trim() || null,
-        ownerId: form.value.ownerId,
-        monthlyRent: toNum(form.value.monthlyRent),
-        maintenanceAmount: toNum(form.value.maintenanceAmount),
-        depositMonths: toNum(form.value.depositMonths),
+        code: formValues.code.trim(),
+        propertyTypeId: formValues.propertyTypeId,
+        addressLine: formValues.addressLine.trim(),
+        districtId: formValues.districtId,
+        description: formValues.description.trim() || null,
+        area: toNum(formValues.area),
+        bedrooms: toNum(formValues.bedrooms),
+        bathrooms: toNum(formValues.bathrooms),
+        ageYears: toNum(formValues.ageYears),
+        floorLevel: formValues.floorLevel.trim() || null,
+        parkingSpaces: toNum(formValues.parkingSpaces),
+        partida1: formValues.partida1.trim() || null,
+        partida2: formValues.partida2.trim() || null,
+        partida3: formValues.partida3.trim() || null,
+        ownerId: formValues.ownerId,
+        monthlyRent: toNum(formValues.monthlyRent),
+        maintenanceAmount: toNum(formValues.maintenanceAmount),
+        depositMonths: toNum(formValues.depositMonths),
       },
     })
     await updateMutation.invalidateList()
     router.push('/alquileres/propiedades')
-  } catch (error) {
-    const msg =
-      isAxiosError(error) && error.response?.data?.message
-        ? String(error.response.data.message)
-        : 'Error al actualizar la propiedad'
-    setError('_form', msg)
+  } catch {
+    void 0
   }
-}
+})
 </script>
 
 <template>
@@ -273,17 +312,7 @@ const handleSubmit = async () => {
       <BaseButton variant="outline" size="sm" @click="goBack">Volver al listado</BaseButton>
     </div>
 
-    <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="handleSubmit">
-      <!-- Error global -->
-      <div
-        v-if="errors._form"
-        class="xl:col-span-3 flex items-center gap-3 px-4 py-3 rounded-lg"
-        :style="{ backgroundColor: 'var(--color-error)15', border: '1px solid var(--color-error)40', color: 'var(--color-error)' }"
-      >
-        <AppIcon icon="lucide:alert-circle" :size="18" />
-        <span class="text-sm font-medium">{{ errors._form }}</span>
-      </div>
-
+    <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">
       <!-- Columna principal -->
       <div class="xl:col-span-2 space-y-5">
 
@@ -303,14 +332,14 @@ const handleSubmit = async () => {
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
-              v-model="form.code"
+              v-bind="codeBinds"
               label="Código de Propiedad"
               placeholder="PROP-001"
               :error="errors.code"
               required
             />
             <FormSelect
-              v-model="form.propertyTypeId"
+              v-bind="propertyTypeIdBinds"
               label="Tipo de Propiedad"
               placeholder="Seleccionar tipo"
               :options="propertyTypeOptions"
@@ -318,7 +347,7 @@ const handleSubmit = async () => {
               required
             />
             <FormInput
-              v-model="form.addressLine"
+              v-bind="addressLineBinds"
               class="md:col-span-2"
               label="Dirección Completa"
               placeholder="Av. Principal 123, Dpto 501"
@@ -326,33 +355,33 @@ const handleSubmit = async () => {
               required
             />
             <FormSelect
-              v-model="form.departmentId"
+              v-bind="departmentIdBinds"
               label="Departamento"
               placeholder="Seleccionar departamento"
               :options="departmentOptions"
               :loading="loadingDepartments"
             />
             <FormSelect
-              v-model="form.provinceId"
+              v-bind="provinceIdBinds"
               label="Provincia"
               placeholder="Seleccionar provincia"
               :options="provinceOptions"
               :loading="loadingProvinces"
-              :disabled="!form.departmentId"
+              :disabled="!values.departmentId"
             />
             <FormSelect
-              v-model="form.districtId"
+              v-bind="districtIdBinds"
               label="Distrito"
               placeholder="Seleccionar distrito"
               :options="districtOptions"
               :loading="loadingDistricts"
-              :disabled="!form.provinceId"
+              :disabled="!values.provinceId"
               :error="errors.districtId"
               required
             />
           </div>
           <FormTextarea
-            v-model="form.description"
+            v-bind="descriptionBinds"
             class="mt-4"
             label="Descripción"
             placeholder="Descripción detallada de la propiedad..."
@@ -381,7 +410,7 @@ const handleSubmit = async () => {
                 <span class="text-xs font-medium">Área</span>
               </div>
               <FormInput
-                v-model="form.area"
+                v-bind="areaBinds"
                 type="number"
                 min="0"
                 step="0.01"
@@ -396,7 +425,7 @@ const handleSubmit = async () => {
                 <span class="text-xs font-medium">Dormitorios</span>
               </div>
               <FormInput
-                v-model="form.bedrooms"
+                v-bind="bedroomsBinds"
                 type="number"
                 min="0"
                 label="Habitaciones"
@@ -410,7 +439,7 @@ const handleSubmit = async () => {
                 <span class="text-xs font-medium">Baños</span>
               </div>
               <FormInput
-                v-model="form.bathrooms"
+                v-bind="bathroomsBinds"
                 type="number"
                 min="0"
                 label="Baños"
@@ -424,7 +453,7 @@ const handleSubmit = async () => {
                 <span class="text-xs font-medium">Antigüedad</span>
               </div>
               <FormInput
-                v-model="form.ageYears"
+                v-bind="ageYearsBinds"
                 type="number"
                 min="0"
                 label="Antigüedad (años)"
@@ -438,7 +467,7 @@ const handleSubmit = async () => {
                 <span class="text-xs font-medium">Piso</span>
               </div>
               <FormInput
-                v-model="form.floorLevel"
+                v-bind="floorLevelBinds"
                 label="Piso / Nivel"
                 placeholder="5to piso"
                 :error="errors.floorLevel"
@@ -450,7 +479,7 @@ const handleSubmit = async () => {
                 <span class="text-xs font-medium">Estacionamientos</span>
               </div>
               <FormInput
-                v-model="form.parkingSpaces"
+                v-bind="parkingSpacesBinds"
                 type="number"
                 min="0"
                 label="Estacionamientos"
@@ -478,7 +507,7 @@ const handleSubmit = async () => {
           <div class="flex flex-wrap items-end gap-3">
             <div class="flex-1 min-w-[200px]">
               <FormSelect
-                v-model="form.ownerId"
+                v-bind="ownerIdBinds"
                 label="Seleccionar Propietario (Cliente)"
                 placeholder="Buscar o seleccionar propietario"
                 :options="ownerOptions"
@@ -508,9 +537,9 @@ const handleSubmit = async () => {
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormInput v-model="form.partida1" label="Partida 1" placeholder="Ej. 12345678" :error="errors.partida1" />
-            <FormInput v-model="form.partida2" label="Partida 2" placeholder="Ej. 12345679" :error="errors.partida2" />
-            <FormInput v-model="form.partida3" label="Partida 3" placeholder="Ej. 12345680" :error="errors.partida3" />
+            <FormInput v-bind="partida1Binds" label="Partida 1" placeholder="Ej. 12345678" :error="errors.partida1" />
+            <FormInput v-bind="partida2Binds" label="Partida 2" placeholder="Ej. 12345679" :error="errors.partida2" />
+            <FormInput v-bind="partida3Binds" label="Partida 3" placeholder="Ej. 12345680" :error="errors.partida3" />
           </div>
         </section>
 
@@ -530,7 +559,7 @@ const handleSubmit = async () => {
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormInput
-              v-model="form.monthlyRent"
+              v-bind="monthlyRentBinds"
               type="number"
               min="0"
               step="0.01"
@@ -539,7 +568,7 @@ const handleSubmit = async () => {
               :error="errors.monthlyRent"
             />
             <FormInput
-              v-model="form.maintenanceAmount"
+              v-bind="maintenanceAmountBinds"
               type="number"
               min="0"
               step="0.01"
@@ -548,7 +577,7 @@ const handleSubmit = async () => {
               :error="errors.maintenanceAmount"
             />
             <FormInput
-              v-model="form.depositMonths"
+              v-bind="depositMonthsBinds"
               type="number"
               min="0"
               label="Garantía (meses)"
@@ -592,7 +621,7 @@ const handleSubmit = async () => {
                 Código
               </dt>
               <dd class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-                {{ form.code || '—' }}
+                {{ values.code || '—' }}
               </dd>
             </div>
             <div>
@@ -607,15 +636,15 @@ const handleSubmit = async () => {
                 <AppIcon icon="lucide:map-pin" :size="13" />
                 Dirección
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ form.addressLine || '—' }}</dd>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ values.addressLine || '—' }}</dd>
             </div>
-            <div v-if="form.provinceId || form.departmentId">
+            <div v-if="values.provinceId || values.departmentId">
               <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
                 <AppIcon icon="lucide:globe" :size="13" />
                 Ubicación
               </dt>
               <dd :style="{ color: 'var(--color-text-primary)' }">
-                {{ [(provinces?.find(p => p.id === form.provinceId)?.name), (departments?.find(d => d.id === form.departmentId)?.name)].filter(Boolean).join(', ') || '—' }}
+                {{ [(provinces?.find(p => p.id === values.provinceId)?.name), (departments?.find(d => d.id === values.departmentId)?.name)].filter(Boolean).join(', ') || '—' }}
               </dd>
             </div>
             <div class="border-t pt-3" :style="{ borderColor: 'var(--color-border)' }">
@@ -625,13 +654,13 @@ const handleSubmit = async () => {
               </dt>
               <dd :style="{ color: 'var(--color-text-primary)' }">{{ selectedOwnerLabel }}</dd>
             </div>
-            <div v-if="form.monthlyRent !== ''">
+            <div v-if="values.monthlyRent !== ''">
               <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
                 <AppIcon icon="lucide:banknote" :size="13" />
                 Alquiler mensual
               </dt>
               <dd class="font-bold" :style="{ color: 'var(--color-primary)' }">
-                S/ {{ Number(form.monthlyRent).toLocaleString('es-PE', { minimumFractionDigits: 2 }) }}
+                S/ {{ Number(values.monthlyRent).toLocaleString('es-PE', { minimumFractionDigits: 2 }) }}
               </dd>
             </div>
           </dl>
@@ -644,21 +673,21 @@ const handleSubmit = async () => {
             <div class="flex flex-col items-center gap-1 text-center">
               <AppIcon icon="lucide:bed-double" :size="16" color="var(--color-text-muted)" />
               <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
-                {{ form.bedrooms !== '' ? form.bedrooms : '—' }}
+                {{ values.bedrooms !== '' ? values.bedrooms : '—' }}
               </span>
               <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Dorm.</span>
             </div>
             <div class="flex flex-col items-center gap-1 text-center">
               <AppIcon icon="lucide:bath" :size="16" color="var(--color-text-muted)" />
               <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
-                {{ form.bathrooms !== '' ? form.bathrooms : '—' }}
+                {{ values.bathrooms !== '' ? values.bathrooms : '—' }}
               </span>
               <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Baños</span>
             </div>
             <div class="flex flex-col items-center gap-1 text-center">
               <AppIcon icon="lucide:ruler" :size="16" color="var(--color-text-muted)" />
               <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
-                {{ form.area !== '' ? `${form.area}m²` : '—' }}
+                {{ values.area !== '' ? `${values.area}m²` : '—' }}
               </span>
               <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Área</span>
             </div>

@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import * as yup from 'yup'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
+import FormInput from '@shared/components/forms/FormInput.vue'
 import { useRoute, useRouter } from 'vue-router'
+import { markapAlert } from '@/shared/alert'
+import { useForm, toTypedSchema } from '@shared/forms'
 import { useResetPassword } from '../composables'
 import { isAxiosError } from 'axios'
 
@@ -13,79 +18,79 @@ const route = useRoute()
 const router = useRouter()
 const resetMutation = useResetPassword()
 
-const email = ref('')
-const code = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
-const error = ref('')
-
 const emailFromQuery = computed(() => {
   const q = route.query.email
   return typeof q === 'string' ? q : ''
 })
 
+const resetSchema = yup.object({
+  email: yup.string().required('El correo electrónico es requerido').email('Ingrese un correo electrónico válido').trim(),
+  code: yup
+    .string()
+    .required('El código es requerido')
+    .length(6, 'El código debe tener exactamente 6 dígitos')
+    .matches(/^\d+$/, 'El código solo debe contener números'),
+  newPassword: yup.string().required('La contraseña es requerida').min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  confirmPassword: yup
+    .string()
+    .required('Confirma la contraseña')
+    .oneOf([yup.ref('newPassword')], 'Las contraseñas no coinciden'),
+})
+
+const { handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm({
+  validationSchema: toTypedSchema(resetSchema),
+  initialValues: {
+    email: '',
+    code: '',
+    newPassword: '',
+    confirmPassword: '',
+  },
+})
+
+const emailBinds = defineComponentBinds('email')
+const codeBinds = defineComponentBinds('code')
+const newPasswordBinds = defineComponentBinds('newPassword')
+const confirmPasswordBinds = defineComponentBinds('confirmPassword')
+
 onMounted(() => {
   if (emailFromQuery.value) {
-    email.value = emailFromQuery.value
+    setFieldValue('email', emailFromQuery.value)
   }
 })
 
 const isSuccess = computed(() => resetMutation.isSuccess.value)
 const isLoading = computed(() => resetMutation.isPending.value)
 
-const handleSubmit = async () => {
-  error.value = ''
-
-  if (!email.value) {
-    error.value = 'El correo electrónico es requerido'
-    return
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-    error.value = 'Ingrese un correo electrónico válido'
-    return
-  }
-
-  if (!code.value || code.value.length !== 6) {
-    error.value = 'El código debe tener exactamente 6 dígitos'
-    return
-  }
-
-  if (!/^\d{6}$/.test(code.value)) {
-    error.value = 'El código solo debe contener números'
-    return
-  }
-
-  if (!newPassword.value || newPassword.value.length < 6) {
-    error.value = 'La contraseña debe tener al menos 6 caracteres'
-    return
-  }
-
-  if (newPassword.value !== confirmPassword.value) {
-    error.value = 'Las contraseñas no coinciden'
-    return
-  }
-
+const onSubmit = handleSubmit((formValues) => {
   resetMutation.mutate(
     {
-      email: email.value.trim(),
-      code: code.value.trim(),
-      newPassword: newPassword.value,
+      email: formValues.email.trim(),
+      code: formValues.code.trim(),
+      newPassword: formValues.newPassword,
     },
     {
+      onSuccess: () => {
+        void markapAlert.toast.success(
+          'Ya puedes iniciar sesión con tu nueva contraseña.',
+          'Contraseña actualizada',
+        )
+      },
       onError: (err: unknown) => {
         const res = isAxiosError(err) ? err.response : undefined
         if (res?.status === 400) {
-          error.value = (res.data as { message?: string })?.message || 'El código es inválido o ha expirado'
+          void markapAlert.error(
+            (res.data as { message?: string })?.message || 'El código es inválido o ha expirado',
+            'Error',
+          )
         } else if (res?.status === 404) {
-          error.value = 'No existe un usuario con ese correo electrónico'
+          void markapAlert.error('No existe un usuario con ese correo electrónico', 'Error')
         } else {
-          error.value = 'Error al restablecer la contraseña. Intente nuevamente.'
+          void markapAlert.error('Error al restablecer la contraseña. Intente nuevamente.', 'Error')
         }
       },
-    }
+    },
   )
-}
+})
 
 const goToLogin = () => {
   router.push('/auth/login')
@@ -100,20 +105,7 @@ const goToLogin = () => {
         class="w-16 h-16 rounded-xl flex items-center justify-center"
         style="background-color: var(--color-primary-light); border: 1px solid var(--color-primary);"
       >
-        <svg
-          class="w-8 h-8"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          style="color: var(--color-primary);"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.5"
-            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-          />
-        </svg>
+        <AppIcon icon="lucide:key-round" :size="32" color="var(--color-primary)" />
       </div>
     </div>
 
@@ -123,20 +115,7 @@ const goToLogin = () => {
         class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
         style="background-color: var(--color-success-light); border: 1px solid var(--color-success);"
       >
-        <svg
-          class="w-8 h-8"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          style="color: var(--color-success);"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M5 13l4 4L19 7"
-          />
-        </svg>
+        <AppIcon icon="lucide:check" :size="32" color="var(--color-success)" />
       </div>
       <h2 class="text-xl font-bold mb-2" style="color: var(--color-text-primary);">
         Contraseña actualizada
@@ -162,81 +141,46 @@ const goToLogin = () => {
         Ingresa el código de 6 dígitos que recibiste por correo y tu nueva contraseña
       </p>
 
-      <form @submit.prevent="handleSubmit" class="space-y-5 text-left">
-        <!-- Email -->
-        <div>
-          <label
-            class="block text-sm font-medium mb-2"
-            style="color: var(--color-text-secondary);"
-          >
-            Correo electrónico
-          </label>
-          <input
-            v-model="email"
-            type="email"
-            placeholder="usuario@markap.com"
-            :style="error ? 'border-color: var(--color-error);' : ''"
-            class="w-full"
-            :readonly="!!emailFromQuery"
-          />
-        </div>
+      <form @submit.prevent="onSubmit" class="space-y-5 text-left">
+        <FormInput
+          v-bind="emailBinds"
+          type="email"
+          label="Correo electrónico"
+          placeholder="usuario@markap.com"
+          :error="errors.email"
+          :disabled="!!emailFromQuery"
+          required
+        />
 
-        <!-- Code -->
-        <div>
-          <label
-            class="block text-sm font-medium mb-2"
-            style="color: var(--color-text-secondary);"
-          >
-            Código de recuperación
-          </label>
-          <input
-            v-model="code"
-            type="text"
-            inputmode="numeric"
-            maxlength="6"
-            placeholder="123456"
-            :style="error ? 'border-color: var(--color-error);' : ''"
-            class="w-full text-center text-xl tracking-[0.5em] font-mono"
-          />
-        </div>
+        <FormInput
+          v-bind="codeBinds"
+          type="text"
+          label="Código de recuperación"
+          placeholder="123456"
+          input-class="text-center text-xl tracking-[0.5em] font-mono"
+          :error="errors.code"
+          required
+          inputmode="numeric"
+          maxlength="6"
+        />
 
-        <!-- New Password -->
-        <div>
-          <label
-            class="block text-sm font-medium mb-2"
-            style="color: var(--color-text-secondary);"
-          >
-            Nueva contraseña
-          </label>
-          <input
-            v-model="newPassword"
-            type="password"
-            placeholder="Mínimo 6 caracteres"
-            :style="error ? 'border-color: var(--color-error);' : ''"
-            class="w-full"
-          />
-        </div>
+        <FormInput
+          v-bind="newPasswordBinds"
+          type="password"
+          label="Nueva contraseña"
+          placeholder="Mínimo 6 caracteres"
+          :error="errors.newPassword"
+          required
+        />
 
-        <!-- Confirm Password -->
-        <div>
-          <label
-            class="block text-sm font-medium mb-2"
-            style="color: var(--color-text-secondary);"
-          >
-            Confirmar contraseña
-          </label>
-          <input
-            v-model="confirmPassword"
-            type="password"
-            placeholder="Repite la contraseña"
-            :style="error ? 'border-color: var(--color-error);' : ''"
-            class="w-full"
-          />
-        </div>
-
-        <p v-if="error" class="text-sm" style="color: var(--color-error);">
-          {{ error }}
-        </p>
+        <FormInput
+          v-bind="confirmPasswordBinds"
+          type="password"
+          label="Confirmar contraseña"
+          placeholder="Repite la contraseña"
+          :error="errors.confirmPassword"
+          required
+        />
 
         <!-- Submit -->
         <button
@@ -245,26 +189,7 @@ const goToLogin = () => {
           class="btn-primary w-full py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span v-if="isLoading" class="flex items-center justify-center gap-2">
-            <svg
-              class="animate-spin h-5 w-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              />
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
+            <AppIcon icon="line-md:loading-loop" :size="20" color="currentColor" />
             Restableciendo...
           </span>
           <span v-else>Restablecer contraseña</span>

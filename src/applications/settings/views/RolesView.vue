@@ -9,7 +9,7 @@ import type { RoleInfo } from '../types'
  * Roles list view (read-only) — uses TanStack Query
  */
 
-const { data: rolesData, isLoading, error, refetch } = useRoles()
+const { data: rolesData, isLoading, isFetching, error, refetch } = useRoles()
 
 const roles = computed<RoleInfo[]>(() => rolesData.value ?? [])
 </script>
@@ -21,7 +21,19 @@ const roles = computed<RoleInfo[]>(() => rolesData.value ?? [])
     <!-- Error -->
     <div v-if="error" class="rounded-lg p-4 mb-6" style="background-color: var(--color-error-light); color: var(--color-error);">
       Error al cargar los roles.
-      <button type="button" class="underline ml-2 font-medium" @click="() => refetch()">Reintentar</button>
+      <button
+        type="button"
+        class="underline ml-2 font-medium inline-flex items-center gap-1.5 disabled:opacity-60"
+        :disabled="isFetching"
+        @click="() => refetch()"
+      >
+        <Icon
+          v-if="isFetching"
+          icon="svg-spinners:ring-resize"
+          class="w-4 h-4"
+        />
+        Reintentar
+      </button>
     </div>
 
     <!-- Loading -->

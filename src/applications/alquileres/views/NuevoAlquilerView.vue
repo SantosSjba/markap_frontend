@@ -1,15 +1,29 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
+import { useForm, toTypedSchema } from '@shared/forms'
 import { usePropertiesList } from '@applications/alquileres/propiedades/composables/useProperties'
 import { useClientsList } from '@applications/alquileres/clientes/composables/useClients'
 import { useCreateRental } from '../composables/useRentals'
 import type { PropertyListItem } from '@applications/alquileres/propiedades/services/properties.service'
 import type { ClientListItem } from '@applications/alquileres/clientes/services/clients.service'
+
+type NuevoRentalFormValues = {
+  propertyId: string
+  tenantId: string
+  startDate: string
+  endDate: string
+  currency: string
+  monthlyAmount: string | number
+  securityDeposit: string | number
+  paymentDueDay: number
+  notes: string
+  enableAlerts: boolean
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -28,22 +42,8 @@ const listTenantsParams = ref({
   clientType: 'TENANT' as const,
 })
 
-const form = ref({
-  propertyId: '',
-  tenantId: '',
-  startDate: '',
-  endDate: '',
-  currency: 'PEN',
-  monthlyAmount: '' as string | number,
-  securityDeposit: '' as string | number,
-  paymentDueDay: 5 as number,
-  notes: '',
-  enableAlerts: true,
-})
 const contractFile = ref<File | null>(null)
 const deliveryActFile = ref<File | null>(null)
-
-const errors = ref<Record<string, string>>({})
 
 const schema = yup.object({
   propertyId: yup.string().required('Seleccione la propiedad'),
@@ -53,9 +53,44 @@ const schema = yup.object({
   currency: yup.string().required(),
   monthlyAmount: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).required('El monto mensual es requerido'),
   securityDeposit: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
-  paymentDueDay: yup.number().min(1).max(28).required(),
+  paymentDueDay: yup
+    .number()
+    .transform((_v, originalValue) => {
+      if (originalValue === '' || originalValue === null || originalValue === undefined) return NaN
+      return Number(originalValue)
+    })
+    .min(1)
+    .max(28)
+    .required(),
   notes: yup.string().trim(),
+  enableAlerts: yup.boolean().required(),
 })
+
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm<NuevoRentalFormValues>({
+  validationSchema: toTypedSchema(schema) as never,
+  initialValues: {
+    propertyId: '',
+    tenantId: '',
+    startDate: '',
+    endDate: '',
+    currency: 'PEN',
+    monthlyAmount: '',
+    securityDeposit: '',
+    paymentDueDay: 5,
+    notes: '',
+    enableAlerts: true,
+  },
+})
+
+const propertyIdBinds = defineComponentBinds('propertyId')
+const tenantIdBinds = defineComponentBinds('tenantId')
+const startDateBinds = defineComponentBinds('startDate')
+const endDateBinds = defineComponentBinds('endDate')
+const currencyBinds = defineComponentBinds('currency')
+const monthlyAmountBinds = defineComponentBinds('monthlyAmount')
+const securityDepositBinds = defineComponentBinds('securityDeposit')
+const paymentDueDayBinds = defineComponentBinds('paymentDueDay')
+const notesBinds = defineComponentBinds('notes')
 
 const { data: propertiesData } = usePropertiesList(listPropertiesParams)
 const { data: tenantsData, refetch: refetchTenants } = useClientsList(listTenantsParams)
@@ -91,7 +126,7 @@ const paymentDueDayOptions = Array.from({ length: 28 }, (_, i) => ({
 }))
 
 const selectedProperty = computed(() =>
-  (properties.value as PropertyListItem[]).find((x) => x.id === form.value.propertyId)
+  (properties.value as PropertyListItem[]).find((x) => x.id === values.propertyId)
 )
 const selectedPropertyLabel = computed(() => {
   const p = selectedProperty.value
@@ -100,24 +135,24 @@ const selectedPropertyLabel = computed(() => {
 
 // Pre-llenar monto de alquiler (y garantía si hay datos) al elegir propiedad; el usuario puede modificar
 watch(
-  () => form.value.propertyId,
+  () => values.propertyId,
   (propertyId) => {
     const p = (properties.value as PropertyListItem[]).find((x) => x.id === propertyId)
-    if (p && p.monthlyRent != null) form.value.monthlyAmount = p.monthlyRent
-  }
+    if (p && p.monthlyRent != null) setFieldValue('monthlyAmount', p.monthlyRent)
+  },
 )
 const selectedTenantLabel = computed(() => {
-  const t = (tenants.value as ClientListItem[]).find((x) => x.id === form.value.tenantId)
+  const t = (tenants.value as ClientListItem[]).find((x) => x.id === values.tenantId)
   return t ? t.fullName : 'Sin seleccionar'
 })
 const vigenciaLabel = computed(() => {
-  if (!form.value.startDate || !form.value.endDate) return 'Sin definir'
-  return `${form.value.startDate} - ${form.value.endDate}`
+  if (!values.startDate || !values.endDate) return 'Sin definir'
+  return `${values.startDate} - ${values.endDate}`
 })
 const montoLabel = computed(() => {
-  const n = Number(form.value.monthlyAmount)
+  const n = Number(values.monthlyAmount)
   if (isNaN(n)) return 'S/ 0.00'
-  const sym = form.value.currency === 'USD' ? 'US$' : 'S/'
+  const sym = values.currency === 'USD' ? 'US$' : 'S/'
   return `${sym} ${n.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
 })
 
@@ -132,51 +167,31 @@ onMounted(async () => {
   const id = route.query.selectedClientId
   if (typeof id === 'string' && id) {
     await refetchTenants()
-    form.value.tenantId = id
+    setFieldValue('tenantId', id)
   }
 })
 
-const setError = (field: string, message: string) => {
-  errors.value[field] = message
-}
-const clearErrors = () => {
-  errors.value = {}
-}
-
-const toNum = (v: string | number): number | null => {
-  if (v === '' || v === undefined) return null
+const toNum = (v: string | number | null | undefined): number | null => {
+  if (v === '' || v === undefined || v === null) return null
   const n = Number(v)
   return isNaN(n) ? null : n
 }
 
-const handleSubmit = async () => {
-  clearErrors()
-  try {
-    await schema.validate(form.value, { abortEarly: false })
-  } catch (e) {
-    if (e instanceof yup.ValidationError) {
-      e.inner.forEach((err) => {
-        if (err.path) setError(err.path, err.message)
-      })
-      return
-    }
-    throw e
-  }
-
+const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
   try {
     await createRentalMutation.mutateAsync({
       data: {
         applicationSlug: 'alquileres',
-        propertyId: form.value.propertyId,
-        tenantId: form.value.tenantId,
-        startDate: form.value.startDate,
-        endDate: form.value.endDate,
-        currency: form.value.currency,
-        monthlyAmount: toNum(form.value.monthlyAmount) ?? 0,
-        securityDeposit: toNum(form.value.securityDeposit),
-        paymentDueDay: form.value.paymentDueDay,
-        notes: form.value.notes.trim() || null,
-        enableAlerts: form.value.enableAlerts,
+        propertyId: formValues.propertyId,
+        tenantId: formValues.tenantId,
+        startDate: formValues.startDate,
+        endDate: formValues.endDate,
+        currency: formValues.currency,
+        monthlyAmount: toNum(formValues.monthlyAmount) ?? 0,
+        securityDeposit: toNum(formValues.securityDeposit),
+        paymentDueDay: formValues.paymentDueDay,
+        notes: formValues.notes?.trim() || null,
+        enableAlerts: formValues.enableAlerts,
       },
       files: {
         contractFile: contractFile.value ?? undefined,
@@ -185,14 +200,10 @@ const handleSubmit = async () => {
     })
     await createRentalMutation.invalidateList()
     router.push('/alquileres/contratos')
-  } catch (error) {
-    const msg =
-      isAxiosError(error) && error.response?.data?.message
-        ? String(error.response.data.message)
-        : 'Error al guardar el contrato'
-    setError('_form', msg)
+  } catch {
+    void 0
   }
-}
+})
 </script>
 
 <template>
@@ -204,9 +215,7 @@ const handleSubmit = async () => {
         :style="{ color: 'var(--color-text-secondary)' }"
         @click="goBack"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
+        <AppIcon icon="lucide:arrow-left" :size="20" color="currentColor" />
       </button>
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
@@ -219,23 +228,10 @@ const handleSubmit = async () => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-12">
-      <svg
-        class="animate-spin h-8 w-8"
-        :style="{ color: appColor }"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <AppIcon icon="line-md:loading-loop" :size="32" :color="appColor" />
     </div>
 
-    <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <p v-if="errors._form" class="text-sm col-span-full" :style="{ color: 'var(--color-error)' }">
-        {{ errors._form }}
-      </p>
-
+    <form v-else @submit.prevent="onSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2 space-y-6">
         <!-- Propiedad -->
         <section
@@ -243,16 +239,14 @@ const handleSubmit = async () => {
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
         >
           <div class="flex items-center gap-2 mb-2">
-            <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <AppIcon icon="lucide:file-text" :size="20" color="var(--color-primary)" />
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Propiedad</h2>
           </div>
           <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
             Selecciona la propiedad a alquilar
           </p>
           <FormSelect
-            v-model="form.propertyId"
+            v-bind="propertyIdBinds"
             label="Seleccionar propiedad"
             placeholder="Seleccionar propiedad"
             :options="propertyOptions"
@@ -267,9 +261,7 @@ const handleSubmit = async () => {
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
         >
           <div class="flex items-center gap-2 mb-2">
-            <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+            <AppIcon icon="lucide:user" :size="20" color="var(--color-primary)" />
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Inquilino</h2>
           </div>
           <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
@@ -278,7 +270,7 @@ const handleSubmit = async () => {
           <div class="flex flex-wrap items-end gap-3">
             <div class="flex-1 min-w-[200px]">
               <FormSelect
-                v-model="form.tenantId"
+                v-bind="tenantIdBinds"
                 label="Seleccionar Inquilino"
                 placeholder="Seleccionar Inquilino"
                 :options="tenantOptions"
@@ -287,9 +279,7 @@ const handleSubmit = async () => {
               />
             </div>
             <BaseButton type="button" variant="outline" class="flex items-center gap-2" @click="goToNewTenant">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3z" />
-              </svg>
+              <AppIcon icon="lucide:user-plus" :size="20" color="currentColor" />
               Registrar nuevo Inquilino
             </BaseButton>
           </div>
@@ -301,33 +291,31 @@ const handleSubmit = async () => {
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
         >
           <div class="flex items-center gap-2 mb-2">
-            <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <AppIcon icon="lucide:calendar" :size="20" color="var(--color-primary)" />
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Fechas y Condiciones</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <FormInput
-              v-model="form.startDate"
+              v-bind="startDateBinds"
               type="date"
               label="Fecha de Inicio"
               :error="errors.startDate"
               required
             />
             <FormInput
-              v-model="form.endDate"
+              v-bind="endDateBinds"
               type="date"
               label="Fecha de Fin"
               :error="errors.endDate"
               required
             />
             <FormSelect
-              v-model="form.currency"
+              v-bind="currencyBinds"
               label="Moneda"
               :options="currencyOptions"
             />
             <FormInput
-              v-model="form.monthlyAmount"
+              v-bind="monthlyAmountBinds"
               type="number"
               min="0"
               step="0.01"
@@ -337,7 +325,7 @@ const handleSubmit = async () => {
               required
             />
             <FormInput
-              v-model="form.securityDeposit"
+              v-bind="securityDepositBinds"
               type="number"
               min="0"
               step="0.01"
@@ -345,7 +333,7 @@ const handleSubmit = async () => {
               placeholder="0.00"
             />
             <FormSelect
-              v-model="form.paymentDueDay"
+              v-bind="paymentDueDayBinds"
               label="Día de Vencimiento de Pago"
               :options="paymentDueDayOptions"
             />
@@ -384,9 +372,7 @@ const handleSubmit = async () => {
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
         >
           <div class="flex items-center gap-2 mb-1">
-            <svg class="w-5 h-5" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
+            <AppIcon icon="lucide:bell" :size="20" color="var(--color-primary)" />
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Alertas y Notificaciones</h2>
           </div>
           <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
@@ -402,14 +388,14 @@ const handleSubmit = async () => {
             <button
               type="button"
               role="switch"
-              :aria-checked="form.enableAlerts"
+              :aria-checked="values.enableAlerts"
               class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-              :style="{ backgroundColor: form.enableAlerts ? 'var(--color-primary)' : 'var(--color-border)' }"
-              @click="form.enableAlerts = !form.enableAlerts"
+              :style="{ backgroundColor: values.enableAlerts ? 'var(--color-primary)' : 'var(--color-border)' }"
+              @click="setFieldValue('enableAlerts', !values.enableAlerts)"
             >
               <span
                 class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                :style="{ transform: form.enableAlerts ? 'translateX(20px)' : 'translateX(0)' }"
+                :style="{ transform: values.enableAlerts ? 'translateX(20px)' : 'translateX(0)' }"
               />
             </button>
           </div>
@@ -422,7 +408,7 @@ const handleSubmit = async () => {
         >
           <h2 class="text-base font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">Observaciones</h2>
           <FormTextarea
-            v-model="form.notes"
+            v-bind="notesBinds"
             placeholder="Notas adicionales sobre el contrato..."
             :rows="3"
           />
@@ -463,9 +449,7 @@ const handleSubmit = async () => {
               class="w-full flex items-center justify-center gap-2"
               :loading="createRentalMutation.isPending.value"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-              </svg>
+              <AppIcon icon="lucide:save" :size="20" color="currentColor" />
               Guardar Contrato
             </BaseButton>
             <BaseButton type="button" variant="outline" class="w-full" @click="goBack">

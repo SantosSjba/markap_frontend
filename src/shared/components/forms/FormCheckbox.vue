@@ -38,7 +38,8 @@ const handleChange = (event: Event) => {
         type="checkbox"
         :checked="modelValue"
         :disabled="disabled"
-        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="w-4 h-4 rounded border focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed focus:ring-[var(--color-primary)]"
+        style="accent-color: var(--color-primary); border-color: var(--color-border);"
         @change="handleChange"
       />
     </div>
@@ -46,14 +47,15 @@ const handleChange = (event: Event) => {
     <div v-if="label || description" class="ml-3">
       <label
         :for="inputId"
-        :class="[
-          'text-sm font-medium',
-          disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 cursor-pointer',
-        ]"
+        class="text-sm font-medium"
+        :style="{
+          color: disabled ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+        }"
       >
         {{ label }}
       </label>
-      <p v-if="description" class="text-sm text-gray-500">
+      <p v-if="description" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
         {{ description }}
       </p>
     </div>

@@ -1,5 +1,8 @@
 import { ref } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { alertConfigService } from '../services/alert-config.service'
 import type { UpsertAlertConfigPayload } from '../services/alert-config.service'
 
@@ -20,13 +23,18 @@ export function useAlertConfig(applicationSlug = 'alquileres') {
     mutationFn: (payload: UpsertAlertConfigPayload) =>
       alertConfigService.upsert(applicationSlug, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey })
+      void invalidateQuerySubtree(queryClient, queryKey)
       saveSuccess.value = true
       saveError.value = null
-      setTimeout(() => { saveSuccess.value = false }, 3000)
+      void markapAlert.toast.success('Configuración de alertas guardada')
+      setTimeout(() => {
+        saveSuccess.value = false
+      }, 3000)
     },
-    onError: (e: any) => {
-      saveError.value = e?.response?.data?.message ?? 'Error al guardar la configuración'
+    onError: (e: unknown) => {
+      const msg = getApiErrorMessage(e, 'Error al guardar la configuración')
+      saveError.value = msg
+      void markapAlert.toast.error('No se pudo guardar', msg)
     },
   })
 

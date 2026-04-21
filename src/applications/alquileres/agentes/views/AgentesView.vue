@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import type { RowSelectionState } from '@tanstack/vue-table'
 import {
   BaseButton,
   BasePagination,
@@ -20,6 +21,8 @@ import { agentsService } from '../services/agents.service'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
+
+const tableRowSelection = ref<RowSelectionState>({})
 
 const listParams = ref<ListAgentsParams>({
   applicationSlug: 'alquileres',
@@ -55,21 +58,13 @@ watch(
 const onPageChange = (page: number) => { listParams.value = { ...listParams.value, page } }
 const onPageSizeChange = (size: number) => { listParams.value = { ...listParams.value, limit: size, page: 1 } }
 
-const tableColumns = [
-  { key: 'agente', label: 'Agente', align: 'left' as const },
-  { key: 'tipo', label: 'Tipo', align: 'left' as const },
-  { key: 'contacto', label: 'Contacto', align: 'left' as const },
-  { key: 'estado', label: 'Estado', align: 'left' as const },
-  { key: 'actions', label: '', align: 'right' as const },
-]
-
 const goToNew = () => router.push('/alquileres/agentes/nuevo')
 const goToEdit = (agent: AgentListItem) => router.push(`/alquileres/agentes/${agent.id}/editar`)
 
 // ---- Modals confirm ----
 const showConfirmModal = ref(false)
 const confirmModal = ref<{
-  type: 'deactivate' | 'delete'
+  type: 'deactivate' | 'activate' | 'delete'
   agent: AgentListItem
 } | null>(null)
 
@@ -80,7 +75,7 @@ const confirmActionPending = computed(
   () => updateMutation.isPending.value || deleteMutation.isPending.value
 )
 
-function openConfirm(type: 'deactivate' | 'delete', agent: AgentListItem) {
+function openConfirm(type: 'deactivate' | 'activate' | 'delete', agent: AgentListItem) {
   confirmModal.value = { type, agent }
   showConfirmModal.value = true
 }
@@ -94,12 +89,16 @@ async function executeConfirm() {
   if (!confirmModal.value) return
   const { type, agent } = confirmModal.value
   closeConfirm()
-  if (type === 'deactivate') {
-    await updateMutation.mutateAsync({ id: agent.id, data: { isActive: false } })
-    await updateMutation.invalidateList()
-  } else {
-    await deleteMutation.mutateAsync(agent.id)
-    await deleteMutation.invalidateList()
+  try {
+    if (type === 'deactivate') {
+      await updateMutation.mutateAsync({ id: agent.id, data: { isActive: false } })
+    } else if (type === 'activate') {
+      await updateMutation.mutateAsync({ id: agent.id, data: { isActive: true } })
+    } else {
+      await deleteMutation.mutateAsync(agent.id)
+    }
+  } catch {
+    /* onError en composables; invalidación en onSuccess */
   }
 }
 
@@ -112,6 +111,12 @@ const getActions = (agent: AgentListItem): { label: string; icon: string; onClic
       label: 'Desactivar',
       icon: 'lucide:user-x',
       onClick: () => openConfirm('deactivate', agent),
+    })
+  } else {
+    actions.push({
+      label: 'Reactivar',
+      icon: 'lucide:user-check',
+      onClick: () => openConfirm('activate', agent),
     })
   }
   actions.push({
@@ -153,6 +158,41 @@ function displayName(row: AgentListItem): string {
   }
   return row.fullName
 }
+
+const tableColumns = [
+  {
+    key: 'agente',
+    label: 'Agente',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => displayName(r as AgentListItem),
+  },
+  {
+    key: 'tipo',
+    label: 'Tipo',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => (r as AgentListItem).type,
+  },
+  {
+    key: 'contacto',
+    label: 'Contacto',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => {
+      const a = r as AgentListItem
+      return `${a.phone ?? ''} ${a.email ?? ''}`
+    },
+  },
+  {
+    key: 'estado',
+    label: 'Estado',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => ((r as AgentListItem).isActive ? 1 : 0),
+  },
+  { key: 'actions', label: '', align: 'right' as const },
+]
 
 const { isExporting, exportToExcel } = useExcelExport()
 
@@ -221,27 +261,7 @@ async function handleExport() {
     </div>
 
     <div
-      class="flex flex-col sm:flex-row gap-3 p-4 rounded-xl border"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div class="flex-1 min-w-0">
-        <SearchInput
-          v-model="searchInput"
-          placeholder="Buscar por nombre, email o teléfono..."
-        />
-      </div>
-      <div class="flex flex-wrap gap-3 flex-shrink-0 sm:flex-nowrap">
-        <div class="w-full sm:w-[180px] min-w-0">
-          <FormSelect v-model="filterType" :options="typeOptions" placeholder="Todos los tipos" />
-        </div>
-        <div class="w-full sm:w-[180px] min-w-0">
-          <FormSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
-        </div>
-      </div>
-    </div>
-
-    <div
-      class="rounded-xl border overflow-visible"
+      class="rounded-xl border overflow-hidden"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
     >
       <div class="overflow-x-auto">
@@ -249,7 +269,27 @@ async function handleExport() {
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
         </div>
         <template v-else>
-          <DataTable :columns="tableColumns" :data="agents" row-key="id">
+          <DataTable
+            v-model:row-selection="tableRowSelection"
+            selectable
+            empty-text="No hay agentes en esta página."
+            :columns="tableColumns"
+            :data="agents"
+            row-key="id"
+          >
+            <template #toolbar>
+              <div class="flex-1 min-w-0">
+                <SearchInput v-model="searchInput" placeholder="Buscar por nombre, email o teléfono..." />
+              </div>
+              <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
+                <div class="w-full sm:w-[175px] min-w-0">
+                  <FormSelect v-model="filterType" :options="typeOptions" placeholder="Todos los tipos" />
+                </div>
+                <div class="w-full sm:w-[175px] min-w-0">
+                  <FormSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
+                </div>
+              </div>
+            </template>
             <template #row="{ row }">
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
@@ -324,11 +364,29 @@ async function handleExport() {
       <template #title>
         <div class="flex items-center gap-2">
           <AppIcon
-            :icon="confirmModal?.type === 'delete' ? 'lucide:trash-2' : 'lucide:user-x'"
+            :icon="
+              confirmModal?.type === 'delete'
+                ? 'lucide:trash-2'
+                : confirmModal?.type === 'activate'
+                  ? 'lucide:user-check'
+                  : 'lucide:user-x'
+            "
             :size="17"
-            :color="confirmModal?.type === 'delete' ? 'var(--color-error)' : '#f59e0b'"
+            :color="
+              confirmModal?.type === 'delete'
+                ? 'var(--color-error)'
+                : confirmModal?.type === 'activate'
+                  ? 'var(--color-success)'
+                  : '#f59e0b'
+            "
           />
-          <span>{{ confirmModal?.type === 'delete' ? 'Eliminar agente' : 'Desactivar agente' }}</span>
+          <span>{{
+            confirmModal?.type === 'delete'
+              ? 'Eliminar agente'
+              : confirmModal?.type === 'activate'
+                ? 'Reactivar agente'
+                : 'Desactivar agente'
+          }}</span>
         </div>
       </template>
       <template v-if="confirmModal">
@@ -336,13 +394,30 @@ async function handleExport() {
           <div
             class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
             :style="{
-              backgroundColor: confirmModal.type === 'delete' ? 'var(--color-error)15' : '#f59e0b15',
+              backgroundColor:
+                confirmModal.type === 'delete'
+                  ? 'var(--color-error)15'
+                  : confirmModal.type === 'activate'
+                    ? 'var(--color-success-light)'
+                    : '#f59e0b15',
             }"
           >
             <AppIcon
-              :icon="confirmModal.type === 'delete' ? 'lucide:trash-2' : 'lucide:user-x'"
+              :icon="
+                confirmModal.type === 'delete'
+                  ? 'lucide:trash-2'
+                  : confirmModal.type === 'activate'
+                    ? 'lucide:user-check'
+                    : 'lucide:user-x'
+              "
               :size="20"
-              :color="confirmModal.type === 'delete' ? 'var(--color-error)' : '#f59e0b'"
+              :color="
+                confirmModal.type === 'delete'
+                  ? 'var(--color-error)'
+                  : confirmModal.type === 'activate'
+                    ? 'var(--color-success)'
+                    : '#f59e0b'
+              "
             />
           </div>
           <div>
@@ -352,6 +427,9 @@ async function handleExport() {
             <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
               <template v-if="confirmModal.type === 'delete'">
                 Se realizará un <strong>soft delete</strong>: el agente no se eliminará de la base de datos pero no aparecerá en ningún listado ni podrá ser seleccionado.
+              </template>
+              <template v-else-if="confirmModal.type === 'activate'">
+                El agente volverá a estado <strong>activo</strong> y aparecerá de nuevo en listados y búsquedas activas.
               </template>
               <template v-else>
                 El agente pasará a estado <strong>inactivo</strong> y no aparecerá en búsquedas activas.
@@ -365,15 +443,31 @@ async function handleExport() {
         <div class="flex justify-end gap-3">
           <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
           <BaseButton
-            :variant="confirmModal?.type === 'delete' ? 'danger' : 'primary'"
+            :variant="
+              confirmModal?.type === 'delete'
+                ? 'danger'
+                : 'primary'
+            "
             :loading="confirmActionPending"
             @click="executeConfirm"
           >
             <AppIcon
-              :icon="confirmModal?.type === 'delete' ? 'lucide:trash-2' : 'lucide:user-x'"
+              :icon="
+                confirmModal?.type === 'delete'
+                  ? 'lucide:trash-2'
+                  : confirmModal?.type === 'activate'
+                    ? 'lucide:user-check'
+                    : 'lucide:user-x'
+              "
               :size="16"
             />
-            {{ confirmModal?.type === 'delete' ? 'Eliminar' : 'Desactivar' }}
+            {{
+              confirmModal?.type === 'delete'
+                ? 'Eliminar'
+                : confirmModal?.type === 'activate'
+                  ? 'Reactivar'
+                  : 'Desactivar'
+            }}
           </BaseButton>
         </div>
       </template>

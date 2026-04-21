@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import FormSelect from '../forms/FormSelect.vue'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**
  * BasePagination Component
@@ -92,10 +93,9 @@ const pageSizeOptionsForSelect = computed(() =>
   props.pageSizeOptions.map((size) => ({ value: size, label: String(size) }))
 )
 
-const onPageSizeChange = (value: string | number | null) => {
-  if (value !== null && value !== '') {
-    emit('update:pageSize', Number(value))
-  }
+const onPageSizeChange = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined || value === '') return
+  emit('update:pageSize', Number(value))
 }
 </script>
 
@@ -142,9 +142,7 @@ const onPageSizeChange = (value: string | number | null) => {
           aria-label="Página anterior"
           @click="goToPage(currentPage - 1)"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
+          <AppIcon icon="lucide:chevron-left" :size="20" color="currentColor" />
         </button>
 
         <div class="flex items-center gap-1">
@@ -179,9 +177,7 @@ const onPageSizeChange = (value: string | number | null) => {
           aria-label="Página siguiente"
           @click="goToPage(currentPage + 1)"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
+          <AppIcon icon="lucide:chevron-right" :size="20" color="currentColor" />
         </button>
       </nav>
     </div>

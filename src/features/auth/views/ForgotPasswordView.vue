@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
+import * as yup from 'yup'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
+import FormInput from '@shared/components/forms/FormInput.vue'
+import { markapAlert } from '@/shared/alert'
+import { useForm, toTypedSchema } from '@shared/forms'
 import { useForgotPassword } from '../composables'
 import { isAxiosError } from 'axios'
 
@@ -10,38 +15,46 @@ import { isAxiosError } from 'axios'
 
 const forgotMutation = useForgotPassword()
 
-const email = ref('')
-const error = ref('')
+const forgotSchema = yup.object({
+  email: yup
+    .string()
+    .required('El correo electrónico es requerido')
+    .email('Ingrese un correo electrónico válido')
+    .trim(),
+})
+
+const { handleSubmit, errors, defineComponentBinds, values } = useForm({
+  validationSchema: toTypedSchema(forgotSchema),
+  initialValues: { email: '' },
+})
+
+const emailBinds = defineComponentBinds('email')
 
 const isSubmitted = computed(() => forgotMutation.isSuccess.value)
 const isLoading = computed(() => forgotMutation.isPending.value)
 
-const handleSubmit = async () => {
-  error.value = ''
+const onSubmit = handleSubmit((formValues) => {
+  const trimmed = formValues.email.trim()
 
-  if (!email.value) {
-    error.value = 'El correo electrónico es requerido'
-    return
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-    error.value = 'Ingrese un correo electrónico válido'
-    return
-  }
-
-  forgotMutation.mutate(email.value.trim(), {
+  forgotMutation.mutate(trimmed, {
     onSuccess: () => {
-      // isSubmitted is derived from isSuccess
+      void markapAlert.toast.success(
+        `Te enviamos un código de 6 dígitos a ${trimmed}`,
+        'Correo enviado',
+      )
     },
     onError: (err: unknown) => {
       if (isAxiosError(err) && err.response?.status === 404) {
-        error.value = 'No existe un usuario registrado con ese correo electrónico'
+        void markapAlert.error(
+          'No existe un usuario registrado con ese correo electrónico',
+          'Error',
+        )
       } else {
-        error.value = 'Error al enviar el código. Intente nuevamente.'
+        void markapAlert.error('Error al enviar el código. Intente nuevamente.', 'Error')
       }
     },
   })
-}
+})
 </script>
 
 <template>
@@ -52,15 +65,7 @@ const handleSubmit = async () => {
         class="w-16 h-16 rounded-xl flex items-center justify-center"
         style="background-color: var(--color-primary-light); border: 1px solid var(--color-primary);"
       >
-        <svg
-          class="w-8 h-8"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          style="color: var(--color-primary);"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-        </svg>
+        <AppIcon icon="lucide:key-round" :size="32" color="var(--color-primary)" />
       </div>
     </div>
 
@@ -74,13 +79,11 @@ const handleSubmit = async () => {
         class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
         style="background-color: var(--color-success-light); border: 1px solid var(--color-success);"
       >
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-success);">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
+        <AppIcon icon="lucide:check" :size="32" color="var(--color-success)" />
       </div>
       <p class="mb-6" style="color: var(--color-text-secondary);">
         Hemos enviado un código de recuperación a<br />
-        <strong style="color: var(--color-text-primary);">{{ email }}</strong>
+        <strong style="color: var(--color-text-primary);">{{ values.email }}</strong>
       </p>
       <p class="text-sm mb-4" style="color: var(--color-text-muted);">
         Revisa tu bandeja de entrada y usa el código en la siguiente pantalla.
@@ -93,7 +96,7 @@ const handleSubmit = async () => {
           Volver al inicio de sesión
         </router-link>
         <router-link
-          :to="{ path: '/auth/reset-password', query: { email } }"
+          :to="{ path: '/auth/reset-password', query: { email: values.email } }"
           class="btn inline-block py-3 px-6 rounded-lg font-medium text-center border-2"
           style="border-color: var(--color-primary); color: var(--color-primary);"
         >
@@ -103,26 +106,15 @@ const handleSubmit = async () => {
     </div>
 
     <!-- Form -->
-    <form v-else @submit.prevent="handleSubmit" class="space-y-5 text-left">
-      <!-- Email -->
-      <div>
-        <label
-          class="block text-sm font-medium mb-2"
-          style="color: var(--color-text-secondary);"
-        >
-          Correo electrónico
-        </label>
-        <input
-          v-model="email"
-          type="email"
-          placeholder="usuario@markap.com"
-          :style="error ? 'border-color: var(--color-error);' : ''"
-          class="w-full"
-        />
-        <p v-if="error" class="mt-1.5 text-sm" style="color: var(--color-error);">
-          {{ error }}
-        </p>
-      </div>
+    <form v-else @submit.prevent="onSubmit" class="space-y-5 text-left">
+      <FormInput
+        v-bind="emailBinds"
+        type="email"
+        label="Correo electrónico"
+        placeholder="usuario@markap.com"
+        :error="errors.email"
+        required
+      />
 
       <!-- Submit button -->
       <button
@@ -131,10 +123,7 @@ const handleSubmit = async () => {
         class="btn-primary w-full py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span v-if="isLoading" class="flex items-center justify-center gap-2">
-          <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+          <AppIcon icon="line-md:loading-loop" :size="20" color="currentColor" />
           Enviando...
         </span>
         <span v-else>Enviar código</span>

@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   useRoleApplicationsPage,
   useAssignRoleApplication,
   useRevokeRoleApplication,
 } from '../composables'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils'
 
 /**
  * Gestión de roles y aplicaciones
@@ -15,6 +17,15 @@ import {
 const pageQuery = useRoleApplicationsPage()
 const assignMutation = useAssignRoleApplication()
 const revokeMutation = useRevokeRoleApplication()
+
+watch(
+  () => pageQuery.error.value,
+  (err) => {
+    if (err != null) {
+      void markapAlert.toast.error('No se pudo cargar roles y aplicaciones', getApiErrorMessage(err))
+    }
+  },
+)
 
 const loading = computed(() => pageQuery.isPending.value)
 const roles = computed(() => pageQuery.data.value?.roles ?? [])
@@ -49,8 +60,26 @@ const toggleAccess = (roleId: string, applicationId: string) => {
       Define qué roles tienen acceso a cada aplicación del sistema.
     </p>
 
-    <div v-if="pageQuery.isError.value" class="rounded-lg p-4 mb-6" style="background-color: var(--color-error-light); color: var(--color-error);">
-      Error al cargar. Intenta de nuevo.
+    <div
+      v-if="pageQuery.isError.value"
+      class="rounded-lg p-4 mb-6 flex flex-wrap items-center gap-3"
+      style="background-color: var(--color-error-light); color: var(--color-error);"
+    >
+      <span>Error al cargar. Intenta de nuevo.</span>
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-opacity disabled:opacity-60"
+        style="border-color: currentColor; color: inherit;"
+        :disabled="pageQuery.isFetching.value"
+        @click="() => pageQuery.refetch()"
+      >
+        <Icon
+          v-if="pageQuery.isFetching.value"
+          icon="svg-spinners:ring-resize"
+          class="w-4 h-4"
+        />
+        Reintentar
+      </button>
     </div>
 
     <div v-if="loading" class="flex justify-center py-12">

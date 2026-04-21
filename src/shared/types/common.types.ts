@@ -37,7 +37,8 @@ export interface BreadcrumbItem {
 }
 
 /**
- * Table column definition
+ * Table column definition (genérico).
+ * Para `DataTable` + TanStack Table ver `DataTableColumn` en `DataTable.vue` (`sortAccessor`, `sortType`).
  */
 export interface TableColumn<T = unknown> {
   key: keyof T | string

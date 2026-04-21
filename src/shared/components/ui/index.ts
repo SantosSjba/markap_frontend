@@ -4,7 +4,6 @@
  */
 
 export { default as BaseButton } from './BaseButton.vue'
-export { default as BaseInput } from './BaseInput.vue'
 export { default as BaseModal } from './BaseModal.vue'
 export { default as BaseCard } from './BaseCard.vue'
 export { default as BaseAlert } from './BaseAlert.vue'
@@ -16,7 +15,6 @@ export { default as Badge } from './Badge.vue'
 export { default as Avatar } from './Avatar.vue'
 export { default as DataTable } from './DataTable.vue'
 export { default as ActionsDropdown } from './ActionsDropdown.vue'
-export { default as CustomModal } from './CustomModal.vue'
 export { default as AppIcon } from './AppIcon.vue'
 export { default as ExcelIcon } from './ExcelIcon.vue'
 export { default as ConfigToggleRow } from './ConfigToggleRow.vue'

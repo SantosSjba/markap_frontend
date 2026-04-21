@@ -1,10 +1,10 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMyApplications, useApplicationMenus } from '@features/applications/composables'
-import { VENTAS_FALLBACK_MENUS } from '../config/ventasFallbackMenus'
 
 /**
- * Hook para layout de aplicación (menús + info de app)
+ * Hook para layout de aplicación (menús + info de app).
+ * Menús solo desde API (mismo criterio que Alquileres); el seed del backend los define.
  */
 export function useAppLayout() {
   const route = useRoute()
@@ -15,21 +15,15 @@ export function useAppLayout() {
 
   const { data: applications } = useMyApplications()
   const application = computed(
-    () => applications.value?.find((a) => a.slug === slug.value) ?? null
+    () => applications.value?.find((a) => a.slug === slug.value) ?? null,
   )
 
-  const { data: menus } = useApplicationMenus(slug)
-
-  const menusEffective = computed(() => {
-    const fromApi = menus.value ?? []
-    return fromApi.length > 0 ? fromApi : VENTAS_FALLBACK_MENUS
-  })
+  const { data: menus, isLoading: menusLoading } = useApplicationMenus(slug)
 
   return {
     slug,
     application,
-    menus: menusEffective,
-    /** No bloquear la vista: si la API viene vacía usamos menú local (misma estructura que el seed). */
-    menusLoading: false,
+    menus: computed(() => menus.value ?? []),
+    menusLoading,
   }
 }

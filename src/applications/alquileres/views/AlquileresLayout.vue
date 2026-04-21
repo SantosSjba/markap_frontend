@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { AppLayoutSidebar, AppHeader } from '@widgets/components'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { useAppLayout } from '../composables'
 
 /**
- * AlquileresLayout
- * Layout para la aplicación Alquileres con sidebar dinámico
+ * AlquileresLayout — mismo shell que Ventas (`AppLayoutSidebar` + `AppHeader` en @widgets).
+ * Menús: API por slug `alquileres`. Notificaciones: filtradas a esta app en el header.
  */
 
 const { application, menus, menusLoading } = useAppLayout()
@@ -60,33 +61,14 @@ const applicationInfo = computed(() =>
         :is-sidebar-collapsed="isSidebarCollapsed"
         minimal-user-menu
         profile-to="/alquileres/perfil"
+        notifications-application-slug="alquileres"
         @toggle-sidebar="toggleSidebar"
         @toggle-mobile-sidebar="toggleMobileSidebar"
       />
 
       <main class="p-4 lg:p-6 mt-16">
         <div v-if="menusLoading" class="flex justify-center py-12">
-          <svg
-            class="animate-spin h-8 w-8"
-            style="color: var(--color-primary);"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            />
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
+          <AppIcon icon="line-md:loading-loop" :size="32" color="var(--color-primary)" />
         </div>
         <router-view v-else />
       </main>

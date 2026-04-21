@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import * as yup from 'yup'
 import StatsCard from '@shared/components/ui/StatsCard.vue'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import BaseButton from '@shared/components/ui/BaseButton.vue'
@@ -13,8 +14,9 @@ import FormInput from '@shared/components/forms/FormInput.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
 import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
+import { useForm, toTypedSchema } from '@shared/forms'
 import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../composables/usePayments'
-import type { PendingPaymentItem, RegisterPaymentPayload } from '../services/payments.service'
+import type { PendingPaymentItem, PaymentMethod } from '../services/payments.service'
 import { paymentsService } from '../services/payments.service'
 
 const router = useRouter()
@@ -36,13 +38,46 @@ const showModal = ref(false)
 const selectedPayment = ref<PendingPaymentItem | null>(null)
 const modalError = ref('')
 
-const form = ref<RegisterPaymentPayload>({
-  paidDate: new Date().toISOString().slice(0, 10),
-  paidAmount: 0,
-  paymentMethod: 'CASH',
-  referenceNumber: '',
-  notes: '',
+const paymentSchema = yup.object({
+  paidDate: yup.string().required('La fecha de pago es requerida'),
+  paidAmount: yup
+    .number()
+    .transform((_v, originalValue) => {
+      if (originalValue === '' || originalValue === null || originalValue === undefined) return NaN
+      const n = Number(originalValue)
+      return Number.isNaN(n) ? NaN : n
+    })
+    .min(0.01, 'El monto debe ser mayor a 0')
+    .required('El monto es requerido'),
+  paymentMethod: yup
+    .string()
+    .oneOf(['CASH', 'TRANSFER', 'DEPOSIT', 'YAPE', 'PLIN', 'CHECK', 'OTHER'])
+    .required(),
+  referenceNumber: yup.string().trim(),
+  notes: yup.string().trim(),
 })
+
+const {
+  handleSubmit: submitPaymentForm,
+  errors: paymentErrors,
+  defineComponentBinds,
+  resetForm: resetPaymentForm,
+} = useForm({
+  validationSchema: toTypedSchema(paymentSchema),
+  initialValues: {
+    paidDate: new Date().toISOString().slice(0, 10),
+    paidAmount: 0,
+    paymentMethod: 'CASH' as PaymentMethod,
+    referenceNumber: '',
+    notes: '',
+  },
+})
+
+const paidDateBinds = defineComponentBinds('paidDate')
+const paidAmountBinds = defineComponentBinds('paidAmount')
+const paymentMethodBinds = defineComponentBinds('paymentMethod')
+const referenceNumberBinds = defineComponentBinds('referenceNumber')
+const notesBinds = defineComponentBinds('notes')
 
 const paymentMethodOptions = [
   { value: 'CASH', label: 'Efectivo' },
@@ -64,13 +99,15 @@ const statusOptions = [
 function openModal(payment: PendingPaymentItem) {
   selectedPayment.value = payment
   modalError.value = ''
-  form.value = {
-    paidDate: new Date().toISOString().slice(0, 10),
-    paidAmount: payment.amount,
-    paymentMethod: 'CASH',
-    referenceNumber: '',
-    notes: '',
-  }
+  resetPaymentForm({
+    values: {
+      paidDate: new Date().toISOString().slice(0, 10),
+      paidAmount: payment.amount,
+      paymentMethod: 'CASH',
+      referenceNumber: '',
+      notes: '',
+    },
+  })
   showModal.value = true
 }
 
@@ -80,23 +117,25 @@ function closeModal() {
   modalError.value = ''
 }
 
-async function submitPayment() {
+const onPaymentSubmit = submitPaymentForm(async (vals) => {
   if (!selectedPayment.value) return
   modalError.value = ''
   try {
     await registerPayment({
       paymentId: selectedPayment.value.paymentId,
       data: {
-        ...form.value,
-        referenceNumber: form.value.referenceNumber || null,
-        notes: form.value.notes || null,
+        paidDate: vals.paidDate,
+        paidAmount: vals.paidAmount,
+        paymentMethod: vals.paymentMethod as PaymentMethod,
+        referenceNumber: vals.referenceNumber?.trim() || null,
+        notes: vals.notes?.trim() || null,
       },
     })
     closeModal()
-  } catch (e: any) {
-    modalError.value = e?.response?.data?.message ?? 'Error al registrar el pago'
+  } catch {
+    /* useRegisterPayment onError muestra toast */
   }
-}
+})
 
 function getStatusBadge(status: string): { variant: 'success' | 'warning' | 'error' | 'info'; label: string } {
   switch (status) {
@@ -360,6 +399,7 @@ async function handleExport() {
       </template>
 
       <template v-if="selectedPayment">
+        <form id="cobranzas-pendientes-register-payment" @submit.prevent="onPaymentSubmit">
         <!-- Resumen del cobro -->
         <div
           class="flex items-center gap-4 p-4 rounded-xl mb-5"
@@ -398,8 +438,8 @@ async function handleExport() {
           <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Datos del pago</p>
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <FormInput v-model="form.paidDate" type="date" label="Fecha de pago" required />
-          <FormInput v-model="form.paidAmount" type="number" label="Monto pagado" required />
+          <FormInput v-bind="paidDateBinds" type="date" label="Fecha de pago" :error="paymentErrors.paidDate" required />
+          <FormInput v-bind="paidAmountBinds" type="number" label="Monto pagado" :error="paymentErrors.paidAmount" required />
         </div>
 
         <!-- Método de pago -->
@@ -407,7 +447,7 @@ async function handleExport() {
           <AppIcon icon="lucide:wallet" :size="15" color="var(--color-primary)" />
           <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Método de pago</p>
         </div>
-        <FormSelect v-model="form.paymentMethod" :options="paymentMethodOptions" label="" required class="mb-4" />
+        <FormSelect v-bind="paymentMethodBinds" :options="paymentMethodOptions" label="" :error="paymentErrors.paymentMethod" required class="mb-4" />
 
         <!-- Sección: Referencia y notas -->
         <div class="flex items-center gap-2 mb-3">
@@ -415,16 +455,18 @@ async function handleExport() {
           <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Referencia y notas</p>
         </div>
         <FormInput
-          v-model="(form.referenceNumber as string)"
+          v-bind="referenceNumberBinds"
           type="text"
           label="N° Referencia / Operación"
           placeholder="Ej: 001234567890"
+          :error="paymentErrors.referenceNumber"
           class="mb-4"
         />
         <FormTextarea
-          v-model="(form.notes as string)"
+          v-bind="notesBinds"
           label="Notas adicionales"
           placeholder="Observaciones sobre el pago..."
+          :error="paymentErrors.notes"
           :rows="2"
         />
 
@@ -436,6 +478,7 @@ async function handleExport() {
           <AppIcon icon="lucide:alert-circle" :size="14" />
           {{ modalError }}
         </div>
+        </form>
       </template>
 
       <template #footer>
@@ -444,7 +487,7 @@ async function handleExport() {
             <AppIcon icon="lucide:x" :size="16" />
             Cancelar
           </BaseButton>
-          <BaseButton variant="primary" :loading="registering" :disabled="registering" @click="submitPayment">
+          <BaseButton variant="primary" type="submit" form="cobranzas-pendientes-register-payment" :loading="registering" :disabled="registering">
             <AppIcon icon="lucide:circle-check" :size="16" />
             Confirmar Pago
           </BaseButton>

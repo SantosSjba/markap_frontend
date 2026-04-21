@@ -40,6 +40,8 @@ export interface OwnerOption {
   primaryEmail: string
 }
 
+export type PropertyMediaItem = { url: string; kind: 'photo' | 'plan' }
+
 export interface CreatePropertyPayload {
   applicationSlug?: string
   code: string
@@ -60,6 +62,10 @@ export interface CreatePropertyPayload {
   monthlyRent?: number | null
   maintenanceAmount?: number | null
   depositMonths?: number | null
+  salePrice?: number | null
+  projectName?: string | null
+  mediaItems?: PropertyMediaItem[] | null
+  listingStatus?: string | null
 }
 
 /** Propiedad completa (para edición) - mismo shape que el backend PropertyData */
@@ -96,6 +102,9 @@ export interface PropertyDetail {
   monthlyRent: number | null
   maintenanceAmount: number | null
   depositMonths: number | null
+  salePrice: number | null
+  projectName: string | null
+  mediaItems: PropertyMediaItem[] | null
   listingStatus: string | null
   isActive: boolean
 }
@@ -112,6 +121,8 @@ export interface PropertyListItem {
   ownerId: string
   ownerFullName: string
   monthlyRent: number | null
+  salePrice: number | null
+  projectName: string | null
   listingStatus: string | null
   /** true si tiene al menos un alquiler en vigencia (permite "Cambiar estado") */
   hasActiveRental?: boolean
@@ -127,7 +138,10 @@ export interface ListPropertiesParams {
   limit?: number
   search?: string
   propertyTypeId?: string
+  districtId?: string
   listingStatus?: string
+  minSalePrice?: number
+  maxSalePrice?: number
 }
 
 export interface ListPropertiesResponse {
@@ -143,6 +157,8 @@ export interface PropertyStats {
   available: number
   expiring: number
   maintenance: number
+  reserved: number
+  sold: number
 }
 
 export const propertiesService = {
@@ -174,15 +190,31 @@ export const propertiesService = {
 
   create: (data: CreatePropertyPayload) =>
     apiClient
-      .post('/properties', { ...data, applicationSlug: 'alquileres' })
+      .post('/properties', {
+        ...data,
+        applicationSlug: data.applicationSlug ?? 'alquileres',
+      })
       .then((r) => r.data),
 
   getList: (params: ListPropertiesParams) => {
-    const { applicationSlug = 'alquileres', page = 1, limit = 10, search, propertyTypeId, listingStatus } = params
+    const {
+      applicationSlug = 'alquileres',
+      page = 1,
+      limit = 10,
+      search,
+      propertyTypeId,
+      districtId,
+      listingStatus,
+      minSalePrice,
+      maxSalePrice,
+    } = params
     const query: Record<string, string | number> = { applicationSlug, page, limit }
     if (search?.trim()) query.search = search.trim()
     if (propertyTypeId) query.propertyTypeId = propertyTypeId
+    if (districtId) query.districtId = districtId
     if (listingStatus) query.listingStatus = listingStatus
+    if (minSalePrice != null && Number.isFinite(minSalePrice)) query.minSalePrice = minSalePrice
+    if (maxSalePrice != null && Number.isFinite(maxSalePrice)) query.maxSalePrice = maxSalePrice
     return apiClient.get<ListPropertiesResponse>('/properties', { params: query }).then((r) => r.data)
   },
 
@@ -198,7 +230,7 @@ export const propertiesService = {
   /** Cambiar solo estado de listado (solo si la propiedad tiene alquiler en vigencia) */
   updateListingStatus: (
     id: string,
-    listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE'
+    listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE',
   ) =>
     apiClient
       .patch<PropertyDetail>(`/properties/${encodeURIComponent(id)}/listing-status`, {

@@ -1,34 +1,32 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isAxiosError } from 'axios'
 import * as yup from 'yup'
 import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
+import { useForm, toTypedSchema } from '@shared/forms'
 import { useRental, useUpdateRental } from '../composables/useRentals'
 import { getAttachmentUrl } from '../services/rentals.service'
+
+type EditarRentalFormValues = {
+  startDate: string
+  endDate: string
+  currency: string
+  monthlyAmount: string | number
+  securityDeposit: string | number
+  paymentDueDay: number
+  notes: string
+  status: string
+  enableAlerts: boolean
+}
 
 const route = useRoute()
 const router = useRouter()
 
 const id = computed(() => String(route.params.id ?? ''))
 
-const form = ref({
-  startDate: '',
-  endDate: '',
-  currency: 'PEN',
-  monthlyAmount: '' as string | number,
-  securityDeposit: '' as string | number,
-  paymentDueDay: 5 as number,
-  notes: '',
-  status: 'ACTIVE' as string,
-  enableAlerts: true,
-})
-
 const contractFile = ref<File | null>(null)
 const deliveryActFile = ref<File | null>(null)
-
-const errors = ref<Record<string, string>>({})
 
 const schema = yup.object({
   startDate: yup.string().required('La fecha de inicio es requerida'),
@@ -36,10 +34,43 @@ const schema = yup.object({
   currency: yup.string().required(),
   monthlyAmount: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).required('El monto mensual es requerido'),
   securityDeposit: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
-  paymentDueDay: yup.number().min(1).max(28).required(),
+  paymentDueDay: yup
+    .number()
+    .transform((_v, originalValue) => {
+      if (originalValue === '' || originalValue === null || originalValue === undefined) return NaN
+      return Number(originalValue)
+    })
+    .min(1)
+    .max(28)
+    .required(),
   notes: yup.string().trim(),
   status: yup.string().oneOf(['ACTIVE', 'EXPIRED', 'CANCELLED']).required(),
+  enableAlerts: yup.boolean().required(),
 })
+
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm<EditarRentalFormValues>({
+  validationSchema: toTypedSchema(schema) as never,
+  initialValues: {
+    startDate: '',
+    endDate: '',
+    currency: 'PEN',
+    monthlyAmount: '',
+    securityDeposit: '',
+    paymentDueDay: 5,
+    notes: '',
+    status: 'ACTIVE',
+    enableAlerts: true,
+  },
+})
+
+const startDateBinds = defineComponentBinds('startDate')
+const endDateBinds = defineComponentBinds('endDate')
+const currencyBinds = defineComponentBinds('currency')
+const monthlyAmountBinds = defineComponentBinds('monthlyAmount')
+const securityDepositBinds = defineComponentBinds('securityDeposit')
+const paymentDueDayBinds = defineComponentBinds('paymentDueDay')
+const notesBinds = defineComponentBinds('notes')
+const statusBinds = defineComponentBinds('status')
 
 const { data: rental, isLoading: loadingRental, isError: rentalError } = useRental(id)
 const updateMutation = useUpdateRental()
@@ -50,19 +81,21 @@ watch(
   rental,
   (r) => {
     if (!r) return
-    form.value = {
-      startDate: r.startDate?.slice(0, 10) ?? '',
-      endDate: r.endDate?.slice(0, 10) ?? '',
-      currency: r.currency ?? 'PEN',
-      monthlyAmount: r.monthlyAmount ?? '',
-      securityDeposit: r.securityDeposit ?? '',
-      paymentDueDay: r.paymentDueDay ?? 5,
-      notes: r.notes ?? '',
-      status: r.status ?? 'ACTIVE',
-      enableAlerts: r.enableAlerts ?? true,
-    }
+    resetForm({
+      values: {
+        startDate: r.startDate?.slice(0, 10) ?? '',
+        endDate: r.endDate?.slice(0, 10) ?? '',
+        currency: r.currency ?? 'PEN',
+        monthlyAmount: r.monthlyAmount ?? '',
+        securityDeposit: r.securityDeposit ?? '',
+        paymentDueDay: r.paymentDueDay ?? 5,
+        notes: r.notes ?? '',
+        status: r.status ?? 'ACTIVE',
+        enableAlerts: r.enableAlerts ?? true,
+      },
+    })
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const currencyOptions = [
@@ -80,42 +113,27 @@ const statusOptions = [
 ]
 
 const goBack = () => router.push(`/alquileres/contratos/${id.value}`)
-const setError = (field: string, message: string) => { errors.value[field] = message }
-const clearErrors = () => { errors.value = {} }
 
-const toNum = (v: string | number): number | null => {
-  if (v === '' || v === undefined) return null
+const toNum = (v: string | number | null | undefined): number | null => {
+  if (v === '' || v === undefined || v === null) return null
   const n = Number(v)
   return isNaN(n) ? null : n
 }
 
-const handleSubmit = async () => {
-  clearErrors()
-  try {
-    await schema.validate(form.value, { abortEarly: false })
-  } catch (e) {
-    if (e instanceof yup.ValidationError) {
-      e.inner.forEach((err) => {
-        if (err.path) setError(err.path, err.message)
-      })
-      return
-    }
-    throw e
-  }
-
+const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
   try {
     await updateMutation.mutateAsync({
       id: id.value,
       data: {
-        startDate: form.value.startDate,
-        endDate: form.value.endDate,
-        currency: form.value.currency,
-        monthlyAmount: toNum(form.value.monthlyAmount) ?? 0,
-        securityDeposit: toNum(form.value.securityDeposit),
-        paymentDueDay: form.value.paymentDueDay,
-        notes: form.value.notes.trim() || null,
-        status: form.value.status as 'ACTIVE' | 'EXPIRED' | 'CANCELLED',
-        enableAlerts: form.value.enableAlerts,
+        startDate: formValues.startDate,
+        endDate: formValues.endDate,
+        currency: formValues.currency,
+        monthlyAmount: toNum(formValues.monthlyAmount) ?? 0,
+        securityDeposit: toNum(formValues.securityDeposit),
+        paymentDueDay: formValues.paymentDueDay,
+        notes: formValues.notes?.trim() || null,
+        status: formValues.status as 'ACTIVE' | 'EXPIRED' | 'CANCELLED',
+        enableAlerts: formValues.enableAlerts,
       },
       files: {
         contractFile: contractFile.value ?? undefined,
@@ -124,14 +142,10 @@ const handleSubmit = async () => {
     })
     await updateMutation.invalidateList()
     router.push(`/alquileres/contratos/${id.value}`)
-  } catch (error) {
-    const msg =
-      isAxiosError(error) && error.response?.data?.message
-        ? String(error.response.data.message)
-        : 'Error al actualizar el contrato'
-    setError('_form', msg)
+  } catch {
+    void 0
   }
-}
+})
 </script>
 
 <template>
@@ -178,17 +192,7 @@ const handleSubmit = async () => {
       <BaseButton variant="outline" size="sm" @click="goBack">Volver</BaseButton>
     </div>
 
-    <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="handleSubmit">
-      <!-- Error global -->
-      <div
-        v-if="errors._form"
-        class="xl:col-span-3 flex items-center gap-3 px-4 py-3 rounded-lg"
-        :style="{ backgroundColor: 'var(--color-error)15', border: '1px solid var(--color-error)40', color: 'var(--color-error)' }"
-      >
-        <AppIcon icon="lucide:alert-circle" :size="18" />
-        <span class="text-sm font-medium">{{ errors._form }}</span>
-      </div>
-
+    <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">
       <!-- Columna principal -->
       <div class="xl:col-span-2 space-y-5">
 
@@ -252,26 +256,26 @@ const handleSubmit = async () => {
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
-              v-model="form.startDate"
+              v-bind="startDateBinds"
               type="date"
               label="Fecha de Inicio"
               :error="errors.startDate"
               required
             />
             <FormInput
-              v-model="form.endDate"
+              v-bind="endDateBinds"
               type="date"
               label="Fecha de Fin"
               :error="errors.endDate"
               required
             />
             <FormSelect
-              v-model="form.currency"
+              v-bind="currencyBinds"
               label="Moneda"
               :options="currencyOptions"
             />
             <FormInput
-              v-model="form.monthlyAmount"
+              v-bind="monthlyAmountBinds"
               type="number"
               min="0"
               step="0.01"
@@ -281,7 +285,7 @@ const handleSubmit = async () => {
               required
             />
             <FormInput
-              v-model="form.securityDeposit"
+              v-bind="securityDepositBinds"
               type="number"
               min="0"
               step="0.01"
@@ -289,13 +293,13 @@ const handleSubmit = async () => {
               placeholder="0.00"
             />
             <FormSelect
-              v-model="form.paymentDueDay"
+              v-bind="paymentDueDayBinds"
               label="Día de Vencimiento de Pago"
               :options="paymentDueDayOptions"
             />
             <div class="md:col-span-2">
               <FormSelect
-                v-model="form.status"
+                v-bind="statusBinds"
                 label="Estado del contrato"
                 :options="statusOptions"
               />
@@ -435,9 +439,9 @@ const handleSubmit = async () => {
           >
             <div class="flex items-center gap-3">
               <AppIcon
-                :icon="form.enableAlerts ? 'lucide:bell-ring' : 'lucide:bell-off'"
+                :icon="values.enableAlerts ? 'lucide:bell-ring' : 'lucide:bell-off'"
                 :size="18"
-                :color="form.enableAlerts ? 'var(--color-primary)' : 'var(--color-text-muted)'"
+                :color="values.enableAlerts ? 'var(--color-primary)' : 'var(--color-text-muted)'"
               />
               <div>
                 <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Recibir alertas para este contrato</p>
@@ -449,14 +453,14 @@ const handleSubmit = async () => {
             <button
               type="button"
               role="switch"
-              :aria-checked="form.enableAlerts"
+              :aria-checked="values.enableAlerts"
               class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-              :style="{ backgroundColor: form.enableAlerts ? 'var(--color-primary)' : 'var(--color-border)' }"
-              @click="form.enableAlerts = !form.enableAlerts"
+              :style="{ backgroundColor: values.enableAlerts ? 'var(--color-primary)' : 'var(--color-border)' }"
+              @click="setFieldValue('enableAlerts', !values.enableAlerts)"
             >
               <span
                 class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                :style="{ transform: form.enableAlerts ? 'translateX(20px)' : 'translateX(0)' }"
+                :style="{ transform: values.enableAlerts ? 'translateX(20px)' : 'translateX(0)' }"
               />
             </button>
           </div>
@@ -474,7 +478,7 @@ const handleSubmit = async () => {
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Observaciones</h2>
           </div>
           <FormTextarea
-            v-model="form.notes"
+            v-bind="notesBinds"
             placeholder="Notas adicionales sobre el contrato..."
             :rows="3"
           />
@@ -511,7 +515,7 @@ const handleSubmit = async () => {
                 Vigencia
               </dt>
               <dd :style="{ color: 'var(--color-text-primary)' }">
-                {{ form.startDate || '—' }} → {{ form.endDate || '—' }}
+                {{ values.startDate || '—' }} → {{ values.endDate || '—' }}
               </dd>
             </div>
             <div>
@@ -520,8 +524,8 @@ const handleSubmit = async () => {
                 Monto mensual
               </dt>
               <dd class="font-bold" :style="{ color: 'var(--color-primary)' }">
-                {{ form.currency === 'USD' ? 'US$' : 'S/' }}
-                {{ form.monthlyAmount !== '' ? Number(form.monthlyAmount).toLocaleString('es-PE', { minimumFractionDigits: 2 }) : '0.00' }}
+                {{ values.currency === 'USD' ? 'US$' : 'S/' }}
+                {{ values.monthlyAmount !== '' && values.monthlyAmount !== undefined ? Number(values.monthlyAmount).toLocaleString('es-PE', { minimumFractionDigits: 2 }) : '0.00' }}
               </dd>
             </div>
           </dl>

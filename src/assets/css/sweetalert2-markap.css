@@ -1,0 +1,185 @@
+/* SweetAlert2 — tema MARKAP solo para diálogos modales (.markap-swal-*). Los toasts usan el tema por defecto de la librería. */
+
+.swal2-container {
+  z-index: 20050;
+}
+
+.markap-swal-container {
+  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.markap-swal-popup {
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  padding: 1.5rem 1.5rem 1.25rem !important;
+}
+
+.markap-swal-title {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.35 !important;
+}
+
+.markap-swal-html {
+  font-size: 0.875rem !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.55 !important;
+}
+
+.markap-swal-close {
+  color: var(--color-text-muted) !important;
+  transition: color var(--transition-fast), opacity var(--transition-fast) !important;
+}
+
+.markap-swal-close:hover {
+  color: var(--color-text-primary) !important;
+}
+
+.markap-swal-close:focus {
+  box-shadow: none !important;
+}
+
+.markap-swal-actions {
+  gap: 0.5rem !important;
+  margin: 1.25rem auto 0 !important;
+}
+
+.markap-swal-btn {
+  margin: 0 !important;
+  padding: 0.5rem 1.125rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  font-family: inherit !important;
+  border-radius: var(--radius-md) !important;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast) !important;
+  box-shadow: none !important;
+}
+
+.markap-swal-btn:focus {
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary-light) !important;
+}
+
+.markap-swal-btn-confirm {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+  border: 1px solid transparent !important;
+}
+
+.markap-swal-btn-confirm:hover {
+  background: var(--color-primary-hover) !important;
+}
+
+.markap-swal-btn-cancel {
+  background: transparent !important;
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.markap-swal-btn-cancel:hover {
+  background: var(--color-hover) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.markap-swal-btn-deny {
+  background: var(--color-error) !important;
+  color: #fff !important;
+  border: 1px solid transparent !important;
+}
+
+.markap-swal-btn-deny:hover {
+  filter: brightness(1.05);
+}
+
+.markap-swal-input,
+.markap-swal-popup .swal2-input,
+.markap-swal-popup .swal2-textarea,
+.markap-swal-popup .swal2-select {
+  margin: 0.75rem 0 0 !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  font-family: inherit !important;
+  color: var(--color-text-primary) !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: none !important;
+}
+
+.markap-swal-popup .swal2-input:focus,
+.markap-swal-popup .swal2-textarea:focus,
+.markap-swal-popup .swal2-select:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 1px var(--color-primary) !important;
+}
+
+.markap-swal-validation {
+  background: transparent !important;
+  color: var(--color-error) !important;
+  font-size: 0.8125rem !important;
+  margin-top: 0.5rem !important;
+}
+
+.markap-swal-footer {
+  border-top: 1px solid var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  font-size: 0.8125rem !important;
+  margin-top: 1rem !important;
+  padding-top: 0.75rem !important;
+}
+
+/* Iconos — alineados con la paleta semántica */
+.markap-swal-popup .swal2-icon.swal2-success {
+  border-color: var(--color-success) !important;
+  color: var(--color-success) !important;
+}
+
+.markap-swal-popup .swal2-icon.swal2-error {
+  border-color: var(--color-error) !important;
+  color: var(--color-error) !important;
+}
+
+.markap-swal-popup .swal2-icon.swal2-warning {
+  border-color: var(--color-warning) !important;
+  color: #92600e !important;
+}
+
+.dark .markap-swal-popup .swal2-icon.swal2-warning {
+  color: var(--color-warning) !important;
+}
+
+.markap-swal-popup .swal2-icon.swal2-info {
+  border-color: var(--color-info) !important;
+  color: var(--color-info) !important;
+}
+
+.markap-swal-popup .swal2-icon.swal2-question {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+/* Barra de progreso (timer / toast) */
+.markap-swal-container .swal2-timer-progress-bar {
+  background: var(--color-primary) !important;
+}
+
+/* Loader */
+.markap-swal-popup .swal2-loader {
+  border-color: var(--color-primary) transparent var(--color-primary) transparent !important;
+}
+
+/* Fondo modal (solo diálogos centrados, nunca toasts) */
+body.swal2-shown:not(.swal2-no-backdrop):not(.swal2-toast-shown) {
+  overflow: hidden;
+}
+
+body:not(.swal2-toast-shown) .markap-swal-container.swal2-backdrop-show {
+  background: rgba(31, 41, 51, 0.42) !important;
+}
+
+.dark body:not(.swal2-toast-shown) .markap-swal-container.swal2-backdrop-show {
+  background: rgba(0, 0, 0, 0.58) !important;
+}

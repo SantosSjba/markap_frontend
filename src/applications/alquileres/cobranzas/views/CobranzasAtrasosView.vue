@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import * as yup from 'yup'
 import StatsCard from '@shared/components/ui/StatsCard.vue'
 import Badge from '@shared/components/ui/Badge.vue'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
@@ -13,8 +14,9 @@ import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
 import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
+import { useForm, toTypedSchema } from '@shared/forms'
 import { useOverduePayments, useRegisterPayment, usePendingPayments, useSaveCommunicationNote } from '../composables/usePayments'
-import type { OverduePaymentItem, RegisterPaymentPayload } from '../services/payments.service'
+import type { OverduePaymentItem, PaymentMethod } from '../services/payments.service'
 import { paymentsService } from '../services/payments.service'
 
 const router = useRouter()
@@ -32,7 +34,6 @@ const showModal = ref(false)
 const selectedOverdue = ref<OverduePaymentItem | null>(null)
 const selectedPaymentId = ref<string | null>(null)
 const modalError = ref('')
-const registering = ref(false)
 
 const pendingParams = computed(() => ({
   search: selectedOverdue.value?.tenantName,
@@ -41,13 +42,62 @@ const pendingParams = computed(() => ({
 
 const { data: tenantPendingPayments } = usePendingPayments(pendingParams)
 
-const form = ref<RegisterPaymentPayload>({
-  paidDate: new Date().toISOString().slice(0, 10),
-  paidAmount: 0,
-  paymentMethod: 'CASH',
-  referenceNumber: '',
-  notes: '',
+const paymentSchema = yup.object({
+  paidDate: yup.string().required('La fecha de pago es requerida'),
+  paidAmount: yup
+    .number()
+    .transform((_v, originalValue) => {
+      if (originalValue === '' || originalValue === null || originalValue === undefined) return NaN
+      const n = Number(originalValue)
+      return Number.isNaN(n) ? NaN : n
+    })
+    .min(0.01, 'El monto debe ser mayor a 0')
+    .required('El monto es requerido'),
+  paymentMethod: yup
+    .string()
+    .oneOf(['CASH', 'TRANSFER', 'DEPOSIT', 'YAPE', 'PLIN', 'CHECK', 'OTHER'])
+    .required(),
+  referenceNumber: yup.string().trim(),
+  notes: yup.string().trim(),
 })
+
+const {
+  handleSubmit: submitPaymentForm,
+  errors: paymentErrors,
+  defineComponentBinds: definePaymentBinds,
+  resetForm: resetPaymentForm,
+} = useForm({
+  validationSchema: toTypedSchema(paymentSchema),
+  initialValues: {
+    paidDate: new Date().toISOString().slice(0, 10),
+    paidAmount: 0,
+    paymentMethod: 'CASH' as PaymentMethod,
+    referenceNumber: '',
+    notes: '',
+  },
+})
+
+const paidDateBinds = definePaymentBinds('paidDate')
+const paidAmountBinds = definePaymentBinds('paidAmount')
+const paymentMethodBinds = definePaymentBinds('paymentMethod')
+const referenceNumberBinds = definePaymentBinds('referenceNumber')
+const notesBinds = definePaymentBinds('notes')
+
+const noteSchema = yup.object({
+  note: yup.string().trim().required('Escriba una nota'),
+})
+
+const {
+  handleSubmit: submitNoteForm,
+  errors: noteErrors,
+  defineComponentBinds: defineNoteBinds,
+  resetForm: resetNoteForm,
+} = useForm({
+  validationSchema: toTypedSchema(noteSchema),
+  initialValues: { note: '' },
+})
+
+const noteFieldBinds = defineNoteBinds('note')
 
 const paymentMethodOptions = [
   { value: 'CASH', label: 'Efectivo' },
@@ -59,19 +109,21 @@ const paymentMethodOptions = [
   { value: 'OTHER', label: 'Otro' },
 ]
 
-const { mutateAsync: doRegisterPayment } = useRegisterPayment()
+const { mutateAsync: doRegisterPayment, isPending: registeringPayment } = useRegisterPayment()
 
 function openModal(item: OverduePaymentItem) {
   selectedOverdue.value = item
   selectedPaymentId.value = null
   modalError.value = ''
-  form.value = {
-    paidDate: new Date().toISOString().slice(0, 10),
-    paidAmount: item.totalOwed,
-    paymentMethod: 'CASH',
-    referenceNumber: '',
-    notes: '',
-  }
+  resetPaymentForm({
+    values: {
+      paidDate: new Date().toISOString().slice(0, 10),
+      paidAmount: item.totalOwed,
+      paymentMethod: 'CASH',
+      referenceNumber: '',
+      notes: '',
+    },
+  })
   showModal.value = true
 }
 
@@ -82,55 +134,52 @@ function closeModal() {
   modalError.value = ''
 }
 
-async function submitPayment() {
+const onPaymentSubmit = submitPaymentForm(async (vals) => {
   if (!selectedPaymentId.value) {
     modalError.value = 'Selecciona el período a pagar'
     return
   }
   modalError.value = ''
-  registering.value = true
   try {
     await doRegisterPayment({
       paymentId: selectedPaymentId.value,
       data: {
-        ...form.value,
-        referenceNumber: form.value.referenceNumber || null,
-        notes: form.value.notes || null,
+        paidDate: vals.paidDate,
+        paidAmount: vals.paidAmount,
+        paymentMethod: vals.paymentMethod as PaymentMethod,
+        referenceNumber: vals.referenceNumber?.trim() || null,
+        notes: vals.notes?.trim() || null,
       },
     })
     closeModal()
-  } catch (e: any) {
-    modalError.value = e?.response?.data?.message ?? 'Error al registrar el pago'
-  } finally {
-    registering.value = false
+  } catch {
+    /* useRegisterPayment onError muestra toast */
   }
-}
+})
 
 // ─── Nota de comunicación ─────────────────────────────────────────────────────
 const showNoteModal = ref(false)
 const noteItem = ref<OverduePaymentItem | null>(null)
-const noteText = ref('')
 const { mutate: doSaveNote, isPending: savingNote } = useSaveCommunicationNote()
 
 function openNoteModal(item: OverduePaymentItem) {
   noteItem.value = item
-  noteText.value = item.lastCommunicationNote ?? ''
+  resetNoteForm({ values: { note: item.lastCommunicationNote ?? '' } })
   showNoteModal.value = true
 }
 
 function closeNoteModal() {
   showNoteModal.value = false
   noteItem.value = null
-  noteText.value = ''
 }
 
-function submitNote() {
-  if (!noteItem.value || !noteText.value.trim()) return
+const onNoteSave = submitNoteForm((vals) => {
+  if (!noteItem.value) return
   doSaveNote(
-    { rentalId: noteItem.value.rentalId, note: noteText.value.trim() },
+    { rentalId: noteItem.value.rentalId, note: vals.note.trim() },
     { onSuccess: closeNoteModal },
   )
-}
+})
 
 function getOverdueLevelBadge(level: string): { variant: 'error' | 'warning' | 'info'; label: string } {
   switch (level) {
@@ -430,6 +479,7 @@ async function handleExport() {
       </template>
 
       <template v-if="selectedOverdue">
+        <form id="cobranzas-atrasos-register-payment" @submit.prevent="onPaymentSubmit">
         <!-- Resumen del cliente en atraso -->
         <div
           class="flex items-center gap-4 p-4 rounded-xl mb-5"
@@ -513,18 +563,19 @@ async function handleExport() {
           <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Datos del pago</p>
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <FormInput v-model="form.paidDate" type="date" label="Fecha de pago" required />
-          <FormInput v-model="form.paidAmount" type="number" label="Monto pagado" required />
+          <FormInput v-bind="paidDateBinds" type="date" label="Fecha de pago" :error="paymentErrors.paidDate" required />
+          <FormInput v-bind="paidAmountBinds" type="number" label="Monto pagado" :error="paymentErrors.paidAmount" required />
         </div>
-        <FormSelect v-model="form.paymentMethod" :options="paymentMethodOptions" label="Método de pago" required class="mb-4" />
+        <FormSelect v-bind="paymentMethodBinds" :options="paymentMethodOptions" label="Método de pago" :error="paymentErrors.paymentMethod" required class="mb-4" />
         <FormInput
-          v-model="(form.referenceNumber as string)"
+          v-bind="referenceNumberBinds"
           type="text"
           label="Referencia / Operación"
           placeholder="Ej: 001234567890"
+          :error="paymentErrors.referenceNumber"
           class="mb-4"
         />
-        <FormTextarea v-model="(form.notes as string)" label="Notas" placeholder="Observaciones..." :rows="2" />
+        <FormTextarea v-bind="notesBinds" label="Notas" placeholder="Observaciones..." :error="paymentErrors.notes" :rows="2" />
 
         <div
           v-if="modalError"
@@ -534,6 +585,7 @@ async function handleExport() {
           <AppIcon icon="lucide:alert-circle" :size="14" />
           {{ modalError }}
         </div>
+        </form>
       </template>
 
       <template #footer>
@@ -542,7 +594,7 @@ async function handleExport() {
             <AppIcon icon="lucide:x" :size="16" />
             Cancelar
           </BaseButton>
-          <BaseButton variant="primary" :loading="registering" :disabled="registering || !selectedPaymentId" @click="submitPayment">
+          <BaseButton variant="primary" type="submit" form="cobranzas-atrasos-register-payment" :loading="registeringPayment" :disabled="registeringPayment || !selectedPaymentId">
             <AppIcon icon="lucide:circle-check" :size="16" />
             Confirmar Cobro
           </BaseButton>
@@ -564,7 +616,7 @@ async function handleExport() {
       </div>
     </template>
 
-    <div class="p-4 space-y-4">
+    <form id="cobranzas-atrasos-note-form" class="p-4 space-y-4" @submit.prevent="onNoteSave">
       <!-- Última nota guardada -->
       <div
         v-if="noteItem?.lastCommunicationDate && noteItem?.lastCommunicationNote"
@@ -581,20 +633,21 @@ async function handleExport() {
       </div>
 
       <FormTextarea
-        v-model="noteText"
+        v-bind="noteFieldBinds"
         label="Nueva nota"
         placeholder="Ej: Llamé al cliente, quedó en pagar el viernes..."
+        :error="noteErrors.note"
         :rows="4"
       />
-    </div>
+    </form>
 
     <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
       <BaseButton variant="ghost" @click="closeNoteModal">Cancelar</BaseButton>
       <BaseButton
         variant="primary"
+        type="submit"
+        form="cobranzas-atrasos-note-form"
         :loading="savingNote"
-        :disabled="!noteText.trim()"
-        @click="submitNote"
       >
         <AppIcon icon="lucide:save" :size="16" class="mr-1" />
         Guardar nota

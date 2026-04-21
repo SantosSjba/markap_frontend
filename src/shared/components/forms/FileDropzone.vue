@@ -4,6 +4,7 @@
  */
 
 import { ref, computed } from 'vue'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 interface Props {
   modelValue?: File | File[] | null
@@ -175,21 +176,13 @@ function clearAll() {
       @dragleave="onDragLeave"
       @drop="onDrop"
     >
-      <svg
-        class="w-10 h-10 shrink-0 transition-colors duration-200"
-        :style="{ color: isDragging ? 'var(--color-primary)' : 'var(--color-text-muted)' }"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
+      <AppIcon
+        icon="lucide:cloud-upload"
+        :size="40"
+        :color="isDragging ? 'var(--color-primary)' : 'var(--color-text-muted)'"
+        class="shrink-0 transition-colors duration-200"
         aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="1.5"
-          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-        />
-      </svg>
+      />
       <p
         class="text-sm text-center max-w-md"
         :style="{ color: files.length ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }"
@@ -216,9 +209,7 @@ function clearAll() {
         class="flex items-center gap-2 py-2 px-3 rounded-lg text-sm"
         :style="{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }"
       >
-        <svg class="w-4 h-4 shrink-0" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
+        <AppIcon icon="lucide:file-text" :size="16" color="var(--color-text-muted)" class="shrink-0" />
         <span class="flex-1 min-w-0 truncate">{{ file.name }}</span>
         <span class="text-xs shrink-0" :style="{ color: 'var(--color-text-muted)' }">
           {{ fileSize(file.size) }}
@@ -230,9 +221,7 @@ function clearAll() {
           aria-label="Quitar archivo"
           @click.stop="removeFile(index)"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <AppIcon icon="lucide:x" :size="16" color="currentColor" />
         </button>
       </li>
       <li v-if="files.length > 1">

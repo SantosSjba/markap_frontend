@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import ExcelJS from 'exceljs'
+import { markapAlert } from '@/shared/alert'
 
 export type ExcelColumn = {
   header: string
@@ -115,7 +116,9 @@ export function useExcelExport() {
     try {
       await generateExcel(options)
     } catch (err) {
-      exportError.value = (err as Error)?.message ?? 'Error al exportar'
+      const msg = (err as Error)?.message ?? 'Error al exportar'
+      exportError.value = msg
+      void markapAlert.toast.error('Exportación fallida', msg)
       console.error('[useExcelExport]', err)
     } finally {
       isExporting.value = false

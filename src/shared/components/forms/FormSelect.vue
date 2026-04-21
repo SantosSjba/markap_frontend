@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '@shared/components/ui/AppIcon.vue'
+
 /**
  * FormSelect - Componente select reutilizable con props
  */
@@ -10,7 +12,7 @@ interface Option {
 }
 
 interface Props {
-  modelValue: string | number | null
+  modelValue?: string | number | null
   options: Option[]
   placeholder?: string
   label?: string
@@ -28,12 +30,15 @@ const props = withDefaults(defineProps<Props>(), {
   required: false,
 })
 
-const emit = defineEmits<{
-  'update:modelValue': [value: string | number | null]
-  change: [value: string | number | null]
-}>()
+const emit = defineEmits(['update:modelValue', 'change'])
 
 const selectId = props.id ?? `select-${Math.random().toString(36).slice(2, 11)}`
+
+const selectValue = () => {
+  const v = props.modelValue
+  if (v === null || v === undefined || v === '') return ''
+  return String(v)
+}
 
 const handleChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
@@ -57,7 +62,7 @@ const handleChange = (event: Event) => {
     <div class="relative">
       <select
         :id="selectId"
-        :value="modelValue"
+        :value="selectValue()"
         :disabled="disabled || loading"
         :required="required"
         class="w-full px-4 py-2.5 rounded-lg border appearance-none pr-10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -65,6 +70,7 @@ const handleChange = (event: Event) => {
           borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
           color: 'var(--color-text-primary)',
+          colorScheme: 'inherit',
         }"
         @change="handleChange"
       >
@@ -79,27 +85,18 @@ const handleChange = (event: Event) => {
         </option>
       </select>
       <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-        <svg
+        <AppIcon
           v-if="loading"
-          class="animate-spin w-4 h-4"
-          :style="{ color: 'var(--color-primary)' }"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        <svg
+          icon="line-md:loading-loop"
+          :size="16"
+          color="var(--color-primary)"
+        />
+        <AppIcon
           v-else
-          class="w-5 h-5"
-          :style="{ color: 'var(--color-text-muted)' }"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
+          icon="lucide:chevron-down"
+          :size="20"
+          color="var(--color-text-muted)"
+        />
       </div>
     </div>
     <p v-if="error" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">

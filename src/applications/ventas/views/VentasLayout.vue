@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { AppLayoutSidebar, AppHeader } from '@widgets/components'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { useAppLayout } from '../composables'
+
+/**
+ * VentasLayout — mismo shell que Alquileres (`AppLayoutSidebar` + `AppHeader` en @widgets).
+ * Menús: API por slug `ventas`. Notificaciones: filtradas a ventas en el header.
+ */
 
 const { application, menus, menusLoading } = useAppLayout()
 
@@ -34,6 +40,7 @@ const applicationInfo = computed(() =>
 
 <template>
   <div class="min-h-screen" style="background-color: var(--color-background);">
+    <!-- Sidebar (mismo widget que Alquileres; menús distintos vía prop) -->
     <AppLayoutSidebar
       :menus="menus"
       :application="applicationInfo"
@@ -43,6 +50,7 @@ const applicationInfo = computed(() =>
       @close-mobile="closeMobileSidebar"
     />
 
+    <!-- Contenido principal -->
     <div
       :class="[
         'transition-all duration-300 ease-in-out',
@@ -53,38 +61,20 @@ const applicationInfo = computed(() =>
         :is-sidebar-collapsed="isSidebarCollapsed"
         minimal-user-menu
         profile-to="/ventas/perfil"
+        notifications-application-slug="ventas"
         @toggle-sidebar="toggleSidebar"
         @toggle-mobile-sidebar="toggleMobileSidebar"
       />
 
       <main class="p-4 lg:p-6 mt-16">
         <div v-if="menusLoading" class="flex justify-center py-12">
-          <svg
-            class="animate-spin h-8 w-8"
-            style="color: var(--color-primary);"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            />
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
+          <AppIcon icon="line-md:loading-loop" :size="32" color="var(--color-primary)" />
         </div>
         <router-view v-else />
       </main>
     </div>
 
+    <!-- Mobile backdrop -->
     <Transition
       enter-active-class="transition-opacity duration-300"
       leave-active-class="transition-opacity duration-200"

@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
+import { markapAlert } from '@/shared/alert'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import {
   propertiesService,
   type CreatePropertyPayload,
@@ -11,7 +14,19 @@ export const propertyKeys = {
   all: ['properties'] as const,
   detail: (id: string) => [...propertyKeys.all, 'detail', id] as const,
   list: (params: ListPropertiesParams) =>
-    [...propertyKeys.all, 'list', params?.applicationSlug ?? 'alquileres', params?.page ?? 1, params?.limit ?? 10, params?.search ?? '', params?.propertyTypeId ?? '', params?.listingStatus ?? ''] as const,
+    [
+      ...propertyKeys.all,
+      'list',
+      params?.applicationSlug ?? 'alquileres',
+      params?.page ?? 1,
+      params?.limit ?? 10,
+      params?.search ?? '',
+      params?.propertyTypeId ?? '',
+      params?.districtId ?? '',
+      params?.listingStatus ?? '',
+      params?.minSalePrice ?? '',
+      params?.maxSalePrice ?? '',
+    ] as const,
   propertyTypes: () => [...propertyKeys.all, 'property-types'] as const,
   departments: () => [...propertyKeys.all, 'departments'] as const,
   provinces: (departmentId?: string) =>
@@ -89,13 +104,17 @@ export function useCreateProperty() {
   const mutation = useMutation({
     mutationFn: (data: CreatePropertyPayload) => propertiesService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      invalidateQuerySubtree(queryClient, propertyKeys.all)
+      void markapAlert.toast.success('Propiedad registrada')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(err))
     },
   })
   return {
     ...mutation,
     /** Refresca el listado y espera a que termine (para usar antes de navegar). */
-    invalidateList: () => queryClient.refetchQueries({ queryKey: propertyKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, propertyKeys.all),
   }
 }
 
@@ -104,15 +123,18 @@ export function useUpdateProperty() {
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdatePropertyPayload }) =>
       propertiesService.update(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
-      queryClient.invalidateQueries({ queryKey: propertyKeys.detail(variables.id) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, propertyKeys.all)
+      void markapAlert.toast.success('Propiedad actualizada')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(err))
     },
   })
   return {
     ...mutation,
     /** Refresca el listado y espera a que termine (para usar antes de navegar). */
-    invalidateList: () => queryClient.refetchQueries({ queryKey: propertyKeys.all }),
+    invalidateList: () => refetchQuerySubtree(queryClient, propertyKeys.all),
   }
 }
 
@@ -126,9 +148,12 @@ export function useUpdatePropertyListingStatus() {
       id: string
       listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE'
     }) => propertiesService.updateListingStatus(id, listingStatus),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
-      queryClient.invalidateQueries({ queryKey: propertyKeys.detail(variables.id) })
+    onSuccess: () => {
+      invalidateQuerySubtree(queryClient, propertyKeys.all)
+      void markapAlert.toast.success('Estado de publicación actualizado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo actualizar el estado', getApiErrorMessage(err))
     },
   })
 }
@@ -138,7 +163,11 @@ export function useDeleteProperty() {
   return useMutation({
     mutationFn: (id: string) => propertiesService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      invalidateQuerySubtree(queryClient, propertyKeys.all)
+      void markapAlert.toast.success('Propiedad eliminada')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err))
     },
   })
 }

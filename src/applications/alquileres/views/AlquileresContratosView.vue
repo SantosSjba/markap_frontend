@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import type { RowSelectionState } from '@tanstack/vue-table'
 import {
   BaseButton,
   BasePagination,
@@ -21,6 +22,8 @@ import { BaseModal } from '@shared/components'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
+
+const tableRowSelection = ref<RowSelectionState>({})
 
 const listParams = ref<ListRentalsParams>({
   applicationSlug: 'alquileres',
@@ -56,15 +59,6 @@ const onPageChange = (page: number) => {
 const onPageSizeChange = (size: number) => {
   listParams.value = { ...listParams.value, limit: size, page: 1 }
 }
-
-const tableColumns = [
-  { key: 'alquiler', label: 'Alquiler', align: 'left' as const },
-  { key: 'partes', label: 'Partes', align: 'left' as const },
-  { key: 'vigencia', label: 'Vigencia', align: 'left' as const },
-  { key: 'estado', label: 'Estado', align: 'left' as const },
-  { key: 'monto', label: 'Alquiler', align: 'left' as const },
-  { key: 'actions', label: '', align: 'right' as const },
-]
 
 function getDisplayStatus(item: RentalListItem): 'vigente' | 'proximo' | 'porVencer' | 'vencido' {
   const today = new Date()
@@ -163,6 +157,53 @@ const getActions = (item: RentalListItem): { label: string; icon: string; onClic
   }
   return actions
 }
+
+const tableColumns = [
+  {
+    key: 'alquiler',
+    label: 'Alquiler',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => {
+      const x = r as RentalListItem
+      return `${x.code} ${x.propertyAddress}`
+    },
+  },
+  {
+    key: 'partes',
+    label: 'Partes',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => {
+      const x = r as RentalListItem
+      return `${x.tenantName} ${x.ownerName}`
+    },
+  },
+  {
+    key: 'vigencia',
+    label: 'Vigencia',
+    align: 'left' as const,
+    sortable: true,
+    sortType: 'basic' as const,
+    sortAccessor: (r: unknown) => new Date((r as RentalListItem).endDate).getTime(),
+  },
+  {
+    key: 'estado',
+    label: 'Estado',
+    align: 'left' as const,
+    sortable: true,
+    sortAccessor: (r: unknown) => getDisplayStatus(r as RentalListItem),
+  },
+  {
+    key: 'monto',
+    label: 'Alquiler',
+    align: 'left' as const,
+    sortable: true,
+    sortType: 'basic' as const,
+    sortAccessor: (r: unknown) => (r as RentalListItem).monthlyAmount,
+  },
+  { key: 'actions', label: '', align: 'right' as const },
+]
 
 const paginationProps = computed(() => {
   const page = listParams.value.page ?? 1
@@ -288,45 +329,37 @@ async function handleExport() {
       </StatsCard>
     </div>
 
-    <!-- Search & Filters -->
-    <div
-      class="flex flex-col sm:flex-row gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-      }"
-    >
-      <div class="flex-1 min-w-0">
-        <SearchInput
-          v-model="searchInput"
-          placeholder="Buscar por código, propiedad, inquilino o propietario..."
-        />
-      </div>
-      <div class="flex flex-wrap gap-3 flex-shrink-0 sm:flex-nowrap">
-        <div class="w-full sm:w-[200px] min-w-0">
-          <FormSelect
-            v-model="filterStatus"
-            :options="statusOptions"
-            placeholder="Todos los estados"
-          />
-        </div>
-      </div>
-    </div>
-
     <!-- Table -->
     <div
-      class="rounded-xl border overflow-visible"
+      class="rounded-xl border overflow-hidden"
       :style="{
         backgroundColor: 'var(--color-surface)',
         borderColor: 'var(--color-border)',
       }"
     >
-      <div class="overflow-x-auto overflow-y-visible">
+      <div class="overflow-x-auto">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
         </div>
         <template v-else>
-          <DataTable :columns="tableColumns" :data="rentals" row-key="id">
+          <DataTable
+            v-model:row-selection="tableRowSelection"
+            selectable
+            empty-text="No hay contratos en esta página."
+            :columns="tableColumns"
+            :data="rentals"
+            row-key="id"
+          >
+            <template #toolbar>
+              <div class="flex-1 min-w-0">
+                <SearchInput v-model="searchInput" placeholder="Buscar por código, propiedad, inquilino o propietario..." />
+              </div>
+              <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
+                <div class="w-full sm:w-[200px] min-w-0">
+                  <FormSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
+                </div>
+              </div>
+            </template>
             <template #row="{ row }">
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
