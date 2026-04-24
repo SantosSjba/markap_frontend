@@ -7,6 +7,10 @@ import { dashboardRoutes } from '@applications/shell/router'
 import { settingsRoutes } from '@applications/settings/router'
 import { alquileresRoutes } from '@applications/alquileres/router'
 import { ventasRoutes } from '@applications/ventas/router'
+import { interiorismoRoutes } from '@applications/interiorismo/router'
+import { arquitecturaRoutes } from '@applications/arquitectura/router'
+import { produccionRoutes } from '@applications/produccion/router'
+import { contabilidadRoutes } from '@applications/contabilidad/router'
 
 const baseRoutes: RouteRecordRaw[] = [
   {
@@ -32,6 +36,10 @@ const routes: RouteRecordRaw[] = [
   ...applicationsRoutes,
   ...alquileresRoutes,
   ...ventasRoutes,
+  ...interiorismoRoutes,
+  ...arquitecturaRoutes,
+  ...produccionRoutes,
+  ...contabilidadRoutes,
   ...settingsRoutes,
   ...dashboardRoutes,
   ...baseRoutes,

@@ -1,0 +1,118 @@
+import type { MenuItem } from '@shared/types'
+
+/**
+ * Menú lateral HITO Arquitectura cuando la API aún no tiene el árbol completo.
+ * Alineado con `prisma/seed/data/menus-arquitectura.ts` y el router.
+ */
+export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
+  {
+    id: 'arq-fb-dashboard',
+    label: 'Dashboard',
+    icon: 'layout-dashboard',
+    path: '/arquitectura',
+    order: 0,
+  },
+  {
+    id: 'arq-fb-proyectos',
+    label: 'Proyectos',
+    icon: 'folder-kanban',
+    path: null,
+    order: 1,
+    children: [
+      {
+        id: 'arq-fb-proy-list',
+        label: 'Listado de proyectos',
+        icon: null,
+        path: '/arquitectura/proyectos',
+        order: 0,
+      },
+      {
+        id: 'arq-fb-proy-new',
+        label: 'Nuevo proyecto',
+        icon: null,
+        path: '/arquitectura/proyectos/nuevo',
+        order: 1,
+      },
+      {
+        id: 'arq-fb-proy-run',
+        label: 'En ejecución',
+        icon: null,
+        path: '/arquitectura/proyectos/en-ejecucion',
+        order: 2,
+      },
+    ],
+  },
+  {
+    id: 'arq-fb-clientes',
+    label: 'Clientes',
+    icon: 'users',
+    path: null,
+    order: 2,
+    children: [
+      {
+        id: 'arq-fb-cli-list',
+        label: 'Listado de clientes',
+        icon: null,
+        path: '/arquitectura/clientes',
+        order: 0,
+      },
+      {
+        id: 'arq-fb-cli-new',
+        label: 'Nuevo cliente',
+        icon: null,
+        path: '/arquitectura/clientes/nuevo',
+        order: 1,
+      },
+    ],
+  },
+  {
+    id: 'arq-fb-presupuestos',
+    label: 'Presupuestos',
+    icon: 'file-text',
+    path: null,
+    order: 3,
+    children: [
+      {
+        id: 'arq-fb-pre-list',
+        label: 'Listado',
+        icon: null,
+        path: '/arquitectura/presupuestos',
+        order: 0,
+      },
+      {
+        id: 'arq-fb-pre-new',
+        label: 'Nuevo presupuesto',
+        icon: null,
+        path: '/arquitectura/presupuestos/nuevo',
+        order: 1,
+      },
+    ],
+  },
+  {
+    id: 'arq-fb-cronograma',
+    label: 'Cronograma',
+    icon: 'calendar-range',
+    path: '/arquitectura/cronograma',
+    order: 4,
+  },
+  {
+    id: 'arq-fb-reportes',
+    label: 'Reportes',
+    icon: 'bar-chart',
+    path: '/arquitectura/reportes',
+    order: 5,
+  },
+  {
+    id: 'arq-fb-config',
+    label: 'Configuración',
+    icon: 'settings',
+    path: '/arquitectura/configuracion',
+    order: 6,
+  },
+]
+
+export function arquitecturaMenusLookComplete(apiMenus: MenuItem[]): boolean {
+  if (!apiMenus.length) return false
+  const proyectos = apiMenus.find((m) => m.label.trim() === 'Proyectos')
+  return !!(proyectos?.children && proyectos.children.length > 0)
+}

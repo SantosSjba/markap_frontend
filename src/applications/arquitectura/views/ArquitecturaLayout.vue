@@ -1,0 +1,88 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { AppLayoutSidebar, AppHeader } from '@widgets/components'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
+import { useAppLayout } from '../composables'
+
+const { application, menus, menusLoading } = useAppLayout()
+
+const isSidebarCollapsed = ref(false)
+const isMobileSidebarOpen = ref(false)
+
+const toggleSidebar = () => {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value
+}
+
+const toggleMobileSidebar = () => {
+  isMobileSidebarOpen.value = !isMobileSidebarOpen.value
+}
+
+const closeMobileSidebar = () => {
+  isMobileSidebarOpen.value = false
+}
+
+const applicationInfo = computed(() =>
+  application.value
+    ? {
+        name: application.value.name,
+        slug: application.value.slug,
+        icon: application.value.icon,
+        color: application.value.color,
+      }
+    : {
+        name: 'HITO Arquitectura',
+        slug: 'arquitectura',
+        icon: 'building',
+        color: '#2DBE7E',
+      },
+)
+</script>
+
+<template>
+  <div class="min-h-screen" style="background-color: var(--color-background);">
+    <AppLayoutSidebar
+      :menus="menus"
+      :application="applicationInfo"
+      back-url="/applications"
+      :is-collapsed="isSidebarCollapsed"
+      :is-mobile-open="isMobileSidebarOpen"
+      @close-mobile="closeMobileSidebar"
+    />
+
+    <div
+      :class="[
+        'transition-all duration-300 ease-in-out',
+        isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64',
+      ]"
+    >
+      <AppHeader
+        :is-sidebar-collapsed="isSidebarCollapsed"
+        minimal-user-menu
+        profile-to="/arquitectura/perfil"
+        notifications-application-slug="arquitectura"
+        @toggle-sidebar="toggleSidebar"
+        @toggle-mobile-sidebar="toggleMobileSidebar"
+      />
+
+      <main class="p-4 lg:p-6 mt-16">
+        <div v-if="menusLoading" class="flex justify-center py-12">
+          <AppIcon icon="line-md:loading-loop" :size="32" color="var(--color-primary)" />
+        </div>
+        <router-view v-else />
+      </main>
+    </div>
+
+    <Transition
+      enter-active-class="transition-opacity duration-300"
+      leave-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="isMobileSidebarOpen"
+        class="fixed inset-0 bg-black/50 z-30 lg:hidden"
+        @click="closeMobileSidebar"
+      />
+    </Transition>
+  </div>
+</template>
