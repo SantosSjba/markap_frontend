@@ -7,10 +7,10 @@ import { dashboardRoutes } from '@modules/shell'
 import { settingsRoutes } from '@modules/settings'
 import { alquileresRoutes } from '@modules/alquileres'
 import { ventasRoutes } from '@modules/ventas'
-import { interiorismoRoutes } from '@/applications/interiorismo/router'
-import { arquitecturaRoutes } from '@/applications/arquitectura/router'
-import { produccionRoutes } from '@/applications/produccion/router'
-import { contabilidadRoutes } from '@/applications/contabilidad/router'
+import { interiorismoRoutes } from '@modules/interiorismo'
+import { arquitecturaRoutes } from '@modules/arquitectura'
+import { produccionRoutes } from '@modules/produccion'
+import { contabilidadRoutes } from '@modules/contabilidad'
 
 const baseRoutes: RouteRecordRaw[] = [
   {
