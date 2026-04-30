@@ -23,7 +23,7 @@ import {
   useVentasCompliancePendingBoard,
   useVentasDispatchComplianceAlerts,
 } from '../../application/useVentasSales'
-import type { SaleClosingRow } from '../../domain/sales.types'
+import type { SaleClosingRow, SaleComplianceChecklist } from '../../domain/sales.types'
 import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
@@ -253,16 +253,20 @@ function applyTaxSuggestion() {
 
 function onSaveChecklist() {
   if (!selectedClosing.value) return
-  saveChecklist({
+  const f = complianceForm.value
+  const payload: SaleComplianceChecklist = {
+    ...f,
     propertyId: selectedClosing.value.property.id,
     buyerClientId: selectedClosing.value.buyer.id,
-    ...complianceForm.value,
-    sunarpSubmittedAt: complianceForm.value.sunarpSubmittedAt || null,
-    sunarpObservedAt: complianceForm.value.sunarpObservedAt || null,
-    sunarpRegisteredAt: complianceForm.value.sunarpRegisteredAt || null,
-    alcabalaPaidAt: complianceForm.value.alcabalaPaidAt || null,
-    rent2PaidAt: complianceForm.value.rent2PaidAt || null,
-  })
+    sunarpStatus: f.sunarpStatus as NonNullable<SaleComplianceChecklist['sunarpStatus']>,
+    kycRiskLevel: f.kycRiskLevel as NonNullable<SaleComplianceChecklist['kycRiskLevel']>,
+    sunarpSubmittedAt: f.sunarpSubmittedAt || null,
+    sunarpObservedAt: f.sunarpObservedAt || null,
+    sunarpRegisteredAt: f.sunarpRegisteredAt || null,
+    alcabalaPaidAt: f.alcabalaPaidAt || null,
+    rent2PaidAt: f.rent2PaidAt || null,
+  }
+  saveChecklist(payload)
 }
 
 function onUploadDoc() {

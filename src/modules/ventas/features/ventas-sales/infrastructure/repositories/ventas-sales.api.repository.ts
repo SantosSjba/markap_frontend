@@ -21,7 +21,7 @@ import {
 
 const scope = { applicationSlug: VENTAS_SALES_APP_SLUG } as const
 
-function qs(params: Record<string, string | number | undefined>) {
+function qs(params: Record<string, string | number | boolean | undefined>) {
   const u = new URLSearchParams()
   Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== '') u.set(k, String(v))
