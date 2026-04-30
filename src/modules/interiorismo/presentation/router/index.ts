@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import InteriorismoLayout from '../views/InteriorismoLayout.vue'
 import { SectionLayout } from '@layouts'
 import { INTERIORISMO_BASE_PATH } from '../../config/routes.constants'
+import { interiorismoClientesRoutes } from '../../features/clientes'
 
 const placeholder = () => import('../views/InteriorismoPlaceholderView.vue')
 
@@ -52,20 +53,7 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
         path: 'clientes',
         component: SectionLayout,
         meta: { title: 'Clientes' },
-        children: [
-          {
-            path: '',
-            name: 'interiorismo-clientes',
-            component: placeholder,
-            meta: { title: 'Listado de clientes' },
-          },
-          {
-            path: 'nuevo',
-            name: 'interiorismo-clientes-nuevo',
-            component: placeholder,
-            meta: { title: 'Nuevo cliente' },
-          },
-        ],
+        children: interiorismoClientesRoutes,
       },
       {
         path: 'presupuestos',
