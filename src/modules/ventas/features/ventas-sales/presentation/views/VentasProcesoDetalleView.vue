@@ -2,7 +2,11 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, AppIcon, FormSelect } from '@shared/components'
-import { useVentasProcessDetail, useVentasUpdateProcess } from '../../application/useVentasSales'
+import {
+  useVentasClosingReadiness,
+  useVentasProcessDetail,
+  useVentasUpdateProcess,
+} from '../../application/useVentasSales'
 import type { SaleProcessDetail } from '../../domain/sales.types'
 import { useVentasPipelineStages } from '@ventas/configuracion'
 import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../../domain/pipeline.constants'
@@ -15,6 +19,12 @@ const id = computed(() => String(route.params.id ?? ''))
 const { stageOptions, labelFor: pipelineStageLabel } = useVentasPipelineStages()
 
 const { data: proc, isLoading } = useVentasProcessDetail(id)
+const complianceParams = computed(() => ({
+  propertyId: (proc.value as SaleProcessDetail | undefined)?.property?.id ?? '',
+  buyerClientId: (proc.value as SaleProcessDetail | undefined)?.buyer?.id ?? '',
+}))
+const { data: closingReadiness, isLoading: loadingReadiness } =
+  useVentasClosingReadiness(complianceParams)
 
 const { mutate: updateProc, isPending: saving } = useVentasUpdateProcess()
 
@@ -99,6 +109,36 @@ function saveStage() {
             <strong :style="{ color: 'var(--color-text-primary)' }">Estado:</strong>
             {{ processStatusLabel((proc as SaleProcessDetail).status) }}
           </p>
+        </div>
+        <div
+          class="rounded-lg border p-3"
+          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+        >
+          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+            Cumplimiento para cierre
+          </p>
+          <p v-if="loadingReadiness" class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+            Validando checklist legal/tributario/compliance...
+          </p>
+          <template v-else>
+            <p
+              class="text-sm mt-1"
+              :style="{ color: closingReadiness?.ok ? 'var(--color-success)' : 'var(--color-warning)' }"
+            >
+              {{
+                closingReadiness?.ok
+                  ? 'Operación lista para cierre.'
+                  : 'Faltan validaciones para habilitar el cierre.'
+              }}
+            </p>
+            <ul
+              v-if="!closingReadiness?.ok && closingReadiness?.missing?.length"
+              class="mt-2 list-disc pl-5 text-sm"
+              :style="{ color: 'var(--color-text-secondary)' }"
+            >
+              <li v-for="m in closingReadiness.missing" :key="m">{{ m }}</li>
+            </ul>
+          </template>
         </div>
       </div>
 

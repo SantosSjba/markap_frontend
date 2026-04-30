@@ -21,6 +21,8 @@ import {
   useVentasCreateBuyerPayment,
   useVentasMarkBuyerPaymentPaid,
 } from '../../application/useVentasFinanzas'
+import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const ITEMS = 15
 const listParams = ref({
@@ -59,11 +61,15 @@ const paginationProps = computed(() => {
 const buyerFilterOptions = ref<{ value: string; label: string }[]>([{ value: '', label: 'Todos los clientes' }])
 
 async function loadBuyers() {
-  const res = await ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 })
-  buyerFilterOptions.value = [
-    { value: '', label: 'Todos los clientes' },
-    ...res.data.map((c) => ({ value: c.id, label: `${c.fullName} (${c.documentNumber})` })),
-  ]
+  try {
+    const res = await ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 })
+    buyerFilterOptions.value = [
+      { value: '', label: 'Todos los clientes' },
+      ...res.data.map((c) => ({ value: c.id, label: `${c.fullName} (${c.documentNumber})` })),
+    ]
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo cargar clientes', getApiErrorMessage(e))
+  }
 }
 
 void loadBuyers()
@@ -111,6 +117,7 @@ function statusLabel(s: string) {
 }
 
 const showNew = ref(false)
+const loadingNewModalData = ref(false)
 const closingOptions = ref<{ value: string; label: string }[]>([])
 
 const paymentSchema = toTypedSchema(
@@ -156,13 +163,20 @@ const { mutate: createPayment, isPending: creating } = useVentasCreateBuyerPayme
 const { mutate: markPaid, isPending: marking } = useVentasMarkBuyerPaymentPaid()
 
 async function openNewModal() {
-  const closings = await ventasSalesRepository.listClosings({ page: 1, limit: 500 })
-  closingOptions.value = closings.data.map((c) => ({
-    value: c.id,
-    label: `${c.property.code} — ${c.buyer.fullName} — S/ ${c.finalPrice.toLocaleString('es-PE')}`,
-  }))
-  resetPaymentForm()
-  showNew.value = true
+  loadingNewModalData.value = true
+  try {
+    const closings = await ventasSalesRepository.listClosings({ page: 1, limit: 500 })
+    closingOptions.value = closings.data.map((c) => ({
+      value: c.id,
+      label: `${c.property.code} — ${c.buyer.fullName} — S/ ${c.finalPrice.toLocaleString('es-PE')}`,
+    }))
+    resetPaymentForm()
+    showNew.value = true
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo abrir el formulario', getApiErrorMessage(e))
+  } finally {
+    loadingNewModalData.value = false
+  }
 }
 
 const onSubmitPayment = submitPayment((values) => {
@@ -197,7 +211,12 @@ function onMarkPaid(row: BuyerPaymentRow) {
           Inicial y cuotas del comprador por cierre; pendiente, pagado o atrasado según vencimiento.
         </p>
       </div>
-      <BaseButton variant="primary" class="flex items-center gap-2" @click="openNewModal">
+      <BaseButton
+        variant="primary"
+        class="flex items-center gap-2"
+        :loading="loadingNewModalData"
+        @click="openNewModal"
+      >
         <AppIcon icon="lucide:plus" :size="18" />
         Registrar pago
       </BaseButton>

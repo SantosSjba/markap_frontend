@@ -18,6 +18,8 @@ import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useVentasPipelineStages } from '@ventas/configuracion'
 import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../../domain/pipeline.constants'
+import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 const { stageOptions, labelFor: pipelineStageLabel } = useVentasPipelineStages()
@@ -81,6 +83,7 @@ const tableColumns = [
 ]
 
 const showNew = ref(false)
+const loadingNewModalData = ref(false)
 const buyerOptions = ref<{ value: string; label: string }[]>([])
 const propertyOptions = ref<{ value: string; label: string }[]>([])
 const agentParams = ref({ page: 1, limit: 500, isActive: true })
@@ -101,19 +104,26 @@ const form = ref({
 const { mutate: createProcess, isPending: creating } = useVentasCreateProcess()
 
 async function openNewModal() {
-  const [buyers, props] = await Promise.all([
-    ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 }),
-    ventasPropertiesRepository.getList({ page: 1, limit: 500, listingStatus: 'AVAILABLE' }),
-  ])
-  buyerOptions.value = buyers.data.map((c) => ({
-    value: c.id,
-    label: `${c.fullName} (${c.documentNumber})`,
-  }))
-  propertyOptions.value = props.data.map((p) => ({
-    value: p.id,
-    label: `${p.code} — ${p.addressLine}`,
-  }))
-  showNew.value = true
+  loadingNewModalData.value = true
+  try {
+    const [buyers, props] = await Promise.all([
+      ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 }),
+      ventasPropertiesRepository.getList({ page: 1, limit: 500, listingStatus: 'AVAILABLE' }),
+    ])
+    buyerOptions.value = buyers.data.map((c) => ({
+      value: c.id,
+      label: `${c.fullName} (${c.documentNumber})`,
+    }))
+    propertyOptions.value = props.data.map((p) => ({
+      value: p.id,
+      label: `${p.code} — ${p.addressLine}`,
+    }))
+    showNew.value = true
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo abrir el formulario', getApiErrorMessage(e))
+  } finally {
+    loadingNewModalData.value = false
+  }
 }
 
 function submitNew() {
@@ -162,7 +172,12 @@ function goDetail(row: SaleProcessListRow) {
           <AppIcon icon="lucide:layout-grid" :size="18" />
           Pipeline
         </BaseButton>
-        <BaseButton variant="primary" class="flex items-center gap-2" @click="openNewModal">
+        <BaseButton
+          variant="primary"
+          class="flex items-center gap-2"
+          :loading="loadingNewModalData"
+          @click="openNewModal"
+        >
           <AppIcon icon="lucide:plus" :size="18" />
           Nuevo proceso
         </BaseButton>

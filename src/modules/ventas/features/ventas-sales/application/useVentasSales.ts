@@ -13,6 +13,15 @@ export const ventasSalesKeys = {
   processDetail: (id: string) => [...ventasSalesKeys.root, 'process', id] as const,
   separations: (params: object) => [...ventasSalesKeys.root, 'separations', params] as const,
   closings: (params: object) => [...ventasSalesKeys.root, 'closings', params] as const,
+  closingReadiness: (propertyId: string, buyerClientId: string) =>
+    [...ventasSalesKeys.root, 'closing-readiness', propertyId, buyerClientId] as const,
+  complianceChecklist: (propertyId: string, buyerClientId: string) =>
+    [...ventasSalesKeys.root, 'compliance-checklist', propertyId, buyerClientId] as const,
+  complianceDocuments: (propertyId: string, buyerClientId: string) =>
+    [...ventasSalesKeys.root, 'compliance-documents', propertyId, buyerClientId] as const,
+  taxPreview: (params: object) => [...ventasSalesKeys.root, 'tax-preview', params] as const,
+  compliancePendingBoard: (params: object) =>
+    [...ventasSalesKeys.root, 'compliance-pending-board', params] as const,
 }
 
 /**
@@ -204,5 +213,103 @@ export function useVentasCreateClosing() {
       void markapAlert.toast.success('Cierre registrado — propiedad vendida y comisión pendiente')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar el cierre', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasClosingReadiness(
+  params: Ref<{ propertyId: string; buyerClientId: string }>,
+) {
+  return useQuery({
+    queryKey: computed(() =>
+      ventasSalesKeys.closingReadiness(params.value.propertyId, params.value.buyerClientId),
+    ),
+    queryFn: () => ventasSalesRepository.getClosingReadiness(params.value),
+    enabled: computed(() => !!params.value.propertyId && !!params.value.buyerClientId),
+  })
+}
+
+export function useVentasComplianceChecklist(
+  params: Ref<{ propertyId: string; buyerClientId: string }>,
+) {
+  return useQuery({
+    queryKey: computed(() =>
+      ventasSalesKeys.complianceChecklist(params.value.propertyId, params.value.buyerClientId),
+    ),
+    queryFn: () => ventasSalesRepository.getComplianceChecklist(params.value),
+    enabled: computed(() => !!params.value.propertyId && !!params.value.buyerClientId),
+  })
+}
+
+export function useVentasComplianceDocuments(
+  params: Ref<{ propertyId: string; buyerClientId: string }>,
+) {
+  return useQuery({
+    queryKey: computed(() =>
+      ventasSalesKeys.complianceDocuments(params.value.propertyId, params.value.buyerClientId),
+    ),
+    queryFn: () => ventasSalesRepository.listComplianceDocuments(params.value),
+    enabled: computed(() => !!params.value.propertyId && !!params.value.buyerClientId),
+  })
+}
+
+export function useVentasUpsertComplianceChecklist() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ventasSalesRepository.upsertComplianceChecklist,
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
+      void markapAlert.toast.success('Checklist legal actualizado')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo guardar checklist', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasUploadComplianceDocument() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ventasSalesRepository.uploadComplianceDocument,
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
+      void markapAlert.toast.success('Documento de cumplimiento registrado')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo subir documento', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasTaxPreview(
+  params: Ref<{
+    salePrice: number
+    acquisitionCost?: number
+    alcabalaApplicable?: boolean
+    rent2Applicable?: boolean
+    uit?: number
+  }>,
+) {
+  return useQuery({
+    queryKey: computed(() => ventasSalesKeys.taxPreview(params.value)),
+    queryFn: () => ventasSalesRepository.getTaxPreview(params.value),
+    enabled: computed(() => Number(params.value.salePrice) > 0),
+  })
+}
+
+export function useVentasCompliancePendingBoard(
+  params: Ref<{ limit?: number; offset?: number; sunarpStatus?: string; onlyOverdue?: boolean }>,
+) {
+  return useQuery({
+    queryKey: computed(() => ventasSalesKeys.compliancePendingBoard(params.value)),
+    queryFn: () => ventasSalesRepository.getCompliancePendingBoard(params.value),
+  })
+}
+
+export function useVentasDispatchComplianceAlerts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ventasSalesRepository.dispatchComplianceAlerts,
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
+      void markapAlert.toast.success('Alertas de cumplimiento procesadas')
+    },
+    onError: (e) =>
+      void markapAlert.toast.error('No se pudieron procesar alertas', getApiErrorMessage(e)),
   })
 }

@@ -1,4 +1,9 @@
 import type {
+  CompliancePendingItem,
+  SaleComplianceChecklist,
+  SaleComplianceDocument,
+  SaleTaxPreview,
+  SaleClosingReadiness,
   SaleClosingRow,
   SaleProcessDetail,
   SaleProcessListRow,
@@ -92,4 +97,58 @@ export interface VentasSalesRepository {
     commissionPercent?: number | null
     commissionAutoFromProfile?: boolean
   }) => Promise<unknown>
+
+  getClosingReadiness: (params: {
+    propertyId: string
+    buyerClientId: string
+  }) => Promise<SaleClosingReadiness>
+
+  getComplianceChecklist: (params: {
+    propertyId: string
+    buyerClientId: string
+  }) => Promise<SaleComplianceChecklist | null>
+
+  upsertComplianceChecklist: (body: SaleComplianceChecklist) => Promise<unknown>
+
+  listComplianceDocuments: (params: {
+    propertyId: string
+    buyerClientId: string
+  }) => Promise<SaleComplianceDocument[]>
+
+  uploadComplianceDocument: (body: {
+    propertyId: string
+    buyerClientId: string
+    docType: string
+    file: File
+    issuedAt?: string | null
+    verifiedAt?: string | null
+    verifiedBy?: string | null
+    notes?: string | null
+  }) => Promise<unknown>
+
+  getTaxPreview: (params: {
+    salePrice: number
+    acquisitionCost?: number
+    alcabalaApplicable?: boolean
+    rent2Applicable?: boolean
+    uit?: number
+  }) => Promise<SaleTaxPreview>
+
+  getCompliancePendingBoard: (params?: {
+    limit?: number
+    offset?: number
+    sunarpStatus?: string
+    onlyOverdue?: boolean
+  }) => Promise<{ data: CompliancePendingItem[]; total: number }>
+
+  dispatchComplianceAlerts: (body?: {
+    dryRun?: boolean
+    daysWithoutAlert?: number
+    maxItems?: number
+  }) => Promise<{
+    dryRun: boolean
+    dispatched: number
+    candidates: number
+    sample?: CompliancePendingItem[]
+  }>
 }

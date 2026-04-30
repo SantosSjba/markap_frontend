@@ -90,7 +90,14 @@ function onCardAdded(targetStage: string, evt: DraggableEvent<SaleProcessListRow
   const row = boardList(targetStage)[evt.newIndex ?? -1]
   if (!row?.id) return
   if (normalizePipelineStage(row.pipelineStage) === targetStage) return
-  patchQuiet({ id: row.id, body: { pipelineStage: targetStage as PipelineStageValue } })
+  patchQuiet(
+    { id: row.id, body: { pipelineStage: targetStage as PipelineStageValue } },
+    {
+      onError: () => {
+        rebuildBoard(listResult.value?.data ?? [])
+      },
+    },
+  )
 }
 
 function goDetail(p: SaleProcessListRow) {

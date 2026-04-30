@@ -67,3 +67,76 @@ export interface SaleProcessDetail extends SaleProcessListRow {
   activities: SaleProcessActivityRow[]
   reminders: SaleProcessReminderRow[]
 }
+
+export interface SaleClosingReadiness {
+  ok: boolean
+  missing: string[]
+  checklist: Record<string, unknown> | null
+}
+
+export interface SaleComplianceChecklist {
+  id?: string
+  applicationId?: string
+  propertyId: string
+  buyerClientId: string
+  titleStudyChecked?: boolean
+  criChecked?: boolean
+  noLiensChecked?: boolean
+  municipalTaxClearanceChecked?: boolean
+  minutaSigned?: boolean
+  publicDeedSigned?: boolean
+  notarialPartSubmitted?: boolean
+  sunarpStatus?: 'PENDING' | 'SUBMITTED' | 'OBSERVED' | 'REGISTERED'
+  sunarpSubmittedAt?: string | null
+  sunarpObservedAt?: string | null
+  sunarpRegisteredAt?: string | null
+  sunarpObservationNotes?: string | null
+  alcabalaApplicable?: boolean
+  alcabalaAmount?: number | null
+  alcabalaPaidAt?: string | null
+  rent2Applicable?: boolean
+  rent2Amount?: number | null
+  rent2PaidAt?: string | null
+  bankedPaymentRequired?: boolean
+  bankedPaymentVerified?: boolean
+  paymentMethod?: string | null
+  bankOperationNumber?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  paymentEvidencePath?: string | null
+  fundsSourceDeclared?: boolean
+  beneficialOwnerDeclared?: boolean
+  kycRiskLevel?: 'PENDING' | 'LOW' | 'MEDIUM' | 'HIGH'
+  complianceNotes?: string | null
+}
+
+export interface SaleComplianceDocument {
+  id: string
+  docType: string
+  filePath: string
+  issuedAt: string | null
+  verifiedAt: string | null
+  verifiedBy: string | null
+  notes: string | null
+  createdAt: string
+}
+
+export interface SaleTaxPreview {
+  salePrice: number
+  acquisitionCost: number
+  uit: number
+  alcabala: { applicable: boolean; taxableBase: number; amount: number }
+  rent2: { applicable: boolean; capitalGain: number; amount: number }
+  legalNote: string
+}
+
+export interface CompliancePendingItem {
+  checklistId: string
+  propertyId: string
+  buyerClientId: string
+  sunarpStatus: string
+  nextActionAt: string | null
+  lastAlertSentAt: string | null
+  severity: 'HIGH' | 'MEDIUM' | 'LOW'
+  missing: string[]
+}
