@@ -1,108 +1,437 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useRouter, type RouteLocationRaw } from 'vue-router'
+import { StatsCard, BaseButton, AppIcon } from '@shared/components'
 import { useAuthStore } from '@modules/auth'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
+import { VENTAS_BASE_PATH } from '@modules/ventas/config/routes.constants'
+import {
+  useVentasConversionReport,
+  useVentasFinancialFlowReport,
+  useVentasSalesByPeriodReport,
+} from '@modules/ventas/features/ventas-reportes/application/useVentasReportes'
+import type { VentasReportesRangeParams } from '@modules/ventas/features/ventas-reportes/domain/reportes.types'
 
+const router = useRouter()
 const authStore = useAuthStore()
+
+function currentMonthRange(): VentasReportesRangeParams {
+  const end = new Date()
+  const start = new Date(end.getFullYear(), end.getMonth(), 1)
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  }
+}
+
+const rangeParams = ref<VentasReportesRangeParams>(currentMonthRange())
+
+const rangeOnly = computed(() => ({
+  startDate: rangeParams.value.startDate,
+  endDate: rangeParams.value.endDate,
+}))
+
+const salesParams = computed(() => ({
+  startDate: rangeParams.value.startDate,
+  endDate: rangeParams.value.endDate,
+  granularity: 'month' as const,
+}))
+
+const conversionQuery = useVentasConversionReport(rangeOnly)
+const financialQuery = useVentasFinancialFlowReport(rangeOnly)
+const salesQuery = useVentasSalesByPeriodReport(salesParams)
+
+const conv = computed(() => conversionQuery.data.value)
+const fin = computed(() => financialQuery.data.value)
 
 const greetingHour = new Date().getHours()
 const greeting =
   greetingHour < 12 ? 'Buenos días' : greetingHour < 19 ? 'Buenas tardes' : 'Buenas noches'
 const firstName = computed(() => authStore.user?.firstName ?? 'Usuario')
 
-const placeholderKpis = [
-  { label: 'Oportunidades activas', icon: 'lucide:target' as const },
-  { label: 'Propiedades en cartera', icon: 'lucide:building-2' as const },
-  { label: 'Negociaciones en curso', icon: 'lucide:handshake' as const },
-  { label: 'Cierres del mes', icon: 'lucide:circle-check' as const },
+function formatPen(value: number) {
+  return new Intl.NumberFormat('es-PE', {
+    style: 'currency',
+    currency: 'PEN',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function formatPenDec(value: number) {
+  return new Intl.NumberFormat('es-PE', {
+    style: 'currency',
+    currency: 'PEN',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+function pipelineTotal(c: typeof conv.value) {
+  if (!c?.activePipelineByStage) return 0
+  return Object.values(c.activePipelineByStage).reduce((a, b) => a + b, 0)
+}
+
+const salesTotals = computed(() => {
+  const rows = salesQuery.data.value ?? []
+  return rows.reduce(
+    (acc, r) => {
+      acc.closings += r.closingsCount
+      acc.amount += r.totalAmount
+      return acc
+    },
+    { closings: 0, amount: 0 },
+  )
+})
+
+const periodLabel = computed(() => {
+  const r = rangeParams.value
+  const a = new Date(`${r.startDate}T12:00:00`)
+  const b = new Date(`${r.endDate}T12:00:00`)
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
+  return `${a.toLocaleDateString('es-PE', opts)} – ${b.toLocaleDateString('es-PE', {
+    ...opts,
+    month: 'long',
+    year: 'numeric',
+  })}`
+})
+
+const loading = computed(
+  () =>
+    conversionQuery.isLoading.value ||
+    financialQuery.isLoading.value ||
+    salesQuery.isLoading.value,
+)
+
+/** Solo bloquea el dashboard si falla conversión (dato principal). */
+const loadFailed = computed(
+  () => conversionQuery.isError.value && !conversionQuery.data.value,
+)
+
+async function refetchAll() {
+  await Promise.all([
+    conversionQuery.refetch(),
+    financialQuery.refetch(),
+    salesQuery.refetch(),
+  ])
+}
+
+function goReportes() {
+  router.push({ name: 'ventas-reportes' })
+}
+
+const PIPELINE_STAGE_LABEL: Record<string, string> = {
+  PROSPECT: 'Prospecto',
+  VISIT: 'Visita',
+  NEGOTIATION: 'Negociación',
+  SEPARATION: 'Separación',
+  CLOSING: 'Cierre',
+}
+
+const acciones: {
+  label: string
+  sub: string
+  icon: string
+  to: RouteLocationRaw
+}[] = [
+  {
+    label: 'Pipeline',
+    sub: 'Embudo de ventas',
+    icon: 'lucide:columns-3',
+    to: { name: 'ventas-procesos-pipeline' },
+  },
+  {
+    label: 'Procesos',
+    sub: 'Listado',
+    icon: 'lucide:handshake',
+    to: { name: 'ventas-procesos' },
+  },
+  {
+    label: 'Nuevo cliente',
+    sub: 'Alta rápida',
+    icon: 'lucide:user-plus',
+    to: { name: 'ventas-clientes-nuevo' },
+  },
+  {
+    label: 'Propiedades',
+    sub: 'Cartera',
+    icon: 'lucide:building-2',
+    to: `${VENTAS_BASE_PATH}/propiedades`,
+  },
 ]
 </script>
 
 <template>
-  <div class="space-y-6 animate-fade-in">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  <div class="space-y-8 animate-fade-in">
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          {{ greeting }}, {{ firstName }} 👋
+          {{ greeting }}, {{ firstName }}
         </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Resumen de ventas y negociaciones
+        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+          Resumen de ventas, embudo y flujo · período del mes en curso
         </p>
       </div>
-      <p class="text-sm shrink-0" :style="{ color: 'var(--color-text-muted)' }">
-        {{
-          new Date().toLocaleDateString('es-PE', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })
-        }}
-      </p>
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
+        <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+          {{
+            new Date().toLocaleDateString('es-PE', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })
+          }}
+        </p>
+        <BaseButton variant="outline" size="sm" type="button" class="whitespace-nowrap" @click="goReportes">
+          <AppIcon icon="lucide:bar-chart-3" :size="16" class="mr-1.5" />
+          Reportes detallados
+        </BaseButton>
+      </div>
+    </div>
+
+    <p v-if="conv" class="text-xs font-medium -mt-4" :style="{ color: 'var(--color-text-muted)' }">
+      Datos del período: {{ periodLabel }} · puedes cambiar fechas y granularidad en Reportes.
+    </p>
+
+    <div v-if="loading" class="flex justify-center py-20">
+      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
     </div>
 
     <div
-      class="rounded-xl border p-8 sm:p-10 text-center"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-        boxShadow: 'var(--shadow-card)',
-      }"
+      v-else-if="loadFailed"
+      class="rounded-xl border p-8 text-center"
+      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
     >
-      <div class="flex flex-wrap items-center justify-center gap-2 mb-5">
-        <span
-          class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide"
-          :style="{
-            backgroundColor: 'var(--color-warning-light)',
-            color: 'var(--color-warning)',
-          }"
-        >
-          <AppIcon icon="lucide:construction" :size="14" />
-          En desarrollo
-        </span>
-      </div>
-      <div
-        class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
-        style="background-color: var(--color-primary-light); color: var(--color-primary);"
-      >
-        <AppIcon icon="lucide:layout-dashboard" :size="32" />
-      </div>
-      <h2 class="text-xl sm:text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-        Dashboard de ventas
-      </h2>
-      <p class="mt-3 max-w-xl mx-auto text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-        Las métricas, gráficos y alertas de este módulo están en construcción. Pronto podrás ver
-        oportunidades, propiedades y el avance de tus negociaciones desde aquí.
+      <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+        No se pudo cargar el dashboard
       </p>
+      <p class="text-xs mt-2" :style="{ color: 'var(--color-text-secondary)' }">
+        Comprueba tu conexión e inténtalo de nuevo.
+      </p>
+      <BaseButton class="mt-4" type="button" @click="refetchAll"> Reintentar </BaseButton>
     </div>
 
-    <div>
-      <h3 class="text-xs font-semibold uppercase tracking-wide mb-3" :style="{ color: 'var(--color-text-muted)' }">
-        Vista previa (sin datos)
-      </h3>
+    <template v-else-if="conv">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Procesos en embudo" :value="String(pipelineTotal(conv))">
+          <template #icon>
+            <AppIcon icon="lucide:git-branch" :size="20" color="var(--color-primary)" />
+          </template>
+        </StatsCard>
+        <StatsCard title="Oportunidades nuevas" :value="String(conv.opportunitiesCreated)">
+          <template #icon>
+            <AppIcon icon="lucide:sparkles" :size="20" color="#2563eb" />
+          </template>
+        </StatsCard>
+        <StatsCard title="Cierres (período)" :value="String(conv.closingsCount)">
+          <template #icon>
+            <AppIcon icon="lucide:circle-check" :size="20" color="#16a34a" />
+          </template>
+        </StatsCard>
+        <StatsCard
+          title="Tasa conversión"
+          :value="
+            Number.isFinite(conv.conversionRatePercent)
+              ? `${conv.conversionRatePercent.toFixed(1)} %`
+              : '—'
+          "
+        >
+          <template #icon>
+            <AppIcon icon="lucide:percent" :size="20" color="#d97706" />
+          </template>
+        </StatsCard>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6">
         <div
-          v-for="kpi in placeholderKpis"
-          :key="kpi.label"
-          class="rounded-xl border p-4 text-left opacity-60 pointer-events-none select-none"
+          v-if="fin"
+          class="rounded-xl border p-5 lg:p-6"
           :style="{
             backgroundColor: 'var(--color-surface)',
             borderColor: 'var(--color-border)',
-            boxShadow: 'var(--shadow-sm)',
+            boxShadow: 'var(--shadow-card)',
           }"
         >
-          <div class="flex items-center gap-2 mb-2" :style="{ color: 'var(--color-text-muted)' }">
-            <AppIcon :icon="kpi.icon" :size="18" />
-            <span class="text-xs font-medium line-clamp-2">{{ kpi.label }}</span>
-          </div>
-          <p class="text-2xl font-bold tabular-nums" :style="{ color: 'var(--color-text-muted)' }">
-            —
+          <h2 class="text-lg font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
+            Flujo financiero (período)
+          </h2>
+          <p class="text-xs mb-5" :style="{ color: 'var(--color-text-muted)' }">
+            Cobranzas, costos y comisiones
           </p>
-          <p class="text-[11px] mt-1" :style="{ color: 'var(--color-text-muted)' }">
-            Próximamente
+          <dl class="space-y-4">
+            <div class="flex justify-between gap-4 text-sm">
+              <dt :style="{ color: 'var(--color-text-secondary)' }">Cobranzas comprador</dt>
+              <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+                {{ formatPenDec(fin.buyerPaymentsCollected) }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4 text-sm">
+              <dt :style="{ color: 'var(--color-text-secondary)' }">Pendiente comprador</dt>
+              <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+                {{ formatPenDec(fin.buyerPaymentsPending) }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4 text-sm">
+              <dt :style="{ color: 'var(--color-text-secondary)' }">Costos documentación</dt>
+              <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+                {{ formatPenDec(fin.documentationCostsTotal) }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4 text-sm">
+              <dt :style="{ color: 'var(--color-text-secondary)' }">Comisiones pagadas</dt>
+              <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+                {{ formatPenDec(fin.commissionsPaidAmount) }}
+              </dd>
+            </div>
+            <div
+              class="flex justify-between gap-4 text-sm pt-3 border-t"
+              :style="{ borderColor: 'var(--color-border)' }"
+            >
+              <dt :style="{ color: 'var(--color-text-secondary)' }">Neto estimado</dt>
+              <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+                {{ formatPenDec(fin.estimatedNetAfterCosts) }}
+              </dd>
+            </div>
+          </dl>
+        </div>
+        <div
+          v-else
+          class="rounded-xl border p-5 lg:p-6 flex items-center justify-center text-sm"
+          :style="{
+            backgroundColor: 'var(--color-surface-muted)',
+            borderColor: 'var(--color-border)',
+          }"
+        >
+          <span :style="{ color: 'var(--color-text-secondary)' }">
+            Flujo financiero no disponible en este momento.
+          </span>
+        </div>
+
+        <div
+          class="rounded-xl border p-5 lg:p-6"
+          :style="{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: 'var(--color-border)',
+            boxShadow: 'var(--shadow-card)',
+          }"
+        >
+          <h2 class="text-lg font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
+            Conversión y pipeline
+          </h2>
+          <p class="text-xs mb-5" :style="{ color: 'var(--color-text-muted)' }">
+            Resultados y movimiento del período
           </p>
+          <dl class="space-y-4">
+            <div class="flex justify-between gap-4 text-sm">
+              <dt :style="{ color: 'var(--color-text-secondary)' }">Ganadas</dt>
+              <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+                {{ conv.opportunitiesWon }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4 text-sm">
+              <dt :style="{ color: 'var(--color-text-secondary)' }">Perdidas</dt>
+              <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+                {{ conv.opportunitiesLost }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4 text-sm">
+              <dt :style="{ color: 'var(--color-text-secondary)' }">Separaciones</dt>
+              <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+                {{ conv.separationsCreated }}
+              </dd>
+            </div>
+            <div
+              class="rounded-lg border p-3 text-xs space-y-2"
+              :style="{ borderColor: 'var(--color-border)' }"
+            >
+              <p class="font-medium" :style="{ color: 'var(--color-text-muted)' }">Embudo por etapa</p>
+              <div
+                v-for="(count, stage) in conv.activePipelineByStage"
+                :key="stage"
+                class="flex justify-between gap-2"
+              >
+                <span :style="{ color: 'var(--color-text-secondary)' }">{{
+                  PIPELINE_STAGE_LABEL[stage] ?? stage
+                }}</span>
+                <span class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">{{
+                  count
+                }}</span>
+              </div>
+            </div>
+          </dl>
         </div>
       </div>
-    </div>
+
+      <div
+        class="rounded-xl border p-5 lg:p-6"
+        :style="{
+          backgroundColor: 'var(--color-surface)',
+          borderColor: 'var(--color-border)',
+          boxShadow: 'var(--shadow-card)',
+        }"
+      >
+        <h2 class="text-lg font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
+          Ventas cerradas (agregado por mes en el período)
+        </h2>
+        <p class="text-xs mb-5" :style="{ color: 'var(--color-text-muted)' }">
+          Suma de series devueltas por el reporte “ventas por período”
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="rounded-lg border p-4" :style="{ borderColor: 'var(--color-border)' }">
+            <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Cierres registrados</p>
+            <p class="text-2xl font-bold tabular-nums mt-1" :style="{ color: 'var(--color-text-primary)' }">
+              {{ salesTotals.closings }}
+            </p>
+          </div>
+          <div class="rounded-lg border p-4" :style="{ borderColor: 'var(--color-border)' }">
+            <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Volumen total (S/)</p>
+            <p class="text-2xl font-bold tabular-nums mt-1" :style="{ color: 'var(--color-text-primary)' }">
+              {{ formatPen(salesTotals.amount) }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="rounded-xl border p-5 lg:p-6"
+        :style="{
+          backgroundColor: 'var(--color-surface)',
+          borderColor: 'var(--color-border)',
+          boxShadow: 'var(--shadow-card)',
+        }"
+      >
+        <h2 class="text-lg font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
+          Acciones rápidas
+        </h2>
+        <p class="text-xs mb-5" :style="{ color: 'var(--color-text-muted)' }">
+          Accesos frecuentes
+        </p>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <button
+            v-for="ac in acciones"
+            :key="ac.label"
+            type="button"
+            class="flex items-start gap-3 rounded-xl border p-4 text-left transition-all hover-surface"
+            :style="{ borderColor: 'var(--color-border)' }"
+            @click="router.push(ac.to)"
+          >
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+              style="background-color: var(--color-primary-light); color: var(--color-primary)"
+            >
+              <AppIcon :icon="ac.icon" :size="20" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                {{ ac.label }}
+              </p>
+              <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                {{ ac.sub }}
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </template>
   </div>
 </template>

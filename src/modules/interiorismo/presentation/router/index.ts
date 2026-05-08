@@ -13,8 +13,7 @@ import { interiorismoEjecucionRoutes } from '../../features/ejecucion'
 import { interiorismoFinanzasRoutes } from '../../features/finanzas'
 import { interiorismoDocumentosRoutes } from '../../features/documentos'
 import { interiorismoReportesRoutes } from '../../features/reportes'
-
-const placeholder = () => import('../views/InteriorismoPlaceholderView.vue')
+import { interiorismoConfiguracionRoutes } from '../../features/configuracion'
 
 export const interiorismoRoutes: RouteRecordRaw[] = [
   {
@@ -113,9 +112,9 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'configuracion',
-        name: 'interiorismo-configuracion',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Configuración' },
+        children: interiorismoConfiguracionRoutes,
       },
     ],
   },

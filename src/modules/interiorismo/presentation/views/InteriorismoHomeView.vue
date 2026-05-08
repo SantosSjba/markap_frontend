@@ -1,103 +1,279 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { StatsCard, BaseButton, AppIcon } from '@shared/components'
 import { useAuthStore } from '@modules/auth'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
+import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
+import { useInteriorReportsDashboard } from '@modules/interiorismo/features/reportes/application/useInteriorReportes'
+import type { InteriorReportesRangeParams } from '@modules/interiorismo/features/reportes/domain/reportes.types'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+function currentMonthRange(): InteriorReportesRangeParams {
+  const end = new Date()
+  const start = new Date(end.getFullYear(), end.getMonth(), 1)
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  }
+}
+
+/** Rango aplicado al dashboard (mes en curso por defecto). */
+const rangeParams = ref<InteriorReportesRangeParams>(currentMonthRange())
+
+const dashboardQuery = useInteriorReportsDashboard(rangeParams)
+const d = computed(() => dashboardQuery.data.value)
 
 const greetingHour = new Date().getHours()
 const greeting =
   greetingHour < 12 ? 'Buenos días' : greetingHour < 19 ? 'Buenas tardes' : 'Buenas noches'
 const firstName = computed(() => authStore.user?.firstName ?? 'Usuario')
 
-const kpis = [
-  { label: 'Proyectos activos', value: '12', delta: '+2', icon: 'lucide:folder-kanban' as const },
-  { label: 'Clientes', value: '28', delta: '+5', icon: 'lucide:users' as const },
-  { label: 'Facturación mes', value: 'S/ 85,600', delta: '+8%', icon: 'lucide:banknote' as const },
-  { label: 'Presupuestos', value: '6', delta: '+3', icon: 'lucide:file-text' as const },
-]
+function formatPen(value: number) {
+  return new Intl.NumberFormat('es-PE', {
+    style: 'currency',
+    currency: 'PEN',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
+}
 
-const actividad = [
-  { title: 'Proyecto finalizado', detail: 'Sala de estar — Familia Rodríguez', time: 'Hace 1 día', tone: 'success' as const },
-  { title: 'En progreso', detail: 'Oficina corporativa — Tech Corp', time: 'Hace 2 días', tone: 'primary' as const },
-  { title: 'Presupuesto aprobado', detail: 'Remodelación cocina — Sr. Mendoza', time: 'Hace 3 días', tone: 'success' as const },
-  { title: 'Nueva consulta', detail: 'Diseño dormitorio principal', time: 'Hace 4 días', tone: 'muted' as const },
-]
+function formatPenDec(value: number) {
+  return new Intl.NumberFormat('es-PE', {
+    style: 'currency',
+    currency: 'PEN',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+const periodLabel = computed(() => {
+  const r = d.value?.range
+  if (!r) return ''
+  const a = new Date(`${r.startDate}T12:00:00`)
+  const b = new Date(`${r.endDate}T12:00:00`)
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
+  const start = a.toLocaleDateString('es-PE', opts)
+  const end = b.toLocaleDateString('es-PE', { ...opts, month: 'long', year: 'numeric' })
+  return `${start} – ${end}`
+})
 
 const acciones = [
-  { label: 'Nuevo proyecto', sub: 'Crear proyecto', to: '/interiorismo/proyectos/nuevo', icon: 'lucide:plus-circle' as const },
-  { label: 'Presupuesto', sub: 'Generar cotización', to: '/interiorismo/presupuestos/nuevo', icon: 'lucide:file-spreadsheet' as const },
-  { label: 'Catálogo', sub: 'Ver materiales', to: '/interiorismo/materiales/catalogo', icon: 'lucide:layers' as const },
-  { label: 'Calendario', sub: 'Ver agenda', to: '/interiorismo/calendario', icon: 'lucide:calendar' as const },
+  {
+    label: 'Nuevo proyecto',
+    sub: 'Crear proyecto',
+    to: `${INTERIORISMO_BASE_PATH}/proyectos/nuevo`,
+    icon: 'lucide:plus-circle' as const,
+  },
+  {
+    label: 'Presupuesto',
+    sub: 'Generar cotización',
+    to: `${INTERIORISMO_BASE_PATH}/presupuestos/nuevo`,
+    icon: 'lucide:file-spreadsheet' as const,
+  },
+  {
+    label: 'Catálogo',
+    sub: 'Ver materiales',
+    to: `${INTERIORISMO_BASE_PATH}/materiales/catalogo`,
+    icon: 'lucide:layers' as const,
+  },
+  {
+    label: 'Calendario',
+    sub: 'Ver agenda',
+    to: `${INTERIORISMO_BASE_PATH}/calendario`,
+    icon: 'lucide:calendar' as const,
+  },
 ]
 
-const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
-  if (tone === 'success') return 'var(--color-success, #16a34a)'
-  if (tone === 'primary') return 'var(--color-primary)'
-  return 'var(--color-border)'
+function goReportes() {
+  router.push({ name: 'interiorismo-reportes' })
 }
 </script>
 
 <template>
   <div class="space-y-8 animate-fade-in">
-    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold" style="color: var(--color-text-primary)">
           Interiorismo
         </h1>
         <p class="text-sm mt-1" style="color: var(--color-text-secondary)">
-          Proyectos de diseño interior
+          Resumen operativo y financiero
         </p>
         <p class="text-sm mt-3 font-medium" style="color: var(--color-text-primary)">
           {{ greeting }}, {{ firstName }}
         </p>
       </div>
-      <p class="text-sm shrink-0" style="color: var(--color-text-muted)">
-        {{
-          new Date().toLocaleDateString('es-PE', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })
-        }}
-      </p>
-    </div>
-
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div
-        v-for="k in kpis"
-        :key="k.label"
-        class="rounded-xl border p-4 transition-shadow hover:shadow-md"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-sm)',
-        }"
-      >
-        <div class="flex items-center justify-between gap-2 mb-3">
-          <span class="text-xs font-medium line-clamp-2" style="color: var(--color-text-muted)">
-            {{ k.label }}
-          </span>
-          <div
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-            style="background-color: var(--color-primary-light); color: var(--color-primary)"
-          >
-            <AppIcon :icon="k.icon" :size="18" />
-          </div>
-        </div>
-        <p class="text-2xl font-bold tabular-nums" style="color: var(--color-text-primary)">
-          {{ k.value }}
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
+        <p class="text-sm" style="color: var(--color-text-muted)">
+          {{
+            new Date().toLocaleDateString('es-PE', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })
+          }}
         </p>
-        <p class="text-xs mt-1 font-medium" style="color: var(--color-success, #16a34a)">
-          {{ k.delta }}
-        </p>
+        <BaseButton variant="outline" size="sm" type="button" class="whitespace-nowrap" @click="goReportes">
+          <AppIcon icon="lucide:bar-chart-3" :size="16" class="mr-1.5" />
+          Reportes detallados
+        </BaseButton>
       </div>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
+    <p v-if="periodLabel && d" class="text-xs font-medium -mt-4" style="color: var(--color-text-muted)">
+      Datos del período: {{ periodLabel }} · mismo rango que puedes ajustar en Reportes.
+    </p>
+
+    <div v-if="dashboardQuery.isLoading.value" class="flex justify-center py-20">
+      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
+    </div>
+
+    <div
+      v-else-if="dashboardQuery.isError.value"
+      class="rounded-xl border p-8 text-center"
+      style="border-color: var(--color-border); background: var(--color-surface)"
+    >
+      <p class="text-sm font-medium" style="color: var(--color-text-primary)">
+        No se pudo cargar el dashboard
+      </p>
+      <p class="text-xs mt-2" style="color: var(--color-text-secondary)">
+        Comprueba tu conexión e inténtalo de nuevo.
+      </p>
+      <BaseButton class="mt-4" type="button" @click="() => dashboardQuery.refetch()">
+        Reintentar
+      </BaseButton>
+    </div>
+
+    <template v-else-if="d">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Proyectos activos" :value="String(d.kpis.proyectosActivos)">
+          <template #icon>
+            <AppIcon icon="lucide:folder-kanban" :size="20" color="var(--color-primary)" />
+          </template>
+        </StatsCard>
+        <StatsCard title="En ejecución" :value="String(d.kpis.proyectosEnEjecucion)">
+          <template #icon>
+            <AppIcon icon="lucide:hard-hat" :size="20" color="#2563eb" />
+          </template>
+        </StatsCard>
+        <StatsCard title="Clientes" :value="String(d.kpis.clientesTotales)">
+          <template #icon>
+            <AppIcon icon="lucide:users" :size="20" color="#16a34a" />
+          </template>
+        </StatsCard>
+        <StatsCard title="Presupuestos borrador" :value="String(d.kpis.presupuestosBorrador)">
+          <template #icon>
+            <AppIcon icon="lucide:file-edit" :size="20" color="#d97706" />
+          </template>
+        </StatsCard>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6">
+        <div
+          class="rounded-xl border p-5 lg:p-6"
+          :style="{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: 'var(--color-border)',
+            boxShadow: 'var(--shadow-card)',
+          }"
+        >
+          <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
+            Ventas y cobranzas (período)
+          </h2>
+          <p class="text-xs mb-5" style="color: var(--color-text-muted)">
+            Movimiento registrado en el rango seleccionado para reportes
+          </p>
+          <dl class="space-y-4">
+            <div class="flex justify-between gap-4 text-sm">
+              <dt style="color: var(--color-text-secondary)">Cobranzas</dt>
+              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+                {{ formatPen(d.ventas.cobranzasPeriodo) }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4 text-sm">
+              <dt style="color: var(--color-text-secondary)">Pagos registrados</dt>
+              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+                {{ formatPenDec(d.ventas.pagosRegistradosPeriodo) }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4 text-sm">
+              <dt style="color: var(--color-text-secondary)">Proyectos con cobro en período</dt>
+              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+                {{ d.ventas.proyectosConCobroEnPeriodo }}
+              </dd>
+            </div>
+            <div
+              class="flex justify-between gap-4 text-sm pt-3 border-t"
+              style="border-color: var(--color-border)"
+            >
+              <dt style="color: var(--color-text-secondary)">Cartera pendiente (cuotas)</dt>
+              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+                {{ formatPenDec(d.ventas.carteraPendienteCuotas) }}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div
+          class="rounded-xl border p-5 lg:p-6"
+          :style="{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: 'var(--color-border)',
+            boxShadow: 'var(--shadow-card)',
+          }"
+        >
+          <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
+            Conversión y rentabilidad
+          </h2>
+          <p class="text-xs mb-5" style="color: var(--color-text-muted)">
+            Presupuestos y proyectos en el período
+          </p>
+          <dl class="space-y-4">
+            <div class="flex justify-between gap-4 text-sm">
+              <dt style="color: var(--color-text-secondary)">Proyectos nuevos</dt>
+              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+                {{ d.conversion.proyectosNuevosPeriodo }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4 text-sm">
+              <dt style="color: var(--color-text-secondary)">Presupuestos aprobados</dt>
+              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+                {{ d.conversion.presupuestosAprobadosPeriodo }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4 text-sm">
+              <dt style="color: var(--color-text-secondary)">Tasa cierre presupuesto</dt>
+              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+                {{
+                  d.conversion.tasaCierrePresupuestoPct != null
+                    ? `${d.conversion.tasaCierrePresupuestoPct.toFixed(1)} %`
+                    : '—'
+                }}
+              </dd>
+            </div>
+            <div
+              class="flex justify-between gap-4 text-sm pt-3 border-t"
+              style="border-color: var(--color-border)"
+            >
+              <dt style="color: var(--color-text-secondary)">Margen bruto estimado</dt>
+              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+                {{ formatPenDec(d.rentabilidad.margenBrutoEstimado) }}
+                <span
+                  v-if="d.rentabilidad.margenBrutoPct != null"
+                  class="text-xs font-normal ml-1"
+                  style="color: var(--color-text-muted)"
+                >
+                  ({{ d.rentabilidad.margenBrutoPct.toFixed(1) }} %)
+                </span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
       <div
         class="rounded-xl border p-5 lg:p-6"
         :style="{
@@ -106,36 +282,46 @@ const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
           boxShadow: 'var(--shadow-card)',
         }"
       >
-        <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
-          Actividad reciente
-        </h2>
-        <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-          Últimos movimientos en el sistema
-        </p>
-        <ul class="space-y-3">
-          <li
-            v-for="a in actividad"
-            :key="a.title + a.time"
-            class="flex gap-3 rounded-lg border p-3"
-            :style="{
-              borderColor: 'var(--color-border)',
-              borderLeftWidth: '3px',
-              borderLeftColor: toneBorder(a.tone),
-            }"
-          >
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium" style="color: var(--color-text-primary)">
-                {{ a.title }}
-              </p>
-              <p class="text-xs mt-0.5 truncate" style="color: var(--color-text-secondary)">
-                {{ a.detail }}
-              </p>
-            </div>
-            <span class="text-[11px] shrink-0 self-start" style="color: var(--color-text-muted)">
-              {{ a.time }}
-            </span>
-          </li>
-        </ul>
+        <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
+          <div>
+            <h2 class="text-lg font-semibold" style="color: var(--color-text-primary)">
+              Productividad y costos
+            </h2>
+            <p class="text-xs mt-0.5" style="color: var(--color-text-muted)">
+              Obra y gastos del período
+            </p>
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="rounded-lg border p-4" style="border-color: var(--color-border)">
+            <p class="text-xs font-medium" style="color: var(--color-text-muted)">Tareas completadas</p>
+            <p class="text-xl font-bold tabular-nums mt-1" style="color: var(--color-text-primary)">
+              {{ d.productividad.tareasCompletadasPeriodo }}
+            </p>
+          </div>
+          <div class="rounded-lg border p-4" style="border-color: var(--color-border)">
+            <p class="text-xs font-medium" style="color: var(--color-text-muted)">Avance tareas</p>
+            <p class="text-xl font-bold tabular-nums mt-1" style="color: var(--color-text-primary)">
+              {{
+                d.productividad.pctAvanceTareas != null
+                  ? `${d.productividad.pctAvanceTareas.toFixed(0)} %`
+                  : '—'
+              }}
+            </p>
+          </div>
+          <div class="rounded-lg border p-4" style="border-color: var(--color-border)">
+            <p class="text-xs font-medium" style="color: var(--color-text-muted)">Costos totales período</p>
+            <p class="text-xl font-bold tabular-nums mt-1" style="color: var(--color-text-primary)">
+              {{ formatPenDec(d.costos.totalCostosPeriodo) }}
+            </p>
+          </div>
+          <div class="rounded-lg border p-4" style="border-color: var(--color-border)">
+            <p class="text-xs font-medium" style="color: var(--color-text-muted)">Incidencias abiertas</p>
+            <p class="text-xl font-bold tabular-nums mt-1" style="color: var(--color-text-primary)">
+              {{ d.productividad.incidenciasAbiertas }}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div
@@ -152,7 +338,7 @@ const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
         <p class="text-xs mb-5" style="color: var(--color-text-muted)">
           Tareas frecuentes
         </p>
-        <div class="grid sm:grid-cols-2 gap-3">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <button
             v-for="ac in acciones"
             :key="ac.to"
@@ -178,10 +364,6 @@ const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
           </button>
         </div>
       </div>
-    </div>
-
-    <p class="text-center text-xs" style="color: var(--color-text-muted)">
-      Los datos mostrados son de demostración hasta conectar módulos reales.
-    </p>
+    </template>
   </div>
 </template>
