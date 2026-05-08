@@ -569,12 +569,15 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
             <div class="flex justify-end">
               <BaseButton variant="primary" type="button" size="sm" @click="openCost">Registrar costo</BaseButton>
             </div>
-            <div class="grid sm:grid-cols-3 gap-3 text-sm">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
               <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
                 Mano de obra: <strong>{{ formatSol(ov.costTotals.labor) }}</strong>
               </div>
               <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
                 Materiales: <strong>{{ formatSol(ov.costTotals.material) }}</strong>
+              </div>
+              <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
+                Transporte: <strong>{{ formatSol(ov.costTotals.transport) }}</strong>
               </div>
               <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
                 Gastos: <strong>{{ formatSol(ov.costTotals.expense) }}</strong>
@@ -690,7 +693,8 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                 },
                 { id: '4', c: '— Mano de obra ejecutada', v: formatSol(ov.costTotals.labor) },
                 { id: '5', c: '— Materiales ejecutados', v: formatSol(ov.costTotals.material) },
-                { id: '6', c: '— Gastos', v: formatSol(ov.costTotals.expense) },
+                { id: '6', c: '— Transporte ejecutado', v: formatSol(ov.costTotals.transport) },
+                { id: '7', c: '— Gastos', v: formatSol(ov.costTotals.expense) },
               ]"
               row-key="id"
             >

@@ -60,6 +60,11 @@ const goExecutionBoard = () => {
   router.push(`${INTERIORISMO_BASE_PATH}/ejecucion/${p.value.id}`)
 }
 
+const goFinanceBoard = () => {
+  if (!p.value) return
+  router.push(`${INTERIORISMO_BASE_PATH}/finanzas/${p.value.id}`)
+}
+
 const materialCols = [
   { key: 'name', label: 'Material', align: 'left' as const },
   { key: 'qty', label: 'Cant.', align: 'left' as const },
@@ -307,7 +312,15 @@ function milestoneDone(m: { completedAt: string | null }) {
             </DataTable>
           </div>
 
-          <div v-show="activeTab === 'finanzas'">
+          <div v-show="activeTab === 'finanzas'" class="space-y-4">
+            <div class="flex justify-end">
+              <BaseButton variant="primary" size="sm" @click="goFinanceBoard">
+                Abrir panel financiero completo
+              </BaseButton>
+            </div>
+            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+              Vista rápida de pagos registrados. Adelantos, cuotas, flujo de caja y rentabilidad están en el panel financiero.
+            </p>
             <DataTable
               empty-text="Sin pagos registrados."
               :columns="paymentCols"

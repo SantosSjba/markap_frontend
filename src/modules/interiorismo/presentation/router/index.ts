@@ -10,6 +10,7 @@ import {
   interiorismoMaterialesProveedoresRoutes,
 } from '../../features/materiales'
 import { interiorismoEjecucionRoutes } from '../../features/ejecucion'
+import { interiorismoFinanzasRoutes } from '../../features/finanzas'
 
 const placeholder = () => import('../views/InteriorismoPlaceholderView.vue')
 
@@ -80,9 +81,9 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'finanzas',
-        name: 'interiorismo-finanzas',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Finanzas' },
+        children: interiorismoFinanzasRoutes,
       },
       {
         path: 'calendario',

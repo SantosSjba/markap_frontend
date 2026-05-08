@@ -34,6 +34,7 @@ export const COST_CATEGORY_LABELS: Record<string, string> = {
   LABOR: 'Mano de obra',
   MATERIAL: 'Materiales',
   EXPENSE: 'Gastos',
+  TRANSPORT: 'Transporte',
 }
 
 export function formatSol(amount: number | null | undefined): string {

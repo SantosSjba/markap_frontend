@@ -64,6 +64,7 @@ export interface InteriorExecutionCostTotalsDto {
   labor: number
   material: number
   expense: number
+  transport: number
   total: number
 }
 
