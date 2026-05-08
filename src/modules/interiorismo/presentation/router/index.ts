@@ -5,6 +5,10 @@ import { INTERIORISMO_BASE_PATH } from '../../config/routes.constants'
 import { interiorismoClientesRoutes } from '../../features/clientes'
 import { interiorismoProyectosRoutes } from '../../features/proyectos'
 import { interiorismoPresupuestosRoutes } from '../../features/presupuestos'
+import {
+  interiorismoMaterialesCatalogoRoutes,
+  interiorismoMaterialesProveedoresRoutes,
+} from '../../features/materiales'
 
 const placeholder = () => import('../views/InteriorismoPlaceholderView.vue')
 
@@ -55,15 +59,15 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
           },
           {
             path: 'catalogo',
-            name: 'interiorismo-materiales-catalogo',
-            component: placeholder,
+            component: SectionLayout,
             meta: { title: 'Catálogo' },
+            children: interiorismoMaterialesCatalogoRoutes,
           },
           {
             path: 'proveedores',
-            name: 'interiorismo-materiales-proveedores',
-            component: placeholder,
+            component: SectionLayout,
             meta: { title: 'Proveedores' },
+            children: interiorismoMaterialesProveedoresRoutes,
           },
         ],
       },
