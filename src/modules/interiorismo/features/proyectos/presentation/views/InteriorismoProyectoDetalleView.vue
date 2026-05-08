@@ -26,6 +26,11 @@ const tabs = [
 
 const goBack = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)
 
+const goEditProject = () => {
+  if (!p.value) return
+  router.push(`${INTERIORISMO_BASE_PATH}/proyectos/${p.value.id}/editar`)
+}
+
 const activityLabel = (t: string) => {
   const m: Record<string, string> = {
     NOTE: 'Nota',
@@ -104,18 +109,30 @@ function milestoneDone(m: { completedAt: string | null }) {
       >
         <AppIcon icon="lucide:arrow-left" :size="20" />
       </button>
-      <div class="flex-1 min-w-0">
-        <div class="flex flex-wrap items-center gap-2">
-          <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-            {{ p?.name ?? 'Proyecto' }}
-          </h1>
-          <Badge v-if="p" variant="neutral">{{ p.code }}</Badge>
-          <Badge v-if="p" variant="info">{{ PROJECT_TYPE_LABELS[p.projectType] }}</Badge>
-          <Badge v-if="p" variant="success">{{ PROJECT_STATUS_LABELS[p.status] }}</Badge>
+      <div class="flex-1 min-w-0 flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              {{ p?.name ?? 'Proyecto' }}
+            </h1>
+            <Badge v-if="p" variant="neutral">{{ p.code }}</Badge>
+            <Badge v-if="p" variant="info">{{ PROJECT_TYPE_LABELS[p.projectType] }}</Badge>
+            <Badge v-if="p" variant="success">{{ PROJECT_STATUS_LABELS[p.status] }}</Badge>
+          </div>
+          <p v-if="p" class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+            Cliente: {{ p.client.fullName }} · {{ p.client.documentNumber }}
+          </p>
         </div>
-        <p v-if="p" class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Cliente: {{ p.client.fullName }} · {{ p.client.documentNumber }}
-        </p>
+        <BaseButton
+          v-if="p"
+          variant="outline"
+          type="button"
+          class="shrink-0"
+          @click="goEditProject"
+        >
+          <AppIcon icon="lucide:pencil" :size="18" class="mr-1.5" />
+          Editar
+        </BaseButton>
       </div>
     </div>
 

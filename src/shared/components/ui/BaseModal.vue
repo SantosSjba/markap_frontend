@@ -83,7 +83,7 @@ watch(
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       >
         <!-- Backdrop -->
         <div
@@ -101,7 +101,7 @@ watch(
           <div
             v-if="modelValue"
             :class="[
-              'relative w-full rounded-xl shadow-xl',
+              'relative w-full rounded-xl shadow-xl flex flex-col max-h-[min(90dvh,calc(100vh-2rem))] overflow-hidden',
               sizeClasses[size],
             ]"
             style="background-color: var(--color-surface);"
@@ -109,7 +109,7 @@ watch(
             <!-- Header -->
             <div
               v-if="title || $slots.title || closable"
-              class="flex items-center justify-between p-4 border-b"
+              class="flex shrink-0 items-center justify-between p-4 border-b"
               style="border-color: var(--color-border);"
             >
               <slot name="title">
@@ -128,15 +128,15 @@ watch(
               </button>
             </div>
 
-            <!-- Body -->
-            <div class="p-4">
+            <!-- Body (scroll when content is taller than viewport) -->
+            <div class="min-h-0 flex-1 overflow-y-auto p-4">
               <slot />
             </div>
 
             <!-- Footer -->
             <div
               v-if="$slots.footer"
-              class="p-4 border-t rounded-b-xl"
+              class="shrink-0 p-4 border-t rounded-b-xl"
               style="border-color: var(--color-border); background-color: var(--color-background);"
             >
               <slot name="footer" />

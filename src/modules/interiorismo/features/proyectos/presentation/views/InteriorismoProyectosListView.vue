@@ -5,12 +5,14 @@ import {
   BaseButton,
   BasePagination,
   Badge,
+  BaseModal,
   DataTable,
   SearchInput,
   FormSelect,
   AppIcon,
+  ActionsDropdown,
 } from '@shared/components'
-import { useInteriorProjectsList } from '../../application/useInteriorProjects'
+import { useInteriorProjectsList, useUpdateInteriorProject } from '../../application/useInteriorProjects'
 import type { InteriorProjectListItem, InteriorProjectStatus, ListInteriorProjectsParams } from '../../domain/project.types'
 import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../labels'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
@@ -63,6 +65,7 @@ const columns = [
   { key: 'status', label: 'Estado', align: 'left' as const },
   { key: 'pct', label: 'Avance', align: 'left' as const },
   { key: 'end', label: 'Fin est.', align: 'left' as const },
+  { key: 'actions', label: '', align: 'right' as const },
 ]
 
 const statusOptions = [
@@ -86,7 +89,49 @@ const paginationProps = computed(() => {
 
 const goDetail = (r: InteriorProjectListItem) =>
   router.push(`${INTERIORISMO_BASE_PATH}/proyectos/${r.id}`)
+const goEdit = (r: InteriorProjectListItem) =>
+  router.push(`${INTERIORISMO_BASE_PATH}/proyectos/${r.id}/editar`)
 const goNew = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos/nuevo`)
+
+const showCancelModal = ref(false)
+const cancelTarget = ref<InteriorProjectListItem | null>(null)
+const { mutateAsync: updateProject, isPending: isCancelPending } = useUpdateInteriorProject()
+
+const openCancelConfirm = (r: InteriorProjectListItem) => {
+  cancelTarget.value = r
+  showCancelModal.value = true
+}
+
+const closeCancelModal = () => {
+  showCancelModal.value = false
+  cancelTarget.value = null
+}
+
+const executeCancel = async () => {
+  const r = cancelTarget.value
+  if (!r) return
+  try {
+    await updateProject({ id: r.id, payload: { status: 'CANCELLED' } })
+    closeCancelModal()
+  } catch {
+    void 0
+  }
+}
+
+const getActions = (r: InteriorProjectListItem): { label: string; icon: string; onClick: () => void }[] => {
+  const rows: { label: string; icon: string; onClick: () => void }[] = [
+    { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(r) },
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => goEdit(r) },
+  ]
+  if (r.status !== 'CANCELLED') {
+    rows.push({
+      label: 'Eliminar',
+      icon: 'lucide:trash-2',
+      onClick: () => openCancelConfirm(r),
+    })
+  }
+  return rows
+}
 
 const pageTitle = computed(() =>
   inProgressOnly.value ? 'Proyectos en progreso' : 'Listado de proyectos',
@@ -179,6 +224,9 @@ const pageSubtitle = computed(() =>
             <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
               {{ (row as InteriorProjectListItem).estimatedEndDate ?? '—' }}
             </td>
+            <td class="py-3 px-4 text-right">
+              <ActionsDropdown :items="getActions(row as InteriorProjectListItem)" />
+            </td>
           </template>
         </DataTable>
         <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
@@ -191,5 +239,33 @@ const pageSubtitle = computed(() =>
         </div>
       </template>
     </div>
+
+    <BaseModal v-model="showCancelModal" :closable="true" size="sm" @close="closeCancelModal">
+      <template #title>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
+            <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error);" />
+          </div>
+          <span class="text-base font-semibold" style="color: var(--color-text-primary);">Cancelar proyecto</span>
+        </div>
+      </template>
+      <div class="p-4 space-y-3">
+        <p class="text-sm" style="color: var(--color-text-secondary);">
+          ¿Marcar como cancelado el proyecto
+          <span class="font-semibold" style="color: var(--color-text-primary);">{{ cancelTarget?.code }}</span>
+          — {{ cancelTarget?.name }}?
+        </p>
+        <p class="text-xs px-3 py-2 rounded-lg" style="background: var(--color-warning-subtle); color: var(--color-warning);">
+          El proyecto pasará al estado «Cancelado». Podrá revertirlo desde Editar si lo necesita.
+        </p>
+      </div>
+      <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+        <BaseButton variant="ghost" @click="closeCancelModal">Cerrar</BaseButton>
+        <BaseButton variant="danger" :loading="isCancelPending" @click="executeCancel">
+          <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
+          Confirmar
+        </BaseButton>
+      </div>
+    </BaseModal>
   </div>
 </template>

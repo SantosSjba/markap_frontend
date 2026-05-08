@@ -4,13 +4,18 @@ import { useRouter } from 'vue-router'
 import {
   BaseButton,
   BasePagination,
+  BaseModal,
   DataTable,
   SearchInput,
   FormInput,
   AppIcon,
+  ActionsDropdown,
 } from '@shared/components'
 import type { InteriorCatalogMaterialListItem, ListInteriorCatalogMaterialsParams } from '../../domain/catalog.types'
-import { useInteriorCatalogMaterialsList } from '../../application/useInteriorCatalogMaterials'
+import {
+  useInteriorCatalogMaterialsList,
+  useDeleteInteriorCatalogMaterial,
+} from '../../application/useInteriorCatalogMaterials'
 import { formatSol, formatQty } from '../labels'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
 
@@ -54,6 +59,7 @@ const columns = [
   { key: 'price', label: 'Precio', align: 'left' as const },
   { key: 'stock', label: 'Stock', align: 'left' as const },
   { key: 'imageCount', label: 'Imgs.', align: 'left' as const },
+  { key: 'actions', label: '', align: 'right' as const },
 ]
 
 const paginationProps = computed(() => {
@@ -73,6 +79,37 @@ const paginationProps = computed(() => {
 const goDetail = (r: InteriorCatalogMaterialListItem) =>
   router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo/${r.id}`)
 const goNew = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo/nuevo`)
+
+const showDeleteModal = ref(false)
+const deleteTarget = ref<InteriorCatalogMaterialListItem | null>(null)
+const { mutateAsync: deleteMaterial, isPending: isDeletingMaterial } = useDeleteInteriorCatalogMaterial()
+
+const openDeleteConfirm = (r: InteriorCatalogMaterialListItem) => {
+  deleteTarget.value = r
+  showDeleteModal.value = true
+}
+
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  deleteTarget.value = null
+}
+
+const executeDelete = async () => {
+  const r = deleteTarget.value
+  if (!r) return
+  try {
+    await deleteMaterial(r.id)
+    closeDeleteModal()
+  } catch {
+    void 0
+  }
+}
+
+const getActions = (r: InteriorCatalogMaterialListItem): { label: string; icon: string; onClick: () => void }[] => [
+  { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(r) },
+  { label: 'Editar', icon: 'lucide:pencil', onClick: () => goDetail(r) },
+  { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteConfirm(r) },
+]
 </script>
 
 <template>
@@ -135,6 +172,9 @@ const goNew = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo/n
             <td class="py-3 px-4 text-sm">{{ formatSol((row as InteriorCatalogMaterialListItem).price) }}</td>
             <td class="py-3 px-4 text-sm">{{ formatQty((row as InteriorCatalogMaterialListItem).stock) }}</td>
             <td class="py-3 px-4 text-sm">{{ (row as InteriorCatalogMaterialListItem).imageCount }}</td>
+            <td class="py-3 px-4 text-right">
+              <ActionsDropdown :items="getActions(row as InteriorCatalogMaterialListItem)" />
+            </td>
           </template>
         </DataTable>
         <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
@@ -147,5 +187,30 @@ const goNew = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo/n
         </div>
       </template>
     </div>
+
+    <BaseModal v-model="showDeleteModal" :closable="true" size="sm" @close="closeDeleteModal">
+      <template #title>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
+            <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error);" />
+          </div>
+          <span class="text-base font-semibold" style="color: var(--color-text-primary);">Eliminar material</span>
+        </div>
+      </template>
+      <div class="p-4 space-y-3">
+        <p class="text-sm" style="color: var(--color-text-secondary);">
+          ¿Eliminar del catálogo
+          <span class="font-semibold" style="color: var(--color-text-primary);">{{ deleteTarget?.code }}</span>
+          — {{ deleteTarget?.name }}?
+        </p>
+      </div>
+      <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+        <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
+        <BaseButton variant="danger" :loading="isDeletingMaterial" @click="executeDelete">
+          <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
+          Eliminar
+        </BaseButton>
+      </div>
+    </BaseModal>
   </div>
 </template>

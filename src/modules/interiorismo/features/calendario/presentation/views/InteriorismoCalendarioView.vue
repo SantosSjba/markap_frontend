@@ -13,6 +13,7 @@ import {
   FormTextarea,
   Badge,
   AppIcon,
+  ActionsDropdown,
 } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { apiClient } from '@core/api/apiClient'
@@ -165,6 +166,9 @@ watch(projectFilter, (v) => {
   if (cur === next) return
   router.replace({ path: route.path, query: { ...route.query, projectId: next || undefined } })
 })
+
+/** Id del formulario del modal de evento (botones en `#footer` usan `form` para submit nativo). */
+const CAL_EVENT_FORM_ID = 'interior-cal-event-form'
 
 const cols = [
   { key: 'when', label: 'Cuándo', align: 'left' as const },
@@ -333,6 +337,14 @@ async function removeEvent(row: CalendarFeedItemDto) {
   await deleteEv.mutateAsync(row.id)
 }
 
+function getEventActions(row: CalendarFeedItemDto): { label: string; icon: string; onClick: () => void }[] {
+  if (row.readOnly) return []
+  return [
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => openEdit(row) },
+    { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => void removeEvent(row) },
+  ]
+}
+
 function fmtWhen(row: CalendarFeedItemDto): string {
   const a = new Date(row.startsAt)
   if (row.allDay) return a.toLocaleDateString('es-PE')
@@ -474,30 +486,19 @@ const monthTitle = computed(() => {
           <td class="py-2 px-3">
             <Badge variant="neutral">{{ (row as any).source }}</Badge>
           </td>
-          <td class="py-2 px-3 text-right space-x-2 whitespace-nowrap">
-            <button
+          <td class="py-2 px-3 text-right whitespace-nowrap">
+            <ActionsDropdown
               v-if="!(row as CalendarFeedItemDto).readOnly"
-              type="button"
-              class="text-xs underline"
-              @click="openEdit(row as CalendarFeedItemDto)"
-            >
-              Editar
-            </button>
-            <button
-              v-if="!(row as CalendarFeedItemDto).readOnly"
-              type="button"
-              class="text-xs text-red-600 underline"
-              @click="removeEvent(row as CalendarFeedItemDto)"
-            >
-              Quitar
-            </button>
+              :items="getEventActions(row as CalendarFeedItemDto)"
+            />
+            <span v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">—</span>
           </td>
         </template>
       </DataTable>
     </div>
 
     <BaseModal v-model="modalOpen" :title="editId ? 'Editar evento' : 'Nuevo evento'" size="lg">
-      <form class="space-y-3" @submit.prevent="onSubmitEvent">
+      <form :id="CAL_EVENT_FORM_ID" class="space-y-3" @submit.prevent="onSubmitEvent">
         <FormSelect v-bind="evBinds.eventType" label="Tipo" :options="typeOptions" />
         <FormInput v-bind="evBinds.title" label="Título" />
         <FormTextarea v-bind="evBinds.description" label="Detalle" :rows="2" />
@@ -517,13 +518,20 @@ const monthTitle = computed(() => {
         <FormInput v-bind="evBinds.endsAt" :type="evValues.allDay ? 'date' : 'datetime-local'" label="Fin (opcional)" />
         <FormSelect v-bind="evBinds.projectId" label="Proyecto (opcional)" :options="projectOptions" />
         <FormSelect v-bind="evBinds.assignedAgentId" label="Responsable (opcional)" :options="agentOptions" />
-        <div class="flex justify-end gap-2 pt-2">
+      </form>
+      <template #footer>
+        <div class="flex justify-end gap-2">
           <BaseButton variant="outline" type="button" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="submit" :loading="createEv.isPending.value || updateEv.isPending.value">
+          <BaseButton
+            variant="primary"
+            type="submit"
+            :form="CAL_EVENT_FORM_ID"
+            :loading="createEv.isPending.value || updateEv.isPending.value"
+          >
             Guardar
           </BaseButton>
         </div>
-      </form>
+      </template>
     </BaseModal>
   </div>
 </template>

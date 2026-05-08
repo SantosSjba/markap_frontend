@@ -42,6 +42,13 @@ export const interiorBudgetsApiRepository: InteriorBudgetsRepository = {
   duplicate: (id: string) =>
     apiClient.post<InteriorBudgetDetail>(`${BASE}/${id}/duplicate`).then((r) => r.data),
 
+  delete: (id: string) =>
+    apiClient
+      .delete(`${BASE}/${id}`, {
+        params: { applicationSlug: INTERIORISMO_APP_SLUG },
+      })
+      .then(() => undefined),
+
   addComment: (id: string, body: string) =>
     apiClient.post(`${BASE}/${id}/comments`, { body }).then((r) => r.data),
 

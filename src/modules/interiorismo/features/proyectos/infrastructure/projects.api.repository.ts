@@ -5,6 +5,7 @@ import type {
   InteriorProjectDetail,
   ListInteriorProjectsParams,
   ListInteriorProjectsResponse,
+  UpdateInteriorProjectPayload,
 } from '../domain/project.types'
 import type { InteriorProjectsRepository } from '../domain/repositories/projects.repository'
 
@@ -37,6 +38,13 @@ export const interiorProjectsApiRepository: InteriorProjectsRepository = {
       .post<InteriorProjectDetail>(BASE, {
         ...payload,
         applicationSlug: INTERIORISMO_APP_SLUG,
+      })
+      .then((r) => r.data),
+
+  update: (id: string, payload: UpdateInteriorProjectPayload) =>
+    apiClient
+      .patch<InteriorProjectDetail>(`${BASE}/${id}`, payload, {
+        params: { applicationSlug: INTERIORISMO_APP_SLUG },
       })
       .then((r) => r.data),
 }

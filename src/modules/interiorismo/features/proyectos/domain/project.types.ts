@@ -142,3 +142,25 @@ export interface CreateInteriorProjectPayload {
   expectedMargin?: number | null
   progressPct?: number | null
 }
+
+/** PATCH `/interiorismo-projects/:id` (el código no es editable tras crear) */
+export interface UpdateInteriorProjectPayload {
+  name?: string
+  clientId?: string
+  projectType?: InteriorProjectType
+  status?: InteriorProjectStatus
+  addressLine?: string | null
+  areaSqm?: number | null
+  levelsCount?: number | null
+  environmentsNote?: string | null
+  startDate?: string | null
+  estimatedEndDate?: string | null
+  designerAgentId?: string | null
+  architectAgentId?: string | null
+  supervisorAgentId?: string | null
+  commercialAgentId?: string | null
+  estimatedBudget?: number | null
+  projectedCost?: number | null
+  expectedMargin?: number | null
+  progressPct?: number | null
+}

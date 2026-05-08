@@ -4,12 +4,14 @@ import { useRouter } from 'vue-router'
 import {
   BaseButton,
   BasePagination,
+  BaseModal,
   DataTable,
   SearchInput,
   Badge,
   AppIcon,
+  ActionsDropdown,
 } from '@shared/components'
-import { useInteriorProjectsList } from '@modules/interiorismo/features/proyectos/application/useInteriorProjects'
+import { useInteriorProjectsList, useUpdateInteriorProject } from '@modules/interiorismo/features/proyectos/application/useInteriorProjects'
 import type { InteriorProjectListItem, ListInteriorProjectsParams } from '@modules/interiorismo/features/proyectos/domain/project.types'
 import { PROJECT_STATUS_LABELS } from '@modules/interiorismo/features/proyectos/presentation/labels'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
@@ -54,6 +56,7 @@ const columns = [
   { key: 'client', label: 'Cliente', align: 'left' as const },
   { key: 'progressPct', label: 'Avance', align: 'left' as const },
   { key: 'status', label: 'Estado', align: 'left' as const },
+  { key: 'actions', label: '', align: 'right' as const },
 ]
 
 const paginationProps = computed(() => {
@@ -70,8 +73,54 @@ const paginationProps = computed(() => {
   }
 })
 
-const openBoard = (p: InteriorProjectListItem) => {
-  router.push(`${INTERIORISMO_BASE_PATH}/ejecucion/${p.id}`)
+const openBoard = (r: InteriorProjectListItem) => {
+  router.push(`${INTERIORISMO_BASE_PATH}/ejecucion/${r.id}`)
+}
+
+const goDetail = (r: InteriorProjectListItem) =>
+  router.push(`${INTERIORISMO_BASE_PATH}/proyectos/${r.id}`)
+const goEdit = (r: InteriorProjectListItem) =>
+  router.push(`${INTERIORISMO_BASE_PATH}/proyectos/${r.id}/editar`)
+
+const showCancelModal = ref(false)
+const cancelTarget = ref<InteriorProjectListItem | null>(null)
+const { mutateAsync: updateProject, isPending: isCancelPending } = useUpdateInteriorProject()
+
+const openCancelConfirm = (r: InteriorProjectListItem) => {
+  cancelTarget.value = r
+  showCancelModal.value = true
+}
+
+const closeCancelModal = () => {
+  showCancelModal.value = false
+  cancelTarget.value = null
+}
+
+const executeCancel = async () => {
+  const r = cancelTarget.value
+  if (!r) return
+  try {
+    await updateProject({ id: r.id, payload: { status: 'CANCELLED' } })
+    closeCancelModal()
+  } catch {
+    void 0
+  }
+}
+
+const getActions = (r: InteriorProjectListItem): { label: string; icon: string; onClick: () => void }[] => {
+  const items: { label: string; icon: string; onClick: () => void }[] = [
+    { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(r) },
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => goEdit(r) },
+    { label: 'Abrir tablero de obra', icon: 'lucide:hard-hat', onClick: () => openBoard(r) },
+  ]
+  if (r.status !== 'CANCELLED') {
+    items.push({
+      label: 'Eliminar',
+      icon: 'lucide:trash-2',
+      onClick: () => openCancelConfirm(r),
+    })
+  }
+  return items
 }
 
 const goProjects = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)
@@ -117,13 +166,13 @@ const goProjects = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)
                 type="button"
                 class="font-medium hover:underline"
                 :style="{ color: 'var(--color-primary)' }"
-                @click="openBoard(row as InteriorProjectListItem)"
+                @click="goDetail(row as InteriorProjectListItem)"
               >
                 {{ (row as InteriorProjectListItem).code }}
               </button>
             </td>
             <td class="py-3 px-4">
-              <button type="button" class="text-left font-medium" @click="openBoard(row as InteriorProjectListItem)">
+              <button type="button" class="text-left font-medium" @click="goDetail(row as InteriorProjectListItem)">
                 <span :style="{ color: 'var(--color-text-primary)' }">{{ (row as InteriorProjectListItem).name }}</span>
               </button>
             </td>
@@ -133,6 +182,9 @@ const goProjects = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)
             <td class="py-3 px-4 text-sm">{{ Math.round((row as InteriorProjectListItem).progressPct) }}%</td>
             <td class="py-3 px-4">
               <Badge variant="neutral">{{ PROJECT_STATUS_LABELS[(row as InteriorProjectListItem).status] }}</Badge>
+            </td>
+            <td class="py-3 px-4 text-right">
+              <ActionsDropdown :items="getActions(row as InteriorProjectListItem)" />
             </td>
           </template>
         </DataTable>
@@ -146,5 +198,30 @@ const goProjects = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)
         </div>
       </template>
     </div>
+
+    <BaseModal v-model="showCancelModal" :closable="true" size="sm" @close="closeCancelModal">
+      <template #title>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
+            <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error);" />
+          </div>
+          <span class="text-base font-semibold" style="color: var(--color-text-primary);">Cancelar proyecto</span>
+        </div>
+      </template>
+      <div class="p-4 space-y-3">
+        <p class="text-sm" style="color: var(--color-text-secondary);">
+          ¿Marcar como cancelado el proyecto
+          <span class="font-semibold" style="color: var(--color-text-primary);">{{ cancelTarget?.code }}</span>
+          · {{ cancelTarget?.name }}?
+        </p>
+      </div>
+      <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+        <BaseButton variant="ghost" @click="closeCancelModal">Volver</BaseButton>
+        <BaseButton variant="danger" :loading="isCancelPending" @click="executeCancel">
+          <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
+          Cancelar proyecto
+        </BaseButton>
+      </div>
+    </BaseModal>
   </div>
 </template>

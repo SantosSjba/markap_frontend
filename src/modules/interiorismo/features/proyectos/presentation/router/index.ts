@@ -20,6 +20,12 @@ export const interiorismoProyectosRoutes: RouteRecordRaw[] = [
     meta: { title: 'En progreso', inProgressOnly: true },
   },
   {
+    path: ':id/editar',
+    name: 'interiorismo-proyectos-editar',
+    component: () => import('../views/InteriorismoProyectoEditarView.vue'),
+    meta: { title: 'Editar proyecto' },
+  },
+  {
     path: ':id',
     name: 'interiorismo-proyectos-detalle',
     component: () => import('../views/InteriorismoProyectoDetalleView.vue'),

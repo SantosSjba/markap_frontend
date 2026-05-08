@@ -14,6 +14,7 @@ export interface InteriorBudgetsRepository {
   create(payload: CreateInteriorBudgetPayload): Promise<InteriorBudgetDetail>
   update(id: string, payload: UpdateInteriorBudgetPayload): Promise<InteriorBudgetDetail>
   duplicate(id: string): Promise<InteriorBudgetDetail>
+  delete(id: string): Promise<void>
   addComment(id: string, body: string): Promise<InteriorBudgetCommentDto>
   addAttachment(id: string, title: string, fileUrl: string): Promise<InteriorBudgetAttachmentDto>
   fetchPdfHtml(id: string): Promise<string>

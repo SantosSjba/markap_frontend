@@ -8,6 +8,7 @@ import {
   DataTable,
   SearchInput,
   AppIcon,
+  ActionsDropdown,
 } from '@shared/components'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
@@ -211,6 +212,13 @@ function goProject(id: string) {
   void router.push(`${INTERIORISMO_BASE_PATH}/proyectos/${id}`)
 }
 
+function getDocActions(row: InteriorDocumentRow): { label: string; icon: string; onClick: () => void }[] {
+  return [
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => openEdit(row) },
+    { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => void removeRow(row) },
+  ]
+}
+
 const navActiveClass =
   'border-[color:var(--color-primary)] text-[color:var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)]'
 const navIdleClass =
@@ -327,12 +335,7 @@ const navIdleClass =
               {{ formatDate((row as InteriorDocumentRow).createdAt) }}
             </td>
             <td class="py-3 px-4 text-right whitespace-nowrap">
-              <BaseButton variant="ghost" size="sm" type="button" class="mr-1" @click="openEdit(row as InteriorDocumentRow)">
-                Editar
-              </BaseButton>
-              <BaseButton variant="outline" size="sm" type="button" @click="removeRow(row as InteriorDocumentRow)">
-                Eliminar
-              </BaseButton>
+              <ActionsDropdown :items="getDocActions(row as InteriorDocumentRow)" />
             </td>
           </template>
         </DataTable>

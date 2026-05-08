@@ -86,6 +86,20 @@ export function useDuplicateInteriorBudget() {
   })
 }
 
+export function useDeleteInteriorBudget() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (budgetId: string) => repo.delete(budgetId),
+    onSuccess: () => {
+      invalidateQuerySubtree(qc, interiorBudgetKeys.all)
+      void markapAlert.toast.success('Presupuesto eliminado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err))
+    },
+  })
+}
+
 export function useAddInteriorBudgetComment(id: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
