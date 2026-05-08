@@ -1,0 +1,1 @@
+export { interiorismoEjecucionRoutes } from './router'

@@ -55,6 +55,11 @@ const goNewBudgetForProject = () => {
   })
 }
 
+const goExecutionBoard = () => {
+  if (!p.value) return
+  router.push(`${INTERIORISMO_BASE_PATH}/ejecucion/${p.value.id}`)
+}
+
 const materialCols = [
   { key: 'name', label: 'Material', align: 'left' as const },
   { key: 'qty', label: 'Cant.', align: 'left' as const },
@@ -225,6 +230,11 @@ function milestoneDone(m: { completedAt: string | null }) {
           </div>
 
           <div v-show="activeTab === 'ejecucion'" class="space-y-4">
+            <div class="flex justify-end">
+              <BaseButton variant="primary" size="sm" @click="goExecutionBoard">
+                Abrir tablero de ejecución
+              </BaseButton>
+            </div>
             <div
               class="p-4 rounded-lg border"
               :style="{ borderColor: 'var(--color-border)' }"

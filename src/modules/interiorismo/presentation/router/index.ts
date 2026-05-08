@@ -9,6 +9,7 @@ import {
   interiorismoMaterialesCatalogoRoutes,
   interiorismoMaterialesProveedoresRoutes,
 } from '../../features/materiales'
+import { interiorismoEjecucionRoutes } from '../../features/ejecucion'
 
 const placeholder = () => import('../views/InteriorismoPlaceholderView.vue')
 
@@ -73,9 +74,9 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'ejecucion',
-        name: 'interiorismo-ejecucion',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Ejecución' },
+        children: interiorismoEjecucionRoutes,
       },
       {
         path: 'finanzas',
