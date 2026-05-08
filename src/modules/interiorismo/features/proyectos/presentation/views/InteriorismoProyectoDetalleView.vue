@@ -39,10 +39,21 @@ const activityLabel = (t: string) => {
 
 const budgetCols = [
   { key: 'code', label: 'Código', align: 'left' as const },
+  { key: 'version', label: 'Ver.', align: 'left' as const },
   { key: 'title', label: 'Título', align: 'left' as const },
   { key: 'amount', label: 'Monto', align: 'left' as const },
   { key: 'status', label: 'Estado', align: 'left' as const },
 ]
+
+const goBudgetDetail = (budgetId: string) =>
+  router.push(`${INTERIORISMO_BASE_PATH}/presupuestos/${budgetId}`)
+const goNewBudgetForProject = () => {
+  if (!p.value) return
+  router.push({
+    path: `${INTERIORISMO_BASE_PATH}/presupuestos/nuevo`,
+    query: { clientId: p.value.client.id, projectId: p.value.id },
+  })
+}
 
 const materialCols = [
   { key: 'name', label: 'Material', align: 'left' as const },
@@ -160,7 +171,12 @@ function milestoneDone(m: { completedAt: string | null }) {
             </div>
           </div>
 
-          <div v-show="activeTab === 'presupuestos'">
+          <div v-show="activeTab === 'presupuestos'" class="space-y-3">
+            <div class="flex justify-end">
+              <BaseButton size="sm" variant="primary" @click="goNewBudgetForProject">
+                Nuevo presupuesto
+              </BaseButton>
+            </div>
             <DataTable
               empty-text="Sin presupuestos asociados."
               :columns="budgetCols"
@@ -168,6 +184,8 @@ function milestoneDone(m: { completedAt: string | null }) {
                 p.budgets.map((b) => ({
                   ...b,
                   code: b.code ?? '—',
+                  version: `v${b.version}`,
+                  title: b.title ?? '—',
                   amount: formatSol(b.totalAmount),
                   status: b.status,
                 }))
@@ -175,10 +193,33 @@ function milestoneDone(m: { completedAt: string | null }) {
               row-key="id"
             >
               <template #row="{ row }">
-                <td class="py-2 px-3 text-sm">{{ (row as any).code }}</td>
-                <td class="py-2 px-3 text-sm">{{ (row as any).title }}</td>
-                <td class="py-2 px-3 text-sm">{{ (row as any).amount }}</td>
-                <td class="py-2 px-3"><Badge variant="neutral">{{ (row as any).status }}</Badge></td>
+                <td
+                  class="py-2 px-3 text-sm cursor-pointer hover:underline"
+                  @click="goBudgetDetail((row as { id: string }).id)"
+                >
+                  {{ (row as any).code }}
+                </td>
+                <td
+                  class="py-2 px-3 text-sm cursor-pointer"
+                  @click="goBudgetDetail((row as { id: string }).id)"
+                >
+                  {{ (row as any).version }}
+                </td>
+                <td
+                  class="py-2 px-3 text-sm cursor-pointer"
+                  @click="goBudgetDetail((row as { id: string }).id)"
+                >
+                  {{ (row as any).title }}
+                </td>
+                <td
+                  class="py-2 px-3 text-sm cursor-pointer"
+                  @click="goBudgetDetail((row as { id: string }).id)"
+                >
+                  {{ (row as any).amount }}
+                </td>
+                <td class="py-2 px-3 cursor-pointer" @click="goBudgetDetail((row as { id: string }).id)">
+                  <Badge variant="neutral">{{ (row as any).status }}</Badge>
+                </td>
               </template>
             </DataTable>
           </div>

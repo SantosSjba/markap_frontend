@@ -19,6 +19,7 @@ export const interiorProjectsApiRepository: InteriorProjectsRepository = {
     if (params.search) searchParams.set('search', params.search)
     if (params.status) searchParams.set('status', params.status)
     if (params.inProgressOnly) searchParams.set('inProgressOnly', 'true')
+    if (params.clientId) searchParams.set('clientId', params.clientId)
     return apiClient
       .get<ListInteriorProjectsResponse>(`${BASE}?${searchParams.toString()}`)
       .then((r) => r.data)

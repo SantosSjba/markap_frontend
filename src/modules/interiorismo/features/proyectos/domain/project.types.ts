@@ -38,7 +38,8 @@ export interface InteriorProjectListItem {
 export interface InteriorProjectBudgetDto {
   id: string
   code: string | null
-  title: string
+  title: string | null
+  version: number
   totalAmount: number
   status: string
 }
@@ -109,6 +110,7 @@ export interface ListInteriorProjectsParams {
   search?: string
   status?: InteriorProjectStatus
   inProgressOnly?: boolean
+  clientId?: string
 }
 
 export interface ListInteriorProjectsResponse {

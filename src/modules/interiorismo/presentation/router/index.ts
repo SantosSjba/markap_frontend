@@ -4,6 +4,7 @@ import { SectionLayout } from '@layouts'
 import { INTERIORISMO_BASE_PATH } from '../../config/routes.constants'
 import { interiorismoClientesRoutes } from '../../features/clientes'
 import { interiorismoProyectosRoutes } from '../../features/proyectos'
+import { interiorismoPresupuestosRoutes } from '../../features/presupuestos'
 
 const placeholder = () => import('../views/InteriorismoPlaceholderView.vue')
 
@@ -41,20 +42,7 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
         path: 'presupuestos',
         component: SectionLayout,
         meta: { title: 'Presupuestos' },
-        children: [
-          {
-            path: '',
-            name: 'interiorismo-presupuestos',
-            component: placeholder,
-            meta: { title: 'Listado de presupuestos' },
-          },
-          {
-            path: 'nuevo',
-            name: 'interiorismo-presupuestos-nuevo',
-            component: placeholder,
-            meta: { title: 'Nuevo presupuesto' },
-          },
-        ],
+        children: interiorismoPresupuestosRoutes,
       },
       {
         path: 'materiales',
