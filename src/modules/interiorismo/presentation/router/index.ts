@@ -3,6 +3,7 @@ import InteriorismoLayout from '../views/InteriorismoLayout.vue'
 import { SectionLayout } from '@layouts'
 import { INTERIORISMO_BASE_PATH } from '../../config/routes.constants'
 import { interiorismoClientesRoutes } from '../../features/clientes'
+import { interiorismoProyectosRoutes } from '../../features/proyectos'
 
 const placeholder = () => import('../views/InteriorismoPlaceholderView.vue')
 
@@ -28,26 +29,7 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
         path: 'proyectos',
         component: SectionLayout,
         meta: { title: 'Proyectos' },
-        children: [
-          {
-            path: '',
-            name: 'interiorismo-proyectos',
-            component: placeholder,
-            meta: { title: 'Listado de proyectos' },
-          },
-          {
-            path: 'nuevo',
-            name: 'interiorismo-proyectos-nuevo',
-            component: placeholder,
-            meta: { title: 'Nuevo proyecto' },
-          },
-          {
-            path: 'en-progreso',
-            name: 'interiorismo-proyectos-en-progreso',
-            component: placeholder,
-            meta: { title: 'En progreso' },
-          },
-        ],
+        children: interiorismoProyectosRoutes,
       },
       {
         path: 'clientes',
