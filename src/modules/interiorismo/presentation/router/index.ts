@@ -11,6 +11,8 @@ import {
 } from '../../features/materiales'
 import { interiorismoEjecucionRoutes } from '../../features/ejecucion'
 import { interiorismoFinanzasRoutes } from '../../features/finanzas'
+import { interiorismoDocumentosRoutes } from '../../features/documentos'
+import { interiorismoReportesRoutes } from '../../features/reportes'
 
 const placeholder = () => import('../views/InteriorismoPlaceholderView.vue')
 
@@ -88,20 +90,26 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
       {
         path: 'calendario',
         name: 'interiorismo-calendario',
-        component: placeholder,
+        component: () => import('../../features/calendario/presentation/views/InteriorismoCalendarioView.vue'),
         meta: { title: 'Calendario' },
       },
       {
         path: 'reportes',
-        name: 'interiorismo-reportes',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Reportes' },
+        children: interiorismoReportesRoutes,
       },
       {
         path: 'documentos',
-        name: 'interiorismo-documentos',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Documentos' },
+        children: [
+          {
+            path: '',
+            redirect: { name: 'interiorismo-documentos-contratos' },
+          },
+          ...interiorismoDocumentosRoutes,
+        ],
       },
       {
         path: 'configuracion',

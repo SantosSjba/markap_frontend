@@ -65,6 +65,11 @@ const goFinanceBoard = () => {
   router.push(`${INTERIORISMO_BASE_PATH}/finanzas/${p.value.id}`)
 }
 
+const goProjectCalendar = () => {
+  if (!p.value) return
+  router.push({ path: `${INTERIORISMO_BASE_PATH}/calendario`, query: { projectId: p.value.id } })
+}
+
 const materialCols = [
   { key: 'name', label: 'Material', align: 'left' as const },
   { key: 'qty', label: 'Cant.', align: 'left' as const },
@@ -235,7 +240,10 @@ function milestoneDone(m: { completedAt: string | null }) {
           </div>
 
           <div v-show="activeTab === 'ejecucion'" class="space-y-4">
-            <div class="flex justify-end">
+            <div class="flex flex-wrap justify-end gap-2">
+              <BaseButton variant="outline" size="sm" @click="goProjectCalendar">
+                Ver calendario del proyecto
+              </BaseButton>
               <BaseButton variant="primary" size="sm" @click="goExecutionBoard">
                 Abrir tablero de ejecución
               </BaseButton>

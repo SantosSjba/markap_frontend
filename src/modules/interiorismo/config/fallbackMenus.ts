@@ -133,31 +133,79 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     order: 7,
   },
   {
-    id: 'int-fb-reportes',
-    label: 'Reportes',
-    icon: 'bar-chart',
-    path: '/interiorismo/reportes',
-    order: 8,
-  },
-  {
     id: 'int-fb-documentos',
     label: 'Documentos',
     icon: 'files',
-    path: '/interiorismo/documentos',
-    order: 9,
+    path: null,
+    order: 8,
+    children: [
+      {
+        id: 'int-fb-doc-contratos',
+        label: 'Contratos',
+        icon: null,
+        path: '/interiorismo/documentos/contratos',
+        order: 0,
+      },
+      {
+        id: 'int-fb-doc-pdfs',
+        label: 'PDFs',
+        icon: null,
+        path: '/interiorismo/documentos/pdfs',
+        order: 1,
+      },
+      {
+        id: 'int-fb-doc-render',
+        label: 'Renderizados',
+        icon: null,
+        path: '/interiorismo/documentos/renderizados',
+        order: 2,
+      },
+      {
+        id: 'int-fb-doc-planos',
+        label: 'Planos',
+        icon: null,
+        path: '/interiorismo/documentos/planos',
+        order: 3,
+      },
+      {
+        id: 'int-fb-doc-facturas',
+        label: 'Facturas',
+        icon: null,
+        path: '/interiorismo/documentos/facturas',
+        order: 4,
+      },
+      {
+        id: 'int-fb-doc-actas',
+        label: 'Actas',
+        icon: null,
+        path: '/interiorismo/documentos/actas',
+        order: 5,
+      },
+    ],
   },
   {
     id: 'int-fb-config',
     label: 'Configuración',
     icon: 'settings',
     path: '/interiorismo/configuracion',
+    order: 9,
+  },
+  {
+    id: 'int-fb-reportes',
+    label: 'Reportes',
+    icon: 'bar-chart',
+    path: '/interiorismo/reportes',
     order: 10,
   },
 ]
 
-/** El árbol de la API incluye submenús de Proyectos (criterio para considerar el seed aplicado). */
+/** El árbol de la API incluye submenús de Proyectos y Documentos (criterio seed / datos completos). */
 export function interiorismoMenusLookComplete(apiMenus: MenuItem[]): boolean {
   if (!apiMenus.length) return false
   const proyectos = apiMenus.find((m) => m.label.trim() === 'Proyectos')
-  return !!(proyectos?.children && proyectos.children.length > 0)
+  const documentos = apiMenus.find((m) => m.label.trim() === 'Documentos')
+  return !!(
+    proyectos?.children?.length &&
+    documentos?.children?.length
+  )
 }
