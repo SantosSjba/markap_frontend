@@ -13,6 +13,7 @@ import {
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useExcelExport } from '@shared/composables'
 import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { useInteriorReportsDashboard } from '../../application/useInteriorReportes'
 
 const PROJECT_STATUS_LABEL: Record<string, string> = {
@@ -70,7 +71,7 @@ const applyFilters = handleSubmit((v) => {
   applied.value = { startDate: v.startDate, endDate: v.endDate }
 })
 
-const dashboardQuery = useInteriorReportsDashboard(rangeParams)
+const dashboardQuery = useInteriorReportsDashboard(rangeParams, { toastOnLoadError: false })
 const d = computed(() => dashboardQuery.data.value)
 
 const activeTab = ref('ventas')
@@ -289,6 +290,17 @@ async function exportDashboardExcel() {
 
     <div v-if="dashboardQuery.isLoading.value" class="flex justify-center py-16">
       <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
+    </div>
+
+    <div
+      v-else-if="dashboardQuery.isError.value"
+      class="rounded-xl border p-8 text-center space-y-4"
+      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+    >
+      <p class="text-sm" style="color: var(--color-error)">
+        {{ getApiErrorMessage(dashboardQuery.error.value) }}
+      </p>
+      <BaseButton variant="secondary" @click="() => dashboardQuery.refetch()">Reintentar</BaseButton>
     </div>
 
     <template v-else-if="d">

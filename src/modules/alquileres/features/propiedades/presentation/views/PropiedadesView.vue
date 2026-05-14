@@ -25,6 +25,7 @@ import {
 } from '../../application/useProperties'
 import type { PropertyListItem, ListPropertiesParams } from '../../domain/property.types'
 import { propertiesRepository } from '@modules/alquileres/features/propiedades'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -40,9 +41,26 @@ const searchInput = ref('')
 const filterListingStatus = ref<string>('')
 const filterPropertyTypeId = ref<string>('')
 
-const { data: listResult, isLoading: loadingList } = usePropertiesList(listParams)
-const { data: stats, isLoading: loadingStats } = usePropertyStats('alquileres')
-const { data: propertyTypes } = usePropertyTypes()
+const {
+  data: listResult,
+  isLoading: loadingList,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = usePropertiesList(listParams)
+const {
+  data: stats,
+  isLoading: loadingStats,
+  isError: statsQueryError,
+  error: statsFetchError,
+  refetch: refetchStats,
+} = usePropertyStats('alquileres')
+const {
+  data: propertyTypes,
+  isError: propertyTypesQueryError,
+  error: propertyTypesFetchError,
+  refetch: refetchPropertyTypes,
+} = usePropertyTypes()
 
 const properties = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
@@ -355,21 +373,39 @@ async function handleExport() {
       class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20"
     />
     <div
+      v-else-if="statsQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+    </div>
+    <div
       v-else
       class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
     >
-      <StatsCard :title="'Total'" :value="stats?.total ?? 0">
+      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
         <template #icon><AppIcon icon="lucide:building-2" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Alquiladas'" :value="stats?.rented ?? 0">
+      <StatsCard :title="'Alquiladas'" :value="String(stats?.rented ?? 0)">
         <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="#16a34a" /></template>
       </StatsCard>
-      <StatsCard :title="'Disponibles'" :value="stats?.available ?? 0">
+      <StatsCard :title="'Disponibles'" :value="String(stats?.available ?? 0)">
         <template #icon><AppIcon icon="lucide:door-open" :size="20" color="#2563eb" /></template>
       </StatsCard>
-      <StatsCard :title="'Por Vencer'" :value="stats?.expiring ?? 0">
+      <StatsCard :title="'Por Vencer'" :value="String(stats?.expiring ?? 0)">
         <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" color="#dc2626" /></template>
       </StatsCard>
+    </div>
+
+    <div
+      v-if="propertyTypesQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span :style="{ color: 'var(--color-text-primary)' }">No se cargaron los tipos de propiedad para el filtro.</span>
+      <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(propertyTypesFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchPropertyTypes()">Reintentar</BaseButton>
     </div>
 
     <!-- Table -->
@@ -383,6 +419,13 @@ async function handleExport() {
       <div class="overflow-x-auto">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+        </div>
+        <div
+          v-else-if="listQueryError"
+          class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+        >
+          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
@@ -453,7 +496,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

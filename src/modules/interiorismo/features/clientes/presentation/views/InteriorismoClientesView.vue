@@ -26,6 +26,7 @@ import { interiorClientsRepository } from '@modules/interiorismo/features/client
 import { BaseModal } from '@shared/components'
 import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -41,8 +42,20 @@ const searchInput = ref('')
 const filterType = ref<'ALL' | 'RESIDENTIAL' | 'CORPORATE'>('ALL')
 const filterStatus = ref<'ALL' | 'active' | 'inactive'>('ALL')
 
-const { data: listResult, isLoading: loadingList } = useInteriorClientsList(listParams)
-const { data: stats, isLoading: loadingStats } = useInteriorClientStats(INTERIORISMO_APP_SLUG)
+const {
+  data: listResult,
+  isLoading: loadingList,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useInteriorClientsList(listParams)
+const {
+  data: stats,
+  isLoading: loadingStats,
+  isError: statsQueryError,
+  error: statsFetchError,
+  refetch: refetchStats,
+} = useInteriorClientStats(INTERIORISMO_APP_SLUG)
 
 const clients = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
@@ -248,17 +261,25 @@ async function handleExport() {
     </div>
 
     <div v-if="loadingStats" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20" />
+    <div
+      v-else-if="statsQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+    </div>
     <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <StatsCard :title="'Total'" :value="stats?.total ?? 0">
+      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
         <template #icon><AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Residencial'" :value="stats?.residential ?? 0">
+      <StatsCard :title="'Residencial'" :value="String(stats?.residential ?? 0)">
         <template #icon><AppIcon icon="lucide:home" :size="20" color="#2563eb" /></template>
       </StatsCard>
-      <StatsCard :title="'Corporativo'" :value="stats?.corporate ?? 0">
+      <StatsCard :title="'Corporativo'" :value="String(stats?.corporate ?? 0)">
         <template #icon><AppIcon icon="lucide:building-2" :size="20" color="#16a34a" /></template>
       </StatsCard>
-      <StatsCard :title="'Activos'" :value="stats?.active ?? 0">
+      <StatsCard :title="'Activos'" :value="String(stats?.active ?? 0)">
         <template #icon><AppIcon icon="lucide:trending-up" :size="20" color="#d97706" /></template>
       </StatsCard>
     </div>
@@ -273,6 +294,13 @@ async function handleExport() {
       <div class="overflow-x-auto">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+        </div>
+        <div
+          v-else-if="listQueryError"
+          class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+        >
+          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
@@ -355,7 +383,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

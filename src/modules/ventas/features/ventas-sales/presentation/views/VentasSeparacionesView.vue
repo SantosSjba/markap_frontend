@@ -7,6 +7,7 @@ import type { SaleSeparationRow } from '../../domain/sales.types'
 import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { SEPARATION_STATUS_OPTIONS, separationStatusLabel } from '../../domain/pipeline.constants'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const ITEMS = 10
 const listParams = ref({ page: 1, limit: ITEMS, status: '' as string | undefined })
@@ -15,7 +16,13 @@ const listApi = computed(() => ({
   limit: listParams.value.limit,
   status: listParams.value.status || undefined,
 }))
-const { data: listResult, isLoading } = useVentasSeparationsList(listApi)
+const {
+  data: listResult,
+  isLoading,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useVentasSeparationsList(listApi)
 const rows = computed(() => listResult.value?.data ?? [])
 const total = computed(() => listResult.value?.total ?? 0)
 
@@ -41,6 +48,8 @@ const columns = [
 ]
 
 const showNew = ref(false)
+const loadingNewModalData = ref(false)
+const newModalLoadError = ref('')
 const buyerOptions = ref<{ value: string; label: string }[]>([])
 const propertyOptions = ref<{ value: string; label: string }[]>([])
 const form = ref({
@@ -54,19 +63,27 @@ const form = ref({
 const { mutate: createSep, isPending } = useVentasCreateSeparation()
 
 async function openModal() {
-  const [buyers, props] = await Promise.all([
-    ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 }),
-    ventasPropertiesRepository.getList({ page: 1, limit: 500, listingStatus: 'AVAILABLE' }),
-  ])
-  buyerOptions.value = buyers.data.map((c) => ({
-    value: c.id,
-    label: `${c.fullName} (${c.documentNumber})`,
-  }))
-  propertyOptions.value = props.data.map((p) => ({
-    value: p.id,
-    label: `${p.code} — ${p.addressLine}`,
-  }))
-  showNew.value = true
+  newModalLoadError.value = ''
+  loadingNewModalData.value = true
+  try {
+    const [buyers, props] = await Promise.all([
+      ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 }),
+      ventasPropertiesRepository.getList({ page: 1, limit: 500, listingStatus: 'AVAILABLE' }),
+    ])
+    buyerOptions.value = buyers.data.map((c) => ({
+      value: c.id,
+      label: `${c.fullName} (${c.documentNumber})`,
+    }))
+    propertyOptions.value = props.data.map((p) => ({
+      value: p.id,
+      label: `${p.code} — ${p.addressLine}`,
+    }))
+    showNew.value = true
+  } catch (e) {
+    newModalLoadError.value = getApiErrorMessage(e)
+  } finally {
+    loadingNewModalData.value = false
+  }
 }
 
 function submit() {
@@ -98,9 +115,20 @@ function submit() {
           Reserva con dinero — la propiedad pasa a estado Separada (bloqueo de inventario).
         </p>
       </div>
-      <BaseButton variant="primary" class="flex items-center gap-2" @click="openModal">
+      <BaseButton variant="primary" class="flex items-center gap-2" :loading="loadingNewModalData" @click="openModal">
         <AppIcon icon="lucide:plus" :size="18" />
         Nueva separación
+      </BaseButton>
+    </div>
+
+    <div
+      v-if="newModalLoadError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span class="max-w-xl" style="color: var(--color-error)">{{ newModalLoadError }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" :loading="loadingNewModalData" @click="openModal">
+        Reintentar
       </BaseButton>
     </div>
 
@@ -110,6 +138,13 @@ function submit() {
     >
       <div v-if="isLoading" class="flex justify-center py-16">
         <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+      </div>
+      <div
+        v-else-if="listQueryError"
+        class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+      >
+        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin separaciones.">
         <template #toolbar>
@@ -131,7 +166,7 @@ function submit() {
           <td class="py-3 px-4">{{ separationStatusLabel((row as SaleSeparationRow).status) }}</td>
         </template>
       </DataTable>
-      <div class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"

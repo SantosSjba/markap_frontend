@@ -20,6 +20,7 @@ import type { RentalListItem, ListRentalsParams } from '../../domain/rental.type
 import { ALQUILERES_APP_SLUG } from '../../../../config/app.constants'
 import { rentalsRepository } from '@modules/alquileres/features/alquileres'
 import { BaseModal } from '@shared/components'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -34,8 +35,20 @@ const listParams = ref<ListRentalsParams>({
 const searchInput = ref('')
 const filterStatus = ref<'ALL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED'>('ALL')
 
-const { data: listResult, isLoading: loadingList } = useRentalsList(listParams)
-const { data: stats, isLoading: loadingStats } = useRentalStats('alquileres')
+const {
+  data: listResult,
+  isLoading: loadingList,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useRentalsList(listParams)
+const {
+  data: stats,
+  isLoading: loadingStats,
+  isError: statsQueryError,
+  error: statsFetchError,
+  refetch: refetchStats,
+} = useRentalStats('alquileres')
 
 const rentals = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
@@ -313,19 +326,27 @@ async function handleExport() {
       class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20"
     />
     <div
+      v-else-if="statsQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+    </div>
+    <div
       v-else
       class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
     >
-      <StatsCard :title="'Total'" :value="stats?.total ?? 0">
+      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
         <template #icon><AppIcon icon="lucide:file-text" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Vigentes'" :value="stats?.vigentes ?? 0">
+      <StatsCard :title="'Vigentes'" :value="String(stats?.vigentes ?? 0)">
         <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="#16a34a" /></template>
       </StatsCard>
-      <StatsCard :title="'Por Vencer'" :value="stats?.porVencer ?? 0">
+      <StatsCard :title="'Por Vencer'" :value="String(stats?.porVencer ?? 0)">
         <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" color="#d97706" /></template>
       </StatsCard>
-      <StatsCard :title="'Vencidos'" :value="stats?.vencidos ?? 0">
+      <StatsCard :title="'Vencidos'" :value="String(stats?.vencidos ?? 0)">
         <template #icon><AppIcon icon="lucide:circle-x" :size="20" color="#dc2626" /></template>
       </StatsCard>
     </div>
@@ -341,6 +362,13 @@ async function handleExport() {
       <div class="overflow-x-auto">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+        </div>
+        <div
+          v-else-if="listQueryError"
+          class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+        >
+          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
@@ -453,7 +481,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

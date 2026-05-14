@@ -10,6 +10,7 @@ import {
   ExcelIcon,
 } from '@shared/components'
 import { useExcelExport } from '@shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
   useReportsSummary,
   useContractsExpiring,
@@ -127,17 +128,6 @@ const metricasMes = computed(() => monthlyMetricsQuery.data.value ?? {
   contratosRenovados: 0,
   clientesNuevos: 0,
 })
-
-const loading = computed(
-  () =>
-    summaryQuery.isPending.value ||
-    contractsExpiringQuery.isPending.value ||
-    propertiesWithoutContractQuery.isPending.value ||
-    activeClientsQuery.isPending.value ||
-    contractStatusQuery.isPending.value ||
-    monthlyMetricsQuery.isPending.value ||
-    (activeTab.value === 'alquiler-por-mes' && rentalsByMonthQuery.isPending.value)
-)
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('es-PE', {
@@ -295,14 +285,24 @@ async function handleExportTab() {
       </div>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex justify-center py-12">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+    <!-- Cards resumen (independiente del resto de consultas) -->
+    <div v-if="summaryQuery.isPending.value" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div
+        v-for="i in 4"
+        :key="i"
+        class="rounded-xl border h-24 animate-pulse"
+        :style="{ backgroundColor: 'var(--color-surface-elevated)', borderColor: 'var(--color-border)' }"
+      />
     </div>
-
-    <template v-else>
-      <!-- Cards resumen -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div
+      v-else-if="summaryQuery.isError.value"
+      class="rounded-xl border p-6 text-center space-y-3"
+      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+    >
+      <p class="text-sm" style="color: var(--color-error)">{{ getApiErrorMessage(summaryQuery.error.value) }}</p>
+      <BaseButton variant="outline" size="sm" @click="() => summaryQuery.refetch()">Reintentar</BaseButton>
+    </div>
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title="Contratos por Vencer" :value="stats.contratosPorVencer">
           <template #icon><AppIcon icon="lucide:calendar-clock" :size="20" color="var(--color-primary)" /></template>
         </StatsCard>
@@ -330,6 +330,19 @@ async function handleExportTab() {
       >
         <!-- Contratos por Vencer -->
         <template v-if="activeTab === 'contratos-por-vencer'">
+          <div v-if="contractsExpiringQuery.isPending.value" class="flex justify-center py-12">
+            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+          </div>
+          <div
+            v-else-if="contractsExpiringQuery.isError.value"
+            class="text-center py-10 space-y-3"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(contractsExpiringQuery.error.value) }}
+            </p>
+            <BaseButton variant="outline" size="sm" @click="() => contractsExpiringQuery.refetch()">Reintentar</BaseButton>
+          </div>
+          <template v-else>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
             <div
@@ -390,10 +403,24 @@ async function handleExportTab() {
               <p class="text-sm">No hay contratos por vencer en el período seleccionado.</p>
             </div>
           </div>
+          </template>
         </template>
 
         <!-- Sin Contrato -->
         <template v-else-if="activeTab === 'sin-contrato'">
+          <div v-if="propertiesWithoutContractQuery.isPending.value" class="flex justify-center py-12">
+            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+          </div>
+          <div
+            v-else-if="propertiesWithoutContractQuery.isError.value"
+            class="text-center py-10 space-y-3"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(propertiesWithoutContractQuery.error.value) }}
+            </p>
+            <BaseButton variant="outline" size="sm" @click="() => propertiesWithoutContractQuery.refetch()">Reintentar</BaseButton>
+          </div>
+          <template v-else>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
             <div
@@ -442,10 +469,24 @@ async function handleExportTab() {
               <p class="text-sm">No hay propiedades sin contrato.</p>
             </div>
           </div>
+          </template>
         </template>
 
         <!-- Clientes Activos -->
         <template v-else-if="activeTab === 'clientes-activos'">
+          <div v-if="activeClientsQuery.isPending.value" class="flex justify-center py-12">
+            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+          </div>
+          <div
+            v-else-if="activeClientsQuery.isError.value"
+            class="text-center py-10 space-y-3"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(activeClientsQuery.error.value) }}
+            </p>
+            <BaseButton variant="outline" size="sm" @click="() => activeClientsQuery.refetch()">Reintentar</BaseButton>
+          </div>
+          <template v-else>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
             <div
@@ -492,6 +533,7 @@ async function handleExportTab() {
               <p class="text-sm">No hay clientes activos.</p>
             </div>
           </div>
+          </template>
         </template>
 
         <!-- Alquiler por mes -->
@@ -563,6 +605,18 @@ async function handleExportTab() {
             </template>
           </div>
 
+          <div
+            v-if="rentalsByMonthQuery.isError.value"
+            class="rounded-xl border p-6 text-center space-y-3 mb-5"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)', borderColor: 'var(--color-border)' }"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(rentalsByMonthQuery.error.value) }}
+            </p>
+            <BaseButton variant="outline" size="sm" @click="() => rentalsByMonthQuery.refetch()">Reintentar</BaseButton>
+          </div>
+
+          <template v-else>
           <!-- Totales rápidos -->
           <div
             v-if="rentalsByMonthRows.length > 0"
@@ -733,13 +787,14 @@ async function handleExportTab() {
               </tfoot>
             </table>
             <p
-              v-if="!rentalsByMonthRows.length && !rentalsByMonthQuery.isPending.value"
+              v-if="!rentalsByMonthRows.length && !rentalsByMonthQuery.isPending.value && !rentalsByMonthQuery.isError.value"
               class="py-8 text-center text-sm"
               style="color: var(--color-text-muted);"
             >
               No hay datos para el período seleccionado.
             </p>
           </div>
+          </template>
 
         </template>
       </div>
@@ -760,7 +815,19 @@ async function handleExportTab() {
               Resumen de Estado de Contratos
             </h3>
           </div>
-          <div class="space-y-4">
+          <div v-if="contractStatusQuery.isPending.value" class="flex justify-center py-10">
+            <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
+          </div>
+          <div
+            v-else-if="contractStatusQuery.isError.value"
+            class="text-center py-6 space-y-3"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(contractStatusQuery.error.value) }}
+            </p>
+            <BaseButton variant="outline" size="sm" @click="() => contractStatusQuery.refetch()">Reintentar</BaseButton>
+          </div>
+          <div v-else class="space-y-4">
             <div
               v-for="(item, i) in resumenContratos"
               :key="i"
@@ -799,7 +866,19 @@ async function handleExportTab() {
               Métricas del Mes
             </h3>
           </div>
-          <div class="grid grid-cols-2 gap-3">
+          <div v-if="monthlyMetricsQuery.isPending.value" class="flex justify-center py-10">
+            <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
+          </div>
+          <div
+            v-else-if="monthlyMetricsQuery.isError.value"
+            class="text-center py-6 space-y-3"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(monthlyMetricsQuery.error.value) }}
+            </p>
+            <BaseButton variant="outline" size="sm" @click="() => monthlyMetricsQuery.refetch()">Reintentar</BaseButton>
+          </div>
+          <div v-else class="grid grid-cols-2 gap-3">
             <div
               class="rounded-lg p-3"
               :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
@@ -849,6 +928,5 @@ async function handleExportTab() {
           </div>
         </div>
       </div>
-    </template>
   </div>
 </template>

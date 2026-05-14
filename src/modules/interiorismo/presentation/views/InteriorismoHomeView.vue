@@ -6,6 +6,7 @@ import { useAuthStore } from '@modules/auth'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
 import { useInteriorReportsDashboard } from '@modules/interiorismo/features/reportes/application/useInteriorReportes'
 import type { InteriorReportesRangeParams } from '@modules/interiorismo/features/reportes/domain/reportes.types'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -22,7 +23,7 @@ function currentMonthRange(): InteriorReportesRangeParams {
 /** Rango aplicado al dashboard (mes en curso por defecto). */
 const rangeParams = ref<InteriorReportesRangeParams>(currentMonthRange())
 
-const dashboardQuery = useInteriorReportsDashboard(rangeParams)
+const dashboardQuery = useInteriorReportsDashboard(rangeParams, { toastOnLoadError: false })
 const d = computed(() => dashboardQuery.data.value)
 
 const greetingHour = new Date().getHours()
@@ -49,8 +50,7 @@ function formatPenDec(value: number) {
 }
 
 const periodLabel = computed(() => {
-  const r = d.value?.range
-  if (!r) return ''
+  const r = rangeParams.value
   const a = new Date(`${r.startDate}T12:00:00`)
   const b = new Date(`${r.endDate}T12:00:00`)
   const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
@@ -89,6 +89,10 @@ const acciones = [
 function goReportes() {
   router.push({ name: 'interiorismo-reportes' })
 }
+
+const dashboardErrorDetail = computed(() =>
+  dashboardQuery.isError.value ? getApiErrorMessage(dashboardQuery.error.value) : '',
+)
 </script>
 
 <template>
@@ -123,7 +127,7 @@ function goReportes() {
       </div>
     </div>
 
-    <p v-if="periodLabel && d" class="text-xs font-medium -mt-4" style="color: var(--color-text-muted)">
+    <p class="text-xs font-medium -mt-4" style="color: var(--color-text-muted)">
       Datos del período: {{ periodLabel }} · mismo rango que puedes ajustar en Reportes.
     </p>
 
@@ -139,8 +143,8 @@ function goReportes() {
       <p class="text-sm font-medium" style="color: var(--color-text-primary)">
         No se pudo cargar el dashboard
       </p>
-      <p class="text-xs mt-2" style="color: var(--color-text-secondary)">
-        Comprueba tu conexión e inténtalo de nuevo.
+      <p class="text-xs mt-2 max-w-md mx-auto" style="color: var(--color-text-secondary)">
+        {{ dashboardErrorDetail || 'Comprueba tu conexión e inténtalo de nuevo.' }}
       </p>
       <BaseButton class="mt-4" type="button" @click="() => dashboardQuery.refetch()">
         Reintentar

@@ -18,6 +18,7 @@ import {
 } from '../../application/useInteriorCatalogMaterials'
 import { formatSol, formatQty } from '../labels'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 const ITEMS = 10
@@ -38,7 +39,13 @@ watch([searchInput, categoryFilter], () => {
   }
 })
 
-const { data: result, isLoading } = useInteriorCatalogMaterialsList(listParams)
+const {
+  data: result,
+  isLoading,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useInteriorCatalogMaterialsList(listParams)
 
 const rows = computed(() => result.value?.data ?? [])
 const total = computed(() => result.value?.total ?? 0)
@@ -136,6 +143,13 @@ const getActions = (r: InteriorCatalogMaterialListItem): { label: string; icon: 
       <div v-if="isLoading" class="flex justify-center py-16">
         <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
       </div>
+      <div
+        v-else-if="listQueryError"
+        class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+      >
+        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+      </div>
       <template v-else>
         <DataTable empty-text="No hay materiales en el catálogo." :columns="columns" :data="rows" row-key="id">
           <template #toolbar>
@@ -177,7 +191,7 @@ const getActions = (r: InteriorCatalogMaterialListItem): { label: string; icon: 
             </td>
           </template>
         </DataTable>
-        <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+        <div v-if="!isLoading && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
           <BasePagination
             v-bind="paginationProps"
             :show-page-size="true"

@@ -7,6 +7,7 @@ import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/compo
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useRental, useUpdateRental } from '../../application/useRentals'
 import { getAttachmentUrl } from '../../infrastructure/http/rental-attachment-url'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 type EditarRentalFormValues = {
   startDate: string
@@ -72,7 +73,13 @@ const paymentDueDayBinds = defineComponentBinds('paymentDueDay')
 const notesBinds = defineComponentBinds('notes')
 const statusBinds = defineComponentBinds('status')
 
-const { data: rental, isLoading: loadingRental, isError: rentalError } = useRental(id)
+const {
+  data: rental,
+  isLoading: loadingRental,
+  isError: rentalError,
+  error: rentalFetchError,
+  refetch: refetchRental,
+} = useRental(id)
 const updateMutation = useUpdateRental()
 
 const loading = computed(() => loadingRental.value)
@@ -186,10 +193,13 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
       class="flex flex-col items-center justify-center py-16 gap-3"
     >
       <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-error)' }">
-        No se encontró el alquiler o ocurrió un error.
+      <p class="text-sm font-medium text-center max-w-md" :style="{ color: 'var(--color-error)' }">
+        {{ rentalError ? getApiErrorMessage(rentalFetchError) : 'No se encontró el alquiler.' }}
       </p>
-      <BaseButton variant="outline" size="sm" @click="goBack">Volver</BaseButton>
+      <div class="flex flex-wrap justify-center gap-2">
+        <BaseButton v-if="rentalError" variant="outline" size="sm" @click="() => refetchRental()">Reintentar</BaseButton>
+        <BaseButton variant="outline" size="sm" @click="goBack">Volver</BaseButton>
+      </div>
     </div>
 
     <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">

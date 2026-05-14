@@ -1,19 +1,12 @@
 import { useQuery, type QueryClient } from '@tanstack/vue-query'
-import { computed, watch, type Ref } from 'vue'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { computed, type Ref } from 'vue'
+import { useQueryErrorToast } from '@/shared/composables'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { InteriorReportesRangeParams } from '../domain/reportes.types'
 import { interiorReportesApiRepository as interiorReportesRepository } from '../infrastructure/repositories/reportes.api.repository'
 
-function toastReportLoadError(error: Ref<unknown>) {
-  watch(
-    () => error.value,
-    (err) => {
-      if (err)
-        void markapAlert.toast.error('No se pudieron cargar los reportes', getApiErrorMessage(err))
-    },
-  )
+export type InteriorReportesHookOptions = {
+  toastOnLoadError?: boolean
 }
 
 export const interiorReportesKeys = {
@@ -25,7 +18,10 @@ export function invalidateInteriorReportesCache(qc: QueryClient) {
   return invalidateQuerySubtree(qc, interiorReportesKeys.root)
 }
 
-export function useInteriorReportsDashboard(params: Ref<InteriorReportesRangeParams>) {
+export function useInteriorReportsDashboard(
+  params: Ref<InteriorReportesRangeParams>,
+  options?: InteriorReportesHookOptions,
+) {
   const q = useQuery({
     queryKey: computed(() =>
       interiorReportesKeys.dashboard({
@@ -41,6 +37,8 @@ export function useInteriorReportsDashboard(params: Ref<InteriorReportesRangePar
     enabled: computed(() => !!params.value.startDate && !!params.value.endDate),
     retry: 1,
   })
-  toastReportLoadError(q.error)
+  if (options?.toastOnLoadError !== false) {
+    useQueryErrorToast(q.error, 'No se pudieron cargar los reportes', { burstGroup: 'interior-reportes' })
+  }
   return q
 }

@@ -29,6 +29,7 @@ import {
 } from '../../application/useVentasProperties'
 import type { VentasPropertyListItem, VentasListPropertiesParams } from '../../domain/property.types'
 import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -51,14 +52,47 @@ const filterMaxPrice = ref<string>('')
 const selectedFilterDepartmentId = computed(() => filterDepartmentId.value || undefined)
 const selectedFilterProvinceId = computed(() => filterProvinceId.value || undefined)
 
-const { data: listResult, isLoading: loadingList } = useVentasPropertiesList(listParams)
-const { data: stats, isLoading: loadingStats } = useVentasPropertyStats()
-const { data: propertyTypes } = useVentasPropertyTypes()
-const { data: departments, isLoading: loadingFilterDepartments } = useVentasPropertyDepartments()
-const { data: filterProvinces, isLoading: loadingFilterProvinces } =
-  useVentasPropertyProvinces(selectedFilterDepartmentId)
-const { data: filterDistricts, isLoading: loadingFilterDistricts } =
-  useVentasPropertyDistricts(selectedFilterProvinceId)
+const {
+  data: listResult,
+  isLoading: loadingList,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useVentasPropertiesList(listParams)
+const {
+  data: stats,
+  isLoading: loadingStats,
+  isError: statsQueryError,
+  error: statsFetchError,
+  refetch: refetchStats,
+} = useVentasPropertyStats()
+const {
+  data: propertyTypes,
+  isError: propertyTypesQueryError,
+  error: propertyTypesFetchError,
+  refetch: refetchPropertyTypes,
+} = useVentasPropertyTypes()
+const {
+  data: departments,
+  isLoading: loadingFilterDepartments,
+  isError: departmentsQueryError,
+  error: departmentsFetchError,
+  refetch: refetchDepartments,
+} = useVentasPropertyDepartments()
+const {
+  data: filterProvinces,
+  isLoading: loadingFilterProvinces,
+  isError: provincesQueryError,
+  error: provincesFetchError,
+  refetch: refetchProvinces,
+} = useVentasPropertyProvinces(selectedFilterDepartmentId)
+const {
+  data: filterDistricts,
+  isLoading: loadingFilterDistricts,
+  isError: districtsQueryError,
+  error: districtsFetchError,
+  refetch: refetchDistricts,
+} = useVentasPropertyDistricts(selectedFilterProvinceId)
 
 const properties = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
@@ -382,19 +416,56 @@ async function handleExport() {
     </div>
 
     <div v-if="loadingStats" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20" />
+    <div
+      v-else-if="statsQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+    </div>
     <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <StatsCard :title="'Total'" :value="stats?.total ?? 0">
+      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
         <template #icon><AppIcon icon="lucide:building-2" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Disponibles'" :value="stats?.available ?? 0">
+      <StatsCard :title="'Disponibles'" :value="String(stats?.available ?? 0)">
         <template #icon><AppIcon icon="lucide:door-open" :size="20" color="#2563eb" /></template>
       </StatsCard>
-      <StatsCard :title="'Separadas'" :value="stats?.reserved ?? 0">
+      <StatsCard :title="'Separadas'" :value="String(stats?.reserved ?? 0)">
         <template #icon><AppIcon icon="lucide:bookmark" :size="20" color="#ca8a04" /></template>
       </StatsCard>
-      <StatsCard :title="'Vendidas'" :value="stats?.sold ?? 0">
+      <StatsCard :title="'Vendidas'" :value="String(stats?.sold ?? 0)">
         <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="#16a34a" /></template>
       </StatsCard>
+    </div>
+
+    <div
+      v-if="
+        propertyTypesQueryError ||
+        departmentsQueryError ||
+        provincesQueryError ||
+        districtsQueryError
+      "
+      class="rounded-xl border px-4 py-3 space-y-2 text-sm"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Algunos datos de filtros no cargaron</p>
+      <div v-if="propertyTypesQueryError" class="flex flex-wrap items-center gap-2">
+        <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(propertyTypesFetchError) }}</span>
+        <BaseButton variant="outline" size="sm" @click="() => refetchPropertyTypes()">Tipos</BaseButton>
+      </div>
+      <div v-if="departmentsQueryError" class="flex flex-wrap items-center gap-2">
+        <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(departmentsFetchError) }}</span>
+        <BaseButton variant="outline" size="sm" @click="() => refetchDepartments()">Departamentos</BaseButton>
+      </div>
+      <div v-if="provincesQueryError" class="flex flex-wrap items-center gap-2">
+        <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(provincesFetchError) }}</span>
+        <BaseButton variant="outline" size="sm" @click="() => refetchProvinces()">Provincias</BaseButton>
+      </div>
+      <div v-if="districtsQueryError" class="flex flex-wrap items-center gap-2">
+        <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(districtsFetchError) }}</span>
+        <BaseButton variant="outline" size="sm" @click="() => refetchDistricts()">Distritos</BaseButton>
+      </div>
     </div>
 
     <div
@@ -407,6 +478,13 @@ async function handleExport() {
       <div class="overflow-x-auto">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+        </div>
+        <div
+          v-else-if="listQueryError"
+          class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+        >
+          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
@@ -555,7 +633,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

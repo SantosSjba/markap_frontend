@@ -11,6 +11,7 @@ import FormSelect from '@shared/components/forms/FormSelect.vue'
 import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
 import { usePaymentHistory } from '../../application/usePayments'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import type { PaymentHistoryItem } from '../../domain/payment.types'
 import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 
@@ -32,7 +33,13 @@ const params = computed(() => ({
   limit: pageSize,
 }))
 
-const { data: historyData, isLoading } = usePaymentHistory(params)
+const {
+  data: historyData,
+  isLoading,
+  isError: historyIsError,
+  error: historyFetchError,
+  refetch: refetchHistory,
+} = usePaymentHistory(params)
 
 const totalPages = computed(() => Math.ceil((historyData.value?.total ?? 0) / pageSize))
 
@@ -243,6 +250,14 @@ async function handleExport() {
         </div>
       </template>
 
+      <template v-else-if="historyIsError">
+        <div class="flex flex-col items-center justify-center py-16 gap-3 px-4 text-center">
+          <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
+          <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(historyFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchHistory()">Reintentar</BaseButton>
+        </div>
+      </template>
+
       <!-- Empty -->
       <template v-else-if="!historyData?.data?.length">
         <div class="flex flex-col items-center justify-center py-16 gap-3">
@@ -340,7 +355,7 @@ async function handleExport() {
 
     <!-- Paginación -->
     <BasePagination
-      v-if="totalPages > 1"
+      v-if="!historyIsError && totalPages > 1"
       :current-page="currentPage"
       :total-pages="totalPages"
       @update:current-page="currentPage = $event"

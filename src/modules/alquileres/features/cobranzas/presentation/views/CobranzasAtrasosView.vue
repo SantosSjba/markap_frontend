@@ -21,6 +21,7 @@ import {
   usePendingPayments,
   useSaveCommunicationNote,
 } from '../../application/usePayments'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import type { OverduePaymentItem, PaymentMethod } from '../../domain/payment.types'
 import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 
@@ -28,7 +29,13 @@ const router = useRouter()
 
 const search = ref('')
 
-const { data: overdueList, isLoading } = useOverduePayments('alquileres', search)
+const {
+  data: overdueList,
+  isLoading,
+  isError: overdueIsError,
+  error: overdueFetchError,
+  refetch: refetchOverdue,
+} = useOverduePayments('alquileres', search)
 
 // KPI stats derivados
 const totalOwed = computed(() => overdueList.value?.reduce((s, i) => s + i.totalOwed, 0) ?? 0)
@@ -45,7 +52,17 @@ const pendingParams = computed(() => ({
   status: 'OVERDUE' as const,
 }))
 
-const { data: tenantPendingPayments } = usePendingPayments(pendingParams)
+const {
+  data: tenantPendingPayments,
+  isLoading: tenantPendLoading,
+  isError: tenantPendError,
+  error: tenantPendFetchError,
+  refetch: refetchTenantPend,
+} = usePendingPayments(pendingParams)
+
+const selectedRentalPendingList = computed(
+  () => tenantPendingPayments.value?.filter((p) => p.rentalId === selectedOverdue.value?.rentalId) ?? [],
+)
 
 const paymentSchema = yup.object({
   paidDate: yup.string().required('La fecha de pago es requerida'),
@@ -339,6 +356,17 @@ async function handleExport() {
       </div>
     </template>
 
+    <template v-else-if="overdueIsError">
+      <div
+        class="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border px-4 text-center"
+        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+      >
+        <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
+        <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(overdueFetchError) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetchOverdue()">Reintentar</BaseButton>
+      </div>
+    </template>
+
     <!-- Empty -->
     <template v-else-if="!overdueList?.length">
       <div
@@ -526,8 +554,21 @@ async function handleExport() {
           :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
         >
           <div class="flex flex-col gap-2">
+            <template v-if="tenantPendError">
+              <div class="flex flex-col items-center gap-2 py-4 text-center px-2">
+                <p class="text-xs" style="color: var(--color-error)">{{ getApiErrorMessage(tenantPendFetchError) }}</p>
+                <BaseButton variant="outline" size="sm" @click="() => refetchTenantPend()">Reintentar</BaseButton>
+              </div>
+            </template>
+            <template v-else-if="tenantPendLoading">
+              <div class="flex items-center gap-2 py-2" :style="{ color: 'var(--color-text-muted)' }">
+                <AppIcon icon="svg-spinners:ring-resize" :size="16" color="var(--color-primary)" />
+                <span class="text-xs">Cargando períodos...</span>
+              </div>
+            </template>
+            <template v-else>
             <label
-              v-for="pending in tenantPendingPayments?.filter(p => p.rentalId === selectedOverdue?.rentalId)"
+              v-for="pending in selectedRentalPendingList"
               :key="pending.paymentId"
               class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
               :style="selectedPaymentId === pending.paymentId
@@ -552,13 +593,13 @@ async function handleExport() {
               <Badge variant="error" :label="`${pending.daysOverdue}d`" />
             </label>
             <div
-              v-if="!tenantPendingPayments?.filter(p => p.rentalId === selectedOverdue?.rentalId).length"
-              class="flex items-center gap-2 py-2"
+              v-if="!selectedRentalPendingList.length"
+              class="py-2 text-xs text-center"
               :style="{ color: 'var(--color-text-muted)' }"
             >
-              <AppIcon icon="svg-spinners:ring-resize" :size="16" color="var(--color-primary)" />
-              <span class="text-xs">Cargando períodos...</span>
+              No hay períodos pendientes para este contrato.
             </div>
+            </template>
           </div>
         </div>
 

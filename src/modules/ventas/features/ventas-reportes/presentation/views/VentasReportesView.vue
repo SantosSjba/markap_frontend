@@ -14,6 +14,7 @@ import {
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useExcelExport } from '@shared/composables'
 import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
   useVentasSalesByPeriodReport,
   useVentasAgentPerformanceReport,
@@ -75,10 +76,10 @@ const salesParams = computed(() => ({
   granularity: applied.value.granularity,
 }))
 
-const salesQuery = useVentasSalesByPeriodReport(salesParams)
-const agentsQuery = useVentasAgentPerformanceReport(rangeForReports)
-const conversionQuery = useVentasConversionReport(rangeForReports)
-const financialQuery = useVentasFinancialFlowReport(rangeForReports)
+const salesQuery = useVentasSalesByPeriodReport(salesParams, { toastOnLoadError: false })
+const agentsQuery = useVentasAgentPerformanceReport(rangeForReports, { toastOnLoadError: false })
+const conversionQuery = useVentasConversionReport(rangeForReports, { toastOnLoadError: false })
+const financialQuery = useVentasFinancialFlowReport(rangeForReports, { toastOnLoadError: false })
 
 const applyFilters = handleSubmit((v) => {
   applied.value = {
@@ -325,6 +326,16 @@ function printToPdf() {
           <div v-if="salesQuery.isLoading.value" class="flex justify-center py-12">
             <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
           </div>
+          <div
+            v-else-if="salesQuery.isError.value"
+            class="rounded-lg border p-6 text-center space-y-3"
+            :style="{ borderColor: 'var(--color-border)' }"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(salesQuery.error.value) }}
+            </p>
+            <BaseButton variant="secondary" size="sm" @click="() => salesQuery.refetch()">Reintentar</BaseButton>
+          </div>
           <DataTable v-else :columns="salesColumns" :data="salesRows" row-key="period" empty-text="Sin cierres en el rango.">
             <template #row="{ row }">
               <td class="py-3 px-4 font-medium">{{ (row as VentasSalesByPeriodRow).period }}</td>
@@ -353,6 +364,16 @@ function printToPdf() {
           </div>
           <div v-if="agentsQuery.isLoading.value" class="flex justify-center py-12">
             <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+          </div>
+          <div
+            v-else-if="agentsQuery.isError.value"
+            class="rounded-lg border p-6 text-center space-y-3"
+            :style="{ borderColor: 'var(--color-border)' }"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(agentsQuery.error.value) }}
+            </p>
+            <BaseButton variant="secondary" size="sm" @click="() => agentsQuery.refetch()">Reintentar</BaseButton>
           </div>
           <DataTable v-else :columns="agentColumns" :data="agentRows" row-key="agentId" empty-text="Sin datos de asesores.">
             <template #row="{ row }">
@@ -385,6 +406,16 @@ function printToPdf() {
           </div>
           <div v-if="conversionQuery.isLoading.value" class="flex justify-center py-12">
             <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+          </div>
+          <div
+            v-else-if="conversionQuery.isError.value"
+            class="rounded-lg border p-6 text-center space-y-3"
+            :style="{ borderColor: 'var(--color-border)' }"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(conversionQuery.error.value) }}
+            </p>
+            <BaseButton variant="secondary" size="sm" @click="() => conversionQuery.refetch()">Reintentar</BaseButton>
           </div>
           <template v-else-if="conversion">
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -441,6 +472,16 @@ function printToPdf() {
           </div>
           <div v-if="financialQuery.isLoading.value" class="flex justify-center py-12">
             <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+          </div>
+          <div
+            v-else-if="financialQuery.isError.value"
+            class="rounded-lg border p-6 text-center space-y-3"
+            :style="{ borderColor: 'var(--color-border)' }"
+          >
+            <p class="text-sm" style="color: var(--color-error)">
+              {{ getApiErrorMessage(financialQuery.error.value) }}
+            </p>
+            <BaseButton variant="secondary" size="sm" @click="() => financialQuery.refetch()">Reintentar</BaseButton>
           </div>
           <div v-else-if="financial" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatsCard

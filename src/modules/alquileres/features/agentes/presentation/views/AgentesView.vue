@@ -18,6 +18,7 @@ import { useExcelExport } from '@shared/composables'
 import { useAgentsList, useUpdateAgent, useDeleteAgent } from '../../application/useAgents'
 import type { AgentListItem, ListAgentsParams } from '../../domain/agent.types'
 import { agentsRepository } from '@modules/alquileres/features/agentes'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -33,7 +34,13 @@ const searchInput = ref('')
 const filterType = ref<'ALL' | 'INTERNAL' | 'EXTERNAL'>('ALL')
 const filterStatus = ref<'ALL' | 'active' | 'inactive'>('ALL')
 
-const { data: listResult, isLoading: loadingList } = useAgentsList(listParams)
+const {
+  data: listResult,
+  isLoading: loadingList,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useAgentsList(listParams)
 
 const agents = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
@@ -268,6 +275,13 @@ async function handleExport() {
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
         </div>
+        <div
+          v-else-if="listQueryError"
+          class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+        >
+          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+        </div>
         <template v-else>
           <DataTable
             v-model:row-selection="tableRowSelection"
@@ -343,7 +357,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

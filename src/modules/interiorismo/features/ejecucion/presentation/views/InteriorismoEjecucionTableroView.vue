@@ -14,6 +14,7 @@ import {
   AppIcon,
 } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
 import { useInteriorCatalogMaterialsList } from '@modules/interiorismo/features/materiales/application/useInteriorCatalogMaterials'
 import type { ListInteriorCatalogMaterialsParams } from '@modules/interiorismo/features/materiales/domain/catalog.types'
@@ -57,7 +58,7 @@ const tabs = [
   { id: 'comparativo', label: 'Presup. vs real', icon: 'lucide:scale' },
 ]
 
-const { data: ov, isLoading, isError } = useInteriorExecutionOverview(projectId)
+const { data: ov, isLoading, isError, error: overviewError, refetch: refetchOverview } = useInteriorExecutionOverview(projectId)
 const patchProgress = usePatchExecutionProgress(projectId)
 const createTask = useCreateExecutionTask(projectId)
 const updateTask = useUpdateExecutionTask(projectId)
@@ -432,9 +433,10 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
       <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
     </div>
 
-    <div v-else-if="isError || !ov" class="text-center py-16 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-      No se pudo cargar el tablero de ejecución.
-      <div class="mt-4">
+    <div v-else-if="isError || !ov" class="text-center py-16 space-y-3 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      <p style="color: var(--color-error)">{{ isError ? getApiErrorMessage(overviewError) : 'No se pudo cargar el tablero de ejecución.' }}</p>
+      <div class="flex flex-wrap justify-center gap-2">
+        <BaseButton variant="outline" @click="() => refetchOverview()">Reintentar</BaseButton>
         <BaseButton variant="outline" @click="goHub">Volver al hub</BaseButton>
       </div>
     </div>

@@ -10,21 +10,33 @@ import {
 import type { SaleProcessDetail } from '../../domain/sales.types'
 import { useVentasPipelineStages } from '@ventas/configuracion'
 import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../../domain/pipeline.constants'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import SaleProcessFollowUpPanel from '../components/SaleProcessFollowUpPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
 
-const { stageOptions, labelFor: pipelineStageLabel } = useVentasPipelineStages()
+const { stageOptions, labelFor: pipelineStageLabel, query: pipelineConfigQuery } = useVentasPipelineStages()
 
-const { data: proc, isLoading } = useVentasProcessDetail(id)
+const {
+  data: proc,
+  isLoading,
+  isError: detailQueryError,
+  error: detailFetchError,
+  refetch: refetchDetail,
+} = useVentasProcessDetail(id)
 const complianceParams = computed(() => ({
   propertyId: (proc.value as SaleProcessDetail | undefined)?.property?.id ?? '',
   buyerClientId: (proc.value as SaleProcessDetail | undefined)?.buyer?.id ?? '',
 }))
-const { data: closingReadiness, isLoading: loadingReadiness } =
-  useVentasClosingReadiness(complianceParams)
+const {
+  data: closingReadiness,
+  isLoading: loadingReadiness,
+  isError: readinessQueryError,
+  error: readinessFetchError,
+  refetch: refetchReadiness,
+} = useVentasClosingReadiness(complianceParams)
 
 const { mutate: updateProc, isPending: saving } = useVentasUpdateProcess()
 
@@ -74,8 +86,46 @@ function saveStage() {
       </div>
     </div>
 
+    <div
+      v-if="pipelineConfigQuery.isError.value"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span :style="{ color: 'var(--color-text-primary)' }">
+        No se cargó la configuración de etapas; se muestran valores por defecto.
+      </span>
+      <span class="text-xs max-w-md" style="color: var(--color-error)">{{
+        getApiErrorMessage(pipelineConfigQuery.error.value)
+      }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
+        Reintentar configuración
+      </BaseButton>
+    </div>
+
     <div v-if="isLoading" class="flex justify-center py-16">
       <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+    </div>
+
+    <div
+      v-else-if="detailQueryError"
+      class="flex flex-col items-center justify-center gap-3 py-16 rounded-xl border px-4 text-center"
+      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+    >
+      <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
+      <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(detailFetchError) }}</p>
+      <div class="flex flex-wrap justify-center gap-2">
+        <BaseButton variant="outline" size="sm" @click="() => refetchDetail()">Reintentar</BaseButton>
+        <BaseButton variant="outline" size="sm" @click="router.push('/ventas/procesos')">Volver al listado</BaseButton>
+      </div>
+    </div>
+
+    <div
+      v-else-if="!proc"
+      class="flex flex-col items-center justify-center gap-3 py-16 rounded-xl border px-4 text-center"
+      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+    >
+      <p class="text-sm font-medium" :style="{ color: 'var(--color-text-muted)' }">No se encontró el proceso.</p>
+      <BaseButton variant="outline" size="sm" @click="router.push('/ventas/procesos')">Volver al listado</BaseButton>
     </div>
 
     <template v-else-if="proc">
@@ -120,6 +170,12 @@ function saveStage() {
           <p v-if="loadingReadiness" class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
             Validando checklist legal/tributario/compliance...
           </p>
+          <div v-else-if="readinessQueryError" class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+            <span style="color: var(--color-error)">{{ getApiErrorMessage(readinessFetchError) }}</span>
+            <BaseButton variant="outline" size="sm" class="self-start sm:ml-auto shrink-0" @click="() => refetchReadiness()">
+              Reintentar
+            </BaseButton>
+          </div>
           <template v-else>
             <p
               class="text-sm mt-1"

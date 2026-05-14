@@ -18,6 +18,7 @@ import {
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { apiClient } from '@core/api/apiClient'
 import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
 import { useInteriorProjectsList } from '@modules/interiorismo/features/proyectos/application/useInteriorProjects'
 import type { ListInteriorProjectsParams } from '@modules/interiorismo/features/proyectos/domain/project.types'
@@ -68,13 +69,14 @@ const feedParams = computed(() => ({
   ...(agentFilter.value.trim() ? { agentId: agentFilter.value.trim() } : {}),
 }))
 
-const { data: feed, isLoading, isError } = useInteriorCalendarFeed(feedParams)
+const { data: feed, isLoading, isError, error: feedError, refetch: refetchFeed } = useInteriorCalendarFeed(feedParams)
 const createEv = useCreateCalendarEvent()
 const updateEv = useUpdateCalendarEvent()
 const deleteEv = useDeleteCalendarEvent()
 
 const listParams = ref<ListInteriorProjectsParams>({ page: 1, limit: 400 })
-const { data: projectsRes } = useInteriorProjectsList(listParams)
+const { data: projectsRes, isError: projectsQueryError, error: projectsListError, refetch: refetchProjects } =
+  useInteriorProjectsList(listParams)
 
 const projectOptions = computed(() => [
   { value: '', label: 'Todos los proyectos' },
@@ -84,7 +86,12 @@ const projectOptions = computed(() => [
   })),
 ])
 
-const { data: agentsRes } = useQuery({
+const {
+  data: agentsRes,
+  isError: agentsQueryError,
+  error: agentsListError,
+  refetch: refetchAgents,
+} = useQuery({
   queryKey: ['agents', INTERIORISMO_APP_SLUG, 'calendar'],
   queryFn: async () => {
     const { data } = await apiClient.get<{ data: { id: string; fullName: string }[] }>('/agents', {
@@ -416,6 +423,23 @@ const monthTitle = computed(() => {
         <FormSelect v-model="agentFilter" label="Responsable (filtro)" :options="agentOptions" />
       </div>
 
+      <div
+        v-if="projectsQueryError || agentsQueryError"
+        class="rounded-lg border px-3 py-2 text-sm space-y-2"
+        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      >
+        <p v-if="projectsQueryError" class="flex flex-wrap items-center gap-2" style="color: var(--color-text-primary)">
+          <span class="text-xs font-medium text-red-600">Proyectos</span>
+          <span class="text-xs">{{ getApiErrorMessage(projectsListError) }}</span>
+          <BaseButton variant="outline" size="sm" class="ml-auto" @click="() => refetchProjects()">Reintentar</BaseButton>
+        </p>
+        <p v-if="agentsQueryError" class="flex flex-wrap items-center gap-2" style="color: var(--color-text-primary)">
+          <span class="text-xs font-medium text-red-600">Agentes</span>
+          <span class="text-xs">{{ getApiErrorMessage(agentsListError) }}</span>
+          <BaseButton variant="outline" size="sm" class="ml-auto" @click="() => refetchAgents()">Reintentar</BaseButton>
+        </p>
+      </div>
+
       <BaseTabs v-model="lens" :tabs="lensTabs" />
 
       <div
@@ -452,8 +476,9 @@ const monthTitle = computed(() => {
       <div v-if="isLoading" class="flex justify-center py-16">
         <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
       </div>
-      <div v-else-if="isError" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-        No se pudo cargar la agenda.
+      <div v-else-if="isError" class="text-center py-12 space-y-3 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p style="color: var(--color-error)">{{ getApiErrorMessage(feedError) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetchFeed()">Reintentar</BaseButton>
       </div>
       <DataTable
         v-else

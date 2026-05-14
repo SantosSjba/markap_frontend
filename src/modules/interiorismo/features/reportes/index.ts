@@ -6,6 +6,7 @@ export {
   invalidateInteriorReportesCache,
   useInteriorReportsDashboard,
 } from './application/useInteriorReportes'
+export type { InteriorReportesHookOptions } from './application/useInteriorReportes'
 export type { InteriorReportesRangeParams, InteriorReportsDashboard } from './domain/reportes.types'
 export type { InteriorReportesRepository } from './domain/repositories/reportes.repository'
 export { interiorReportesApiRepository as interiorReportesRepository } from './infrastructure/repositories/reportes.api.repository'

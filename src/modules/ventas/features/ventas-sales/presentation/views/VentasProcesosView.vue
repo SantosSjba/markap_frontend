@@ -18,11 +18,10 @@ import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useVentasPipelineStages } from '@ventas/configuracion'
 import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../../domain/pipeline.constants'
-import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
-const { stageOptions, labelFor: pipelineStageLabel } = useVentasPipelineStages()
+const { stageOptions, labelFor: pipelineStageLabel, query: pipelineConfigQuery } = useVentasPipelineStages()
 const pipelineFilterOptions = computed(() => [
   { value: '', label: 'Todas las etapas' },
   ...stageOptions.value,
@@ -45,7 +44,8 @@ const listParamsForApi = computed(() => ({
   status: listParams.value.status || undefined,
 }))
 
-const { data: listResult, isLoading } = useVentasProcessesList(listParamsForApi)
+const { data: listResult, isLoading, isError: listQueryError, error: listFetchError, refetch: refetchList } =
+  useVentasProcessesList(listParamsForApi)
 const rows = computed(() => listResult.value?.data ?? [])
 const total = computed(() => listResult.value?.total ?? 0)
 
@@ -84,10 +84,16 @@ const tableColumns = [
 
 const showNew = ref(false)
 const loadingNewModalData = ref(false)
+const newModalLoadError = ref('')
 const buyerOptions = ref<{ value: string; label: string }[]>([])
 const propertyOptions = ref<{ value: string; label: string }[]>([])
 const agentParams = ref({ page: 1, limit: 500, isActive: true })
-const { data: agentsRes } = useVentasAgentsList(agentParams)
+const {
+  data: agentsRes,
+  isError: agentsQueryError,
+  error: agentsFetchError,
+  refetch: refetchAgents,
+} = useVentasAgentsList(agentParams)
 const agentOptions = computed(() => [
   { value: '', label: 'Sin asignar' },
   ...(agentsRes.value?.data ?? []).map((a) => ({ value: a.id, label: a.fullName })),
@@ -104,6 +110,7 @@ const form = ref({
 const { mutate: createProcess, isPending: creating } = useVentasCreateProcess()
 
 async function openNewModal() {
+  newModalLoadError.value = ''
   loadingNewModalData.value = true
   try {
     const [buyers, props] = await Promise.all([
@@ -120,7 +127,7 @@ async function openNewModal() {
     }))
     showNew.value = true
   } catch (e) {
-    void markapAlert.toast.error('No se pudo abrir el formulario', getApiErrorMessage(e))
+    newModalLoadError.value = getApiErrorMessage(e)
   } finally {
     loadingNewModalData.value = false
   }
@@ -185,11 +192,55 @@ function goDetail(row: SaleProcessListRow) {
     </div>
 
     <div
+      v-if="newModalLoadError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span class="max-w-xl" style="color: var(--color-error)">{{ newModalLoadError }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" :loading="loadingNewModalData" @click="openNewModal">
+        Reintentar
+      </BaseButton>
+    </div>
+
+    <div
+      v-if="pipelineConfigQuery.isError.value"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span :style="{ color: 'var(--color-text-primary)' }">
+        No se cargó la configuración de etapas; se muestran valores por defecto.
+      </span>
+      <span class="text-xs max-w-md" style="color: var(--color-error)">{{
+        getApiErrorMessage(pipelineConfigQuery.error.value)
+      }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
+        Reintentar configuración
+      </BaseButton>
+    </div>
+
+    <div
+      v-if="agentsQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span :style="{ color: 'var(--color-text-primary)' }">No se pudieron cargar los asesores para el formulario.</span>
+      <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(agentsFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchAgents()">Reintentar</BaseButton>
+    </div>
+
+    <div
       class="rounded-xl border overflow-hidden"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
     >
       <div v-if="isLoading" class="flex justify-center py-16">
         <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+      </div>
+      <div
+        v-else-if="listQueryError"
+        class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+      >
+        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable
         v-else
@@ -258,7 +309,7 @@ function goDetail(row: SaleProcessListRow) {
           </td>
         </template>
       </DataTable>
-      <div class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"

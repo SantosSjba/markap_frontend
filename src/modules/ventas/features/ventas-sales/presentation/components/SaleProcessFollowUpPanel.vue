@@ -16,6 +16,7 @@ import {
   saleProcessActivityFormSchema,
   saleProcessReminderFormSchema,
 } from '../../infrastructure/schemas/saleProcessFollowUpSchemas'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const props = withDefaults(
   defineProps<{
@@ -32,7 +33,13 @@ const props = withDefaults(
 )
 
 const pid = computed(() => props.processId)
-const { data: procRaw, isLoading } = useVentasProcessDetail(pid)
+const {
+  data: procRaw,
+  isLoading,
+  isError: detailQueryError,
+  error: detailFetchError,
+  refetch: refetchProcDetail,
+} = useVentasProcessDetail(pid)
 
 const proc = computed(() => procRaw.value as SaleProcessDetail | undefined)
 
@@ -135,6 +142,15 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
 
     <div v-else-if="isLoading" class="flex justify-center py-10">
       <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
+    </div>
+
+    <div
+      v-else-if="detailQueryError"
+      class="flex flex-col items-center justify-center gap-3 py-10 px-4 text-center rounded-xl border"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+    >
+      <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(detailFetchError) }}</p>
+      <BaseButton variant="outline" size="sm" @click="() => refetchProcDetail()">Reintentar</BaseButton>
     </div>
 
     <template v-else-if="proc">

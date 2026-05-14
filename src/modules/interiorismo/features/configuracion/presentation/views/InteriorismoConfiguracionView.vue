@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import * as yup from 'yup'
 import { BaseButton, AppIcon, BaseTabs } from '@shared/components'
@@ -13,6 +13,7 @@ import {
   useInteriorismoSaveInteriorProjectNumbering,
 } from '../../application/useInteriorismoConfig'
 import type { InteriorismoProjectStageDTO } from '../../domain/config.types'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const activeTab = ref('accesos')
 
@@ -43,7 +44,8 @@ const quickLinks = [
   },
 ]
 
-const { data: boot, isLoading, refetch } = useInteriorismoConfigBootstrap()
+const { data: boot, isLoading, isError, error, refetch } = useInteriorismoConfigBootstrap()
+const configLoadError = computed(() => (isError.value ? getApiErrorMessage(error.value) : ''))
 const { mutate: saveStages, isPending: savingStages } = useInteriorismoSaveProjectStages()
 const { mutate: saveNumbering, isPending: savingNum } = useInteriorismoSaveInteriorProjectNumbering()
 
@@ -176,6 +178,20 @@ const flowSteps = [
     <div v-else-if="activeTab === 'parametros'" class="space-y-8">
       <div v-if="isLoading" class="flex justify-center py-16">
         <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+      </div>
+
+      <div
+        v-else-if="isError"
+        class="rounded-xl border p-8 text-center space-y-3"
+        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+      >
+        <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+          No se pudo cargar la configuración
+        </p>
+        <p class="text-xs max-w-lg mx-auto" :style="{ color: 'var(--color-text-secondary)' }">
+          {{ configLoadError }}
+        </p>
+        <BaseButton type="button" @click="() => refetch()">Reintentar</BaseButton>
       </div>
 
       <template v-else>

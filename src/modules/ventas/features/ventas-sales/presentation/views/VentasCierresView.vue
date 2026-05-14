@@ -28,13 +28,18 @@ import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import { PAYMENT_TYPE_OPTIONS } from '../../domain/pipeline.constants'
-import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const ITEMS = 10
 const listParams = ref({ page: 1, limit: ITEMS })
 const listApi = computed(() => listParams.value)
-const { data: listResult, isLoading } = useVentasClosingsList(listApi)
+const {
+  data: listResult,
+  isLoading,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useVentasClosingsList(listApi)
 const rows = computed(() => listResult.value?.data ?? [])
 const total = computed(() => listResult.value?.total ?? 0)
 
@@ -63,10 +68,16 @@ const columns = [
 
 const showNew = ref(false)
 const loadingNewModalData = ref(false)
+const newModalLoadError = ref('')
 const buyerOptions = ref<{ value: string; label: string }[]>([])
 const propertyOptions = ref<{ value: string; label: string }[]>([])
 const agentParams = ref({ page: 1, limit: 500, isActive: true })
-const { data: agentsRes } = useVentasAgentsList(agentParams)
+const {
+  data: agentsRes,
+  isError: agentsQueryError,
+  error: agentsFetchError,
+  refetch: refetchAgents,
+} = useVentasAgentsList(agentParams)
 const agentOptions = computed(() =>
   (agentsRes.value?.data ?? []).map((a) => ({ value: a.id, label: a.fullName })),
 )
@@ -89,12 +100,18 @@ const boardFilters = ref({
   sunarpStatus: '',
   onlyOverdue: false,
 })
-const { data: pendingBoard, isLoading: loadingPendingBoard } =
-  useVentasCompliancePendingBoard(boardFilters)
+const {
+  data: pendingBoard,
+  isLoading: loadingPendingBoard,
+  isError: pendingBoardQueryError,
+  error: pendingBoardFetchError,
+  refetch: refetchPendingBoard,
+} = useVentasCompliancePendingBoard(boardFilters)
 const { mutate: dispatchAlerts, isPending: dispatchingAlerts } =
   useVentasDispatchComplianceAlerts()
 
 async function openModal() {
+  newModalLoadError.value = ''
   loadingNewModalData.value = true
   try {
     const [buyers, props] = await Promise.all([
@@ -111,7 +128,7 @@ async function openModal() {
     }))
     showNew.value = true
   } catch (e) {
-    void markapAlert.toast.error('No se pudo abrir formulario de cierre', getApiErrorMessage(e))
+    newModalLoadError.value = getApiErrorMessage(e)
   } finally {
     loadingNewModalData.value = false
   }
@@ -150,12 +167,27 @@ const complianceParams = computed(() => ({
   buyerClientId: selectedClosing.value?.buyer.id ?? '',
 }))
 
-const { data: checklistData, isLoading: loadingChecklist } =
-  useVentasComplianceChecklist(complianceParams)
-const { data: documentsData, isLoading: loadingDocuments } =
-  useVentasComplianceDocuments(complianceParams)
-const { data: readinessData, isLoading: loadingReadiness } =
-  useVentasClosingReadiness(complianceParams)
+const {
+  data: checklistData,
+  isLoading: loadingChecklist,
+  isError: checklistQueryError,
+  error: checklistFetchError,
+  refetch: refetchChecklist,
+} = useVentasComplianceChecklist(complianceParams)
+const {
+  data: documentsData,
+  isLoading: loadingDocuments,
+  isError: documentsQueryError,
+  error: documentsFetchError,
+  refetch: refetchDocuments,
+} = useVentasComplianceDocuments(complianceParams)
+const {
+  data: readinessData,
+  isLoading: loadingReadiness,
+  isError: readinessQueryError,
+  error: readinessFetchError,
+  refetch: refetchReadiness,
+} = useVentasClosingReadiness(complianceParams)
 
 const complianceForm = ref({
   titleStudyChecked: false,
@@ -195,7 +227,13 @@ const taxPreviewParams = computed(() => ({
   alcabalaApplicable: complianceForm.value.alcabalaApplicable,
   rent2Applicable: complianceForm.value.rent2Applicable,
 }))
-const { data: taxPreview, isLoading: loadingTaxPreview } = useVentasTaxPreview(taxPreviewParams)
+const {
+  data: taxPreview,
+  isLoading: loadingTaxPreview,
+  isError: taxPreviewQueryError,
+  error: taxPreviewFetchError,
+  refetch: refetchTaxPreview,
+} = useVentasTaxPreview(taxPreviewParams)
 
 watch(checklistData, (v) => {
   if (!v) return
@@ -318,6 +356,27 @@ function runAlerts(dryRun: boolean) {
     </div>
 
     <div
+      v-if="newModalLoadError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span class="max-w-xl" style="color: var(--color-error)">{{ newModalLoadError }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" :loading="loadingNewModalData" @click="openModal">
+        Reintentar
+      </BaseButton>
+    </div>
+
+    <div
+      v-if="agentsQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span :style="{ color: 'var(--color-text-primary)' }">No se pudieron cargar los asesores para el formulario de cierre.</span>
+      <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(agentsFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchAgents()">Reintentar</BaseButton>
+    </div>
+
+    <div
       class="rounded-xl border p-4 space-y-3"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
     >
@@ -355,6 +414,13 @@ function runAlerts(dryRun: boolean) {
 
       <div v-if="loadingPendingBoard" class="py-8 text-center">
         <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
+      </div>
+      <div
+        v-else-if="pendingBoardQueryError"
+        class="flex flex-col items-center justify-center gap-3 py-10 px-4 text-center"
+      >
+        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(pendingBoardFetchError) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetchPendingBoard()">Reintentar</BaseButton>
       </div>
       <div v-else class="overflow-auto">
         <table class="w-full text-sm">
@@ -403,6 +469,13 @@ function runAlerts(dryRun: boolean) {
       <div v-if="isLoading" class="flex justify-center py-16">
         <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
       </div>
+      <div
+        v-else-if="listQueryError"
+        class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+      >
+        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+      </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin cierres registrados.">
         <template #row="{ row }">
           <td class="py-3 px-4 text-sm">{{ (row as SaleClosingRow).property.code }}</td>
@@ -427,7 +500,7 @@ function runAlerts(dryRun: boolean) {
           </td>
         </template>
       </DataTable>
-      <div class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"
@@ -509,6 +582,12 @@ function runAlerts(dryRun: boolean) {
         >
           <p class="font-semibold text-sm">Estado de cierre legal</p>
           <p v-if="loadingReadiness" class="text-sm mt-1">Validando...</p>
+          <div v-else-if="readinessQueryError" class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+            <span style="color: var(--color-error)">{{ getApiErrorMessage(readinessFetchError) }}</span>
+            <BaseButton variant="outline" size="sm" class="self-start sm:ml-auto shrink-0" @click="() => refetchReadiness()">
+              Reintentar
+            </BaseButton>
+          </div>
           <template v-else>
             <p class="text-sm mt-1" :style="{ color: readinessData?.ok ? 'var(--color-success)' : 'var(--color-warning)' }">
               {{ readinessData?.ok ? 'Listo para cierre.' : 'Pendiente de requisitos.' }}
@@ -521,6 +600,14 @@ function runAlerts(dryRun: boolean) {
 
         <div v-if="loadingChecklist" class="py-8 text-center">
           <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
+        </div>
+        <div
+          v-else-if="checklistQueryError"
+          class="flex flex-col items-center justify-center gap-3 py-8 px-4 text-center rounded-lg border"
+          :style="{ borderColor: 'var(--color-border)' }"
+        >
+          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(checklistFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchChecklist()">Reintentar checklist</BaseButton>
         </div>
         <div v-else class="space-y-3">
           <div class="grid sm:grid-cols-2 gap-2">
@@ -586,6 +673,10 @@ function runAlerts(dryRun: boolean) {
             <span v-if="taxPreview" class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
               Alcabala: S/ {{ taxPreview.alcabala.amount.toLocaleString('es-PE') }} · Renta 2da: S/ {{ taxPreview.rent2.amount.toLocaleString('es-PE') }}
             </span>
+          </div>
+          <div v-if="taxPreviewQueryError" class="flex flex-wrap items-center gap-2 text-xs">
+            <span style="color: var(--color-error)">{{ getApiErrorMessage(taxPreviewFetchError) }}</span>
+            <BaseButton variant="outline" size="sm" @click="() => refetchTaxPreview()">Reintentar estimado</BaseButton>
           </div>
 
           <div class="grid sm:grid-cols-2 gap-3">
@@ -664,6 +755,12 @@ function runAlerts(dryRun: boolean) {
           </div>
 
           <div v-if="loadingDocuments" class="text-sm opacity-70">Cargando documentos...</div>
+          <div v-else-if="documentsQueryError" class="flex flex-col sm:flex-row sm:items-center gap-2 text-sm py-2">
+            <span style="color: var(--color-error)">{{ getApiErrorMessage(documentsFetchError) }}</span>
+            <BaseButton variant="outline" size="sm" class="self-start shrink-0" @click="() => refetchDocuments()">
+              Reintentar lista
+            </BaseButton>
+          </div>
           <ul v-else class="space-y-1 text-sm">
             <li v-for="d in documentsData ?? []" :key="d.id" class="flex items-center justify-between gap-2">
               <span>{{ d.docType }} · {{ d.filePath }}</span>

@@ -14,7 +14,6 @@ import {
 import { usePagination } from '@shared/composables'
 import { BasePagination } from '@shared/components'
 import FormInput from '@shared/components/forms/FormInput.vue'
-import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import type { UserListItem } from '../../domain/settings.types'
@@ -28,13 +27,7 @@ const ITEMS_PER_PAGE = 10
 
 // Queries
 const { data: users, isLoading, isFetching, error, refetch } = useUsers()
-const { data: roles } = useRoles()
-
-watch(error, (err) => {
-  if (err != null) {
-    void markapAlert.toast.error('No se pudo cargar la lista de usuarios', getApiErrorMessage(err))
-  }
-})
+const { data: roles, isError: isRolesError, error: rolesError, refetch: refetchRoles } = useRoles()
 
 // Pagination
 const pagination = usePagination({
@@ -338,6 +331,23 @@ const paginationProps = computed(() => ({
 
     <!-- Users table -->
     <div v-else class="card overflow-hidden">
+      <div
+        v-if="isRolesError"
+        class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b text-sm"
+        style="border-color: var(--color-border); background-color: var(--color-warning-light)"
+      >
+        <span style="color: var(--color-text-primary)">
+          No se pudieron cargar los roles para asignar:
+          <span style="color: var(--color-error)">{{ getApiErrorMessage(rolesError) }}</span>
+        </span>
+        <button
+          type="button"
+          class="btn-primary px-4 py-2 rounded-lg text-sm shrink-0"
+          @click="() => refetchRoles()"
+        >
+          Reintentar roles
+        </button>
+      </div>
       <div class="table-container">
         <table>
           <thead>

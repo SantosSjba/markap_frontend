@@ -21,6 +21,7 @@ import {
   useVentasRecalculateCommission,
   useVentasUpsertCommissionProfile,
 } from '../../application/useVentasFinanzas'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const ITEMS = 12
 const listParams = ref({ page: 1, limit: ITEMS, status: '' as string | undefined, agentId: '' as string | undefined })
@@ -31,7 +32,13 @@ const listApi = computed(() => ({
   agentId: listParams.value.agentId || undefined,
 }))
 
-const { data: listResult, isLoading } = useVentasCommissionsList(listApi)
+const {
+  data: listResult,
+  isLoading,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useVentasCommissionsList(listApi)
 const rows = computed(() => listResult.value?.data ?? [])
 const total = computed(() => listResult.value?.total ?? 0)
 
@@ -56,7 +63,12 @@ const statusOptions = [
 ]
 
 const agentParams = ref({ page: 1, limit: 500, isActive: true })
-const { data: agentsRes } = useVentasAgentsList(agentParams)
+const {
+  data: agentsRes,
+  isError: agentsQueryError,
+  error: agentsFetchError,
+  refetch: refetchAgents,
+} = useVentasAgentsList(agentParams)
 const agentFilterOptions = computed(() => [
   { value: '', label: 'Todos los asesores' },
   ...(agentsRes.value?.data ?? []).map((a) => ({ value: a.id, label: a.fullName })),
@@ -73,7 +85,13 @@ const columns = [
   { key: 'act', label: '' },
 ]
 
-const { data: profiles, isLoading: profilesLoading } = useVentasCommissionProfiles()
+const {
+  data: profiles,
+  isLoading: profilesLoading,
+  isError: profilesQueryError,
+  error: profilesFetchError,
+  refetch: refetchProfiles,
+} = useVentasCommissionProfiles()
 const profileRows = computed(() => (profiles.value ?? []) as CommissionProfileRow[])
 
 const showProfileModal = ref(false)
@@ -133,6 +151,16 @@ const onSubmitProfile = submitProfile((values) => {
       </p>
     </div>
 
+    <div
+      v-if="agentsQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span :style="{ color: 'var(--color-text-primary)' }">No se pudieron cargar los asesores para filtros y perfiles.</span>
+      <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(agentsFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchAgents()">Reintentar</BaseButton>
+    </div>
+
     <section class="space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h2 class="text-lg font-semibold" :style="{ color: 'var(--color-text-primary)' }">
@@ -149,6 +177,13 @@ const onSubmitProfile = submitProfile((values) => {
       >
         <div v-if="profilesLoading" class="flex justify-center py-12">
           <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
+        </div>
+        <div
+          v-else-if="profilesQueryError"
+          class="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center"
+        >
+          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(profilesFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchProfiles()">Reintentar</BaseButton>
         </div>
         <table v-else class="w-full text-sm">
           <thead>
@@ -190,6 +225,13 @@ const onSubmitProfile = submitProfile((values) => {
       >
         <div v-if="isLoading" class="flex justify-center py-16">
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+        </div>
+        <div
+          v-else-if="listQueryError"
+          class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+        >
+          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin comisiones.">
           <template #row="{ row }">
@@ -234,7 +276,7 @@ const onSubmitProfile = submitProfile((values) => {
             </td>
           </template>
         </DataTable>
-        <div class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+        <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
           <BasePagination
             v-bind="paginationProps"
             :show-page-size="true"

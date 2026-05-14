@@ -1,18 +1,13 @@
 import { useQuery, type QueryClient } from '@tanstack/vue-query'
-import { computed, watch, type Ref } from 'vue'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { computed, type Ref } from 'vue'
+import { useQueryErrorToast } from '@/shared/composables'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { VentasReportesRangeParams } from '../domain/reportes.types'
 import { ventasReportesApiRepository as ventasReportesRepository } from '../infrastructure/repositories/ventas-reportes.api.repository'
 
-function toastReportLoadError(error: Ref<unknown>) {
-  watch(
-    () => error.value,
-    (err) => {
-      if (err) void markapAlert.toast.error('No se pudieron cargar los reportes', getApiErrorMessage(err))
-    },
-  )
+/** Opciones comunes para hooks de reportes (pantallas con varias queries en paralelo suelen desactivar el toast). */
+export type VentasReportesHookOptions = {
+  toastOnLoadError?: boolean
 }
 
 export const ventasReportesKeys = {
@@ -29,7 +24,10 @@ export function invalidateVentasReportesCache(qc: QueryClient) {
 
 export type { VentasReportesRangeParams } from '../domain/reportes.types'
 
-export function useVentasSalesByPeriodReport(params: Ref<VentasReportesRangeParams>) {
+export function useVentasSalesByPeriodReport(
+  params: Ref<VentasReportesRangeParams>,
+  options?: VentasReportesHookOptions,
+) {
   const q = useQuery({
     queryKey: computed(() =>
       ventasReportesKeys.salesByPeriod({
@@ -47,12 +45,15 @@ export function useVentasSalesByPeriodReport(params: Ref<VentasReportesRangePara
     enabled: computed(() => !!params.value.startDate && !!params.value.endDate),
     retry: 1,
   })
-  toastReportLoadError(q.error)
+  if (options?.toastOnLoadError !== false) {
+    useQueryErrorToast(q.error, 'No se pudieron cargar los reportes', { burstGroup: 'ventas-reportes' })
+  }
   return q
 }
 
 export function useVentasAgentPerformanceReport(
   params: Ref<{ startDate: string; endDate: string }>,
+  options?: VentasReportesHookOptions,
 ) {
   const q = useQuery({
     queryKey: computed(() =>
@@ -69,11 +70,16 @@ export function useVentasAgentPerformanceReport(
     enabled: computed(() => !!params.value.startDate && !!params.value.endDate),
     retry: 1,
   })
-  toastReportLoadError(q.error)
+  if (options?.toastOnLoadError !== false) {
+    useQueryErrorToast(q.error, 'No se pudieron cargar los reportes', { burstGroup: 'ventas-reportes' })
+  }
   return q
 }
 
-export function useVentasConversionReport(params: Ref<{ startDate: string; endDate: string }>) {
+export function useVentasConversionReport(
+  params: Ref<{ startDate: string; endDate: string }>,
+  options?: VentasReportesHookOptions,
+) {
   const q = useQuery({
     queryKey: computed(() =>
       ventasReportesKeys.conversion({
@@ -89,11 +95,16 @@ export function useVentasConversionReport(params: Ref<{ startDate: string; endDa
     enabled: computed(() => !!params.value.startDate && !!params.value.endDate),
     retry: 1,
   })
-  toastReportLoadError(q.error)
+  if (options?.toastOnLoadError !== false) {
+    useQueryErrorToast(q.error, 'No se pudieron cargar los reportes', { burstGroup: 'ventas-reportes' })
+  }
   return q
 }
 
-export function useVentasFinancialFlowReport(params: Ref<{ startDate: string; endDate: string }>) {
+export function useVentasFinancialFlowReport(
+  params: Ref<{ startDate: string; endDate: string }>,
+  options?: VentasReportesHookOptions,
+) {
   const q = useQuery({
     queryKey: computed(() =>
       ventasReportesKeys.financialFlow({
@@ -109,6 +120,8 @@ export function useVentasFinancialFlowReport(params: Ref<{ startDate: string; en
     enabled: computed(() => !!params.value.startDate && !!params.value.endDate),
     retry: 1,
   })
-  toastReportLoadError(q.error)
+  if (options?.toastOnLoadError !== false) {
+    useQueryErrorToast(q.error, 'No se pudieron cargar los reportes', { burstGroup: 'ventas-reportes' })
+  }
   return q
 }

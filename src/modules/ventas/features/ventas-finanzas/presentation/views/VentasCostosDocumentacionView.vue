@@ -21,6 +21,7 @@ import {
   useVentasCreateDocumentationCost,
   useVentasClosingProfitability,
 } from '../../application/useVentasFinanzas'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const ITEMS = 12
 const listParams = ref({
@@ -34,7 +35,13 @@ const listApi = computed(() => ({
   buyerClientId: listParams.value.buyerClientId || undefined,
 }))
 
-const { data: listResult, isLoading } = useVentasDocumentationCostsList(listApi)
+const {
+  data: listResult,
+  isLoading,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useVentasDocumentationCostsList(listApi)
 const rows = computed(() => listResult.value?.data ?? [])
 const total = computed(() => listResult.value?.total ?? 0)
 
@@ -146,7 +153,13 @@ const onSubmitCost = submitCost((values) => {
 })
 
 const profitabilityClosingId = ref('')
-const { data: profit, isLoading: profitLoading } = useVentasClosingProfitability(profitabilityClosingId)
+const {
+  data: profit,
+  isLoading: profitLoading,
+  isError: profitQueryError,
+  error: profitFetchError,
+  refetch: refetchProfit,
+} = useVentasClosingProfitability(profitabilityClosingId)
 
 const closingOptionsForProfit = ref<{ value: string; label: string }[]>([])
 async function loadClosingsForProfit() {
@@ -185,14 +198,23 @@ void loadClosingsForProfit()
           />
         </div>
       </div>
-      <div v-if="profitLoading" class="flex py-4 justify-center">
-        <AppIcon icon="svg-spinners:ring-resize" :size="24" color="var(--color-primary)" />
-      </div>
-      <div
-        v-else-if="profit && profitabilityClosingId"
-        class="grid sm:grid-cols-2 gap-3 text-sm"
-        :style="{ color: 'var(--color-text-secondary)' }"
-      >
+      <div v-if="!profitabilityClosingId" class="text-sm opacity-70">Elija un cierre para ver el resumen.</div>
+      <template v-else>
+        <div v-if="profitLoading" class="flex py-4 justify-center">
+          <AppIcon icon="svg-spinners:ring-resize" :size="24" color="var(--color-primary)" />
+        </div>
+        <div
+          v-else-if="profitQueryError"
+          class="flex flex-col sm:flex-row sm:items-center gap-2 py-4 text-sm"
+        >
+          <span style="color: var(--color-error)">{{ getApiErrorMessage(profitFetchError) }}</span>
+          <BaseButton variant="outline" size="sm" class="self-start shrink-0" @click="() => refetchProfit()">Reintentar</BaseButton>
+        </div>
+        <div
+          v-else-if="profit"
+          class="grid sm:grid-cols-2 gap-3 text-sm"
+          :style="{ color: 'var(--color-text-secondary)' }"
+        >
         <p>
           <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Precio final:</span>
           S/ {{ profit.finalPrice.toLocaleString('es-PE') }}
@@ -210,8 +232,9 @@ void loadClosingsForProfit()
           <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Neto estimado:</span>
           S/ {{ profit.netEstimated.toLocaleString('es-PE') }}
         </p>
-      </div>
-      <p v-else class="text-sm opacity-70">Elija un cierre para ver el resumen.</p>
+        </div>
+        <p v-else class="text-sm opacity-70">No hay datos de rentabilidad para este cierre.</p>
+      </template>
     </div>
 
     <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
@@ -231,6 +254,13 @@ void loadClosingsForProfit()
       <div v-if="isLoading" class="flex justify-center py-16">
         <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
       </div>
+      <div
+        v-else-if="listQueryError"
+        class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+      >
+        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+      </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin costos registrados.">
         <template #row="{ row }">
           <td class="py-3 px-4 text-sm">{{ (row as DocumentationCostRow).closing.property.code }}</td>
@@ -249,7 +279,7 @@ void loadClosingsForProfit()
           </td>
         </template>
       </DataTable>
-      <div class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"

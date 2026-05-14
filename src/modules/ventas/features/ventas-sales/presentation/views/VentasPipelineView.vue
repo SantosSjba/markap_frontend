@@ -14,6 +14,7 @@ import {
   normalizePipelineStage,
   type PipelineStageValue,
 } from '../../domain/pipeline.constants'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 
@@ -45,7 +46,14 @@ function boardList(stage: string): SaleProcessListRow[] {
 }
 
 const { stageOptions, orderedCodes, query: configQuery } = useVentasPipelineStages()
-const { data: listResult, isLoading, isFetching } = useVentasPipelineBoard()
+const {
+  data: listResult,
+  isLoading,
+  isFetching,
+  isError: boardIsError,
+  error: boardError,
+  refetch: refetchBoard,
+} = useVentasPipelineBoard()
 const { mutate: patchQuiet, isPending: savingMove } = useVentasUpdateProcessQuiet()
 
 function rebuildBoard(rows: SaleProcessListRow[]) {
@@ -131,11 +139,34 @@ const group = { name: 'ventas-pipeline', pull: true, put: true }
     </div>
 
     <div
-      v-if="isLoading || configQuery.isLoading.value"
+      v-if="configQuery.isError.value"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span :style="{ color: 'var(--color-text-primary)' }">
+        No se cargó la configuración de etapas; se muestran valores por defecto.
+      </span>
+      <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(configQuery.error.value) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => configQuery.refetch()">
+        Reintentar configuración
+      </BaseButton>
+    </div>
+
+    <div
+      v-if="isLoading"
       class="flex justify-center py-24 rounded-xl border"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
     >
       <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
+    </div>
+
+    <div
+      v-else-if="boardIsError"
+      class="flex flex-col items-center justify-center gap-3 py-20 rounded-xl border text-center px-4"
+      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+    >
+      <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(boardError) }}</p>
+      <BaseButton variant="outline" size="sm" @click="() => refetchBoard()">Reintentar tablero</BaseButton>
     </div>
 
     <div
@@ -225,7 +256,7 @@ const group = { name: 'ventas-pipeline', pull: true, put: true }
       </div>
     </div>
 
-    <p v-if="!isLoading && !configQuery.isLoading.value" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+    <p v-if="!isLoading && !boardIsError" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
       Etapas: {{ stageOptions.map((o) => o.label).join(' → ') }}. Use
       <strong>Seguimiento</strong> para notas, actividades y recordatorios sin salir del pipeline.
     </p>

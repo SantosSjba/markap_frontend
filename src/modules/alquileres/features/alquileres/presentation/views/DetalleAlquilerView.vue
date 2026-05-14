@@ -5,14 +5,27 @@ import { BaseButton, Badge, AppIcon } from '@shared/components'
 import { useRental, useRentalFinancialBreakdown } from '../../application/useRentals'
 import type { RentalDetail } from '../../domain/rental.types'
 import { getAttachmentUrl } from '../../infrastructure/http/rental-attachment-url'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const route = useRoute()
 const router = useRouter()
 
 const id = computed(() => String(route.params.id ?? ''))
 
-const { data: rental, isLoading: loadingRental, isError: rentalError } = useRental(id)
-const { data: breakdown, isLoading: loadingBreakdown } = useRentalFinancialBreakdown(id)
+const {
+  data: rental,
+  isLoading: loadingRental,
+  isError: rentalError,
+  error: rentalFetchError,
+  refetch: refetchRental,
+} = useRental(id)
+const {
+  data: breakdown,
+  isLoading: loadingBreakdown,
+  isError: breakdownQueryError,
+  error: breakdownFetchError,
+  refetch: refetchBreakdown,
+} = useRentalFinancialBreakdown(id)
 
 function formatDate(d: string): string {
   return new Date(d).toLocaleDateString('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -93,10 +106,13 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
       class="flex flex-col items-center justify-center py-16 gap-3"
     >
       <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-error)' }">
-        No se encontró el alquiler o ocurrió un error.
+      <p class="text-sm font-medium text-center max-w-md" :style="{ color: 'var(--color-error)' }">
+        {{ rentalError ? getApiErrorMessage(rentalFetchError) : 'No se encontró el alquiler.' }}
       </p>
-      <BaseButton variant="outline" size="sm" @click="goBack">Volver al listado</BaseButton>
+      <div class="flex flex-wrap justify-center gap-2">
+        <BaseButton v-if="rentalError" variant="outline" size="sm" @click="() => refetchRental()">Reintentar</BaseButton>
+        <BaseButton variant="outline" size="sm" @click="goBack">Volver al listado</BaseButton>
+      </div>
     </div>
 
     <template v-else>
@@ -200,6 +216,15 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
             <div v-if="loadingBreakdown" class="flex items-center gap-2 py-4" :style="{ color: 'var(--color-text-muted)' }">
               <AppIcon icon="svg-spinners:ring-resize" :size="18" color="var(--color-primary)" />
               <span class="text-sm">Cargando desglose...</span>
+            </div>
+
+            <div
+              v-else-if="breakdownQueryError"
+              class="flex flex-col items-center py-6 gap-2 rounded-lg text-center px-2"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <p class="text-xs" style="color: var(--color-error)">{{ getApiErrorMessage(breakdownFetchError) }}</p>
+              <BaseButton variant="outline" size="sm" @click="() => refetchBreakdown()">Reintentar</BaseButton>
             </div>
 
             <template v-else-if="breakdown">

@@ -6,18 +6,36 @@ import { FormInput, FormSelect } from '@shared/components'
 import { useRental, useRentalFinancialBreakdown, useUpsertRentalFinancialConfig } from '../../application/useRentals'
 import { useUsers } from '@modules/settings'
 import { useAgentsList } from '@modules/alquileres/features/agentes'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const route = useRoute()
 const router = useRouter()
 
 const id = computed(() => String(route.params.id ?? ''))
 
-const { data: rental, isLoading: loadingRental, isError: rentalError } = useRental(id)
-const { data: breakdown, isLoading: loadingBreakdown } = useRentalFinancialBreakdown(id)
+const {
+  data: rental,
+  isLoading: loadingRental,
+  isError: rentalError,
+  error: rentalFetchError,
+  refetch: refetchRental,
+} = useRental(id)
+const {
+  data: breakdown,
+  isLoading: loadingBreakdown,
+  isError: breakdownQueryError,
+  error: breakdownFetchError,
+  refetch: refetchBreakdown,
+} = useRentalFinancialBreakdown(id)
 const upsertFinancial = useUpsertRentalFinancialConfig()
-const { data: usersList } = useUsers()
+const { data: usersList, isError: usersQueryError, error: usersFetchError, refetch: refetchUsers } = useUsers()
 const externalAgentsParams = ref({ applicationSlug: 'alquileres', type: 'EXTERNAL' as const, page: 1, limit: 200, isActive: true })
-const { data: externalAgentsResult } = useAgentsList(externalAgentsParams)
+const {
+  data: externalAgentsResult,
+  isError: externalAgentsQueryError,
+  error: externalAgentsFetchError,
+  refetch: refetchExternalAgents,
+} = useAgentsList(externalAgentsParams)
 const externalAgentsList = computed(() => externalAgentsResult.value?.data ?? [])
 
 const form = ref({
@@ -157,13 +175,32 @@ watch(upsertSuccess, (ok) => {
       class="flex flex-col items-center justify-center py-16 gap-3"
     >
       <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-error)' }">
-        No se encontró el alquiler o ocurrió un error.
+      <p class="text-sm font-medium text-center max-w-md" :style="{ color: 'var(--color-error)' }">
+        {{ rentalError ? getApiErrorMessage(rentalFetchError) : 'No se encontró el alquiler.' }}
       </p>
-      <BaseButton variant="outline" size="sm" @click="goBack">Volver</BaseButton>
+      <div class="flex flex-wrap justify-center gap-2">
+        <BaseButton v-if="rentalError" variant="outline" size="sm" @click="() => refetchRental()">Reintentar</BaseButton>
+        <BaseButton variant="outline" size="sm" @click="goBack">Volver</BaseButton>
+      </div>
     </div>
 
     <template v-else>
+      <div
+        v-if="usersQueryError || externalAgentsQueryError"
+        class="mb-5 rounded-xl border px-4 py-3 text-sm space-y-2"
+        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      >
+        <p v-if="usersQueryError" class="flex flex-wrap items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
+          <span class="font-medium text-red-600">Usuarios (agente interno)</span>
+          <span class="text-xs flex-1 min-w-0">{{ getApiErrorMessage(usersFetchError) }}</span>
+          <BaseButton variant="outline" size="sm" @click="() => refetchUsers()">Reintentar</BaseButton>
+        </p>
+        <p v-if="externalAgentsQueryError" class="flex flex-wrap items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
+          <span class="font-medium text-red-600">Agentes externos</span>
+          <span class="text-xs flex-1 min-w-0">{{ getApiErrorMessage(externalAgentsFetchError) }}</span>
+          <BaseButton variant="outline" size="sm" @click="() => refetchExternalAgents()">Reintentar</BaseButton>
+        </p>
+      </div>
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
         <!-- Columna principal: configuración -->
         <div class="xl:col-span-2 space-y-5">
@@ -432,6 +469,15 @@ watch(upsertSuccess, (ok) => {
             <div v-if="loadingBreakdown" class="flex items-center gap-2 py-4" :style="{ color: 'var(--color-text-muted)' }">
               <AppIcon icon="svg-spinners:ring-resize" :size="18" color="var(--color-primary)" />
               <span class="text-sm">Calculando...</span>
+            </div>
+
+            <div
+              v-else-if="breakdownQueryError"
+              class="flex flex-col items-center py-6 gap-2 rounded-lg text-center px-2"
+              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            >
+              <p class="text-xs" style="color: var(--color-error)">{{ getApiErrorMessage(breakdownFetchError) }}</p>
+              <BaseButton variant="outline" size="sm" @click="() => refetchBreakdown()">Reintentar</BaseButton>
             </div>
 
             <div v-else-if="breakdown" class="rounded-lg overflow-hidden" :style="{ border: '1px solid var(--color-border)' }">

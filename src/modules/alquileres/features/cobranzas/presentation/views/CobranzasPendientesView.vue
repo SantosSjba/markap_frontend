@@ -16,6 +16,7 @@ import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
 import { useExcelExport } from '@shared/composables'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../../application/usePayments'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import type { PendingPaymentItem, PaymentMethod } from '../../domain/payment.types'
 import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 
@@ -29,8 +30,20 @@ const params = computed(() => ({
   status: statusFilter.value as any,
 }))
 
-const { data: payments, isLoading } = usePendingPayments(params)
-const { data: stats, isLoading: statsLoading } = usePaymentStats()
+const {
+  data: payments,
+  isLoading,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = usePendingPayments(params)
+const {
+  data: stats,
+  isLoading: statsLoading,
+  isError: statsQueryError,
+  error: statsFetchError,
+  refetch: refetchStats,
+} = usePaymentStats()
 const { mutateAsync: registerPayment, isPending: registering } = useRegisterPayment()
 
 // Modal
@@ -261,24 +274,39 @@ async function handleExport() {
       </div>
     </div>
 
+    <div
+      v-if="statsQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+    </div>
+
     <!-- KPIs -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatsCard :value="statsLoading ? '...' : formatCurrency(stats?.totalPending ?? 0)" title="Por Cobrar">
+      <StatsCard
+        :value="statsQueryError ? '—' : statsLoading ? '...' : formatCurrency(stats?.totalPending ?? 0)"
+        title="Por Cobrar"
+      >
         <template #icon>
           <AppIcon icon="lucide:clock" :size="20" color="#f59e0b" />
         </template>
       </StatsCard>
-      <StatsCard :value="statsLoading ? '...' : formatCurrency(stats?.totalCollected ?? 0)" title="Cobrado (mes)">
+      <StatsCard
+        :value="statsQueryError ? '—' : statsLoading ? '...' : formatCurrency(stats?.totalCollected ?? 0)"
+        title="Cobrado (mes)"
+      >
         <template #icon>
           <AppIcon icon="lucide:circle-check" :size="20" color="#10b981" />
         </template>
       </StatsCard>
-      <StatsCard :value="statsLoading ? '...' : String(stats?.pendingCount ?? 0)" title="Pendientes">
+      <StatsCard :value="statsQueryError ? '—' : statsLoading ? '...' : String(stats?.pendingCount ?? 0)" title="Pendientes">
         <template #icon>
           <AppIcon icon="lucide:wallet" :size="20" color="#3b82f6" />
         </template>
       </StatsCard>
-      <StatsCard :value="statsLoading ? '...' : String(stats?.overdueCount ?? 0)" title="Con Atraso">
+      <StatsCard :value="statsQueryError ? '—' : statsLoading ? '...' : String(stats?.overdueCount ?? 0)" title="Con Atraso">
         <template #icon>
           <AppIcon icon="lucide:triangle-alert" :size="20" color="#ef4444" />
         </template>
@@ -302,6 +330,14 @@ async function handleExport() {
         <div class="flex flex-col items-center justify-center py-12 gap-3">
           <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
           <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando pagos...</p>
+        </div>
+      </template>
+
+      <template v-else-if="listQueryError">
+        <div class="flex flex-col items-center justify-center py-16 gap-3 px-4 text-center">
+          <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
+          <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
       </template>
 

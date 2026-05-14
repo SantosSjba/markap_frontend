@@ -25,6 +25,7 @@ import {
 import type { VentasClientListItem, ListVentasClientsParams } from '../../domain/client.types'
 import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../../domain/leadOrigins.constants'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
 const route = useRoute()
@@ -40,8 +41,20 @@ const searchInput = ref('')
 const filterKind = ref<'ALL' | 'BUYER' | 'OWNER'>('ALL')
 const filterPipeline = ref<'ALL' | 'PROSPECT' | 'INTERESTED' | 'CLIENT'>('ALL')
 
-const { data: listResult, isLoading: loadingList } = useVentasClientsList(listParams)
-const { data: stats, isLoading: loadingStats } = useVentasClientStats()
+const {
+  data: listResult,
+  isLoading: loadingList,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useVentasClientsList(listParams)
+const {
+  data: stats,
+  isLoading: loadingStats,
+  isError: statsQueryError,
+  error: statsFetchError,
+  refetch: refetchStats,
+} = useVentasClientStats()
 
 const clients = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
@@ -311,28 +324,36 @@ async function handleExport() {
     </div>
 
     <div v-if="loadingStats" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 h-20" />
+    <div
+      v-else-if="statsQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
+      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+    >
+      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+    </div>
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-      <StatsCard :title="'Total'" :value="stats?.total ?? 0">
+      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
         <template #icon>
           <AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" />
         </template>
       </StatsCard>
-      <StatsCard :title="'Propietarios'" :value="stats?.owners ?? 0">
+      <StatsCard :title="'Propietarios'" :value="String(stats?.owners ?? 0)">
         <template #icon>
           <AppIcon icon="lucide:building-2" :size="20" color="#64748b" />
         </template>
       </StatsCard>
-      <StatsCard :title="'Prospectos'" :value="stats?.prospects ?? 0">
+      <StatsCard :title="'Prospectos'" :value="String(stats?.prospects ?? 0)">
         <template #icon>
           <AppIcon icon="lucide:user-plus" :size="20" color="#2563eb" />
         </template>
       </StatsCard>
-      <StatsCard :title="'Interesados'" :value="stats?.interested ?? 0">
+      <StatsCard :title="'Interesados'" :value="String(stats?.interested ?? 0)">
         <template #icon>
           <AppIcon icon="lucide:heart" :size="20" color="#d97706" />
         </template>
       </StatsCard>
-      <StatsCard :title="'Clientes'" :value="stats?.salesClients ?? 0">
+      <StatsCard :title="'Clientes'" :value="String(stats?.salesClients ?? 0)">
         <template #icon>
           <AppIcon icon="lucide:badge-check" :size="20" color="#16a34a" />
         </template>
@@ -349,6 +370,13 @@ async function handleExport() {
       <div class="overflow-x-auto">
         <div v-if="loadingList" class="flex justify-center py-16 px-4">
           <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+        </div>
+        <div
+          v-else-if="listQueryError"
+          class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
+        >
+          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
@@ -452,7 +480,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

@@ -40,7 +40,8 @@ const listApi = computed(() => ({
   kind: listParams.value.kind || undefined,
 }))
 
-const { data: listResult, isLoading } = useVentasBuyerPaymentsList(listApi)
+const { data: listResult, isLoading, isError, error: listQueryError, refetch: refetchList } =
+  useVentasBuyerPaymentsList(listApi)
 const rows = computed(() => listResult.value?.data ?? [])
 const total = computed(() => listResult.value?.total ?? 0)
 
@@ -59,16 +60,22 @@ const paginationProps = computed(() => {
 })
 
 const buyerFilterOptions = ref<{ value: string; label: string }[]>([{ value: '', label: 'Todos los clientes' }])
+const buyersLoadState = ref<'idle' | 'loading' | 'error'>('idle')
+const buyersErrorMsg = ref('')
 
 async function loadBuyers() {
+  buyersLoadState.value = 'loading'
+  buyersErrorMsg.value = ''
   try {
     const res = await ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 })
     buyerFilterOptions.value = [
       { value: '', label: 'Todos los clientes' },
       ...res.data.map((c) => ({ value: c.id, label: `${c.fullName} (${c.documentNumber})` })),
     ]
+    buyersLoadState.value = 'idle'
   } catch (e) {
-    void markapAlert.toast.error('No se pudo cargar clientes', getApiErrorMessage(e))
+    buyersLoadState.value = 'error'
+    buyersErrorMsg.value = getApiErrorMessage(e)
   }
 }
 
@@ -226,6 +233,14 @@ function onMarkPaid(row: BuyerPaymentRow) {
       class="flex flex-wrap gap-3 items-end rounded-xl border p-4"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
     >
+      <div
+        v-if="buyersLoadState === 'error'"
+        class="w-full flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
+        style="border-color: var(--color-border); color: var(--color-error)"
+      >
+        <span>No se pudieron cargar los clientes del filtro: {{ buyersErrorMsg }}</span>
+        <BaseButton variant="secondary" size="sm" @click="loadBuyers">Reintentar</BaseButton>
+      </div>
       <div class="min-w-[200px] flex-1">
         <FormSelect
           v-model="listParams.buyerClientId"
@@ -247,6 +262,14 @@ function onMarkPaid(row: BuyerPaymentRow) {
     >
       <div v-if="isLoading" class="flex justify-center py-16">
         <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+      </div>
+      <div
+        v-else-if="isError"
+        class="p-8 text-center space-y-3"
+        :style="{ color: 'var(--color-text-secondary)' }"
+      >
+        <p class="text-sm" style="color: var(--color-error)">{{ getApiErrorMessage(listQueryError) }}</p>
+        <BaseButton variant="secondary" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin pagos registrados.">
         <template #row="{ row }">
