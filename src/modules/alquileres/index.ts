@@ -1,4 +1,5 @@
 export * from './features/alquileres'
+export * from './application'
 export { alquileresRoutes } from './presentation/router'
 export { useAlquileresAppLayout } from './presentation/composables/useAlquileresAppLayout'
 export { ALQUILERES_BASE_PATH } from './config/routes.constants'

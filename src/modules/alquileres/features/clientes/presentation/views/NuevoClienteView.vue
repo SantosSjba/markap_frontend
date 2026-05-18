@@ -14,14 +14,10 @@ import {
   mergeDepartmentOptions,
 } from '../../constants/ubigeo-other'
 import { useClientAddressUbigeo } from '../../composables/useClientAddressUbigeo'
-import { propertyKeys } from '@modules/alquileres/features/propiedades'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
-import { useQueryClient } from '@tanstack/vue-query'
 import type { DocumentType } from '../../domain/client.types'
 
 const route = useRoute()
 const router = useRouter()
-const queryClient = useQueryClient()
 const appColor = 'var(--color-primary)'
 
 const clientType = ref<'OWNER' | 'TENANT'>('OWNER')
@@ -208,7 +204,6 @@ const onSubmit = handleSubmit(async (formValues) => {
     })
     await createMutation.invalidateList()
     if (returnTo.value && data?.id) {
-      await invalidateQuerySubtree(queryClient, propertyKeys.all)
       router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
     } else {
       router.push('/alquileres/clientes')

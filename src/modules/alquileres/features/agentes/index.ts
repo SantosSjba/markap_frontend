@@ -3,6 +3,7 @@
  */
 export { agentesRoutes } from './presentation/router'
 export {
+  agentKeys,
   useAgentsList,
   useAgent,
   useCreateAgent,

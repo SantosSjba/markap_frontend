@@ -2,7 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import {
+  invalidateAlquileresQueries,
+  refetchAlquileresQueries,
+} from '@modules/alquileres/application'
+import { alquileresQueryKeys } from '@modules/alquileres/application/alquileresQueryKeys'
+import { sk } from '@modules/alquileres/application/stableQueryKey'
 import type {
   CreateRentalPayload,
   ListRentalsParams,
@@ -13,16 +18,16 @@ import { ALQUILERES_APP_SLUG } from '../../../config/app.constants'
 import { rentalsApiRepository as rentalsRepository } from '../infrastructure/repositories/rentals.api.repository'
 
 export const rentalKeys = {
-  all: ['rentals'] as const,
+  all: alquileresQueryKeys.rentals,
   list: (params: ListRentalsParams) =>
     [
       ...rentalKeys.all,
       'list',
-      params?.applicationSlug ?? '',
-      params?.page ?? 1,
-      params?.limit ?? 10,
-      params?.search ?? '',
-      params?.status ?? '',
+      sk(params.applicationSlug ?? 'alquileres'),
+      sk(params.page ?? 1),
+      sk(params.limit ?? 10),
+      sk(params.search ?? ''),
+      sk(params.status ?? ''),
     ] as const,
   stats: (slug?: string) => [...rentalKeys.all, 'stats', slug ?? ALQUILERES_APP_SLUG] as const,
   detail: (id: string) => [...rentalKeys.all, 'detail', id] as const,
@@ -60,7 +65,7 @@ export function useCreateRental() {
       files?: { contractFile?: File; deliveryActFile?: File }
     }) => rentalsRepository.create(params.data, params.files),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, rentalKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'rentals')
       void markapAlert.toast.success('Contrato de alquiler creado')
     },
     onError: (err) => {
@@ -69,7 +74,7 @@ export function useCreateRental() {
   })
   return {
     ...mutation,
-    invalidateList: () => refetchQuerySubtree(queryClient, rentalKeys.all),
+    invalidateList: () => refetchAlquileresQueries(queryClient, 'rentals'),
   }
 }
 
@@ -86,7 +91,7 @@ export function useUpdateRental() {
       files?: { contractFile?: File; deliveryActFile?: File }
     }) => rentalsRepository.update(id, data, files),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, rentalKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'rentals')
       void markapAlert.toast.success('Contrato actualizado')
     },
     onError: (err) => {
@@ -95,7 +100,7 @@ export function useUpdateRental() {
   })
   return {
     ...mutation,
-    invalidateList: () => refetchQuerySubtree(queryClient, rentalKeys.all),
+    invalidateList: () => refetchAlquileresQueries(queryClient, 'rentals'),
   }
 }
 
@@ -121,7 +126,7 @@ export function useUpsertRentalFinancialConfig() {
     mutationFn: ({ rentalId, data }: { rentalId: string; data: UpsertRentalFinancialConfigPayload }) =>
       rentalsRepository.upsertFinancialConfig(rentalId, data),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, rentalKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'rentals')
       void markapAlert.toast.success('Distribución financiera guardada')
     },
     onError: (err) => {
@@ -135,7 +140,7 @@ export function useCancelRental() {
   return useMutation({
     mutationFn: (id: string) => rentalsRepository.cancel(id),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, rentalKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'rentals')
       void markapAlert.toast.success('Contrato anulado')
     },
     onError: (err) => {

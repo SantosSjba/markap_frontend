@@ -2,7 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import {
+  invalidateAlquileresQueries,
+  refetchAlquileresQueries,
+} from '@modules/alquileres/application'
+import { alquileresQueryKeys } from '@modules/alquileres/application/alquileresQueryKeys'
+import { sk } from '@modules/alquileres/application/stableQueryKey'
 import type { CreateAgentPayload, ListAgentsParams, UpdateAgentPayload } from '../domain/agent.types'
 import { agentsApiRepository as agentsRepository } from '../infrastructure/repositories/agents.api.repository'
 
@@ -28,11 +33,20 @@ function isActivateOnlyUpdate(data: UpdateAgentPayload): boolean {
   )
 }
 
-/** Incluye el slug en la raíz para que `invalidateQueries` no afecte a ventas (`['agents','ventas']`). */
-const agentKeys = {
-  all: ['agents', 'alquileres'] as const,
+/** Raíz bajo `alquileres` para no colisionar con ventas (`['agents','ventas']`). */
+export const agentKeys = {
+  all: alquileresQueryKeys.agents,
   lists: () => [...agentKeys.all, 'list'] as const,
-  list: (params: ListAgentsParams) => [...agentKeys.lists(), params] as const,
+  list: (params: ListAgentsParams) =>
+    [
+      ...agentKeys.lists(),
+      sk(params.applicationSlug ?? 'alquileres'),
+      sk(params.page ?? 1),
+      sk(params.limit ?? 10),
+      sk(params.search ?? ''),
+      sk(params.type ?? ''),
+      sk(params.isActive ?? ''),
+    ] as const,
   detail: (id: string) => [...agentKeys.all, 'detail', id] as const,
 }
 
@@ -56,7 +70,7 @@ export function useCreateAgent() {
   const mutation = useMutation({
     mutationFn: (payload: CreateAgentPayload) => agentsRepository.create(payload),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, agentKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'agents')
       void markapAlert.toast.success(
         'Agente registrado',
         'Quedó asociado al módulo de alquileres y ya aparece en el listado.',
@@ -68,7 +82,7 @@ export function useCreateAgent() {
   })
   return {
     ...mutation,
-    invalidateList: () => refetchQuerySubtree(queryClient, agentKeys.all),
+    invalidateList: () => refetchAlquileresQueries(queryClient, 'agents'),
   }
 }
 
@@ -78,7 +92,7 @@ export function useUpdateAgent() {
     mutationFn: ({ id, data }: { id: string; data: UpdateAgentPayload }) =>
       agentsRepository.update(id, data),
     onSuccess: (_, { data }) => {
-      invalidateQuerySubtree(queryClient, agentKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'agents')
       if (isDeactivateOnlyUpdate(data)) {
         void markapAlert.toast.success(
           'Agente desactivado',
@@ -102,7 +116,7 @@ export function useUpdateAgent() {
   })
   return {
     ...mutation,
-    invalidateList: () => refetchQuerySubtree(queryClient, agentKeys.all),
+    invalidateList: () => refetchAlquileresQueries(queryClient, 'agents'),
   }
 }
 
@@ -111,7 +125,7 @@ export function useDeleteAgent() {
   const mutation = useMutation({
     mutationFn: (id: string) => agentsRepository.delete(id),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, agentKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'agents')
       void markapAlert.toast.success(
         'Agente eliminado',
         'Se aplicó borrado lógico: dejará de mostrarse en el listado.',
@@ -123,6 +137,6 @@ export function useDeleteAgent() {
   })
   return {
     ...mutation,
-    invalidateList: () => refetchQuerySubtree(queryClient, agentKeys.all),
+    invalidateList: () => refetchAlquileresQueries(queryClient, 'agents'),
   }
 }

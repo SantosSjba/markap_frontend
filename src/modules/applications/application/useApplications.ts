@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import { applicationsQueryKeys } from './applicationsQueryKeys'
+import { sk } from './stableQueryKey'
 import { applicationsApiRepository } from '../infrastructure/repositories/applications.api.repository'
 
 export const applicationKeys = {
-  all: ['applications'] as const,
-  myApps: () => [...applicationKeys.all, 'me'] as const,
-  menus: (slug: string) => [...applicationKeys.all, slug, 'menus'] as const,
+  all: applicationsQueryKeys.module,
+  myApps: () => applicationsQueryKeys.myApps,
+  menus: (slug: string) => [...applicationsQueryKeys.menus, sk(slug)] as const,
 }
 
 export function useMyApplications() {

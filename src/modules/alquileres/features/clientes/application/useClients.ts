@@ -2,21 +2,35 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import {
+  invalidateAlquileresQueries,
+  refetchAlquileresQueries,
+} from '@modules/alquileres/application'
+import { alquileresCatalogKeys, alquileresQueryKeys } from '@modules/alquileres/application/alquileresQueryKeys'
+import { sk } from '@modules/alquileres/application/stableQueryKey'
 import type { CreateClientPayload, ListClientsParams, UpdateClientPayload } from '../domain/client.types'
 import { clientsApiRepository as clientsRepository } from '../infrastructure/repositories/clients.api.repository'
 
 export const clientKeys = {
-  all: ['clients', 'alquileres'] as const,
-  list: (params: ListClientsParams) => [...clientKeys.all, 'list', params] as const,
+  all: alquileresQueryKeys.clients,
+  list: (params: ListClientsParams) =>
+    [
+      ...clientKeys.all,
+      'list',
+      sk(params.applicationSlug ?? 'alquileres'),
+      sk(params.page ?? 1),
+      sk(params.limit ?? 10),
+      sk(params.search ?? ''),
+      sk(params.clientType ?? ''),
+      sk(params.salesStatus ?? ''),
+      sk(params.isActive ?? ''),
+    ] as const,
   detail: (id: string) => [...clientKeys.all, 'detail', id] as const,
   stats: (slug?: string) => [...clientKeys.all, 'stats', slug ?? 'alquileres'] as const,
-  documentTypes: () => [...clientKeys.all, 'document-types'] as const,
-  departments: () => [...clientKeys.all, 'departments'] as const,
-  provinces: (departmentId?: string) =>
-    [...clientKeys.all, 'provinces', departmentId ?? 'all'] as const,
-  districts: (provinceId?: string) =>
-    [...clientKeys.all, 'districts', provinceId ?? 'all'] as const,
+  documentTypes: () => alquileresCatalogKeys.documentTypes,
+  departments: () => alquileresCatalogKeys.departments,
+  provinces: (departmentId?: string) => alquileresCatalogKeys.provinces(departmentId),
+  districts: (provinceId?: string) => alquileresCatalogKeys.districts(provinceId),
 }
 
 export function useClientsList(params: Ref<ListClientsParams>) {
@@ -77,7 +91,7 @@ export function useCreateClient() {
   const mutation = useMutation({
     mutationFn: (data: CreateClientPayload) => clientsRepository.create(data),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, clientKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'clients')
       void markapAlert.toast.success('Cliente registrado')
     },
     onError: (err) => {
@@ -86,7 +100,7 @@ export function useCreateClient() {
   })
   return {
     ...mutation,
-    invalidateList: () => refetchQuerySubtree(queryClient, clientKeys.all),
+    invalidateList: () => refetchAlquileresQueries(queryClient, 'clients'),
   }
 }
 
@@ -96,7 +110,7 @@ export function useUpdateClient() {
     mutationFn: ({ id, data }: { id: string; data: UpdateClientPayload }) =>
       clientsRepository.update(id, data),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, clientKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'clients')
       void markapAlert.toast.success('Cliente actualizado')
     },
     onError: (err) => {
@@ -105,7 +119,7 @@ export function useUpdateClient() {
   })
   return {
     ...mutation,
-    invalidateList: () => refetchQuerySubtree(queryClient, clientKeys.all),
+    invalidateList: () => refetchAlquileresQueries(queryClient, 'clients'),
   }
 }
 
@@ -114,7 +128,7 @@ export function useDeleteClient() {
   return useMutation({
     mutationFn: (id: string) => clientsRepository.delete(id),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, clientKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'clients')
       void markapAlert.toast.success('Cliente eliminado')
     },
     onError: (err) => {

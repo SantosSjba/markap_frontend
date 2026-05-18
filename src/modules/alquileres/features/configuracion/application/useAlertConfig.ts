@@ -3,11 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateAlquileresQueries } from '@modules/alquileres/application'
+import { alquileresConfigKeys } from '@modules/alquileres/application/alquileresQueryKeys'
 import type { UpsertAlertConfigPayload } from '../domain/alert-config.types'
 import { alertConfigApiRepository as alertConfigRepository } from '../infrastructure/repositories/alert-config.api.repository'
 
 export function useAlertConfig(applicationSlug = 'alquileres') {
-  const queryKey = ['alert-config', applicationSlug]
+  const queryKey = alquileresConfigKeys.alertConfig(applicationSlug)
   const queryClient = useQueryClient()
 
   const { data, isLoading, error } = useQuery({
@@ -24,6 +26,7 @@ export function useAlertConfig(applicationSlug = 'alquileres') {
       alertConfigRepository.upsert(applicationSlug, payload),
     onSuccess: () => {
       void invalidateQuerySubtree(queryClient, queryKey)
+      void invalidateAlquileresQueries(queryClient, 'rentals')
       saveSuccess.value = true
       saveError.value = null
       void markapAlert.toast.success('Configuración de alertas guardada')

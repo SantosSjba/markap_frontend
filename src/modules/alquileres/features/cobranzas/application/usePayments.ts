@@ -2,15 +2,35 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateAlquileresQueries } from '@modules/alquileres/application'
+import { alquileresQueryKeys } from '@modules/alquileres/application/alquileresQueryKeys'
+import { sk } from '@modules/alquileres/application/stableQueryKey'
 import type { ListHistoryParams, ListPendingParams, RegisterPaymentPayload } from '../domain/payment.types'
 import { paymentsApiRepository as paymentsRepository } from '../infrastructure/repositories/payments.api.repository'
 
 export const paymentKeys = {
-  all: ['payments'] as const,
+  all: alquileresQueryKeys.payments,
   stats: (slug = 'alquileres') => [...paymentKeys.all, 'stats', slug] as const,
-  pending: (params: ListPendingParams) => [...paymentKeys.all, 'pending', params] as const,
-  history: (params: ListHistoryParams) => [...paymentKeys.all, 'history', params] as const,
+  pending: (params: ListPendingParams) =>
+    [
+      ...paymentKeys.all,
+      'pending',
+      sk(params.applicationSlug ?? 'alquileres'),
+      sk(params.search ?? ''),
+      sk(params.status ?? ''),
+    ] as const,
+  history: (params: ListHistoryParams) =>
+    [
+      ...paymentKeys.all,
+      'history',
+      sk(params.applicationSlug ?? 'alquileres'),
+      sk(params.search ?? ''),
+      sk(params.periodYear ?? ''),
+      sk(params.periodMonth ?? ''),
+      sk(params.paymentMethod ?? ''),
+      sk(params.page ?? 1),
+      sk(params.limit ?? 20),
+    ] as const,
   overdue: (slug = 'alquileres', search?: string) =>
     [...paymentKeys.all, 'overdue', slug, search ?? ''] as const,
 }
@@ -49,7 +69,7 @@ export function useRegisterPayment() {
     mutationFn: ({ paymentId, data }: { paymentId: string; data: RegisterPaymentPayload }) =>
       paymentsRepository.registerPayment(paymentId, data),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, paymentKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'payments')
       void markapAlert.toast.success('Pago registrado')
     },
     onError: (err) => {
@@ -64,7 +84,7 @@ export function useSaveCommunicationNote() {
     mutationFn: ({ rentalId, note }: { rentalId: string; note: string }) =>
       paymentsRepository.saveCommunicationNote(rentalId, note),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, paymentKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'payments')
       void markapAlert.toast.success('Nota de comunicación guardada')
     },
     onError: (err) => {

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import { alquileresQueryKeys } from '@modules/alquileres/application/alquileresQueryKeys'
 import {
   ALQUILERES_REPORTS_SLUG,
   type FinancialDistributionParams,
@@ -8,7 +9,7 @@ import {
 import { reportesApiRepository as reportesRepository } from '../infrastructure/repositories/reportes.api.repository'
 
 export const reportKeys = {
-  all: ['reports'] as const,
+  all: alquileresQueryKeys.reports,
   summary: (slug: string, days: number) => [...reportKeys.all, 'summary', slug, days] as const,
   contractsExpiring: (slug: string, days: number) =>
     [...reportKeys.all, 'contracts-expiring', slug, days] as const,
@@ -20,8 +21,8 @@ export const reportKeys = {
   monthlyMetrics: (slug: string) => [...reportKeys.all, 'monthly-metrics', slug] as const,
   rentalsByMonth: (slug: string, year: number, month?: number, startDate?: string, endDate?: string) =>
     [...reportKeys.all, 'rentals-by-month', slug, year, month ?? '', startDate ?? '', endDate ?? ''] as const,
-  financialDistribution: (slug: string, status?: string) =>
-    [...reportKeys.all, 'financial-distribution', slug, status ?? ''] as const,
+  financialDistribution: (slug: string, filterKey: string) =>
+    [...reportKeys.all, 'financial-distribution', slug, filterKey] as const,
 }
 
 export function useReportsSummary(

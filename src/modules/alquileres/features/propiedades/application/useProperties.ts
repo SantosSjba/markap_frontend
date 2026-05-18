@@ -2,35 +2,38 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import {
+  invalidateAlquileresQueries,
+  refetchAlquileresQueries,
+} from '@modules/alquileres/application'
+import { alquileresCatalogKeys, alquileresQueryKeys } from '@modules/alquileres/application/alquileresQueryKeys'
+import { sk } from '@modules/alquileres/application/stableQueryKey'
 import type { CreatePropertyPayload, ListPropertiesParams, UpdatePropertyPayload } from '../domain/property.types'
 import { propertiesApiRepository as propertiesRepository } from '../infrastructure/repositories/properties.api.repository'
 
 export const propertyKeys = {
-  all: ['properties'] as const,
+  all: alquileresQueryKeys.properties,
   detail: (id: string) => [...propertyKeys.all, 'detail', id] as const,
   list: (params: ListPropertiesParams) =>
     [
       ...propertyKeys.all,
       'list',
-      params?.applicationSlug ?? 'alquileres',
-      params?.page ?? 1,
-      params?.limit ?? 10,
-      params?.search ?? '',
-      params?.propertyTypeId ?? '',
-      params?.districtId ?? '',
-      params?.listingStatus ?? '',
-      params?.minSalePrice ?? '',
-      params?.maxSalePrice ?? '',
+      sk(params.applicationSlug ?? 'alquileres'),
+      sk(params.page ?? 1),
+      sk(params.limit ?? 10),
+      sk(params.search ?? ''),
+      sk(params.propertyTypeId ?? ''),
+      sk(params.districtId ?? ''),
+      sk(params.listingStatus ?? ''),
+      sk(params.minSalePrice ?? ''),
+      sk(params.maxSalePrice ?? ''),
     ] as const,
   propertyTypes: () => [...propertyKeys.all, 'property-types'] as const,
-  departments: () => [...propertyKeys.all, 'departments'] as const,
-  provinces: (departmentId?: string) =>
-    [...propertyKeys.all, 'provinces', departmentId ?? 'all'] as const,
-  districts: (provinceId?: string) =>
-    [...propertyKeys.all, 'districts', provinceId ?? 'all'] as const,
+  departments: () => alquileresCatalogKeys.departments,
+  provinces: (departmentId?: string) => alquileresCatalogKeys.provinces(departmentId),
+  districts: (provinceId?: string) => alquileresCatalogKeys.districts(provinceId),
   owners: (slug?: string, search?: string) =>
-    [...propertyKeys.all, 'owners', slug ?? 'alquileres', search ?? ''] as const,
+    [...propertyKeys.all, 'owners', sk(slug ?? 'alquileres'), sk(search ?? '')] as const,
   stats: (slug?: string) => [...propertyKeys.all, 'stats', slug ?? 'alquileres'] as const,
 }
 
@@ -100,7 +103,7 @@ export function useCreateProperty() {
   const mutation = useMutation({
     mutationFn: (data: CreatePropertyPayload) => propertiesRepository.create(data),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, propertyKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'properties')
       void markapAlert.toast.success('Propiedad registrada')
     },
     onError: (err) => {
@@ -109,7 +112,7 @@ export function useCreateProperty() {
   })
   return {
     ...mutation,
-    invalidateList: () => refetchQuerySubtree(queryClient, propertyKeys.all),
+    invalidateList: () => refetchAlquileresQueries(queryClient, 'properties'),
   }
 }
 
@@ -119,7 +122,7 @@ export function useUpdateProperty() {
     mutationFn: ({ id, data }: { id: string; data: UpdatePropertyPayload }) =>
       propertiesRepository.update(id, data),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, propertyKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'properties')
       void markapAlert.toast.success('Propiedad actualizada')
     },
     onError: (err) => {
@@ -128,7 +131,7 @@ export function useUpdateProperty() {
   })
   return {
     ...mutation,
-    invalidateList: () => refetchQuerySubtree(queryClient, propertyKeys.all),
+    invalidateList: () => refetchAlquileresQueries(queryClient, 'properties'),
   }
 }
 
@@ -143,7 +146,7 @@ export function useUpdatePropertyListingStatus() {
       listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE'
     }) => propertiesRepository.updateListingStatus(id, listingStatus),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, propertyKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'properties')
       void markapAlert.toast.success('Estado de publicación actualizado')
     },
     onError: (err) => {
@@ -157,7 +160,7 @@ export function useDeleteProperty() {
   return useMutation({
     mutationFn: (id: string) => propertiesRepository.delete(id),
     onSuccess: () => {
-      invalidateQuerySubtree(queryClient, propertyKeys.all)
+      void invalidateAlquileresQueries(queryClient, 'properties')
       void markapAlert.toast.success('Propiedad eliminada')
     },
     onError: (err) => {
