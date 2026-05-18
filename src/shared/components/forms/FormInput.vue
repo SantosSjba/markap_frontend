@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useSlots, computed } from 'vue'
+import { ref, useSlots, computed } from 'vue'
+import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**
  * FormInput — único input de formulario de texto/número/fecha del design system.
@@ -21,6 +22,8 @@ interface Props {
   inputClass?: string
   maxlength?: number | string
   inputmode?: 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
+  /** Mostrar ojito para ver/ocultar (solo type="password"). Por defecto true. */
+  showPasswordToggle?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -29,10 +32,28 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   required: false,
   inputClass: '',
+  showPasswordToggle: true,
 })
 
 const slots = useSlots()
-const hasSuffix = computed(() => Boolean(slots.suffix))
+const passwordVisible = ref(false)
+
+const hasPasswordToggle = computed(
+  () => props.type === 'password' && props.showPasswordToggle,
+)
+const hasSuffixSlot = computed(() => Boolean(slots.suffix))
+const hasRightAdornment = computed(() => hasSuffixSlot.value || hasPasswordToggle.value)
+
+const inputType = computed(() => {
+  if (hasPasswordToggle.value) {
+    return passwordVisible.value ? 'text' : 'password'
+  }
+  return props.type
+})
+
+function togglePasswordVisible() {
+  passwordVisible.value = !passwordVisible.value
+}
 
 const emit = defineEmits(['update:modelValue', 'blur', 'focus'])
 
@@ -65,7 +86,7 @@ const handleInput = (event: Event) => {
     <div class="relative w-full">
       <input
         :id="inputId"
-        :type="type"
+        :type="inputType"
         :value="displayValue()"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -73,7 +94,7 @@ const handleInput = (event: Event) => {
         :maxlength="maxlength"
         :inputmode="inputmode"
         class="w-full px-4 py-2.5 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
-        :class="[hasSuffix ? 'pr-12' : '', props.inputClass]"
+        :class="[hasRightAdornment ? 'pr-12' : '', props.inputClass]"
         :style="{
           borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
@@ -85,10 +106,26 @@ const handleInput = (event: Event) => {
         @focus="emit('focus', $event)"
       />
       <div
-        v-if="hasSuffix"
-        class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none [&_button]:pointer-events-auto"
+        v-if="hasRightAdornment"
+        class="absolute inset-y-0 right-0 flex items-center gap-1 pr-3 pointer-events-none [&_button]:pointer-events-auto"
       >
-        <slot name="suffix" />
+        <button
+          v-if="hasPasswordToggle"
+          type="button"
+          class="p-0.5 rounded transition-colors hover:opacity-80"
+          style="color: var(--color-text-muted)"
+          :aria-label="passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          :disabled="disabled"
+          tabindex="-1"
+          @click="togglePasswordVisible"
+        >
+          <AppIcon
+            :icon="passwordVisible ? 'lucide:eye-off' : 'lucide:eye'"
+            :size="20"
+            color="currentColor"
+          />
+        </button>
+        <slot v-if="hasSuffixSlot" name="suffix" />
       </div>
     </div>
     <p v-if="error" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">

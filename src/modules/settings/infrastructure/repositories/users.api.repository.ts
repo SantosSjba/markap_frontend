@@ -14,7 +14,10 @@ export const usersApiRepository: UsersRepository = {
   },
 
   async create(userData: CreateUserData): Promise<UserListItem> {
-    const { data } = await apiClient.post<UserListItem>('/users', userData)
+    const { roleIds, ...body } = userData
+    const payload =
+      roleIds && roleIds.length > 0 ? { ...body, roleIds } : body
+    const { data } = await apiClient.post<UserListItem>('/users', payload)
     return data
   },
 

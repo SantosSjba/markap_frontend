@@ -152,7 +152,6 @@ const handleCreate = createForm.handleSubmit(async (vals) => {
       password: vals.password,
       firstName: vals.firstName.trim(),
       lastName: vals.lastName.trim(),
-      roleIds: [],
     })
     closeCreateModal()
   } catch {

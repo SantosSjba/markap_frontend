@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import * as yup from 'yup'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
@@ -15,8 +14,6 @@ import { useAuthStore } from '@modules/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
-
-const showPassword = ref(false)
 
 const loginSchema = yup.object({
   email: yup
@@ -52,9 +49,6 @@ const onSubmit = handleSubmit(async (values) => {
   }
 })
 
-const togglePassword = () => {
-  showPassword.value = !showPassword.value
-}
 </script>
 
 <template>
@@ -84,25 +78,12 @@ const togglePassword = () => {
 
       <FormInput
         v-bind="passwordBinds"
-        :type="showPassword ? 'text' : 'password'"
+        type="password"
         label="Contraseña"
         placeholder="••••••••"
         :error="errors.password"
         required
-      >
-        <template #suffix>
-          <button
-            type="button"
-            class="p-0.5 rounded transition-colors"
-            style="color: var(--color-text-muted);"
-            :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-            @click="togglePassword"
-          >
-            <AppIcon v-if="!showPassword" icon="lucide:eye" :size="20" color="currentColor" />
-            <AppIcon v-else icon="lucide:eye-off" :size="20" color="currentColor" />
-          </button>
-        </template>
-      </FormInput>
+      />
 
       <!-- Forgot password link -->
       <div class="text-right">
