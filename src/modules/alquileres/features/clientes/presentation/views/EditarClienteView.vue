@@ -42,9 +42,10 @@ const schema = yup.object({
   secondaryPhone: yup.string().trim(),
   primaryEmail: yup
     .string()
-    .required('El email principal es requerido')
+    .trim()
+    .transform((v) => (v === '' ? undefined : v))
     .email('Email inválido')
-    .trim(),
+    .optional(),
   secondaryEmail: yup
     .string()
     .trim()
@@ -178,7 +179,7 @@ watch(
         legalRepresentativePosition: c.legalRepresentativePosition ?? '',
         primaryPhone: c.primaryPhone,
         secondaryPhone: c.secondaryPhone ?? '',
-        primaryEmail: c.primaryEmail,
+        primaryEmail: c.primaryEmail ?? '',
         secondaryEmail: c.secondaryEmail ?? '',
         addressLine: c.primaryAddress?.addressLine ?? '',
         departmentId: c.primaryAddress?.district?.province?.department?.id ?? '',
@@ -225,7 +226,7 @@ const onSubmit = handleSubmit(async (formValues) => {
           formValues.legalRepresentativePosition?.trim() || null,
         primaryPhone: formValues.primaryPhone.trim(),
         secondaryPhone: formValues.secondaryPhone?.trim() || null,
-        primaryEmail: formValues.primaryEmail.trim(),
+        primaryEmail: formValues.primaryEmail?.trim() || null,
         secondaryEmail: formValues.secondaryEmail?.trim() || null,
         notes: formValues.notes?.trim() || null,
         address: {
@@ -415,10 +416,9 @@ const onSubmit = handleSubmit(async (formValues) => {
           <FormInput
             v-bind="primaryEmailBinds"
             type="email"
-            label="Email Principal"
+            label="Email principal (opcional)"
             placeholder="correo@ejemplo.com"
             :error="errors.primaryEmail"
-            required
           />
           <FormInput
             v-bind="secondaryEmailBinds"

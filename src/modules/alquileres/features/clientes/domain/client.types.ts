@@ -47,7 +47,7 @@ export interface CreateClientPayload {
   legalRepresentativePosition?: string | null
   primaryPhone: string
   secondaryPhone?: string | null
-  primaryEmail: string
+  primaryEmail?: string | null
   secondaryEmail?: string | null
   notes?: string | null
   address: {
@@ -70,7 +70,7 @@ export interface ClientDetail {
   legalRepresentativePosition: string | null
   primaryPhone: string
   secondaryPhone: string | null
-  primaryEmail: string
+  primaryEmail: string | null
   secondaryEmail: string | null
   notes: string | null
   isActive: boolean
@@ -99,7 +99,7 @@ export interface UpdateClientPayload {
   legalRepresentativePosition?: string | null
   primaryPhone?: string
   secondaryPhone?: string | null
-  primaryEmail?: string
+  primaryEmail?: string | null
   secondaryEmail?: string | null
   notes?: string | null
   address?: {
@@ -116,7 +116,7 @@ export interface ClientListItem {
   documentTypeCode: string
   documentNumber: string
   primaryPhone: string
-  primaryEmail: string
+  primaryEmail: string | null
   clientType: 'OWNER' | 'TENANT' | 'BUYER'
   isActive: boolean
   propertiesCount: number

@@ -107,7 +107,7 @@ const tableColumns = [
     sortable: true,
     sortAccessor: (r: unknown) => {
       const c = r as ClientListItem
-      return `${c.primaryPhone} ${c.primaryEmail}`
+      return `${c.primaryPhone} ${c.primaryEmail ?? ''}`
     },
   },
   {
@@ -384,7 +384,7 @@ async function handleExport() {
                 </span>
                 <span class="flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
                   <AppIcon icon="lucide:mail" :size="16" color="var(--color-text-muted)" />
-                  {{ (row as ClientListItem).primaryEmail }}
+                  {{ (row as ClientListItem).primaryEmail || '—' }}
                 </span>
               </div>
             </td>
