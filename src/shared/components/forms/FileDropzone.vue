@@ -46,11 +46,14 @@ const files = computed(() => {
   return Array.isArray(v) ? v : [v]
 })
 
+const hasFiles = computed(() => files.value.length > 0)
+
 const displayText = computed(() => {
-  if (files.value.length === 0) return props.placeholder
-  const first = files.value[0]
-  if (files.value.length === 1 && first) return first.name
-  return `${files.value.length} archivos seleccionados`
+  if (!hasFiles.value) return props.placeholder
+  if (files.value.length === 1) {
+    return 'Archivo listo — clic o arrastra para reemplazar'
+  }
+  return `${files.value.length} archivos — clic para cambiar`
 })
 
 const fileSize = (bytes: number) => {
@@ -159,15 +162,24 @@ function clearAll() {
     <div
       role="button"
       tabindex="0"
-      class="w-full min-h-[140px] rounded-xl border-2 border-dashed transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 flex flex-col items-center justify-center gap-2 py-6 px-4 cursor-pointer"
-      :class="{ 'opacity-60 cursor-not-allowed': disabled }"
+      class="w-full rounded-xl border-2 border-dashed transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 flex flex-col items-center justify-center gap-2 px-4 cursor-pointer"
+      :class="[
+        hasFiles ? 'min-h-[88px] py-4' : 'min-h-[140px] py-6',
+        { 'opacity-60 cursor-not-allowed': disabled },
+      ]"
       :style="{
         borderColor: error
           ? 'var(--color-error)'
           : isDragging
             ? 'var(--color-primary)'
-            : 'var(--color-border)',
-        backgroundColor: isDragging ? 'var(--color-primary-muted, rgba(11, 176, 190, 0.08))' : 'var(--color-surface)',
+            : hasFiles
+              ? 'var(--color-success, #16a34a)'
+              : 'var(--color-border)',
+        backgroundColor: isDragging
+          ? 'var(--color-primary-muted, rgba(11, 176, 190, 0.08))'
+          : hasFiles
+            ? 'var(--color-success, #16a34a)0a'
+            : 'var(--color-surface)',
         '--ring-color': 'var(--color-primary)',
       }"
       @click="triggerSelect"
@@ -177,21 +189,27 @@ function clearAll() {
       @drop="onDrop"
     >
       <AppIcon
-        icon="lucide:cloud-upload"
-        :size="40"
-        :color="isDragging ? 'var(--color-primary)' : 'var(--color-text-muted)'"
+        :icon="hasFiles ? 'lucide:file-check-2' : 'lucide:cloud-upload'"
+        :size="hasFiles ? 32 : 40"
+        :color="
+          hasFiles
+            ? 'var(--color-success, #16a34a)'
+            : isDragging
+              ? 'var(--color-primary)'
+              : 'var(--color-text-muted)'
+        "
         class="shrink-0 transition-colors duration-200"
         aria-hidden="true"
       />
       <p
-        class="text-sm text-center max-w-md"
-        :style="{ color: files.length ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }"
+        class="text-sm text-center max-w-md leading-snug"
+        :style="{ color: hasFiles ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }"
       >
         {{ displayText }}
       </p>
       <p
-        v-if="accept"
-        class="text-xs"
+        v-if="accept && !hasFiles"
+        class="text-xs text-center"
         :style="{ color: 'var(--color-text-muted)' }"
       >
         Aceptados: {{ accept }}
@@ -201,16 +219,25 @@ function clearAll() {
     <!-- Lista de archivos seleccionados -->
     <ul
       v-if="files.length > 0"
-      class="mt-2 space-y-1.5"
+      class="mt-3 space-y-2"
     >
       <li
         v-for="(file, index) in files"
-        :key="index"
-        class="flex items-center gap-2 py-2 px-3 rounded-lg text-sm"
-        :style="{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }"
+        :key="`${file.name}-${file.size}-${index}`"
+        class="flex items-center gap-2.5 py-2.5 px-3 rounded-lg text-sm"
+        :style="{
+          backgroundColor: 'var(--color-surface-elevated, var(--color-surface))',
+          color: 'var(--color-text-primary)',
+          border: '1px solid var(--color-border)',
+        }"
       >
-        <AppIcon icon="lucide:file-text" :size="16" color="var(--color-text-muted)" class="shrink-0" />
-        <span class="flex-1 min-w-0 truncate">{{ file.name }}</span>
+        <div
+          class="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
+          :style="{ backgroundColor: 'var(--color-primary)14' }"
+        >
+          <AppIcon icon="lucide:file-text" :size="16" color="var(--color-primary)" />
+        </div>
+        <span class="flex-1 min-w-0 truncate font-medium" :title="file.name">{{ file.name }}</span>
         <span class="text-xs shrink-0" :style="{ color: 'var(--color-text-muted)' }">
           {{ fileSize(file.size) }}
         </span>

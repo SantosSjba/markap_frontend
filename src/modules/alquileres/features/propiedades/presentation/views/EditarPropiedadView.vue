@@ -15,6 +15,7 @@ import {
   useUpdateProperty,
 } from '../../application/useProperties'
 import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
+import { formatFormArea, formatFormStat } from '@shared/utils/format-form-stat'
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
   UBIGEO_OTHER_DEPARTMENT_LABEL,
@@ -781,21 +782,21 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             <div class="flex flex-col items-center gap-1 text-center">
               <AppIcon icon="lucide:bed-double" :size="16" color="var(--color-text-muted)" />
               <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
-                {{ values.bedrooms !== '' ? values.bedrooms : '—' }}
+                {{ formatFormStat(values.bedrooms) }}
               </span>
               <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Dorm.</span>
             </div>
             <div class="flex flex-col items-center gap-1 text-center">
               <AppIcon icon="lucide:bath" :size="16" color="var(--color-text-muted)" />
               <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
-                {{ values.bathrooms !== '' ? values.bathrooms : '—' }}
+                {{ formatFormStat(values.bathrooms) }}
               </span>
               <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Baños</span>
             </div>
             <div class="flex flex-col items-center gap-1 text-center">
               <AppIcon icon="lucide:ruler" :size="16" color="var(--color-text-muted)" />
               <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
-                {{ values.area !== '' ? `${values.area}m²` : '—' }}
+                {{ formatFormArea(values.area) }}
               </span>
               <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Área</span>
             </div>
