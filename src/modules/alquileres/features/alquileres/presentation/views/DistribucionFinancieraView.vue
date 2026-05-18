@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useRental, useRentalFinancialBreakdown, useUpsertRentalFinancialConfig } from '../../application/useRentals'
-import { useUsers } from '@modules/settings'
 import { useAgentsList } from '@modules/alquileres/features/agentes'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
@@ -28,15 +27,22 @@ const {
   refetch: refetchBreakdown,
 } = useRentalFinancialBreakdown(id)
 const upsertFinancial = useUpsertRentalFinancialConfig()
-const { data: usersList, isError: usersQueryError, error: usersFetchError, refetch: refetchUsers } = useUsers()
 const externalAgentsParams = ref({ applicationSlug: 'alquileres', type: 'EXTERNAL' as const, page: 1, limit: 200, isActive: true })
+const internalAgentsParams = ref({ applicationSlug: 'alquileres', type: 'INTERNAL' as const, page: 1, limit: 200, isActive: true })
 const {
   data: externalAgentsResult,
   isError: externalAgentsQueryError,
   error: externalAgentsFetchError,
   refetch: refetchExternalAgents,
 } = useAgentsList(externalAgentsParams)
+const {
+  data: internalAgentsResult,
+  isError: internalAgentsQueryError,
+  error: internalAgentsFetchError,
+  refetch: refetchInternalAgents,
+} = useAgentsList(internalAgentsParams)
 const externalAgentsList = computed(() => externalAgentsResult.value?.data ?? [])
+const internalAgentsList = computed(() => internalAgentsResult.value?.data ?? [])
 
 const form = ref({
   baseAmount: '' as number | string,
@@ -51,6 +57,7 @@ const form = ref({
   internalAgentId: '' as string | null,
   internalAgentType: 'FIXED' as 'PERCENT' | 'FIXED',
   internalAgentValue: 0,
+  internalAgentName: '',
 })
 
 watch(breakdown, (b) => {
@@ -69,6 +76,7 @@ watch(breakdown, (b) => {
     internalAgentId: c.internalAgentId ?? '',
     internalAgentType: c.internalAgentType,
     internalAgentValue: c.internalAgentValue,
+    internalAgentName: c.internalAgentName ?? '',
   }
 }, { immediate: true })
 
@@ -94,6 +102,7 @@ function submitFinancialConfig() {
       internalAgentId: form.value.internalAgentId || null,
       internalAgentType: form.value.internalAgentType,
       internalAgentValue: form.value.internalAgentValue,
+      internalAgentName: form.value.internalAgentName || null,
     },
   })
 }
@@ -101,18 +110,61 @@ function submitFinancialConfig() {
 const goBack = () => router.push(`/alquileres/contratos/${id.value}`)
 const goToEdit = () => router.push(`/alquileres/contratos/${id.value}/editar`)
 
+const distributionReturnPath = computed(
+  () => `/alquileres/contratos/${id.value}/distribucion-financiera`,
+)
+
+function goToNewAgent(type: 'EXTERNAL' | 'INTERNAL', field: 'external' | 'internal') {
+  if (!id.value) return
+  router.push({
+    name: 'alquileres-agentes-nuevo',
+    query: {
+      agentType: type,
+      agentField: field,
+      returnTo: distributionReturnPath.value,
+    },
+  })
+}
+
+function applySelectedAgentFromQuery() {
+  const agentId = route.query.selectedAgentId
+  const field = route.query.agentField
+  if (typeof agentId !== 'string' || !agentId) return
+
+  if (field === 'external') {
+    const agent = externalAgentsList.value.find((a) => a.id === agentId)
+    form.value.externalAgentId = agentId
+    if (agent) form.value.externalAgentName = agent.fullName
+  } else if (field === 'internal') {
+    const agent = internalAgentsList.value.find((a) => a.id === agentId)
+    form.value.internalAgentId = agentId
+    if (agent) form.value.internalAgentName = agent.fullName
+  }
+
+  router.replace({ path: route.path })
+}
+
+onMounted(async () => {
+  const agentId = route.query.selectedAgentId
+  if (typeof agentId !== 'string' || !agentId) return
+  const field = route.query.agentField
+  if (field === 'external') await refetchExternalAgents()
+  else if (field === 'internal') await refetchInternalAgents()
+  applySelectedAgentFromQuery()
+})
+
 const expenseTypeOptions = [
   { value: 'FIXED', label: 'Monto fijo' },
   { value: 'PERCENT', label: 'Porcentaje' },
 ]
-const internalAgentOptions = computed(() => {
-  const list = usersList.value ?? []
-  return [{ value: '', label: 'Ninguno' }, ...list.map((u) => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))]
-})
 const internalAgentIdModel = computed({
   get: () => form.value.internalAgentId ?? '',
   set: (v: string | null) => { form.value.internalAgentId = (v === null || v === '') ? '' : v },
 })
+const internalAgentOptions = computed(() => [
+  { value: '', label: 'Ninguno (nombre manual)' },
+  ...internalAgentsList.value.map((a) => ({ value: a.id, label: a.fullName })),
+])
 const externalAgentIdModel = computed({
   get: () => form.value.externalAgentId ?? '',
   set: (v: string | null) => { form.value.externalAgentId = (v === null || v === '') ? '' : v },
@@ -121,12 +173,6 @@ const externalAgentOptions = computed(() => [
   { value: '', label: 'Ninguno (nombre manual)' },
   ...externalAgentsList.value.map((a) => ({ value: a.id, label: a.fullName })),
 ])
-const selectedInternalUser = computed(() => {
-  const uid = form.value.internalAgentId
-  if (!uid) return null
-  return usersList.value?.find((u) => u.id === uid) ?? null
-})
-
 const upsertSuccess = computed(() => upsertFinancial.isSuccess.value)
 watch(upsertSuccess, (ok) => {
   if (ok) setTimeout(() => upsertFinancial.reset(), 3000)
@@ -186,14 +232,14 @@ watch(upsertSuccess, (ok) => {
 
     <template v-else>
       <div
-        v-if="usersQueryError || externalAgentsQueryError"
+        v-if="internalAgentsQueryError || externalAgentsQueryError"
         class="mb-5 rounded-xl border px-4 py-3 text-sm space-y-2"
         :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
       >
-        <p v-if="usersQueryError" class="flex flex-wrap items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
-          <span class="font-medium text-red-600">Usuarios (agente interno)</span>
-          <span class="text-xs flex-1 min-w-0">{{ getApiErrorMessage(usersFetchError) }}</span>
-          <BaseButton variant="outline" size="sm" @click="() => refetchUsers()">Reintentar</BaseButton>
+        <p v-if="internalAgentsQueryError" class="flex flex-wrap items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
+          <span class="font-medium text-red-600">Agentes internos</span>
+          <span class="text-xs flex-1 min-w-0">{{ getApiErrorMessage(internalAgentsFetchError) }}</span>
+          <BaseButton variant="outline" size="sm" @click="() => refetchInternalAgents()">Reintentar</BaseButton>
         </p>
         <p v-if="externalAgentsQueryError" class="flex flex-wrap items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
           <span class="font-medium text-red-600">Agentes externos</span>
@@ -303,14 +349,26 @@ watch(upsertSuccess, (ok) => {
             class="p-5 rounded-xl"
             :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
           >
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                <AppIcon icon="lucide:user-round-cog" :size="17" color="var(--color-primary)" />
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                  <AppIcon icon="lucide:user-round-cog" :size="17" color="var(--color-primary)" />
+                </div>
+                <div>
+                  <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Agente externo</h2>
+                  <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Agente externo a la empresa</p>
+                </div>
               </div>
-              <div>
-                <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Agente externo</h2>
-                <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Agente externo a la empresa</p>
-              </div>
+              <BaseButton
+                type="button"
+                variant="outline"
+                size="sm"
+                class="flex items-center gap-1.5 shrink-0"
+                @click="goToNewAgent('EXTERNAL', 'external')"
+              >
+                <AppIcon icon="lucide:user-plus" :size="15" />
+                Nuevo agente externo
+              </BaseButton>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="sm:col-span-2">
@@ -350,31 +408,35 @@ watch(upsertSuccess, (ok) => {
             class="p-5 rounded-xl"
             :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
           >
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                <AppIcon icon="lucide:user-check" :size="17" color="var(--color-primary)" />
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
+                  <AppIcon icon="lucide:user-check" :size="17" color="var(--color-primary)" />
+                </div>
+                <div>
+                  <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Agente interno</h2>
+                  <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Agente de la empresa (catálogo o nombre manual)</p>
+                </div>
               </div>
-              <div>
-                <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Agente interno</h2>
-                <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Usuario de la empresa</p>
-              </div>
+              <BaseButton
+                type="button"
+                variant="outline"
+                size="sm"
+                class="flex items-center gap-1.5 shrink-0"
+                @click="goToNewAgent('INTERNAL', 'internal')"
+              >
+                <AppIcon icon="lucide:user-plus" :size="15" />
+                Nuevo agente interno
+              </BaseButton>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="sm:col-span-2">
                 <FormSelect
                   v-model="internalAgentIdModel"
-                  label="Seleccionar usuario interno"
+                  label="Seleccionar agente interno"
                   :options="internalAgentOptions"
                   placeholder="Ninguno"
                 />
-                <div
-                  v-if="selectedInternalUser"
-                  class="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-                  :style="{ backgroundColor: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }"
-                >
-                  <AppIcon icon="lucide:mail" :size="14" />
-                  <span>{{ selectedInternalUser.email }}</span>
-                </div>
               </div>
               <FormSelect
                 v-model="form.internalAgentType"
@@ -389,6 +451,14 @@ watch(upsertSuccess, (ok) => {
                 :label="form.internalAgentType === 'PERCENT' ? 'Comisión (%)' : 'Comisión (monto fijo)'"
                 placeholder="0"
               />
+              <div class="sm:col-span-2">
+                <FormInput
+                  v-model="form.internalAgentName"
+                  type="text"
+                  label="Nombre (si no elige agente del catálogo)"
+                  :placeholder="form.internalAgentId ? 'Se usará el nombre del agente seleccionado' : 'Ej: María López'"
+                />
+              </div>
             </div>
           </section>
 

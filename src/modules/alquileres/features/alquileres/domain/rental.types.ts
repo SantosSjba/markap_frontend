@@ -134,6 +134,7 @@ export interface RentalFinancialConfig {
   internalAgentId: string | null
   internalAgentType: FinancialValueType
   internalAgentValue: number
+  internalAgentName: string | null
   createdAt: string
   updatedAt: string
 }
@@ -164,4 +165,5 @@ export interface UpsertRentalFinancialConfigPayload {
   internalAgentId?: string | null
   internalAgentType?: FinancialValueType
   internalAgentValue?: number
+  internalAgentName?: string | null
 }

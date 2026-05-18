@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
 import { BaseButton, AppIcon, Badge } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
@@ -9,15 +9,29 @@ import { useCreateAgent } from '../../application/useAgents'
 import { useUsers } from '@modules/settings'
 import type { AgentType } from '../../domain/agent.types'
 
+const route = useRoute()
 const router = useRouter()
+
+/** Path para volver tras registrar (ej. distribución financiera de un contrato). */
+const returnTo = computed(() => {
+  const t = route.query.returnTo
+  return typeof t === 'string' ? t : ''
+})
+
+/** Campo a autoseleccionar al volver: external | internal */
+const agentField = computed(() => {
+  const f = route.query.agentField
+  return f === 'external' || f === 'internal' ? f : ''
+})
+
+const presetAgentType = computed((): AgentType | null => {
+  const t = route.query.agentType
+  return t === 'INTERNAL' || t === 'EXTERNAL' ? t : null
+})
 
 const schema = yup.object({
   type: yup.string().oneOf(['INTERNAL', 'EXTERNAL']).required(),
-  userId: yup.string().when('type', {
-    is: 'INTERNAL',
-    then: (s) => s.required('Seleccione el usuario'),
-    otherwise: (s) => s.trim(),
-  }),
+  userId: yup.string().trim().optional(),
   fullName: yup.string().required('El nombre es requerido').trim(),
   email: yup.string().trim().email('Email inválido').optional(),
   phone: yup.string().trim().optional(),
@@ -83,11 +97,18 @@ watch(
   },
 )
 
-const goBack = () => router.push('/alquileres/agentes')
+onMounted(() => {
+  if (presetAgentType.value) setFieldValue('type', presetAgentType.value)
+})
+
+const goBack = () => {
+  if (returnTo.value) router.push(returnTo.value)
+  else router.push('/alquileres/agentes')
+}
 
 const onSubmit = handleSubmit(async (formValues) => {
   try {
-    await createMutation.mutateAsync({
+    const data = await createMutation.mutateAsync({
       applicationSlug: 'alquileres',
       type: formValues.type,
       userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
@@ -97,7 +118,18 @@ const onSubmit = handleSubmit(async (formValues) => {
       documentTypeId: formValues.documentTypeId || null,
       documentNumber: formValues.documentNumber?.trim() || null,
     })
-    router.push('/alquileres/agentes')
+    await createMutation.invalidateList()
+    if (returnTo.value && data?.id) {
+      router.push({
+        path: returnTo.value,
+        query: {
+          selectedAgentId: data.id,
+          ...(agentField.value ? { agentField: agentField.value } : {}),
+        },
+      })
+    } else {
+      router.push('/alquileres/agentes')
+    }
   } catch {
     void 0
   }
@@ -148,8 +180,20 @@ const onSubmit = handleSubmit(async (formValues) => {
             </div>
           </div>
 
+          <div
+            v-if="presetAgentType"
+            class="mb-4 flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+            :style="{ backgroundColor: 'var(--color-primary)0d', border: '1px solid var(--color-primary)33' }"
+          >
+            <AppIcon icon="lucide:info" :size="15" color="var(--color-primary)" />
+            <span :style="{ color: 'var(--color-text-secondary)' }">
+              Registrando agente
+              <strong :style="{ color: 'var(--color-text-primary)' }">{{ presetAgentType === 'INTERNAL' ? 'interno' : 'externo' }}</strong>
+            </span>
+          </div>
+
           <!-- Selector de tipo como botones -->
-          <div class="grid grid-cols-2 gap-3 mb-4">
+          <div v-if="!presetAgentType" class="grid grid-cols-2 gap-3 mb-4">
             <button
               type="button"
               class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
@@ -194,8 +238,8 @@ const onSubmit = handleSubmit(async (formValues) => {
           <div v-if="values.type === 'INTERNAL'" class="space-y-3">
             <FormSelect
               v-bind="userIdBinds"
-              label="Seleccionar usuario del sistema"
-              :options="userOptions"
+              label="Vincular usuario del sistema (opcional)"
+              :options="[{ value: '', label: 'Ninguno' }, ...userOptions]"
               placeholder="Seleccionar usuario..."
               :error="errors.userId"
             />
