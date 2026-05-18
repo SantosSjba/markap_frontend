@@ -41,7 +41,12 @@ export const rentalsApiRepository: RentalsRepository = {
       if (data.paymentDueDay != null) form.append('paymentDueDay', String(data.paymentDueDay))
       if (data.notes != null) form.append('notes', data.notes)
       if (data.status != null) form.append('status', data.status)
-      if (data.enableAlerts != null) form.append('enableAlerts', String(data.enableAlerts))
+      if (data.enableExpirationAlerts != null) {
+        form.append('enableExpirationAlerts', String(data.enableExpirationAlerts))
+      }
+      if (data.enableCollectionAlerts != null) {
+        form.append('enableCollectionAlerts', String(data.enableCollectionAlerts))
+      }
       if (files.contractFile) form.append('contractFile', files.contractFile)
       if (files.deliveryActFile) form.append('deliveryActFile', files.deliveryActFile)
       return apiClient
@@ -102,7 +107,8 @@ export const rentalsApiRepository: RentalsRepository = {
     if (data.securityDeposit != null) form.append('securityDeposit', String(data.securityDeposit))
     form.append('paymentDueDay', String(data.paymentDueDay))
     if (data.notes != null) form.append('notes', data.notes)
-    form.append('enableAlerts', String(data.enableAlerts ?? true))
+    form.append('enableExpirationAlerts', String(data.enableExpirationAlerts ?? true))
+    form.append('enableCollectionAlerts', String(data.enableCollectionAlerts ?? true))
     if (files?.contractFile) form.append('contractFile', files.contractFile)
     if (files?.deliveryActFile) form.append('deliveryActFile', files.deliveryActFile)
     return apiClient

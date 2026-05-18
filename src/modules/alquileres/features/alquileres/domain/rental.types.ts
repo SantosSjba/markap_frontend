@@ -9,7 +9,8 @@ export interface CreateRentalPayload {
   securityDeposit?: number | null
   paymentDueDay: number
   notes?: string | null
-  enableAlerts?: boolean
+  enableExpirationAlerts?: boolean
+  enableCollectionAlerts?: boolean
 }
 
 export interface RentalCreated {
@@ -25,7 +26,8 @@ export interface RentalCreated {
   paymentDueDay: number
   notes: string | null
   status: string
-  enableAlerts: boolean
+  enableExpirationAlerts: boolean
+  enableCollectionAlerts: boolean
 }
 
 export interface RentalListItem {
@@ -89,7 +91,8 @@ export interface RentalDetail {
   paymentDueDay: number
   notes: string | null
   status: string
-  enableAlerts: boolean
+  enableExpirationAlerts: boolean
+  enableCollectionAlerts: boolean
   code: string
   property: {
     id: string
@@ -113,7 +116,8 @@ export interface UpdateRentalPayload {
   paymentDueDay?: number
   notes?: string | null
   status?: 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
-  enableAlerts?: boolean
+  enableExpirationAlerts?: boolean
+  enableCollectionAlerts?: boolean
 }
 
 export type FinancialValueType = 'PERCENT' | 'FIXED'

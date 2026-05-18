@@ -8,6 +8,7 @@ import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useRental, useUpdateRental } from '../../application/useRentals'
 import { getAttachmentUrl } from '../../infrastructure/http/rental-attachment-url'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import RentalContractAlertSettings from '../components/RentalContractAlertSettings.vue'
 
 type EditarRentalFormValues = {
   startDate: string
@@ -18,7 +19,8 @@ type EditarRentalFormValues = {
   paymentDueDay: number
   notes: string
   status: string
-  enableAlerts: boolean
+  enableExpirationAlerts: boolean
+  enableCollectionAlerts: boolean
 }
 
 const route = useRoute()
@@ -46,7 +48,8 @@ const schema = yup.object({
     .required(),
   notes: yup.string().trim(),
   status: yup.string().oneOf(['ACTIVE', 'EXPIRED', 'CANCELLED']).required(),
-  enableAlerts: yup.boolean().required(),
+  enableExpirationAlerts: yup.boolean().required(),
+  enableCollectionAlerts: yup.boolean().required(),
 })
 
 const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm<EditarRentalFormValues>({
@@ -60,7 +63,8 @@ const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, reset
     paymentDueDay: 5,
     notes: '',
     status: 'ACTIVE',
-    enableAlerts: true,
+    enableExpirationAlerts: true,
+    enableCollectionAlerts: true,
   },
 })
 
@@ -98,7 +102,8 @@ watch(
         paymentDueDay: r.paymentDueDay ?? 5,
         notes: r.notes ?? '',
         status: r.status ?? 'ACTIVE',
-        enableAlerts: r.enableAlerts ?? true,
+        enableExpirationAlerts: r.enableExpirationAlerts ?? true,
+        enableCollectionAlerts: r.enableCollectionAlerts ?? true,
       },
     })
   },
@@ -140,7 +145,8 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
         paymentDueDay: formValues.paymentDueDay,
         notes: formValues.notes?.trim() || null,
         status: formValues.status as 'ACTIVE' | 'EXPIRED' | 'CANCELLED',
-        enableAlerts: formValues.enableAlerts,
+        enableExpirationAlerts: formValues.enableExpirationAlerts,
+        enableCollectionAlerts: formValues.enableCollectionAlerts,
       },
       files: {
         contractFile: contractFile.value ?? undefined,
@@ -429,52 +435,12 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
           </div>
         </section>
 
-        <!-- Alertas y Notificaciones -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-        >
-          <div class="flex items-center gap-2 mb-1">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:bell" :size="17" color="var(--color-primary)" />
-            </div>
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Alertas y Notificaciones</h2>
-          </div>
-          <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-            Controla si recibirás alertas para este contrato
-          </p>
-          <div
-            class="flex items-center justify-between p-4 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
-          >
-            <div class="flex items-center gap-3">
-              <AppIcon
-                :icon="values.enableAlerts ? 'lucide:bell-ring' : 'lucide:bell-off'"
-                :size="18"
-                :color="values.enableAlerts ? 'var(--color-primary)' : 'var(--color-text-muted)'"
-              />
-              <div>
-                <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Recibir alertas para este contrato</p>
-                <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
-                  Según la configuración global de alertas del sistema
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              :aria-checked="values.enableAlerts"
-              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-              :style="{ backgroundColor: values.enableAlerts ? 'var(--color-primary)' : 'var(--color-border)' }"
-              @click="setFieldValue('enableAlerts', !values.enableAlerts)"
-            >
-              <span
-                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                :style="{ transform: values.enableAlerts ? 'translateX(20px)' : 'translateX(0)' }"
-              />
-            </button>
-          </div>
-        </section>
+        <RentalContractAlertSettings
+          :enable-expiration-alerts="values.enableExpirationAlerts"
+          :enable-collection-alerts="values.enableCollectionAlerts"
+          @update:enable-expiration-alerts="setFieldValue('enableExpirationAlerts', $event)"
+          @update:enable-collection-alerts="setFieldValue('enableCollectionAlerts', $event)"
+        />
 
         <!-- Observaciones -->
         <section

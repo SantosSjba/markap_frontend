@@ -9,6 +9,7 @@ import { useForm, toTypedSchema } from '@shared/components/forms'
 import { usePropertiesList } from '@modules/alquileres/features/propiedades'
 import { useClientsList } from '@modules/alquileres/features/clientes'
 import { useCreateRental } from '../../application/useRentals'
+import RentalContractAlertSettings from '../components/RentalContractAlertSettings.vue'
 import type { PropertyListItem } from '@modules/alquileres/features/propiedades'
 import type { ClientListItem } from '@modules/alquileres/features/clientes'
 
@@ -22,7 +23,8 @@ type NuevoRentalFormValues = {
   securityDeposit: string | number
   paymentDueDay: number
   notes: string
-  enableAlerts: boolean
+  enableExpirationAlerts: boolean
+  enableCollectionAlerts: boolean
 }
 
 const route = useRoute()
@@ -63,7 +65,8 @@ const schema = yup.object({
     .max(28)
     .required(),
   notes: yup.string().trim(),
-  enableAlerts: yup.boolean().required(),
+  enableExpirationAlerts: yup.boolean().required(),
+  enableCollectionAlerts: yup.boolean().required(),
 })
 
 const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm<NuevoRentalFormValues>({
@@ -78,7 +81,8 @@ const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = us
     securityDeposit: '',
     paymentDueDay: 5,
     notes: '',
-    enableAlerts: true,
+    enableExpirationAlerts: true,
+    enableCollectionAlerts: true,
   },
 })
 
@@ -191,7 +195,8 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
         securityDeposit: toNum(formValues.securityDeposit),
         paymentDueDay: formValues.paymentDueDay,
         notes: formValues.notes?.trim() || null,
-        enableAlerts: formValues.enableAlerts,
+        enableExpirationAlerts: formValues.enableExpirationAlerts,
+        enableCollectionAlerts: formValues.enableCollectionAlerts,
       },
       files: {
         contractFile: contractFile.value ?? undefined,
@@ -366,40 +371,12 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
           </div>
         </section>
 
-        <!-- Notificaciones -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-        >
-          <div class="flex items-center gap-2 mb-1">
-            <AppIcon icon="lucide:bell" :size="20" color="var(--color-primary)" />
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Alertas y Notificaciones</h2>
-          </div>
-          <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-            Controla si recibirás alertas para este contrato (vencimientos, pagos)
-          </p>
-          <div class="flex items-center justify-between p-4 rounded-lg" :style="{ backgroundColor: 'var(--color-surface-elevated)' }">
-            <div>
-              <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Recibir alertas para este contrato</p>
-              <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
-                Según la configuración global de alertas del sistema
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              :aria-checked="values.enableAlerts"
-              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-              :style="{ backgroundColor: values.enableAlerts ? 'var(--color-primary)' : 'var(--color-border)' }"
-              @click="setFieldValue('enableAlerts', !values.enableAlerts)"
-            >
-              <span
-                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                :style="{ transform: values.enableAlerts ? 'translateX(20px)' : 'translateX(0)' }"
-              />
-            </button>
-          </div>
-        </section>
+        <RentalContractAlertSettings
+          :enable-expiration-alerts="values.enableExpirationAlerts"
+          :enable-collection-alerts="values.enableCollectionAlerts"
+          @update:enable-expiration-alerts="setFieldValue('enableExpirationAlerts', $event)"
+          @update:enable-collection-alerts="setFieldValue('enableCollectionAlerts', $event)"
+        />
 
         <!-- Observaciones -->
         <section

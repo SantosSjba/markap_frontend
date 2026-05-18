@@ -12,8 +12,23 @@ export function mapListRentalsResponse(body: ListRentalsResponse): ListRentalsRe
   return body
 }
 
+type RentalAlertFields = {
+  enableExpirationAlerts?: boolean
+  enableCollectionAlerts?: boolean
+  enableAlerts?: boolean
+}
+
+function mapRentalAlertFields<T extends RentalAlertFields>(body: T): T {
+  const legacy = body.enableAlerts
+  return {
+    ...body,
+    enableExpirationAlerts: body.enableExpirationAlerts ?? legacy ?? true,
+    enableCollectionAlerts: body.enableCollectionAlerts ?? legacy ?? true,
+  }
+}
+
 export function mapRentalDetail(body: RentalDetail): RentalDetail {
-  return body
+  return mapRentalAlertFields(body)
 }
 
 export function mapRentalStats(body: RentalStats): RentalStats {
@@ -21,7 +36,7 @@ export function mapRentalStats(body: RentalStats): RentalStats {
 }
 
 export function mapRentalCreated(body: RentalCreated): RentalCreated {
-  return body
+  return mapRentalAlertFields(body)
 }
 
 export function mapRentalFinancialConfig(body: RentalFinancialConfig | null): RentalFinancialConfig | null {
