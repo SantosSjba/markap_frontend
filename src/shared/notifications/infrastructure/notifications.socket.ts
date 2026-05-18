@@ -23,6 +23,9 @@ export function connectNotificationsSocket(
       auth: { token: accessToken },
       path: '/socket.io',
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
     })
     const s = socket as {
       on: (event: string, cb: (p: NotificationPayload) => void) => void
