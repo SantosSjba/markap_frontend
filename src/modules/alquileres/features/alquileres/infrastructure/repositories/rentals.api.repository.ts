@@ -47,6 +47,9 @@ export const rentalsApiRepository: RentalsRepository = {
       if (data.enableCollectionAlerts != null) {
         form.append('enableCollectionAlerts', String(data.enableCollectionAlerts))
       }
+      if (data.tenantIds?.length) {
+        form.append('tenantIds', JSON.stringify(data.tenantIds.filter(Boolean)))
+      }
       if (files.contractFile) form.append('contractFile', files.contractFile)
       if (files.deliveryActFile) form.append('deliveryActFile', files.deliveryActFile)
       return apiClient
@@ -99,7 +102,8 @@ export const rentalsApiRepository: RentalsRepository = {
     const form = new FormData()
     form.append('applicationSlug', data.applicationSlug ?? ALQUILERES_APP_SLUG)
     form.append('propertyId', data.propertyId)
-    form.append('tenantId', data.tenantId)
+    const tenantIds = data.tenantIds.filter(Boolean)
+    form.append('tenantIds', JSON.stringify(tenantIds))
     form.append('startDate', data.startDate)
     form.append('endDate', data.endDate)
     form.append('currency', data.currency)

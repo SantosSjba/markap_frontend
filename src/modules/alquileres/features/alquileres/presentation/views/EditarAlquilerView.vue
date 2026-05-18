@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
 import { BaseButton, AppIcon } from '@shared/components'
@@ -9,6 +9,9 @@ import { useRental, useUpdateRental } from '../../application/useRentals'
 import { getAttachmentUrl } from '../../infrastructure/http/rental-attachment-url'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import RentalContractAlertSettings from '../components/RentalContractAlertSettings.vue'
+import RentalTenantsSection from '../components/RentalTenantsSection.vue'
+import { useClientsList } from '@modules/alquileres/features/clientes'
+import type { ClientListItem } from '@modules/alquileres/features/clientes'
 
 type EditarRentalFormValues = {
   startDate: string
@@ -86,6 +89,23 @@ const {
 } = useRental(id)
 const updateMutation = useUpdateRental()
 
+const listTenantsParams = ref({
+  applicationSlug: 'alquileres' as const,
+  page: 1,
+  limit: 200,
+  clientType: 'TENANT' as const,
+})
+const { data: tenantsData, refetch: refetchTenants } = useClientsList(listTenantsParams)
+const tenantIds = ref<string[]>([''])
+const tenantIdsError = ref<string | undefined>()
+
+const tenantOptions = computed(() =>
+  ((tenantsData.value?.data ?? []) as ClientListItem[]).map((c) => ({
+    value: c.id,
+    label: c.fullName,
+  })),
+)
+
 const loading = computed(() => loadingRental.value)
 
 watch(
@@ -106,9 +126,26 @@ watch(
         enableCollectionAlerts: r.enableCollectionAlerts ?? true,
       },
     })
+    const ids =
+      r.tenants?.length ? r.tenants.map((t) => t.id) : r.tenant?.id ? [r.tenant.id] : []
+    tenantIds.value = ids.length ? ids : ['']
   },
   { immediate: true },
 )
+
+function validateTenantIds(): boolean {
+  const ids = tenantIds.value.filter(Boolean)
+  if (ids.length === 0) {
+    tenantIdsError.value = 'Seleccione al menos un inquilino'
+    return false
+  }
+  if (new Set(ids).size !== ids.length) {
+    tenantIdsError.value = 'No repita el mismo inquilino'
+    return false
+  }
+  tenantIdsError.value = undefined
+  return true
+}
 
 const currencyOptions = [
   { value: 'PEN', label: 'Soles (S/)' },
@@ -126,6 +163,20 @@ const statusOptions = [
 
 const goBack = () => router.push(`/alquileres/contratos/${id.value}`)
 
+onMounted(async () => {
+  const clientId = route.query.selectedClientId
+  if (typeof clientId !== 'string' || !clientId) return
+  await refetchTenants()
+  const indexRaw = route.query.tenantIndex
+  const index =
+    typeof indexRaw === 'string' && indexRaw !== '' ? Number.parseInt(indexRaw, 10) : 0
+  const next = [...tenantIds.value]
+  const idx = Number.isFinite(index) && index >= 0 ? index : 0
+  while (next.length <= idx) next.push('')
+  next[idx] = clientId
+  tenantIds.value = next
+})
+
 const toNum = (v: string | number | null | undefined): number | null => {
   if (v === '' || v === undefined || v === null) return null
   const n = Number(v)
@@ -133,6 +184,7 @@ const toNum = (v: string | number | null | undefined): number | null => {
 }
 
 const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
+  if (!validateTenantIds()) return
   try {
     await updateMutation.mutateAsync({
       id: id.value,
@@ -147,6 +199,7 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
         status: formValues.status as 'ACTIVE' | 'EXPIRED' | 'CANCELLED',
         enableExpirationAlerts: formValues.enableExpirationAlerts,
         enableCollectionAlerts: formValues.enableCollectionAlerts,
+        tenantIds: tenantIds.value.filter(Boolean),
       },
       files: {
         contractFile: contractFile.value ?? undefined,
@@ -222,7 +275,7 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
               <AppIcon icon="lucide:building-2" :size="17" color="var(--color-primary)" />
             </div>
             <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-              Propiedad e inquilino
+              Propiedad
             </h2>
             <span
               class="ml-auto text-xs px-2 py-0.5 rounded-full font-medium"
@@ -231,31 +284,26 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
               Solo lectura
             </span>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div
-              class="flex items-center gap-3 p-3 rounded-lg"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
-            >
-              <AppIcon icon="lucide:map-pin" :size="16" color="var(--color-text-muted)" />
-              <div class="min-w-0">
-                <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Propiedad</p>
-                <p class="text-sm font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">
-                  {{ rental?.property?.code }} – {{ rental?.property?.addressLine }}
-                </p>
-              </div>
-            </div>
-            <div
-              class="flex items-center gap-3 p-3 rounded-lg"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
-            >
-              <AppIcon icon="lucide:user" :size="16" color="var(--color-text-muted)" />
-              <div class="min-w-0">
-                <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Inquilino</p>
-                <p class="text-sm font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">{{ rental?.tenant?.fullName }}</p>
-              </div>
+          <div
+            class="flex items-center gap-3 p-3 rounded-lg"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+          >
+            <AppIcon icon="lucide:map-pin" :size="16" color="var(--color-text-muted)" />
+            <div class="min-w-0">
+              <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Propiedad</p>
+              <p class="text-sm font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">
+                {{ rental?.property?.code }} – {{ rental?.property?.addressLine }}
+              </p>
             </div>
           </div>
         </section>
+
+        <RentalTenantsSection
+          v-model:tenant-ids="tenantIds"
+          :tenant-options="tenantOptions"
+          :error="tenantIdsError"
+          :return-to="`/alquileres/contratos/${id}/editar`"
+        />
 
         <!-- Fechas y condiciones -->
         <section
@@ -483,7 +531,16 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
                 <AppIcon icon="lucide:user" :size="13" />
                 Inquilino
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ rental?.tenant?.fullName }}</dd>
+              <dd :style="{ color: 'var(--color-text-primary)' }">
+                {{
+                  (rental?.tenants?.length
+                    ? rental.tenants.map((t) => t.fullName)
+                    : rental?.tenant?.fullName
+                      ? [rental.tenant.fullName]
+                      : []
+                  ).join(', ') || '—'
+                }}
+              </dd>
             </div>
             <div class="border-t pt-3" :style="{ borderColor: 'var(--color-border)' }">
               <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">

@@ -1,7 +1,12 @@
+export interface RentalTenantRef {
+  id: string
+  fullName: string
+}
+
 export interface CreateRentalPayload {
   applicationSlug?: string
   propertyId: string
-  tenantId: string
+  tenantIds: string[]
   startDate: string
   endDate: string
   currency: string
@@ -102,6 +107,7 @@ export interface RentalDetail {
     owner: { id: string; fullName: string }
   }
   tenant: { id: string; fullName: string }
+  tenants: RentalTenantRef[]
   hasContract: boolean
   hasDeliveryAct: boolean
   attachments?: RentalAttachment[]
@@ -118,6 +124,7 @@ export interface UpdateRentalPayload {
   status?: 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
   enableExpirationAlerts?: boolean
   enableCollectionAlerts?: boolean
+  tenantIds?: string[]
 }
 
 export type FinancialValueType = 'PERCENT' | 'FIXED'

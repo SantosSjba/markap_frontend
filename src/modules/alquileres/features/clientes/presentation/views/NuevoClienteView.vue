@@ -204,7 +204,16 @@ const onSubmit = handleSubmit(async (formValues) => {
     })
     await createMutation.invalidateList()
     if (returnTo.value && data?.id) {
-      router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
+      const tenantIndex = route.query.tenantIndex
+      router.push({
+        path: returnTo.value,
+        query: {
+          selectedClientId: data.id,
+          ...(typeof tenantIndex === 'string' && tenantIndex !== ''
+            ? { tenantIndex }
+            : {}),
+        },
+      })
     } else {
       router.push('/alquileres/clientes')
     }

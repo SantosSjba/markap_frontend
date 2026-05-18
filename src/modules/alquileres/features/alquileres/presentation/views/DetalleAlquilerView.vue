@@ -175,7 +175,16 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                 </div>
                 <div class="min-w-0">
                   <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Inquilino</p>
-                  <p class="font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">{{ rental.tenant?.fullName }}</p>
+                  <p class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                    {{
+                      (rental.tenants?.length
+                        ? rental.tenants.map((t) => t.fullName)
+                        : rental.tenant?.fullName
+                          ? [rental.tenant.fullName]
+                          : []
+                      ).join(', ') || '—'
+                    }}
+                  </p>
                 </div>
               </div>
               <div

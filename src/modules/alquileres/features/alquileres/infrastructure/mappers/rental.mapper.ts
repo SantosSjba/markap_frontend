@@ -28,7 +28,14 @@ function mapRentalAlertFields<T extends RentalAlertFields>(body: T): T {
 }
 
 export function mapRentalDetail(body: RentalDetail): RentalDetail {
-  return mapRentalAlertFields(body)
+  const mapped = mapRentalAlertFields(body)
+  const tenants =
+    mapped.tenants?.length
+      ? mapped.tenants
+      : mapped.tenant
+        ? [mapped.tenant]
+        : []
+  return { ...mapped, tenants }
 }
 
 export function mapRentalStats(body: RentalStats): RentalStats {

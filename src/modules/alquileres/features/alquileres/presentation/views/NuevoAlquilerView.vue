@@ -10,12 +10,12 @@ import { usePropertiesList } from '@modules/alquileres/features/propiedades'
 import { useClientsList } from '@modules/alquileres/features/clientes'
 import { useCreateRental } from '../../application/useRentals'
 import RentalContractAlertSettings from '../components/RentalContractAlertSettings.vue'
+import RentalTenantsSection from '../components/RentalTenantsSection.vue'
 import type { PropertyListItem } from '@modules/alquileres/features/propiedades'
 import type { ClientListItem } from '@modules/alquileres/features/clientes'
 
 type NuevoRentalFormValues = {
   propertyId: string
-  tenantId: string
   startDate: string
   endDate: string
   currency: string
@@ -49,7 +49,6 @@ const deliveryActFile = ref<File | null>(null)
 
 const schema = yup.object({
   propertyId: yup.string().required('Seleccione la propiedad'),
-  tenantId: yup.string().required('Seleccione el inquilino'),
   startDate: yup.string().required('La fecha de inicio es requerida'),
   endDate: yup.string().required('La fecha de fin es requerida'),
   currency: yup.string().required(),
@@ -73,7 +72,6 @@ const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = us
   validationSchema: toTypedSchema(schema) as never,
   initialValues: {
     propertyId: '',
-    tenantId: '',
     startDate: '',
     endDate: '',
     currency: 'PEN',
@@ -87,8 +85,9 @@ const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = us
 })
 
 const propertyIdBinds = defineComponentBinds('propertyId')
-const tenantIdBinds = defineComponentBinds('tenantId')
 const startDateBinds = defineComponentBinds('startDate')
+const tenantIds = ref<string[]>([''])
+const tenantIdsError = ref<string | undefined>()
 const endDateBinds = defineComponentBinds('endDate')
 const currencyBinds = defineComponentBinds('currency')
 const monthlyAmountBinds = defineComponentBinds('monthlyAmount')
@@ -145,10 +144,27 @@ watch(
     if (p && p.monthlyRent != null) setFieldValue('monthlyAmount', p.monthlyRent)
   },
 )
-const selectedTenantLabel = computed(() => {
-  const t = (tenants.value as ClientListItem[]).find((x) => x.id === values.tenantId)
-  return t ? t.fullName : 'Sin seleccionar'
+const selectedTenantsLabel = computed(() => {
+  const names = tenantIds.value
+    .filter(Boolean)
+    .map((id) => (tenants.value as ClientListItem[]).find((x) => x.id === id)?.fullName)
+    .filter(Boolean)
+  return names.length ? names.join(', ') : 'Sin seleccionar'
 })
+
+function validateTenantIds(): boolean {
+  const ids = tenantIds.value.filter(Boolean)
+  if (ids.length === 0) {
+    tenantIdsError.value = 'Seleccione al menos un inquilino'
+    return false
+  }
+  if (new Set(ids).size !== ids.length) {
+    tenantIdsError.value = 'No repita el mismo inquilino'
+    return false
+  }
+  tenantIdsError.value = undefined
+  return true
+}
 const vigenciaLabel = computed(() => {
   if (!values.startDate || !values.endDate) return 'Sin definir'
   return `${values.startDate} - ${values.endDate}`
@@ -161,18 +177,18 @@ const montoLabel = computed(() => {
 })
 
 const goBack = () => router.push('/alquileres/contratos')
-const goToNewTenant = () => {
-  router.push({
-    name: 'alquileres-clientes-nuevo',
-    query: { clientType: 'TENANT', returnTo: '/alquileres/contratos/nuevo' },
-  })
-}
 onMounted(async () => {
   const id = route.query.selectedClientId
-  if (typeof id === 'string' && id) {
-    await refetchTenants()
-    setFieldValue('tenantId', id)
-  }
+  if (typeof id !== 'string' || !id) return
+  await refetchTenants()
+  const indexRaw = route.query.tenantIndex
+  const index =
+    typeof indexRaw === 'string' && indexRaw !== '' ? Number.parseInt(indexRaw, 10) : 0
+  const next = [...tenantIds.value]
+  const idx = Number.isFinite(index) && index >= 0 ? index : 0
+  while (next.length <= idx) next.push('')
+  next[idx] = id
+  tenantIds.value = next
 })
 
 const toNum = (v: string | number | null | undefined): number | null => {
@@ -182,12 +198,13 @@ const toNum = (v: string | number | null | undefined): number | null => {
 }
 
 const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
+  if (!validateTenantIds()) return
   try {
     await createRentalMutation.mutateAsync({
       data: {
         applicationSlug: 'alquileres',
         propertyId: formValues.propertyId,
-        tenantId: formValues.tenantId,
+        tenantIds: tenantIds.value.filter(Boolean),
         startDate: formValues.startDate,
         endDate: formValues.endDate,
         currency: formValues.currency,
@@ -260,35 +277,12 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
           />
         </section>
 
-        <!-- Inquilino -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
-        >
-          <div class="flex items-center gap-2 mb-2">
-            <AppIcon icon="lucide:user" :size="20" color="var(--color-primary)" />
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Inquilino</h2>
-          </div>
-          <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-            Selecciona o registra al Inquilino
-          </p>
-          <div class="flex flex-wrap items-end gap-3">
-            <div class="flex-1 min-w-[200px]">
-              <FormSelect
-                v-bind="tenantIdBinds"
-                label="Seleccionar Inquilino"
-                placeholder="Seleccionar Inquilino"
-                :options="tenantOptions"
-                :error="errors.tenantId"
-                required
-              />
-            </div>
-            <BaseButton type="button" variant="outline" class="flex items-center gap-2" @click="goToNewTenant">
-              <AppIcon icon="lucide:user-plus" :size="20" color="currentColor" />
-              Registrar nuevo Inquilino
-            </BaseButton>
-          </div>
-        </section>
+        <RentalTenantsSection
+          v-model:tenant-ids="tenantIds"
+          :tenant-options="tenantOptions"
+          :error="tenantIdsError"
+          return-to="/alquileres/contratos/nuevo"
+        />
 
         <!-- Fechas y Condiciones -->
         <section
@@ -408,7 +402,7 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
             </div>
             <div>
               <dt class="font-medium" :style="{ color: 'var(--color-text-muted)' }">Inquilino</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ selectedTenantLabel }}</dd>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ selectedTenantsLabel }}</dd>
             </div>
             <div>
               <dt class="font-medium" :style="{ color: 'var(--color-text-muted)' }">Vigencia</dt>
