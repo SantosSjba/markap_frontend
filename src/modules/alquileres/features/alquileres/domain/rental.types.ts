@@ -81,6 +81,8 @@ export interface RentalAttachment {
   type: 'CONTRACT' | 'DELIVERY_ACT'
   filePath: string
   originalFileName: string
+  archivoId?: string | null
+  downloadUrl?: string | null
 }
 
 export interface RentalDetail {

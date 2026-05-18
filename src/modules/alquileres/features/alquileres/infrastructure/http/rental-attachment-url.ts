@@ -1,6 +1,15 @@
-/** URL pública de un adjunto a partir de su filePath relativo. */
-export function getAttachmentUrl(filePath: string): string {
-  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
-  const serverRoot = apiBase.replace(/\/api$/, '')
-  return `${serverRoot}/uploads/${filePath}`
+import { resolveFileDownloadUrl } from '@shared/utils/archivo-url'
+
+/** URL de descarga de adjunto de alquiler (MinIO o legacy). */
+export function getAttachmentUrl(
+  filePathOrAttachment: string | {
+    filePath: string
+    downloadUrl?: string | null
+    archivoId?: string | null
+  },
+): string {
+  if (typeof filePathOrAttachment === 'string') {
+    return resolveFileDownloadUrl({ filePath: filePathOrAttachment })
+  }
+  return resolveFileDownloadUrl(filePathOrAttachment)
 }

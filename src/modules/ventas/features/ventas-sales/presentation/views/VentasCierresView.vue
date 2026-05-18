@@ -28,6 +28,7 @@ import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import { PAYMENT_TYPE_OPTIONS } from '../../domain/pipeline.constants'
+import { resolveFileDownloadUrl } from '@shared/utils/archivo-url'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const ITEMS = 10
@@ -763,7 +764,17 @@ function runAlerts(dryRun: boolean) {
           </div>
           <ul v-else class="space-y-1 text-sm">
             <li v-for="d in documentsData ?? []" :key="d.id" class="flex items-center justify-between gap-2">
-              <span>{{ d.docType }} · {{ d.filePath }}</span>
+              <span>{{ d.docType }}</span>
+              <a
+                v-if="resolveFileDownloadUrl(d) !== '#'"
+                :href="resolveFileDownloadUrl(d)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-sm shrink-0"
+                :style="{ color: 'var(--color-primary)' }"
+              >
+                Ver archivo
+              </a>
             </li>
             <li v-if="!(documentsData ?? []).length" class="opacity-70">Sin documentos cargados.</li>
           </ul>

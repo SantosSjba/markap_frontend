@@ -443,7 +443,7 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                 </div>
                 <a
                   v-if="rental.attachments?.find(a => a.type === 'CONTRACT')"
-                  :href="getAttachmentUrl(rental.attachments.find(a => a.type === 'CONTRACT')!.filePath)"
+                  :href="getAttachmentUrl(rental.attachments.find(a => a.type === 'CONTRACT')!)"
                   target="_blank"
                   download
                   class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md transition-colors"
@@ -482,7 +482,7 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                 </div>
                 <a
                   v-if="rental.attachments?.find(a => a.type === 'DELIVERY_ACT')"
-                  :href="getAttachmentUrl(rental.attachments.find(a => a.type === 'DELIVERY_ACT')!.filePath)"
+                  :href="getAttachmentUrl(rental.attachments.find(a => a.type === 'DELIVERY_ACT')!)"
                   target="_blank"
                   download
                   class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md transition-colors"

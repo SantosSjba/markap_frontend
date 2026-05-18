@@ -114,6 +114,8 @@ export interface SaleComplianceDocument {
   id: string
   docType: string
   filePath: string
+  archivoId?: string | null
+  downloadUrl?: string | null
   issuedAt: string | null
   verifiedAt: string | null
   verifiedBy: string | null
