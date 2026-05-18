@@ -16,6 +16,13 @@ export interface Province {
   departmentId: string
 }
 
+export interface LocationCustom {
+  country: string
+  department: string
+  province: string
+  district: string
+}
+
 export interface District {
   id: string
   name: string
@@ -47,6 +54,7 @@ export interface CreateClientPayload {
     addressLine: string
     districtId: string
     reference?: string | null
+    locationCustom?: LocationCustom | null
   }
 }
 
@@ -75,6 +83,7 @@ export interface ClientDetail {
     addressLine: string
     reference: string | null
     districtId: string
+    locationCustom: LocationCustom | null
     district: District
   } | null
   assignedAgent?: { id: string; fullName: string } | null
@@ -97,6 +106,7 @@ export interface UpdateClientPayload {
     addressLine?: string
     districtId?: string
     reference?: string | null
+    locationCustom?: LocationCustom | null
   }
 }
 
