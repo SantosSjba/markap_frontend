@@ -13,6 +13,7 @@ import RentalContractAlertSettings from '../components/RentalContractAlertSettin
 import RentalTenantsSection from '../components/RentalTenantsSection.vue'
 import type { PropertyListItem } from '@modules/alquileres/features/propiedades'
 import type { ClientListItem } from '@modules/alquileres/features/clientes'
+import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
 
 type NuevoRentalFormValues = {
   propertyId: string
@@ -220,8 +221,14 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
         deliveryActFile: deliveryActFile.value ?? undefined,
       },
     })
-    await createRentalMutation.invalidateList()
-    router.push('/alquileres/contratos')
+    contractFile.value = null
+    deliveryActFile.value = null
+    tenantIds.value = ['']
+
+    await navigateAfterAlquileresSave(router, {
+      listPath: '/alquileres/contratos',
+      invalidate: () => createRentalMutation.invalidateList(),
+    })
   } catch {
     void 0
   }

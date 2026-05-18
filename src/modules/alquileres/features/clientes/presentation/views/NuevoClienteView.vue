@@ -14,6 +14,7 @@ import {
   mergeDepartmentOptions,
 } from '../../constants/ubigeo-other'
 import { useClientAddressUbigeo } from '../../composables/useClientAddressUbigeo'
+import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
 import type { DocumentType } from '../../domain/client.types'
 
 const route = useRoute()
@@ -202,21 +203,23 @@ const onSubmit = handleSubmit(async (formValues) => {
           : {}),
       },
     })
-    await createMutation.invalidateList()
-    if (returnTo.value && data?.id) {
-      const tenantIndex = route.query.tenantIndex
-      router.push({
-        path: returnTo.value,
-        query: {
-          selectedClientId: data.id,
-          ...(typeof tenantIndex === 'string' && tenantIndex !== ''
-            ? { tenantIndex }
-            : {}),
-        },
-      })
-    } else {
-      router.push('/alquileres/clientes')
-    }
+    const tenantIndex = route.query.tenantIndex
+    const returnQuery =
+      returnTo.value && data?.id
+        ? {
+            selectedClientId: data.id,
+            ...(typeof tenantIndex === 'string' && tenantIndex !== ''
+              ? { tenantIndex }
+              : {}),
+          }
+        : undefined
+
+    await navigateAfterAlquileresSave(router, {
+      listPath: '/alquileres/clientes',
+      returnTo: returnTo.value && data?.id ? returnTo.value : undefined,
+      returnQuery,
+      invalidate: () => createMutation.invalidateList(),
+    })
   } catch {
     void 0
   }

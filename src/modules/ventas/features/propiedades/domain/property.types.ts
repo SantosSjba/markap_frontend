@@ -43,12 +43,20 @@ export interface VentasOwnerOption {
 
 export type VentasPropertyMediaItem = { url: string; kind: 'photo' | 'plan' }
 
+export interface VentasLocationCustom {
+  country: string
+  department: string
+  province: string
+  district: string
+}
+
 /** Alta de propiedad en inventario Ventas (sin campos de alquiler). */
 export interface VentasCreatePropertyPayload {
   code: string
   propertyTypeId: string
   addressLine: string
   districtId: string
+  locationCustom?: VentasLocationCustom | null
   description?: string | null
   area?: number | null
   bedrooms?: number | null
@@ -73,6 +81,7 @@ export interface VentasPropertyDetail {
   propertyTypeId: string
   addressLine: string
   districtId: string
+  locationCustom?: VentasLocationCustom | null
   district?: {
     id: string
     name: string

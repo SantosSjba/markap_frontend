@@ -6,6 +6,7 @@ import { BaseButton, AppIcon, Badge } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useCreateAgent } from '../../application/useAgents'
+import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
 import { useUsers } from '@modules/settings'
 import type { AgentType } from '../../domain/agent.types'
 
@@ -118,18 +119,18 @@ const onSubmit = handleSubmit(async (formValues) => {
       documentTypeId: formValues.documentTypeId || null,
       documentNumber: formValues.documentNumber?.trim() || null,
     })
-    await createMutation.invalidateList()
-    if (returnTo.value && data?.id) {
-      router.push({
-        path: returnTo.value,
-        query: {
-          selectedAgentId: data.id,
-          ...(agentField.value ? { agentField: agentField.value } : {}),
-        },
-      })
-    } else {
-      router.push('/alquileres/agentes')
-    }
+    await navigateAfterAlquileresSave(router, {
+      listPath: '/alquileres/agentes',
+      returnTo: returnTo.value && data?.id ? returnTo.value : undefined,
+      returnQuery:
+        returnTo.value && data?.id
+          ? {
+              selectedAgentId: data.id,
+              ...(agentField.value ? { agentField: agentField.value } : {}),
+            }
+          : undefined,
+      invalidate: () => createMutation.invalidateList(),
+    })
   } catch {
     void 0
   }

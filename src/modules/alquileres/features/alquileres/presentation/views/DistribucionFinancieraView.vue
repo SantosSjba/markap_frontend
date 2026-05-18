@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, AppIcon } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useRental, useRentalFinancialBreakdown, useUpsertRentalFinancialConfig } from '../../application/useRentals'
+import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
 import { useAgentsList } from '@modules/alquileres/features/agentes'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
@@ -85,26 +86,34 @@ function formatAmount(amount: number, currency: string): string {
   return `${sym} ${Number(amount).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
 }
 
-function submitFinancialConfig() {
+async function submitFinancialConfig() {
   if (!id.value) return
-  upsertFinancial.mutate({
-    rentalId: id.value,
-    data: {
-      baseAmount: form.value.baseAmount !== '' && Number(form.value.baseAmount) > 0 ? Number(form.value.baseAmount) : null,
-      expenseType: form.value.expenseType,
-      expenseValue: form.value.expenseValue,
-      taxType: form.value.taxType,
-      taxValue: form.value.taxValue,
-      externalAgentId: form.value.externalAgentId || null,
-      externalAgentType: form.value.externalAgentType,
-      externalAgentValue: form.value.externalAgentValue,
-      externalAgentName: form.value.externalAgentName || null,
-      internalAgentId: form.value.internalAgentId || null,
-      internalAgentType: form.value.internalAgentType,
-      internalAgentValue: form.value.internalAgentValue,
-      internalAgentName: form.value.internalAgentName || null,
-    },
-  })
+  try {
+    await upsertFinancial.mutateAsync({
+      rentalId: id.value,
+      data: {
+        baseAmount:
+          form.value.baseAmount !== '' && Number(form.value.baseAmount) > 0
+            ? Number(form.value.baseAmount)
+            : null,
+        expenseType: form.value.expenseType,
+        expenseValue: form.value.expenseValue,
+        taxType: form.value.taxType,
+        taxValue: form.value.taxValue,
+        externalAgentId: form.value.externalAgentId || null,
+        externalAgentType: form.value.externalAgentType,
+        externalAgentValue: form.value.externalAgentValue,
+        externalAgentName: form.value.externalAgentName || null,
+        internalAgentId: form.value.internalAgentId || null,
+        internalAgentType: form.value.internalAgentType,
+        internalAgentValue: form.value.internalAgentValue,
+        internalAgentName: form.value.internalAgentName || null,
+      },
+    })
+    await navigateAfterAlquileresSave(router, { listPath: '/alquileres/contratos' })
+  } catch {
+    void 0
+  }
 }
 
 const goBack = () => router.push(`/alquileres/contratos/${id.value}`)

@@ -40,12 +40,20 @@ export interface OwnerOption {
 
 export type PropertyMediaItem = { url: string; kind: 'photo' | 'plan' }
 
+export interface LocationCustom {
+  country: string
+  department: string
+  province: string
+  district: string
+}
+
 export interface CreatePropertyPayload {
   applicationSlug?: string
   code: string
   propertyTypeId: string
   addressLine: string
   districtId: string
+  locationCustom?: LocationCustom | null
   description?: string | null
   area?: number | null
   bedrooms?: number | null
@@ -74,6 +82,7 @@ export interface PropertyDetail {
   propertyTypeId: string
   addressLine: string
   districtId: string
+  locationCustom?: LocationCustom | null
   district?: {
     id: string
     name: string

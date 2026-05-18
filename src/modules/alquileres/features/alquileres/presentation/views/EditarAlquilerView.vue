@@ -12,6 +12,7 @@ import RentalContractAlertSettings from '../components/RentalContractAlertSettin
 import RentalTenantsSection from '../components/RentalTenantsSection.vue'
 import { useClientsList } from '@modules/alquileres/features/clientes'
 import type { ClientListItem } from '@modules/alquileres/features/clientes'
+import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
 
 type EditarRentalFormValues = {
   startDate: string
@@ -206,8 +207,13 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
         deliveryActFile: deliveryActFile.value ?? undefined,
       },
     })
-    await updateMutation.invalidateList()
-    router.push(`/alquileres/contratos/${id.value}`)
+    contractFile.value = null
+    deliveryActFile.value = null
+
+    await navigateAfterAlquileresSave(router, {
+      listPath: '/alquileres/contratos',
+      invalidate: () => updateMutation.invalidateList(),
+    })
   } catch {
     void 0
   }

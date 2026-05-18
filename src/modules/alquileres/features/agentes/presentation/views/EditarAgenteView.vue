@@ -6,6 +6,7 @@ import { BaseButton, AppIcon, Badge } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useAgent, useUpdateAgent, useDeleteAgent } from '../../application/useAgents'
+import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
 import { useUsers } from '@modules/settings'
 import type { AgentType } from '../../domain/agent.types'
 
@@ -127,7 +128,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         isActive: formValues.isActive,
       },
     })
-    router.push('/alquileres/agentes')
+    await navigateAfterAlquileresSave(router, { listPath: '/alquileres/agentes' })
   } catch {
     void 0
   }
@@ -140,7 +141,7 @@ const handleDeactivate = async () => {
       id: id.value,
       data: { isActive: false },
     })
-    router.push('/alquileres/agentes')
+    await navigateAfterAlquileresSave(router, { listPath: '/alquileres/agentes' })
   } catch {
     void 0
   }
@@ -153,7 +154,7 @@ const handleActivate = async () => {
       id: id.value,
       data: { isActive: true },
     })
-    router.push('/alquileres/agentes')
+    await navigateAfterAlquileresSave(router, { listPath: '/alquileres/agentes' })
   } catch {
     void 0
   }
@@ -163,7 +164,7 @@ const handleDelete = async () => {
   showDeleteConfirm.value = false
   try {
     await deleteMutation.mutateAsync(id.value)
-    router.push('/alquileres/agentes')
+    await navigateAfterAlquileresSave(router, { listPath: '/alquileres/agentes' })
   } catch {
     void 0
   }

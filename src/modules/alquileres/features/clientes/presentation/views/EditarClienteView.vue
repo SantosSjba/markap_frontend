@@ -21,6 +21,7 @@ import {
   mergeDepartmentOptions,
 } from '../../constants/ubigeo-other'
 import { useClientAddressUbigeo } from '../../composables/useClientAddressUbigeo'
+import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
 import type { DocumentType } from '../../domain/client.types'
 
 const route = useRoute()
@@ -249,8 +250,10 @@ const onSubmit = handleSubmit(async (formValues) => {
         },
       },
     })
-    await updateMutation.invalidateList()
-    router.push('/alquileres/clientes')
+    await navigateAfterAlquileresSave(router, {
+      listPath: '/alquileres/clientes',
+      invalidate: () => updateMutation.invalidateList(),
+    })
   } catch {
     void 0
   }

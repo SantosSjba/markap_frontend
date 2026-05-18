@@ -9,3 +9,4 @@ export {
   refetchAlquileresQueries,
   type AlquileresInvalidationPreset,
 } from './invalidateAlquileresQueries'
+export { navigateAfterAlquileresSave } from './navigateAfterAlquileresSave'
