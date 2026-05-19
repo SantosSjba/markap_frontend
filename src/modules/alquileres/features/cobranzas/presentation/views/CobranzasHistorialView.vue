@@ -9,6 +9,8 @@ import ExcelIcon from '@shared/components/ui/ExcelIcon.vue'
 import SearchInput from '@shared/components/forms/SearchInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
 import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
+import { ListRowsSkeleton } from '@shared/components'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useExcelExport } from '@shared/composables'
 import { usePaymentHistory } from '../../application/usePayments'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -18,6 +20,7 @@ import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 const router = useRouter()
 
 const search = ref('')
+const debouncedSearch = useDebouncedRef(search)
 const filterYear = ref<string>('')
 const filterMonth = ref<string>('')
 const filterMethod = ref<string>('')
@@ -25,7 +28,7 @@ const currentPage = ref(1)
 const pageSize = 20
 
 const params = computed(() => ({
-  search: search.value || undefined,
+  search: debouncedSearch.value.trim() || undefined,
   periodYear: filterYear.value ? parseInt(filterYear.value) : undefined,
   periodMonth: filterMonth.value ? parseInt(filterMonth.value) : undefined,
   paymentMethod: filterMethod.value || undefined,
@@ -35,7 +38,7 @@ const params = computed(() => ({
 
 const {
   data: historyData,
-  isLoading,
+  isFetching,
   isError: historyIsError,
   error: historyFetchError,
   refetch: refetchHistory,
@@ -192,18 +195,18 @@ async function handleExport() {
 
     <!-- KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <StatsCard :value="isLoading ? '...' : formatCurrency(historyData?.totalAmount ?? 0)" title="Total filtrado">
+      <StatsCard :value="isFetching ? '...' : formatCurrency(historyData?.totalAmount ?? 0)" title="Total filtrado">
         <template #icon>
           <AppIcon icon="lucide:circle-dollar-sign" :size="20" color="#10b981" />
         </template>
       </StatsCard>
-      <StatsCard :value="isLoading ? '...' : String(historyData?.total ?? 0)" title="Pagos registrados">
+      <StatsCard :value="isFetching ? '...' : String(historyData?.total ?? 0)" title="Pagos registrados">
         <template #icon>
           <AppIcon icon="lucide:circle-check" :size="20" color="#6366f1" />
         </template>
       </StatsCard>
       <StatsCard
-        :value="isLoading || !historyData?.total ? '...' : formatCurrency((historyData?.totalAmount ?? 0) / (historyData?.total ?? 1))"
+        :value="isFetching || !historyData?.total ? '...' : formatCurrency((historyData?.totalAmount ?? 0) / (historyData?.total ?? 1))"
         title="Promedio por pago"
       >
         <template #icon>
@@ -242,15 +245,7 @@ async function handleExport() {
       class="rounded-xl border overflow-hidden"
       :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
     >
-      <!-- Skeleton -->
-      <template v-if="isLoading">
-        <div class="flex flex-col items-center justify-center py-12 gap-3">
-          <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando historial...</p>
-        </div>
-      </template>
-
-      <template v-else-if="historyIsError">
+      <template v-if="historyIsError">
         <div class="flex flex-col items-center justify-center py-16 gap-3 px-4 text-center">
           <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
           <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(historyFetchError) }}</p>
@@ -258,17 +253,7 @@ async function handleExport() {
         </div>
       </template>
 
-      <!-- Empty -->
-      <template v-else-if="!historyData?.data?.length">
-        <div class="flex flex-col items-center justify-center py-16 gap-3">
-          <AppIcon icon="lucide:clipboard-list" :size="48" color="var(--color-text-muted)" />
-          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No se encontraron pagos</p>
-        </div>
-      </template>
-
-      <!-- Rows -->
       <template v-else>
-        <!-- Table header -->
         <div
           class="hidden lg:grid grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b"
           :style="{ color: 'var(--color-text-muted)', borderColor: 'var(--color-border)' }"
@@ -283,7 +268,23 @@ async function handleExport() {
           <span></span>
         </div>
 
+        <ListRowsSkeleton
+          v-if="isFetching"
+          :rows="8"
+          :columns="8"
+          grid-class="grid-cols-1 lg:grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr_auto]"
+        />
+
         <div
+          v-else-if="!historyData?.data?.length"
+          class="flex flex-col items-center justify-center py-16 gap-3"
+        >
+          <AppIcon icon="lucide:clipboard-list" :size="48" color="var(--color-text-muted)" />
+          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No se encontraron pagos</p>
+        </div>
+
+        <div
+          v-else
           v-for="item in historyData.data"
           :key="item.paymentId"
           class="grid grid-cols-1 lg:grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-5 py-4 border-b transition-colors hover-surface items-center"

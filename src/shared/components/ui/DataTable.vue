@@ -25,6 +25,7 @@ import {
   type FilterFn,
 } from '@tanstack/vue-table'
 import AppIcon from './AppIcon.vue'
+import TableBodySkeleton from './TableBodySkeleton.vue'
 
 export type DataTableSortAccessor = (row: unknown) => string | number | boolean | Date | null | undefined
 
@@ -46,12 +47,17 @@ const props = withDefaults(
     showGlobalFilter?: boolean
     selectable?: boolean
     emptyText?: string
+    /** Muestra filas skeleton en lugar del cuerpo (p. ej. al buscar o paginar). */
+    loading?: boolean
+    skeletonRows?: number
   }>(),
   {
     rowKey: 'id',
     showGlobalFilter: false,
     selectable: false,
     emptyText: 'Sin filas para mostrar.',
+    loading: false,
+    skeletonRows: 8,
   },
 )
 
@@ -285,8 +291,15 @@ function toggleRow(row: Row<unknown>, e: Event) { row.getToggleSelectedHandler()
           </tr>
         </thead>
 
+        <TableBodySkeleton
+          v-if="loading"
+          :rows="skeletonRows"
+          :columns="columns.length"
+          :selectable="selectable"
+        />
+
         <!-- Filas -->
-        <tbody v-if="table.getRowModel().rows.length > 0">
+        <tbody v-else-if="table.getRowModel().rows.length > 0">
           <tr
             v-for="row in table.getRowModel().rows"
             :key="row.id"
@@ -319,7 +332,7 @@ function toggleRow(row: Row<unknown>, e: Event) { row.getToggleSelectedHandler()
 
       <!-- Estado vacío -->
       <div
-        v-if="table.getRowModel().rows.length === 0"
+        v-if="!loading && table.getRowModel().rows.length === 0"
         class="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center"
         role="status"
       >

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -46,6 +46,7 @@ export function usePendingPayments(params: Ref<ListPendingParams>) {
   return useQuery({
     queryKey: computed(() => paymentKeys.pending(params.value)),
     queryFn: () => paymentsRepository.listPending(params.value),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -53,6 +54,7 @@ export function usePaymentHistory(params: Ref<ListHistoryParams>) {
   return useQuery({
     queryKey: computed(() => paymentKeys.history(params.value)),
     queryFn: () => paymentsRepository.listHistory(params.value),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -60,6 +62,7 @@ export function useOverduePayments(applicationSlug = 'alquileres', search?: Ref<
   return useQuery({
     queryKey: computed(() => paymentKeys.overdue(applicationSlug, search?.value)),
     queryFn: () => paymentsRepository.listOverdue(applicationSlug, search?.value),
+    placeholderData: keepPreviousData,
   })
 }
 

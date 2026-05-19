@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { alquileresQueryKeys } from '@modules/alquileres/application/alquileresQueryKeys'
 import {
@@ -34,6 +34,7 @@ export function useReportsSummary(
   return useQuery({
     queryKey: computed(() => reportKeys.summary(slugVal.value, daysVal.value)),
     queryFn: () => reportesRepository.getSummary(slugVal.value, daysVal.value),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -46,6 +47,7 @@ export function useContractsExpiring(
   return useQuery({
     queryKey: computed(() => reportKeys.contractsExpiring(slugVal.value, daysVal.value)),
     queryFn: () => reportesRepository.getContractsExpiring(slugVal.value, daysVal.value),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -53,6 +55,7 @@ export function usePropertiesWithoutContract(applicationSlug: string = ALQUILERE
   return useQuery({
     queryKey: reportKeys.propertiesWithoutContract(applicationSlug),
     queryFn: () => reportesRepository.getPropertiesWithoutContract(applicationSlug),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -60,6 +63,7 @@ export function useActiveClientsReport(applicationSlug: string = ALQUILERES_REPO
   return useQuery({
     queryKey: reportKeys.activeClients(applicationSlug),
     queryFn: () => reportesRepository.getActiveClients(applicationSlug),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -101,6 +105,7 @@ export function useRentalsByMonth(
         paramsVal.value.startDate,
         paramsVal.value.endDate,
       ),
+    placeholderData: keepPreviousData,
   })
 }
 

@@ -13,6 +13,8 @@ import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
 import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
+import { ListRowsSkeleton } from '@shared/components'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useExcelExport } from '@shared/composables'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../../application/usePayments'
@@ -23,16 +25,17 @@ import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 const router = useRouter()
 
 const search = ref('')
+const debouncedSearch = useDebouncedRef(search)
 const statusFilter = ref<string>('ALL')
 
 const params = computed(() => ({
-  search: search.value || undefined,
+  search: debouncedSearch.value.trim() || undefined,
   status: statusFilter.value as any,
 }))
 
 const {
   data: payments,
-  isLoading,
+  isFetching,
   isError: listQueryError,
   error: listFetchError,
   refetch: refetchList,
@@ -325,15 +328,7 @@ async function handleExport() {
 
     <!-- Tabla -->
     <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }">
-      <!-- Skeleton loading animado -->
-      <template v-if="isLoading">
-        <div class="flex flex-col items-center justify-center py-12 gap-3">
-          <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando pagos...</p>
-        </div>
-      </template>
-
-      <template v-else-if="listQueryError">
+      <template v-if="listQueryError">
         <div class="flex flex-col items-center justify-center py-16 gap-3 px-4 text-center">
           <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
           <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
@@ -341,15 +336,6 @@ async function handleExport() {
         </div>
       </template>
 
-      <!-- Empty -->
-      <template v-else-if="!payments?.length">
-        <div class="flex flex-col items-center justify-center py-16 gap-3">
-          <AppIcon icon="lucide:circle-check-big" :size="48" color="var(--color-text-muted)" />
-          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No hay pagos pendientes</p>
-        </div>
-      </template>
-
-      <!-- List -->
       <template v-else>
         <div
           class="hidden lg:grid grid-cols-[2fr_2fr_1.5fr_1fr_1fr_auto] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b"
@@ -363,7 +349,23 @@ async function handleExport() {
           <span></span>
         </div>
 
+        <ListRowsSkeleton
+          v-if="isFetching"
+          :rows="8"
+          :columns="6"
+          grid-class="grid-cols-1 lg:grid-cols-[2fr_2fr_1.5fr_1fr_1fr_auto]"
+        />
+
         <div
+          v-else-if="!payments?.length"
+          class="flex flex-col items-center justify-center py-16 gap-3"
+        >
+          <AppIcon icon="lucide:circle-check-big" :size="48" color="var(--color-text-muted)" />
+          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No hay pagos pendientes</p>
+        </div>
+
+        <div
+          v-else
           v-for="item in payments"
           :key="item.paymentId"
           class="grid grid-cols-1 lg:grid-cols-[2fr_2fr_1.5fr_1fr_1fr_auto] gap-4 px-5 py-4 border-b transition-colors hover-surface items-center"

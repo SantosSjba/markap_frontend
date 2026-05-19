@@ -8,6 +8,7 @@ import {
   BaseButton,
   AppIcon,
   ExcelIcon,
+  TableBodySkeleton,
 } from '@shared/components'
 import { useExcelExport } from '@shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -330,11 +331,8 @@ async function handleExportTab() {
       >
         <!-- Contratos por Vencer -->
         <template v-if="activeTab === 'contratos-por-vencer'">
-          <div v-if="contractsExpiringQuery.isPending.value" class="flex justify-center py-12">
-            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-          </div>
           <div
-            v-else-if="contractsExpiringQuery.isError.value"
+            v-if="contractsExpiringQuery.isError.value"
             class="text-center py-10 space-y-3"
           >
             <p class="text-sm" style="color: var(--color-error)">
@@ -377,7 +375,12 @@ async function handleExportTab() {
                   <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Días</th>
                 </tr>
               </thead>
-              <tbody>
+              <TableBodySkeleton
+                v-if="contractsExpiringQuery.isFetching.value"
+                :rows="8"
+                :columns="6"
+              />
+              <tbody v-else>
                 <tr
                   v-for="row in contratosPorVencerRows"
                   :key="row.id"
@@ -395,7 +398,7 @@ async function handleExportTab() {
               </tbody>
             </table>
             <div
-              v-if="!contratosPorVencerRows.length"
+              v-if="!contractsExpiringQuery.isFetching.value && !contratosPorVencerRows.length"
               class="flex flex-col items-center gap-2 py-10"
               style="color: var(--color-text-muted);"
             >
@@ -408,11 +411,8 @@ async function handleExportTab() {
 
         <!-- Sin Contrato -->
         <template v-else-if="activeTab === 'sin-contrato'">
-          <div v-if="propertiesWithoutContractQuery.isPending.value" class="flex justify-center py-12">
-            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-          </div>
           <div
-            v-else-if="propertiesWithoutContractQuery.isError.value"
+            v-if="propertiesWithoutContractQuery.isError.value"
             class="text-center py-10 space-y-3"
           >
             <p class="text-sm" style="color: var(--color-error)">
@@ -448,7 +448,12 @@ async function handleExportTab() {
                   <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Propietario</th>
                 </tr>
               </thead>
-              <tbody>
+              <TableBodySkeleton
+                v-if="propertiesWithoutContractQuery.isFetching.value"
+                :rows="8"
+                :columns="3"
+              />
+              <tbody v-else>
                 <tr
                   v-for="row in propertiesWithoutContractRows"
                   :key="row.id"
@@ -461,7 +466,7 @@ async function handleExportTab() {
               </tbody>
             </table>
             <div
-              v-if="!propertiesWithoutContractRows.length"
+              v-if="!propertiesWithoutContractQuery.isFetching.value && !propertiesWithoutContractRows.length"
               class="flex flex-col items-center gap-2 py-10"
               style="color: var(--color-text-muted);"
             >
@@ -474,11 +479,8 @@ async function handleExportTab() {
 
         <!-- Clientes Activos -->
         <template v-else-if="activeTab === 'clientes-activos'">
-          <div v-if="activeClientsQuery.isPending.value" class="flex justify-center py-12">
-            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-          </div>
           <div
-            v-else-if="activeClientsQuery.isError.value"
+            v-if="activeClientsQuery.isError.value"
             class="text-center py-10 space-y-3"
           >
             <p class="text-sm" style="color: var(--color-error)">
@@ -513,7 +515,12 @@ async function handleExportTab() {
                   <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Contratos activos</th>
                 </tr>
               </thead>
-              <tbody>
+              <TableBodySkeleton
+                v-if="activeClientsQuery.isFetching.value"
+                :rows="8"
+                :columns="2"
+              />
+              <tbody v-else>
                 <tr
                   v-for="row in activeClientsRows"
                   :key="row.id"
@@ -525,7 +532,7 @@ async function handleExportTab() {
               </tbody>
             </table>
             <div
-              v-if="!activeClientsRows.length"
+              v-if="!activeClientsQuery.isFetching.value && !activeClientsRows.length"
               class="flex flex-col items-center gap-2 py-10"
               style="color: var(--color-text-muted);"
             >
@@ -696,10 +703,7 @@ async function handleExportTab() {
             </div>
           </div>
 
-          <div v-if="rentalsByMonthQuery.isPending.value" class="flex justify-center py-12">
-            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-          </div>
-          <div v-else class="overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="w-full border-collapse text-sm">
               <thead>
                 <tr style="border-bottom: 2px solid var(--color-border);">
@@ -728,7 +732,12 @@ async function handleExportTab() {
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <TableBodySkeleton
+                v-if="rentalsByMonthQuery.isFetching.value"
+                :rows="6"
+                :columns="8"
+              />
+              <tbody v-else>
                 <tr
                   v-for="row in rentalsByMonthRows"
                   :key="`${row.year}-${row.month}`"
@@ -787,7 +796,7 @@ async function handleExportTab() {
               </tfoot>
             </table>
             <p
-              v-if="!rentalsByMonthRows.length && !rentalsByMonthQuery.isPending.value && !rentalsByMonthQuery.isError.value"
+              v-if="!rentalsByMonthRows.length && !rentalsByMonthQuery.isFetching.value && !rentalsByMonthQuery.isError.value"
               class="py-8 text-center text-sm"
               style="color: var(--color-text-muted);"
             >

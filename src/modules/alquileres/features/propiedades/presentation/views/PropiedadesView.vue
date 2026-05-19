@@ -25,6 +25,7 @@ import {
 } from '../../application/useProperties'
 import type { PropertyListItem, ListPropertiesParams } from '../../domain/property.types'
 import { propertiesRepository } from '@modules/alquileres/features/propiedades'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
@@ -38,12 +39,13 @@ const listParams = ref<ListPropertiesParams>({
   limit: ITEMS_PER_PAGE,
 })
 const searchInput = ref('')
+const debouncedSearch = useDebouncedRef(searchInput)
 const filterListingStatus = ref<string>('')
 const filterPropertyTypeId = ref<string>('')
 
 const {
   data: listResult,
-  isLoading: loadingList,
+  isFetching: fetchingList,
   isError: listQueryError,
   error: listFetchError,
   refetch: refetchList,
@@ -66,12 +68,12 @@ const properties = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
 
 watch(
-  [searchInput, filterListingStatus, filterPropertyTypeId],
+  [debouncedSearch, filterListingStatus, filterPropertyTypeId],
   () => {
     listParams.value = {
       ...listParams.value,
       page: 1,
-      search: searchInput.value.trim() || undefined,
+      search: debouncedSearch.value.trim() || undefined,
       listingStatus: filterListingStatus.value || undefined,
       propertyTypeId: filterPropertyTypeId.value || undefined,
     }
@@ -417,11 +419,8 @@ async function handleExport() {
       }"
     >
       <div class="overflow-x-auto">
-        <div v-if="loadingList" class="flex justify-center py-16 px-4">
-          <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-        </div>
         <div
-          v-else-if="listQueryError"
+          v-if="listQueryError"
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
           <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
@@ -435,6 +434,7 @@ async function handleExport() {
             :columns="tableColumns"
             :data="properties"
             row-key="id"
+            :loading="fetchingList"
           >
             <template #toolbar>
               <div class="flex-1 min-w-0">
@@ -496,7 +496,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

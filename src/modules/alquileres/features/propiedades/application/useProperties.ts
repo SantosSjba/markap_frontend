@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -80,6 +80,7 @@ export function usePropertiesList(params: Ref<ListPropertiesParams> | ListProper
   return useQuery({
     queryKey: computed(() => propertyKeys.list(resolved.value)),
     queryFn: () => propertiesRepository.getList(resolved.value),
+    placeholderData: keepPreviousData,
   })
 }
 

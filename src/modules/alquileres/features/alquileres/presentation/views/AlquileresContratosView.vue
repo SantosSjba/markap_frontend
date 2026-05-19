@@ -20,6 +20,7 @@ import type { RentalListItem, ListRentalsParams } from '../../domain/rental.type
 import { ALQUILERES_APP_SLUG } from '../../../../config/app.constants'
 import { rentalsRepository } from '@modules/alquileres/features/alquileres'
 import { BaseModal } from '@shared/components'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
@@ -33,11 +34,12 @@ const listParams = ref<ListRentalsParams>({
   limit: ITEMS_PER_PAGE,
 })
 const searchInput = ref('')
+const debouncedSearch = useDebouncedRef(searchInput)
 const filterStatus = ref<'ALL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED'>('ALL')
 
 const {
   data: listResult,
-  isLoading: loadingList,
+  isFetching: fetchingList,
   isError: listQueryError,
   error: listFetchError,
   refetch: refetchList,
@@ -54,12 +56,12 @@ const rentals = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
 
 watch(
-  [searchInput, filterStatus],
+  [debouncedSearch, filterStatus],
   () => {
     listParams.value = {
       ...listParams.value,
       page: 1,
-      search: searchInput.value.trim() || undefined,
+      search: debouncedSearch.value.trim() || undefined,
       status: filterStatus.value === 'ALL' ? undefined : filterStatus.value,
     }
   },
@@ -360,11 +362,8 @@ async function handleExport() {
       }"
     >
       <div class="overflow-x-auto">
-        <div v-if="loadingList" class="flex justify-center py-16 px-4">
-          <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-        </div>
         <div
-          v-else-if="listQueryError"
+          v-if="listQueryError"
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
           <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
@@ -378,6 +377,7 @@ async function handleExport() {
             :columns="tableColumns"
             :data="rentals"
             row-key="id"
+            :loading="fetchingList"
           >
             <template #toolbar>
               <div class="flex-1 min-w-0">
@@ -481,7 +481,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

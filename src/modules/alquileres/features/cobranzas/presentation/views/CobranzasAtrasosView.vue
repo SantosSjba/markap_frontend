@@ -13,6 +13,7 @@ import FormInput from '@shared/components/forms/FormInput.vue'
 import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/components/forms/FormTextarea.vue'
 import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useExcelExport } from '@shared/composables'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
@@ -28,14 +29,15 @@ import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 const router = useRouter()
 
 const search = ref('')
+const debouncedSearch = useDebouncedRef(search)
 
 const {
   data: overdueList,
-  isLoading,
+  isFetching,
   isError: overdueIsError,
   error: overdueFetchError,
   refetch: refetchOverdue,
-} = useOverduePayments('alquileres', search)
+} = useOverduePayments('alquileres', debouncedSearch)
 
 // KPI stats derivados
 const totalOwed = computed(() => overdueList.value?.reduce((s, i) => s + i.totalOwed, 0) ?? 0)
@@ -321,17 +323,17 @@ async function handleExport() {
 
     <!-- KPIs -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatsCard :value="isLoading ? '...' : String(overdueList?.length ?? 0)" title="Con atraso">
+      <StatsCard :value="isFetching ? '...' : String(overdueList?.length ?? 0)" title="Con atraso">
         <template #icon>
           <AppIcon icon="lucide:triangle-alert" :size="20" color="#ef4444" />
         </template>
       </StatsCard>
-      <StatsCard :value="isLoading ? '...' : formatCurrency(totalOwed)" title="Total adeudado">
+      <StatsCard :value="isFetching ? '...' : formatCurrency(totalOwed)" title="Total adeudado">
         <template #icon>
           <AppIcon icon="lucide:circle-dollar-sign" :size="20" color="#f59e0b" />
         </template>
       </StatsCard>
-      <StatsCard :value="isLoading ? '...' : String(criticalCount)" title="Estado crítico">
+      <StatsCard :value="isFetching ? '...' : String(criticalCount)" title="Estado crítico">
         <template #icon>
           <AppIcon icon="lucide:clock-alert" :size="20" color="#ef4444" />
         </template>
@@ -348,15 +350,7 @@ async function handleExport() {
       <SearchInput v-model="search" placeholder="Buscar por inquilino o propiedad..." />
     </div>
 
-    <!-- Skeleton loading -->
-    <template v-if="isLoading">
-      <div class="flex flex-col items-center justify-center py-12 gap-3">
-        <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-        <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando atrasos...</p>
-      </div>
-    </template>
-
-    <template v-else-if="overdueIsError">
+    <template v-if="overdueIsError">
       <div
         class="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border px-4 text-center"
         :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
@@ -366,6 +360,15 @@ async function handleExport() {
         <BaseButton variant="outline" size="sm" @click="() => refetchOverdue()">Reintentar</BaseButton>
       </div>
     </template>
+
+    <div v-if="isFetching" class="flex flex-col gap-4">
+      <div
+        v-for="n in 5"
+        :key="n"
+        class="h-28 rounded-xl border animate-pulse"
+        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 10%, transparent)' }"
+      />
+    </div>
 
     <!-- Empty -->
     <template v-else-if="!overdueList?.length">
