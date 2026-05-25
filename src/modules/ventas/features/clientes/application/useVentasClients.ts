@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -8,6 +8,10 @@ import type {
   ListVentasClientsParams,
   UpdateVentasClientPayload,
 } from '../domain/client.types'
+import {
+  UBIGEO_OTHER_DEPARTMENT_ID,
+  UBIGEO_OTHER_PROVINCE_ID,
+} from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { ventasClientsApiRepository as ventasClientsRepository } from '../infrastructure/repositories/ventas-clients.api.repository'
 
 /** Caché e invalidación CRM clientes Ventas (sin prefijo compartido con Alquileres). */
@@ -57,7 +61,11 @@ export function useVentasClientProvinces(departmentId: Ref<string | undefined> |
   return useQuery({
     queryKey: computed(() => ventasClientKeys.provinces(unref(departmentId))),
     queryFn: () => ventasClientsRepository.getProvinces(unref(departmentId)),
-    enabled: computed(() => !!unref(departmentId)),
+    enabled: computed(() => {
+      const id = unref(departmentId)
+      return !!id && id !== UBIGEO_OTHER_DEPARTMENT_ID
+    }),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -65,7 +73,11 @@ export function useVentasClientDistricts(provinceId?: Ref<string | undefined> | 
   return useQuery({
     queryKey: computed(() => ventasClientKeys.districts(unref(provinceId))),
     queryFn: () => ventasClientsRepository.getDistricts(unref(provinceId)),
-    enabled: computed(() => !!unref(provinceId)),
+    enabled: computed(() => {
+      const id = unref(provinceId)
+      return !!id && id !== UBIGEO_OTHER_PROVINCE_ID
+    }),
+    placeholderData: keepPreviousData,
   })
 }
 

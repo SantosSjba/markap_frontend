@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
 import { BaseButton, AppIcon } from '@shared/components'
@@ -18,6 +18,12 @@ import type {
   VentasOwnerOption,
   VentasPropertyMediaItem,
 } from '../../domain/property.types'
+import {
+  UBIGEO_OTHER_DEPARTMENT_ID,
+  mergeDepartmentOptions,
+  buildPropertyUbigeoPayload,
+} from '@modules/alquileres/features/clientes/constants/ubigeo-other'
+import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
 
 type ListingVentas = 'AVAILABLE' | 'RESERVED' | 'SOLD'
 
@@ -28,6 +34,10 @@ type PropertyFormValues = {
   departmentId: string
   provinceId: string
   districtId: string
+  locationCountry: string
+  locationDepartment: string
+  locationProvince: string
+  locationDistrict: string
   description: string
   area: string | number
   bedrooms: string | number
@@ -51,9 +61,33 @@ const schema = yup.object({
   code: yup.string().required('El código es requerido').trim(),
   propertyTypeId: yup.string().required('Seleccione el tipo de propiedad'),
   addressLine: yup.string().required('La dirección es requerida').trim(),
-  departmentId: yup.string().trim(),
+  departmentId: yup.string().required('Seleccione el departamento').trim(),
   provinceId: yup.string().trim(),
-  districtId: yup.string().required('Seleccione el distrito'),
+  districtId: yup.string().when('departmentId', {
+    is: (v: string) => v !== UBIGEO_OTHER_DEPARTMENT_ID,
+    then: (s) => s.required('Seleccione el distrito'),
+    otherwise: (s) => s.trim(),
+  }),
+  locationCountry: yup.string().when('departmentId', {
+    is: UBIGEO_OTHER_DEPARTMENT_ID,
+    then: (s) => s.required('Indique el país').trim(),
+    otherwise: (s) => s.trim(),
+  }),
+  locationDepartment: yup.string().when('departmentId', {
+    is: UBIGEO_OTHER_DEPARTMENT_ID,
+    then: (s) => s.required('Indique departamento / estado').trim(),
+    otherwise: (s) => s.trim(),
+  }),
+  locationProvince: yup.string().when('departmentId', {
+    is: UBIGEO_OTHER_DEPARTMENT_ID,
+    then: (s) => s.required('Indique la provincia').trim(),
+    otherwise: (s) => s.trim(),
+  }),
+  locationDistrict: yup.string().when('departmentId', {
+    is: UBIGEO_OTHER_DEPARTMENT_ID,
+    then: (s) => s.required('Indique el distrito / localidad').trim(),
+    otherwise: (s) => s.trim(),
+  }),
   description: yup.string().trim(),
   area: yup.number().transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v))).min(0).nullable(),
   bedrooms: yup.number().transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v))).min(0).integer().nullable(),
@@ -86,6 +120,10 @@ const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = us
     departmentId: '',
     provinceId: '',
     districtId: '',
+    locationCountry: '',
+    locationDepartment: '',
+    locationProvince: '',
+    locationDistrict: '',
     description: '',
     area: '',
     bedrooms: '',
@@ -109,6 +147,10 @@ const addressLineBinds = defineComponentBinds('addressLine')
 const departmentIdBinds = defineComponentBinds('departmentId')
 const provinceIdBinds = defineComponentBinds('provinceId')
 const districtIdBinds = defineComponentBinds('districtId')
+const locationCountryBinds = defineComponentBinds('locationCountry')
+const locationDepartmentBinds = defineComponentBinds('locationDepartment')
+const locationProvinceBinds = defineComponentBinds('locationProvince')
+const locationDistrictBinds = defineComponentBinds('locationDistrict')
 const descriptionBinds = defineComponentBinds('description')
 const areaBinds = defineComponentBinds('area')
 const bedroomsBinds = defineComponentBinds('bedrooms')
@@ -134,31 +176,16 @@ const { data: districts, isLoading: loadingDistricts } = useVentasPropertyDistri
 const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = useVentasPropertyOwners()
 const createMutation = useVentasCreateProperty()
 
+const { isOtherLocation } = useClientAddressUbigeo({ values, setFieldValue })
+
 const mediaRows = ref<{ url: string; kind: 'photo' | 'plan' }[]>([{ url: '', kind: 'photo' }])
 
 const loading = computed(() => loadingTypes.value || loadingDepartments.value || loadingOwners.value)
 
-watch(
-  () => values.departmentId,
-  () => {
-    setFieldValue('provinceId', '')
-    setFieldValue('districtId', '')
-  },
-)
-
-watch(
-  () => values.provinceId,
-  () => {
-    setFieldValue('districtId', '')
-  },
-)
-
 const propertyTypeOptions = computed(() =>
   (propertyTypes.value ?? []).map((p: VentasPropertyType) => ({ value: p.id, label: p.name })),
 )
-const departmentOptions = computed(() =>
-  (departments.value ?? []).map((d) => ({ value: d.id, label: d.name })),
-)
+const departmentOptions = computed(() => mergeDepartmentOptions(departments.value))
 const provinceOptions = computed(() =>
   (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name })),
 )
@@ -229,11 +256,13 @@ function buildMediaItems(): VentasPropertyMediaItem[] | null {
 
 const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
   try {
+    const ubigeo = buildPropertyUbigeoPayload(formValues)
     await createMutation.mutateAsync({
       code: formValues.code.trim(),
       propertyTypeId: formValues.propertyTypeId,
       addressLine: formValues.addressLine.trim(),
-      districtId: formValues.districtId,
+      districtId: ubigeo.districtId,
+      locationCustom: ubigeo.locationCustom,
       description: formValues.description.trim() || null,
       area: toNum(formValues.area),
       bedrooms: toNum(formValues.bedrooms),
@@ -340,28 +369,62 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             <FormSelect
               v-bind="departmentIdBinds"
               label="Departamento"
-              placeholder="Departamento"
+              placeholder="Seleccionar departamento"
               :options="departmentOptions"
               :loading="loadingDepartments"
-            />
-            <FormSelect
-              v-bind="provinceIdBinds"
-              label="Provincia"
-              placeholder="Provincia"
-              :options="provinceOptions"
-              :loading="loadingProvinces"
-              :disabled="!values.departmentId"
-            />
-            <FormSelect
-              v-bind="districtIdBinds"
-              label="Distrito"
-              placeholder="Distrito"
-              :options="districtOptions"
-              :loading="loadingDistricts"
-              :disabled="!values.provinceId"
-              :error="errors.districtId"
+              :error="errors.departmentId"
               required
             />
+            <template v-if="isOtherLocation">
+              <FormInput
+                v-bind="locationCountryBinds"
+                label="País"
+                placeholder="Ej. España, Chile, Estados Unidos"
+                :error="errors.locationCountry"
+                required
+              />
+              <FormInput
+                v-bind="locationDepartmentBinds"
+                label="Departamento / Estado"
+                placeholder="Ej. Madrid, California"
+                :error="errors.locationDepartment"
+                required
+              />
+              <FormInput
+                v-bind="locationProvinceBinds"
+                label="Provincia"
+                placeholder="Ej. Madrid, Los Angeles"
+                :error="errors.locationProvince"
+                required
+              />
+              <FormInput
+                v-bind="locationDistrictBinds"
+                label="Distrito / Localidad"
+                placeholder="Ej. Centro, Beverly Hills"
+                :error="errors.locationDistrict"
+                required
+              />
+            </template>
+            <template v-else>
+              <FormSelect
+                v-bind="provinceIdBinds"
+                label="Provincia"
+                placeholder="Seleccionar provincia"
+                :options="provinceOptions"
+                :loading="loadingProvinces"
+                :disabled="!values.departmentId"
+              />
+              <FormSelect
+                v-bind="districtIdBinds"
+                label="Distrito"
+                placeholder="Seleccionar distrito"
+                :options="districtOptions"
+                :loading="loadingDistricts"
+                :disabled="!values.provinceId"
+                :error="errors.districtId"
+                required
+              />
+            </template>
             <FormSelect
               v-bind="listingStatusBinds"
               label="Estado comercial"

@@ -78,6 +78,12 @@ export interface VentasClientDetail {
     addressLine: string
     reference: string | null
     districtId: string
+    locationCustom?: {
+      country: string
+      department: string
+      province: string
+      district: string
+    } | null
     district: VentasDistrict
   } | null
   assignedAgent: { id: string; fullName: string } | null
@@ -102,6 +108,12 @@ export interface CreateVentasClientPayload {
     addressLine: string
     districtId: string
     reference?: string | null
+    locationCustom?: {
+      country: string
+      department: string
+      province: string
+      district: string
+    } | null
   }
 }
 
@@ -124,6 +136,12 @@ export interface UpdateVentasClientPayload {
     addressLine?: string
     districtId?: string
     reference?: string | null
+    locationCustom?: {
+      country: string
+      department: string
+      province: string
+      district: string
+    } | null
   }
 }
 

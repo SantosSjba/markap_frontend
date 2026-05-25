@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -8,6 +8,10 @@ import type {
   VentasListPropertiesParams,
   VentasUpdatePropertyPayload,
 } from '../domain/property.types'
+import {
+  UBIGEO_OTHER_DEPARTMENT_ID,
+  UBIGEO_OTHER_PROVINCE_ID,
+} from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { ventasPropertiesApiRepository as ventasPropertiesRepository } from '../infrastructure/repositories/ventas-properties.api.repository'
 
 /** Query keys solo para inventario Ventas — no comparten caché con Alquileres. */
@@ -56,7 +60,11 @@ export function useVentasPropertyProvinces(departmentId: Ref<string | undefined>
   return useQuery({
     queryKey: computed(() => ventasPropertyKeys.provinces(unref(departmentId))),
     queryFn: () => ventasPropertiesRepository.getProvinces(unref(departmentId)),
-    enabled: computed(() => !!unref(departmentId)),
+    enabled: computed(() => {
+      const id = unref(departmentId)
+      return !!id && id !== UBIGEO_OTHER_DEPARTMENT_ID
+    }),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -64,7 +72,11 @@ export function useVentasPropertyDistricts(provinceId?: Ref<string | undefined> 
   return useQuery({
     queryKey: computed(() => ventasPropertyKeys.districts(unref(provinceId))),
     queryFn: () => ventasPropertiesRepository.getDistricts(unref(provinceId)),
-    enabled: computed(() => !!unref(provinceId)),
+    enabled: computed(() => {
+      const id = unref(provinceId)
+      return !!id && id !== UBIGEO_OTHER_PROVINCE_ID
+    }),
+    placeholderData: keepPreviousData,
   })
 }
 
