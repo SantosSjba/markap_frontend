@@ -141,7 +141,7 @@ const tableColumns = [
     sortable: true,
     sortAccessor: (r: unknown) => {
       const c = r as VentasClientListItem
-      return `${c.primaryPhone} ${c.primaryEmail}`
+      return `${c.primaryPhone} ${c.primaryEmail ?? ''}`
     },
   },
   {
@@ -277,7 +277,7 @@ async function handleExport() {
       documentTypeCode: c.documentTypeCode,
       documentNumber: c.documentNumber,
       primaryPhone: c.primaryPhone,
-      primaryEmail: c.primaryEmail,
+      primaryEmail: c.primaryEmail ?? '—',
       propertiesCount: c.clientType === 'OWNER' ? String(c.propertiesCount) : '—',
       salesStatus: c.clientType === 'BUYER' ? salesStatusLabel(c.salesStatus) : '—',
       leadOrigin: c.clientType === 'BUYER' ? leadOriginLabel(c.leadOrigin) : '—',
@@ -441,7 +441,7 @@ async function handleExport() {
                   </span>
                   <span class="flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
                     <AppIcon icon="lucide:mail" :size="16" color="var(--color-text-muted)" />
-                    {{ (row as VentasClientListItem).primaryEmail }}
+                    {{ (row as VentasClientListItem).primaryEmail || '—' }}
                   </span>
                 </div>
               </td>

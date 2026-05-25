@@ -44,7 +44,7 @@ export interface VentasClientListItem {
   documentTypeCode: string
   documentNumber: string
   primaryPhone: string
-  primaryEmail: string
+  primaryEmail: string | null
   clientType: VentasClientType
   isActive: boolean
   propertiesCount: number
@@ -65,7 +65,7 @@ export interface VentasClientDetail {
   legalRepresentativePosition: string | null
   primaryPhone: string
   secondaryPhone: string | null
-  primaryEmail: string
+  primaryEmail: string | null
   secondaryEmail: string | null
   notes: string | null
   isActive: boolean
@@ -92,7 +92,7 @@ export interface CreateVentasClientPayload {
   legalRepresentativePosition?: string | null
   primaryPhone: string
   secondaryPhone?: string | null
-  primaryEmail: string
+  primaryEmail?: string | null
   secondaryEmail?: string | null
   notes?: string | null
   salesStatus?: SalesPipelineStatus
@@ -114,7 +114,7 @@ export interface UpdateVentasClientPayload {
   legalRepresentativePosition?: string | null
   primaryPhone?: string
   secondaryPhone?: string | null
-  primaryEmail?: string
+  primaryEmail?: string | null
   secondaryEmail?: string | null
   notes?: string | null
   salesStatus?: SalesPipelineStatus | null

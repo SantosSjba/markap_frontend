@@ -69,9 +69,10 @@ const baseShape = {
   secondaryPhone: yup.string().trim(),
   primaryEmail: yup
     .string()
-    .required('El email es requerido')
+    .trim()
+    .transform((v) => (v === '' ? undefined : v))
     .email('Email inválido')
-    .trim(),
+    .optional(),
   secondaryEmail: yup
     .string()
     .trim()
@@ -243,7 +244,7 @@ const onSubmit = handleSubmit(async (formValues) => {
           formValues.legalRepresentativePosition?.trim() || null,
         primaryPhone: formValues.primaryPhone.trim(),
         secondaryPhone: formValues.secondaryPhone?.trim() || null,
-        primaryEmail: formValues.primaryEmail.trim(),
+        primaryEmail: formValues.primaryEmail?.trim() || null,
         secondaryEmail: formValues.secondaryEmail?.trim() || null,
         notes: formValues.notes?.trim() || null,
         salesStatus: formValues.salesStatus as 'PROSPECT' | 'INTERESTED' | 'CLIENT',
@@ -269,7 +270,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         formValues.legalRepresentativePosition?.trim() || null,
       primaryPhone: formValues.primaryPhone.trim(),
       secondaryPhone: formValues.secondaryPhone?.trim() || null,
-      primaryEmail: formValues.primaryEmail.trim(),
+      primaryEmail: formValues.primaryEmail?.trim() || null,
       secondaryEmail: formValues.secondaryEmail?.trim() || null,
       notes: formValues.notes?.trim() || null,
       address: {
@@ -444,9 +445,8 @@ const onSubmit = handleSubmit(async (formValues) => {
             v-bind="primaryEmailBinds"
             type="email"
             label="Email"
-            placeholder="correo@ejemplo.com"
+            placeholder="Opcional"
             :error="errors.primaryEmail"
-            required
           />
           <FormInput
             v-bind="secondaryEmailBinds"
