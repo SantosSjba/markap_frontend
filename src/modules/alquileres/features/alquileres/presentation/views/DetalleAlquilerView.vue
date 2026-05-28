@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, Badge, AppIcon } from '@shared/components'
+import { BaseButton, Badge, AppIcon, FormSectionCard } from '@shared/components'
 import { useRental, useRentalFinancialBreakdown } from '../../application/useRentals'
 import type { RentalDetail } from '../../domain/rental.types'
 import { getAttachmentUrl } from '../../infrastructure/http/rental-attachment-url'
@@ -120,19 +120,11 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
         <!-- Columna principal -->
         <div class="xl:col-span-2 space-y-5">
 
-          <!-- Alquiler y propiedad -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Propiedad"
+            subtitle="Datos del inmueble del contrato"
+            icon="lucide:building-2"
           >
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                <AppIcon icon="lucide:building-2" :size="17" color="var(--color-primary)" />
-              </div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-                Propiedad
-              </h2>
-            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p class="text-xs uppercase tracking-wide font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Código</p>
@@ -152,19 +144,13 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                 </div>
               </div>
             </div>
-          </section>
+          </FormSectionCard>
 
-          <!-- Partes -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Partes"
+            subtitle="Inquilino y propietario"
+            icon="lucide:users"
           >
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                <AppIcon icon="lucide:users" :size="17" color="var(--color-primary)" />
-              </div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Partes</h2>
-            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
                 class="flex items-center gap-3 p-3 rounded-lg"
@@ -200,22 +186,14 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                 </div>
               </div>
             </div>
-          </section>
+          </FormSectionCard>
 
-          <!-- Distribución financiera -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Distribución financiera"
+            subtitle="Desglose de ingresos y comisiones"
+            icon="lucide:wallet"
           >
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                  <AppIcon icon="lucide:sliders-horizontal" :size="17" color="var(--color-primary)" />
-                </div>
-                <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-                  Distribución financiera
-                </h2>
-              </div>
+            <div class="flex justify-end mb-4">
               <BaseButton variant="outline" size="sm" class="flex items-center gap-1.5" @click="goToFinancialConfig">
                 <AppIcon :icon="breakdown?.config ? 'lucide:pencil' : 'lucide:settings'" :size="13" />
                 {{ breakdown?.config ? 'Editar' : 'Configurar' }}
@@ -349,22 +327,16 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                 Sin configuración financiera. Presione "Configurar" para definir el monto base, gastos, impuestos y comisiones.
               </p>
             </div>
-          </section>
+          </FormSectionCard>
         </div>
 
         <!-- Columna lateral -->
         <div class="space-y-5">
-          <!-- Vigencia y montos -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Vigencia y montos"
+            subtitle="Fechas y condiciones del contrato"
+            icon="lucide:calendar"
           >
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                <AppIcon icon="lucide:calendar" :size="17" color="var(--color-primary)" />
-              </div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Vigencia y montos</h2>
-            </div>
             <dl class="space-y-3">
               <div class="flex justify-between items-center">
                 <dt class="text-sm flex items-center gap-1.5" :style="{ color: 'var(--color-text-muted)' }">
@@ -406,19 +378,13 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                 <dd class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Día {{ rental.paymentDueDay }}</dd>
               </div>
             </dl>
-          </section>
+          </FormSectionCard>
 
-          <!-- Adjuntos -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Adjuntos"
+            subtitle="Contrato y acta de entrega"
+            icon="lucide:paperclip"
           >
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                <AppIcon icon="lucide:paperclip" :size="17" color="var(--color-primary)" />
-              </div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Adjuntos</h2>
-            </div>
             <ul class="space-y-2">
               <!-- Contrato -->
               <li
@@ -502,22 +468,16 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
               <AppIcon icon="lucide:upload" :size="14" />
               Gestionar adjuntos
             </BaseButton>
-          </section>
+          </FormSectionCard>
 
-          <!-- Notas -->
-          <section
+          <FormSectionCard
             v-if="rental.notes"
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+            title="Observaciones"
+            subtitle="Notas del contrato"
+            icon="lucide:message-square"
           >
-            <div class="flex items-center gap-2 mb-3">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                <AppIcon icon="lucide:notebook-pen" :size="17" color="var(--color-primary)" />
-              </div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Observaciones</h2>
-            </div>
             <p class="text-sm whitespace-pre-wrap leading-relaxed" :style="{ color: 'var(--color-text-secondary)' }">{{ rental.notes }}</p>
-          </section>
+          </FormSectionCard>
         </div>
       </div>
     </template>

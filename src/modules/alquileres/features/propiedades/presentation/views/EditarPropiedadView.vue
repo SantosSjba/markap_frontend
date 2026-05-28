@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon } from '@shared/components'
+import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
@@ -393,20 +393,11 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
       <!-- Columna principal -->
       <div class="xl:col-span-2 space-y-5">
 
-        <!-- Información básica -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Información de la Propiedad"
+          subtitle="Datos básicos del inmueble"
+          icon="lucide:building-2"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:building-2" :size="17" color="var(--color-primary)" />
-            </div>
-            <div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Información de la Propiedad</h2>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Datos básicos del inmueble</p>
-            </div>
-          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               v-bind="codeBinds"
@@ -498,22 +489,13 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             placeholder="Descripción detallada de la propiedad..."
             :rows="3"
           />
-        </section>
+        </FormSectionCard>
 
-        <!-- Características -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Características"
+          subtitle="Superficie, habitaciones y detalles"
+          icon="lucide:list-checks"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:layout-list" :size="17" color="var(--color-primary)" />
-            </div>
-            <div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Características</h2>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Superficie, habitaciones y detalles</p>
-            </div>
-          </div>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div class="flex flex-col gap-1">
               <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
@@ -599,22 +581,13 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               />
             </div>
           </div>
-        </section>
+        </FormSectionCard>
 
-        <!-- Propietario -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Propietario"
+          subtitle="Cliente propietario del inmueble"
+          icon="lucide:user-check"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:briefcase" :size="17" color="var(--color-primary)" />
-            </div>
-            <div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Propietario</h2>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Cliente propietario del inmueble</p>
-            </div>
-          </div>
           <div class="flex flex-wrap items-end gap-3">
             <div class="flex-1 min-w-[200px]">
               <FormSelect
@@ -631,43 +604,25 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               Nuevo Propietario
             </BaseButton>
           </div>
-        </section>
+        </FormSectionCard>
 
-        <!-- Números de partida -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Números de partida"
+          subtitle="Hasta 3 números de partida registral (opcional)"
+          icon="lucide:hash"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:hash" :size="17" color="var(--color-primary)" />
-            </div>
-            <div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Números de partida</h2>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Hasta 3 números de partida registral (opcional)</p>
-            </div>
-          </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormInput v-bind="partida1Binds" label="Partida 1" placeholder="Ej. 12345678" :error="errors.partida1" />
             <FormInput v-bind="partida2Binds" label="Partida 2" placeholder="Ej. 12345679" :error="errors.partida2" />
             <FormInput v-bind="partida3Binds" label="Partida 3" placeholder="Ej. 12345680" :error="errors.partida3" />
           </div>
-        </section>
+        </FormSectionCard>
 
-        <!-- Información de Alquiler -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Información de Alquiler"
+          subtitle="Montos de referencia y garantía"
+          icon="lucide:banknote"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:banknote" :size="17" color="var(--color-primary)" />
-            </div>
-            <div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Información de Alquiler</h2>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Montos de referencia y garantía</p>
-            </div>
-          </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormInput
               v-bind="monthlyRentBinds"
@@ -696,7 +651,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               :error="errors.depositMonths"
             />
           </div>
-        </section>
+        </FormSectionCard>
 
         <!-- Botones móvil -->
         <div class="xl:hidden flex gap-3">

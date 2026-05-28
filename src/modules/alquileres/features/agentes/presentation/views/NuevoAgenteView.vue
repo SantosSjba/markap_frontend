@@ -2,7 +2,7 @@
 import { computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, Badge } from '@shared/components'
+import { BaseButton, AppIcon, Badge, FormSectionCard } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useCreateAgent } from '../../application/useAgents'
@@ -166,21 +166,11 @@ const onSubmit = handleSubmit(async (formValues) => {
       <!-- Columna principal -->
       <div class="xl:col-span-2 space-y-5">
 
-        <!-- Tipo de agente -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Tipo de agente"
+          subtitle="¿Es un usuario del sistema o un tercero?"
+          icon="lucide:user-cog"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:users" :size="17" color="var(--color-primary)" />
-            </div>
-            <div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Tipo de agente</h2>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">¿Es un usuario del sistema o un tercero?</p>
-            </div>
-          </div>
-
           <div
             v-if="presetAgentType"
             class="mb-4 flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
@@ -256,22 +246,13 @@ const onSubmit = handleSubmit(async (formValues) => {
               </div>
             </div>
           </div>
-        </section>
+        </FormSectionCard>
 
-        <!-- Datos del agente -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Datos del agente"
+          subtitle="Nombre y datos de contacto"
+          icon="lucide:id-card"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:contact" :size="17" color="var(--color-primary)" />
-            </div>
-            <div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Datos del agente</h2>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Nombre y datos de contacto</p>
-            </div>
-          </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormInput
               v-bind="fullNameBinds"
@@ -300,7 +281,7 @@ const onSubmit = handleSubmit(async (formValues) => {
               placeholder="RUC / DNI"
             />
           </div>
-        </section>
+        </FormSectionCard>
 
         <!-- Botones móvil -->
         <div class="xl:hidden flex gap-3">

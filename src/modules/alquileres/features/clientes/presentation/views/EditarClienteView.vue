@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton } from '@shared/components'
+import { BaseButton, FormSectionCard } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
@@ -286,17 +286,11 @@ const onSubmit = handleSubmit(async (formValues) => {
     </div>
 
     <form v-else-if="client" @submit.prevent="onSubmit" class="space-y-8">
-      <!-- Tipo de Cliente -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Tipo de Cliente"
+        subtitle="Selecciona el tipo de cliente"
+        icon="lucide:users"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Tipo de Cliente
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Selecciona el tipo de cliente
-        </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"
@@ -337,19 +331,13 @@ const onSubmit = handleSubmit(async (formValues) => {
             </div>
           </button>
         </div>
-      </section>
+      </FormSectionCard>
 
-      <!-- Información Personal -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Información Personal"
+        subtitle="Datos básicos del cliente"
+        icon="lucide:id-card"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Información Personal
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Datos básicos del cliente
-        </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormSelect
             v-bind="documentTypeIdBinds"
@@ -387,19 +375,13 @@ const onSubmit = handleSubmit(async (formValues) => {
             :error="errors.legalRepresentativePosition"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <!-- Información de Contacto -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Información de Contacto"
+        subtitle="Datos para comunicación"
+        icon="lucide:phone"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Información de Contacto
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Datos para comunicación
-        </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
             v-bind="primaryPhoneBinds"
@@ -431,19 +413,13 @@ const onSubmit = handleSubmit(async (formValues) => {
             :error="errors.secondaryEmail"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <!-- Dirección -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Dirección"
+        subtitle="Dirección de residencia o fiscal"
+        icon="lucide:map-pin"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Dirección
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Dirección de residencia o fiscal
-        </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
             v-bind="addressLineBinds"
@@ -513,26 +489,20 @@ const onSubmit = handleSubmit(async (formValues) => {
             />
           </template>
         </div>
-      </section>
+      </FormSectionCard>
 
-      <!-- Notas Adicionales -->
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Notas Adicionales"
+        subtitle="Información relevante sobre el cliente"
+        icon="lucide:notebook-pen"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Notas Adicionales
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Información relevante sobre el cliente
-        </p>
         <FormTextarea
           v-bind="notesBinds"
           label="Notas"
           placeholder="Notas, observaciones, preferencias del cliente..."
           :rows="4"
         />
-      </section>
+      </FormSectionCard>
 
       <div class="flex justify-end gap-3">
         <BaseButton variant="outline" type="button" @click="goBack">

@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton } from '@shared/components'
+import { BaseButton, FormSectionCard } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
@@ -262,18 +262,11 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
 
     <form v-else @submit.prevent="onSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2 space-y-6">
-        <!-- Propiedad -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Propiedad"
+          subtitle="Selecciona la propiedad a alquilar"
+          icon="lucide:building-2"
         >
-          <div class="flex items-center gap-2 mb-2">
-            <AppIcon icon="lucide:file-text" :size="20" color="var(--color-primary)" />
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Propiedad</h2>
-          </div>
-          <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-            Selecciona la propiedad a alquilar
-          </p>
           <FormSelect
             v-bind="propertyIdBinds"
             label="Seleccionar propiedad"
@@ -282,7 +275,7 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
             :error="errors.propertyId"
             required
           />
-        </section>
+        </FormSectionCard>
 
         <RentalTenantsSection
           v-model:tenant-ids="tenantIds"
@@ -291,16 +284,12 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
           return-to="/alquileres/contratos/nuevo"
         />
 
-        <!-- Fechas y Condiciones -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Fechas y Condiciones"
+          subtitle="Vigencia, montos y día de pago"
+          icon="lucide:calendar"
         >
-          <div class="flex items-center gap-2 mb-2">
-            <AppIcon icon="lucide:calendar" :size="20" color="var(--color-primary)" />
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Fechas y Condiciones</h2>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               v-bind="startDateBinds"
               type="date"
@@ -344,14 +333,13 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
               :options="paymentDueDayOptions"
             />
           </div>
-        </section>
+        </FormSectionCard>
 
-        <!-- Adjuntos -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Adjuntos"
+          subtitle="Contrato y acta de entrega"
+          icon="lucide:paperclip"
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">Adjuntos</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FileDropzone
               v-model="contractFile"
@@ -370,7 +358,7 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
               hint="PDF, Word o imágenes. Máx. 10 MB"
             />
           </div>
-        </section>
+        </FormSectionCard>
 
         <RentalContractAlertSettings
           :enable-expiration-alerts="values.enableExpirationAlerts"
@@ -379,18 +367,17 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
           @update:enable-collection-alerts="setFieldValue('enableCollectionAlerts', $event)"
         />
 
-        <!-- Observaciones -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Observaciones"
+          subtitle="Notas adicionales sobre el contrato"
+          icon="lucide:message-square"
         >
-          <h2 class="text-base font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">Observaciones</h2>
           <FormTextarea
             v-bind="notesBinds"
             placeholder="Notas adicionales sobre el contrato..."
             :rows="3"
           />
-        </section>
+        </FormSectionCard>
       </div>
 
       <!-- Resumen -->

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, AppIcon } from '@shared/components'
+import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useRental, useRentalFinancialBreakdown, useUpsertRentalFinancialConfig } from '../../application/useRentals'
 import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
@@ -260,26 +260,11 @@ watch(upsertSuccess, (ok) => {
         <!-- Columna principal: configuración -->
         <div class="xl:col-span-2 space-y-5">
 
-          <!-- Monto base -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{
-              backgroundColor: 'var(--color-surface)',
-              border: '2px solid var(--color-primary)',
-              borderStyle: 'dashed',
-            }"
+          <FormSectionCard
+            title="Monto ingresado por el alquiler"
+            :subtitle="`Importe real que la empresa recibe por este alquiler. Sobre este monto se calculan todos los descuentos. Si se deja vacío, se usa el monto del contrato ${rental ? formatAmount(rental.monthlyAmount, rental.currency) : ''}.`"
+            icon="lucide:banknote"
           >
-            <div class="flex items-center gap-2 mb-1">
-              <AppIcon icon="lucide:banknote" :size="18" color="var(--color-primary)" />
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-                Monto ingresado por el alquiler
-              </h2>
-            </div>
-            <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-              Importe real que la empresa recibe por este alquiler. Sobre este monto se calculan todos los descuentos.
-              Si se deja vacío, se usa el monto del contrato
-              <strong>{{ rental ? formatAmount(rental.monthlyAmount, rental.currency) : '' }}</strong>.
-            </p>
             <div class="max-w-xs">
               <FormInput
                 v-model="form.baseAmount"
@@ -290,19 +275,13 @@ watch(upsertSuccess, (ok) => {
                 :placeholder="`Ej: ${rental?.monthlyAmount ?? 0}`"
               />
             </div>
-          </section>
+          </FormSectionCard>
 
-          <!-- Descuentos: Gastos e Impuestos -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Gastos e Impuestos"
+            subtitle="Descuentos sobre el monto base"
+            icon="lucide:receipt"
           >
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-warning, #d97706)1a' }">
-                <AppIcon icon="lucide:minus-circle" :size="17" color="var(--color-warning, #d97706)" />
-              </div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Gastos e Impuestos</h2>
-            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <!-- Gastos -->
               <div
@@ -351,23 +330,14 @@ watch(upsertSuccess, (ok) => {
                 />
               </div>
             </div>
-          </section>
+          </FormSectionCard>
 
-          <!-- Agente Externo -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Agente externo"
+            subtitle="Agente externo a la empresa"
+            icon="lucide:user-cog"
           >
-            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                  <AppIcon icon="lucide:user-round-cog" :size="17" color="var(--color-primary)" />
-                </div>
-                <div>
-                  <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Agente externo</h2>
-                  <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Agente externo a la empresa</p>
-                </div>
-              </div>
+            <div class="flex justify-end mb-4">
               <BaseButton
                 type="button"
                 variant="outline"
@@ -410,23 +380,14 @@ watch(upsertSuccess, (ok) => {
                 />
               </div>
             </div>
-          </section>
+          </FormSectionCard>
 
-          <!-- Agente Interno -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Agente interno"
+            subtitle="Agente de la empresa (catálogo o nombre manual)"
+            icon="lucide:user-check"
           >
-            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                  <AppIcon icon="lucide:user-check" :size="17" color="var(--color-primary)" />
-                </div>
-                <div>
-                  <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Agente interno</h2>
-                  <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Agente de la empresa (catálogo o nombre manual)</p>
-                </div>
-              </div>
+            <div class="flex justify-end mb-4">
               <BaseButton
                 type="button"
                 variant="outline"
@@ -469,7 +430,7 @@ watch(upsertSuccess, (ok) => {
                 />
               </div>
             </div>
-          </section>
+          </FormSectionCard>
 
           <!-- Mensaje de éxito -->
           <div
@@ -502,17 +463,11 @@ watch(upsertSuccess, (ok) => {
 
         <!-- Columna lateral: desglose + acciones -->
         <div class="space-y-5">
-          <!-- Resumen del contrato -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Información del contrato"
+            subtitle="Montos del contrato y base de distribución"
+            icon="lucide:clipboard-list"
           >
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                <AppIcon icon="lucide:file-text" :size="17" color="var(--color-primary)" />
-              </div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Información del contrato</h2>
-            </div>
             <dl class="space-y-3 text-sm">
               <div>
                 <dt class="font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto mensual (contrato)</dt>
@@ -531,20 +486,13 @@ watch(upsertSuccess, (ok) => {
                 </dd>
               </div>
             </dl>
-          </section>
+          </FormSectionCard>
 
-          <!-- Desglose actual -->
-          <section
-            class="p-5 rounded-xl"
-            :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+          <FormSectionCard
+            title="Desglose actual"
+            subtitle="Cálculo según la configuración guardada"
+            icon="lucide:wallet"
           >
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-                <AppIcon icon="lucide:pie-chart" :size="17" color="var(--color-primary)" />
-              </div>
-              <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Desglose actual</h2>
-            </div>
-
             <div v-if="loadingBreakdown" class="flex items-center gap-2 py-4" :style="{ color: 'var(--color-text-muted)' }">
               <AppIcon icon="svg-spinners:ring-resize" :size="18" color="var(--color-primary)" />
               <span class="text-sm">Calculando...</span>
@@ -640,7 +588,7 @@ watch(upsertSuccess, (ok) => {
                 Configura los valores para ver el desglose
               </p>
             </div>
-          </section>
+          </FormSectionCard>
 
           <!-- Botón guardar (desktop) -->
           <div class="hidden xl:flex flex-col gap-3">

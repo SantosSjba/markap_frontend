@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon } from '@shared/components'
+import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useRental, useUpdateRental } from '../../application/useRentals'
@@ -271,25 +271,17 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
       <!-- Columna principal -->
       <div class="xl:col-span-2 space-y-5">
 
-        <!-- Propiedad e inquilino (solo lectura) -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Propiedad"
+          subtitle="Datos del inmueble del contrato"
+          icon="lucide:building-2"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:building-2" :size="17" color="var(--color-primary)" />
-            </div>
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-              Propiedad
-            </h2>
-            <span
-              class="ml-auto text-xs px-2 py-0.5 rounded-full font-medium"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }"
-            >
-              Solo lectura
-            </span>
-          </div>
+          <span
+            class="inline-block mb-3 text-xs px-2 py-0.5 rounded-full font-medium"
+            :style="{ backgroundColor: 'var(--color-surface-elevated)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }"
+          >
+            Solo lectura
+          </span>
           <div
             class="flex items-center gap-3 p-3 rounded-lg"
             :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
@@ -302,7 +294,7 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
               </p>
             </div>
           </div>
-        </section>
+        </FormSectionCard>
 
         <RentalTenantsSection
           v-model:tenant-ids="tenantIds"
@@ -311,19 +303,11 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
           :return-to="`/alquileres/contratos/${id}/editar`"
         />
 
-        <!-- Fechas y condiciones -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Fechas y condiciones"
+          subtitle="Vigencia, montos y estado del contrato"
+          icon="lucide:calendar"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:calendar" :size="17" color="var(--color-primary)" />
-            </div>
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-              Fechas y condiciones
-            </h2>
-          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               v-bind="startDateBinds"
@@ -375,23 +359,13 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
               />
             </div>
           </div>
-        </section>
+        </FormSectionCard>
 
-        <!-- Adjuntos -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Adjuntos"
+          subtitle="Reemplaza o agrega documentos al contrato (PDF, Word o imágenes, máx. 10 MB)"
+          icon="lucide:paperclip"
         >
-          <div class="flex items-center gap-2 mb-1">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:paperclip" :size="17" color="var(--color-primary)" />
-            </div>
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Adjuntos</h2>
-          </div>
-          <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-            Reemplaza o agrega documentos al contrato (PDF, Word o imágenes, máx. 10 MB)
-          </p>
-
           <!-- Adjuntos actuales con descarga -->
           <div class="space-y-2 mb-4">
             <!-- Contrato actual -->
@@ -487,7 +461,7 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
               hint="Reemplaza el acta actual. PDF, Word o imágenes."
             />
           </div>
-        </section>
+        </FormSectionCard>
 
         <RentalContractAlertSettings
           :enable-expiration-alerts="values.enableExpirationAlerts"
@@ -496,23 +470,17 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
           @update:enable-collection-alerts="setFieldValue('enableCollectionAlerts', $event)"
         />
 
-        <!-- Observaciones -->
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Observaciones"
+          subtitle="Notas adicionales sobre el contrato"
+          icon="lucide:message-square"
         >
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-primary)1a' }">
-              <AppIcon icon="lucide:notebook-pen" :size="17" color="var(--color-primary)" />
-            </div>
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Observaciones</h2>
-          </div>
           <FormTextarea
             v-bind="notesBinds"
             placeholder="Notas adicionales sobre el contrato..."
             :rows="3"
           />
-        </section>
+        </FormSectionCard>
       </div>
 
       <!-- Columna lateral: resumen y acciones -->

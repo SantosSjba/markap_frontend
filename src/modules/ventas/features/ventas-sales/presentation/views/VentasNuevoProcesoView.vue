@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, FormSelect, AppIcon } from '@shared/components'
+import { BaseButton, FormInput, FormSelect, AppIcon, FormSectionCard } from '@shared/components'
 import { useVentasPipelineStages } from '@ventas/configuracion'
 import { useVentasCreateProcess, useVentasFinancingChannels } from '../../application/useVentasSales'
 import type {
@@ -511,10 +511,7 @@ function submit() {
       </BaseButton>
     </div>
 
-    <div
-      class="p-5 rounded-xl border space-y-5"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
+    <div class="space-y-5">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormSelect
           v-model="form.propertyId"
@@ -537,18 +534,16 @@ function submit() {
         />
       </div>
 
-      <section class="space-y-3">
-        <div class="flex items-center justify-between gap-2">
-          <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-            Comisiones de asesores
-          </h2>
+      <FormSectionCard
+        title="Comisiones de asesores"
+        subtitle="Asesores internos o externos. Puede usar porcentaje sobre el precio del inmueble o un monto fijo en soles."
+        icon="lucide:percent"
+      >
+        <div class="flex justify-end mb-3">
           <BaseButton type="button" variant="outline" size="sm" @click="addCommissionRow">
             + Agregar asesor
           </BaseButton>
         </div>
-        <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
-          Asesores internos o externos. Puede usar porcentaje sobre el precio del inmueble o un monto fijo en soles.
-        </p>
 
         <div
           v-for="(row, idx) in commissionRows"
@@ -775,13 +770,14 @@ function submit() {
             Sin precio en el inmueble: los montos en % se calcularán cuando haya precio o al cierre.
           </p>
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section class="space-y-3">
-        <div class="flex items-center justify-between">
-          <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-            Compradores
-          </h2>
+      <FormSectionCard
+        title="Compradores"
+        subtitle="Personas que participan en la compra"
+        icon="lucide:users"
+      >
+        <div class="flex justify-end mb-3">
           <BaseButton type="button" variant="outline" size="sm" @click="addBuyer">
             + Agregar comprador
           </BaseButton>
@@ -806,16 +802,14 @@ function submit() {
             Quitar
           </BaseButton>
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
+      <FormSectionCard
         v-if="form.propertyId"
-        class="space-y-2 rounded-lg border px-4 py-3"
-        :style="{ borderColor: 'var(--color-border)' }"
+        title="Propietarios del inmueble"
+        subtitle="Titulares registrados en la ficha del inmueble"
+        icon="lucide:user-check"
       >
-        <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-          Propietarios del inmueble
-        </h2>
         <p v-if="loadingPropertyOwners" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
           Cargando propietarios…
         </p>
@@ -837,7 +831,7 @@ function submit() {
         <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
           Sin propietarios registrados en la ficha del inmueble.
         </p>
-      </section>
+      </FormSectionCard>
 
       <div class="flex justify-end gap-2 pt-2">
         <BaseButton variant="outline" @click="router.push('/ventas/procesos')">Cancelar</BaseButton>

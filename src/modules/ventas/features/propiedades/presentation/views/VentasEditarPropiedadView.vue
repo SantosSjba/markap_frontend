@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon } from '@shared/components'
+import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
@@ -454,11 +454,11 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
 
     <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">
       <div class="xl:col-span-2 space-y-5">
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Datos del inmueble"
+          subtitle="Código, tipo y ubicación"
+          icon="lucide:building-2"
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">Datos del inmueble</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput v-bind="codeBinds" label="Código" :error="errors.code" required />
             <FormSelect
@@ -566,16 +566,13 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             />
           </div>
           <FormTextarea v-bind="descriptionBinds" class="mt-4" label="Descripción" :rows="3" />
-        </section>
+        </FormSectionCard>
 
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Multimedia"
+          subtitle="Fotos y planos del inmueble"
+          icon="lucide:images"
         >
-          <div class="flex items-center gap-2 mb-3">
-            <AppIcon icon="lucide:images" :size="18" color="var(--color-primary)" />
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">Multimedia</h2>
-          </div>
           <div v-for="(row, idx) in mediaRows" :key="idx" class="flex flex-wrap gap-2 mb-3 items-end">
             <div class="flex-1 min-w-[200px]">
               <FormInput v-model="row.url" label="URL" />
@@ -599,13 +596,13 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             <AppIcon icon="lucide:plus" :size="16" />
             Añadir
           </BaseButton>
-        </section>
+        </FormSectionCard>
 
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Características"
+          subtitle="Superficie, habitaciones y detalles"
+          icon="lucide:list-checks"
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">Características</h2>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             <FormInput v-bind="areaBinds" type="number" min="0" step="0.01" label="Área (m²)" :error="errors.area" />
             <FormInput v-bind="bedroomsBinds" type="number" min="0" label="Dormitorios" :error="errors.bedrooms" />
@@ -614,25 +611,21 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             <FormInput v-bind="floorLevelBinds" label="Piso" :error="errors.floorLevel" />
             <FormInput v-bind="parkingSpacesBinds" type="number" min="0" label="Estacionamientos" :error="errors.parkingSpaces" />
           </div>
-        </section>
+        </FormSectionCard>
 
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Propietarios"
+          subtitle="Copropietarios del inmueble"
+          icon="lucide:user-check"
         >
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-              Propietarios
-            </h2>
-            <div class="flex gap-2">
-              <BaseButton type="button" variant="outline" size="sm" @click="addOwnerRow">
-                + Agregar propietario
-              </BaseButton>
-              <BaseButton type="button" variant="outline" size="sm" @click="goToNewOwner">
-                <AppIcon icon="lucide:user-plus" :size="15" class="mr-1" />
-                Nuevo
-              </BaseButton>
-            </div>
+          <div class="flex flex-wrap justify-end gap-2 mb-4">
+            <BaseButton type="button" variant="outline" size="sm" @click="addOwnerRow">
+              + Agregar propietario
+            </BaseButton>
+            <BaseButton type="button" variant="outline" size="sm" @click="goToNewOwner">
+              <AppIcon icon="lucide:user-plus" :size="15" class="mr-1" />
+              Nuevo
+            </BaseButton>
           </div>
           <div
             v-for="(_, idx) in ownerRows"
@@ -658,19 +651,19 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               Quitar
             </BaseButton>
           </div>
-        </section>
+        </FormSectionCard>
 
-        <section
-          class="p-5 rounded-xl"
-          :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        <FormSectionCard
+          title="Partidas"
+          subtitle="Números de partida registral (opcional)"
+          icon="lucide:hash"
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">Partidas</h2>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormInput v-bind="partida1Binds" label="Partida 1" :error="errors.partida1" />
             <FormInput v-bind="partida2Binds" label="Partida 2" :error="errors.partida2" />
             <FormInput v-bind="partida3Binds" label="Partida 3" :error="errors.partida3" />
           </div>
-        </section>
+        </FormSectionCard>
 
         <div class="xl:hidden flex gap-3">
           <BaseButton

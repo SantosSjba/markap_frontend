@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton } from '@shared/components'
+import { BaseButton, FormSectionCard } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormSelect } from '@shared/components'
 
@@ -61,20 +61,11 @@ function goToNewTenant(index: number) {
 </script>
 
 <template>
-  <section
-    class="p-5 rounded-xl"
-    :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+  <FormSectionCard
+    title="Inquilinos"
+    subtitle="Puede haber uno o más inquilinos en el mismo contrato. El primero será el contacto principal en cobranzas."
+    icon="lucide:users"
   >
-    <div class="flex items-center gap-2 mb-2">
-      <AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" />
-      <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-        Inquilinos
-      </h2>
-    </div>
-    <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-      Puede haber uno o más inquilinos en el mismo contrato. El primero será el contacto principal en cobranzas.
-    </p>
-
     <div class="space-y-3">
       <div
         v-for="(tenantId, index) in rows"
@@ -124,5 +115,5 @@ function goToNewTenant(index: number) {
       <AppIcon icon="lucide:plus" :size="18" color="currentColor" />
       Agregar inquilino
     </BaseButton>
-  </section>
+  </FormSectionCard>
 </template>

@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton } from '@shared/components'
+import { BaseButton, FormSectionCard } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
@@ -408,17 +408,11 @@ const onSubmit = handleSubmit(async (formValues) => {
     </div>
 
     <form v-else-if="client" @submit.prevent="onSubmit" class="space-y-8">
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Tipo de cliente"
+        subtitle="Comprador / lead o propietario de inventario. Si es titular de propiedades, no podrás pasarlo a comprador hasta liberar el inventario."
+        icon="lucide:users"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Tipo de cliente
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Comprador / lead o propietario de inventario. Si es titular de propiedades, no podrás pasarlo a
-          comprador hasta liberar el inventario.
-        </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"
@@ -459,16 +453,14 @@ const onSubmit = handleSubmit(async (formValues) => {
             </div>
           </button>
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Datos personales"
+        subtitle="Identificación y nombre"
+        icon="lucide:id-card"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Datos personales
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormSelect
             v-bind="documentTypeIdBinds"
             label="Tipo de documento"
@@ -502,16 +494,14 @@ const onSubmit = handleSubmit(async (formValues) => {
             :error="errors.legalRepresentativePosition"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Contacto"
+        subtitle="Teléfonos y correos"
+        icon="lucide:phone"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Contacto
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
             v-bind="primaryPhoneBinds"
             type="tel"
@@ -539,20 +529,15 @@ const onSubmit = handleSubmit(async (formValues) => {
             :error="errors.secondaryEmail"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
+      <FormSectionCard
         v-if="editKind === 'OWNER'"
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        title="Dirección fiscal"
+        subtitle="Obligatoria para propietarios (misma regla que en nuevo cliente)."
+        icon="lucide:map-pin"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Dirección fiscal
-        </h2>
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Obligatoria para propietarios (misma regla que en nuevo cliente).
-        </p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
             v-bind="addressLineBinds"
             class="md:col-span-2"
@@ -626,17 +611,15 @@ const onSubmit = handleSubmit(async (formValues) => {
             :error="errors.reference"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
+      <FormSectionCard
         v-if="editKind === 'BUYER'"
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+        title="Lead y asignación"
+        subtitle="Estado en el embudo, origen y asesor responsable"
+        icon="lucide:target"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Lead y asignación
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormSelect
             v-bind="salesStatusBinds"
             label="Estado del cliente"
@@ -659,15 +642,13 @@ const onSubmit = handleSubmit(async (formValues) => {
             :error="errors.assignedAgentId"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Notas"
+        subtitle="Observaciones del cliente"
+        icon="lucide:notebook-pen"
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Notas
-        </h2>
         <FormTextarea
           v-bind="notesBinds"
           label="Observaciones"
@@ -678,7 +659,7 @@ const onSubmit = handleSubmit(async (formValues) => {
           "
           :rows="4"
         />
-      </section>
+      </FormSectionCard>
 
       <div class="flex justify-end gap-3">
         <BaseButton variant="outline" type="button" @click="goBack">Cancelar</BaseButton>
