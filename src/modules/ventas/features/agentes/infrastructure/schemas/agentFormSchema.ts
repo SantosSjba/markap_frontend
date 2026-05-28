@@ -18,8 +18,8 @@ export const ventasAgentCreateFormSchema = yup.object({
     .required('Seleccione el tipo de agente'),
   userId: yup.string().when('type', {
     is: 'INTERNAL',
-    then: (s) => s.required('Seleccione el usuario'),
-    otherwise: (s) => s.optional(),
+    then: (s) => s.trim().optional(),
+    otherwise: (s) => s.trim().optional(),
   }),
   fullName: yup
     .string()

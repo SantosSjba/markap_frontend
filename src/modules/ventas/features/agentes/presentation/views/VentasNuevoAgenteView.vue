@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, AppIcon, Badge } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
@@ -10,7 +10,23 @@ import { useUsers } from '@modules/settings'
 import type { VentasAgentType } from '../../domain/agent.types'
 import { ventasAgentCreateFormSchema } from '../../infrastructure/schemas/agentFormSchema'
 
+const route = useRoute()
 const router = useRouter()
+
+const returnTo = computed(() => {
+  const t = route.query.returnTo
+  return typeof t === 'string' ? t : ''
+})
+
+const agentField = computed(() => {
+  const f = route.query.agentField
+  return f === 'external' || f === 'internal' ? f : ''
+})
+
+const presetAgentType = computed((): VentasAgentType | null => {
+  const t = route.query.agentType
+  return t === 'INTERNAL' || t === 'EXTERNAL' ? t : null
+})
 
 const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm({
   validationSchema: toTypedSchema(ventasAgentCreateFormSchema),
@@ -70,7 +86,14 @@ watch(
   },
 )
 
-const goBack = () => router.push('/ventas/agentes')
+onMounted(() => {
+  if (presetAgentType.value) setFieldValue('type', presetAgentType.value)
+})
+
+const goBack = () => {
+  if (returnTo.value) router.push(returnTo.value)
+  else router.push('/ventas/agentes')
+}
 
 function onInvalidSubmit() {
   void markapAlert.toast.warning(
@@ -82,16 +105,26 @@ function onInvalidSubmit() {
 const onSubmit = handleSubmit(
   async (formValues) => {
     try {
-    await createMutation.mutateAsync({
-      type: formValues.type,
-      userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
-      fullName: formValues.fullName.trim(),
-      email: formValues.email?.trim() || null,
-      phone: formValues.phone?.trim() || null,
-      documentTypeId: formValues.documentTypeId || null,
-      documentNumber: formValues.documentNumber?.trim() || null,
-    })
-    router.push('/ventas/agentes')
+      const data = await createMutation.mutateAsync({
+        type: formValues.type,
+        userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
+        fullName: formValues.fullName.trim(),
+        email: formValues.email?.trim() || null,
+        phone: formValues.phone?.trim() || null,
+        documentTypeId: formValues.documentTypeId || null,
+        documentNumber: formValues.documentNumber?.trim() || null,
+      })
+      if (returnTo.value && data?.id) {
+        router.push({
+          path: returnTo.value,
+          query: {
+            selectedAgentId: data.id,
+            ...(agentField.value ? { agentField: agentField.value } : {}),
+          },
+        })
+        return
+      }
+      router.push('/ventas/agentes')
     } catch {
       void 0
     }
@@ -140,7 +173,19 @@ const onSubmit = handleSubmit(
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 mb-4">
+          <div
+            v-if="presetAgentType"
+            class="mb-4 flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+            :style="{ backgroundColor: 'var(--color-primary)0d', border: '1px solid var(--color-primary)33' }"
+          >
+            <AppIcon icon="lucide:info" :size="15" color="var(--color-primary)" />
+            <span :style="{ color: 'var(--color-text-secondary)' }">
+              Registrando agente
+              <strong :style="{ color: 'var(--color-text-primary)' }">{{ presetAgentType === 'INTERNAL' ? 'interno' : 'externo' }}</strong>
+            </span>
+          </div>
+
+          <div v-if="!presetAgentType" class="grid grid-cols-2 gap-3 mb-4">
             <button
               type="button"
               class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
@@ -184,8 +229,8 @@ const onSubmit = handleSubmit(
           <div v-if="values.type === 'INTERNAL'" class="space-y-3">
             <FormSelect
               v-bind="userIdBinds"
-              label="Seleccionar usuario del sistema"
-              :options="userOptions"
+              label="Vincular usuario del sistema (opcional)"
+              :options="[{ value: '', label: 'Ninguno' }, ...userOptions]"
               placeholder="Seleccionar usuario..."
               :error="errors.userId"
             />
