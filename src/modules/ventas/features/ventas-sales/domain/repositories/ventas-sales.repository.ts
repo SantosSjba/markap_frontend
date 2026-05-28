@@ -26,7 +26,9 @@ export interface VentasSalesRepository {
 
   createProcess: (body: {
     buyerClientId: string
+    buyerClientIds?: string[]
     propertyId: string
+    ownerClientIds?: string[]
     agentId?: string | null
     title?: string | null
     pipelineStage?: string

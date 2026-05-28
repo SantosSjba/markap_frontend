@@ -10,12 +10,8 @@ import {
   AppIcon,
   BasePagination,
 } from '@shared/components'
-import { useVentasProcessesList, useVentasCreateProcess } from '../../application/useVentasSales'
+import { useVentasProcessesList } from '../../application/useVentasSales'
 import type { SaleProcessListRow } from '../../domain/sales.types'
-import { ventasClientsRepository } from '@modules/ventas/features/clientes'
-import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
-import { useVentasAgentsList } from '@modules/ventas/features/agentes'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useVentasPipelineStages } from '@ventas/configuracion'
 import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../../domain/pipeline.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -82,82 +78,6 @@ const tableColumns = [
   { key: 'actions', label: '', align: 'right' as const },
 ]
 
-const showNew = ref(false)
-const loadingNewModalData = ref(false)
-const newModalLoadError = ref('')
-const buyerOptions = ref<{ value: string; label: string }[]>([])
-const propertyOptions = ref<{ value: string; label: string }[]>([])
-const agentParams = ref({ page: 1, limit: 500, isActive: true })
-const {
-  data: agentsRes,
-  isError: agentsQueryError,
-  error: agentsFetchError,
-  refetch: refetchAgents,
-} = useVentasAgentsList(agentParams)
-const agentOptions = computed(() => [
-  { value: '', label: 'Sin asignar' },
-  ...(agentsRes.value?.data ?? []).map((a) => ({ value: a.id, label: a.fullName })),
-])
-
-const form = ref({
-  buyerClientId: '',
-  propertyId: '',
-  agentId: '',
-  title: '',
-  pipelineStage: 'PROSPECT',
-})
-
-const { mutate: createProcess, isPending: creating } = useVentasCreateProcess()
-
-async function openNewModal() {
-  newModalLoadError.value = ''
-  loadingNewModalData.value = true
-  try {
-    const [buyers, props] = await Promise.all([
-      ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 }),
-      ventasPropertiesRepository.getList({ page: 1, limit: 500, listingStatus: 'AVAILABLE' }),
-    ])
-    buyerOptions.value = buyers.data.map((c) => ({
-      value: c.id,
-      label: `${c.fullName} (${c.documentNumber})`,
-    }))
-    propertyOptions.value = props.data.map((p) => ({
-      value: p.id,
-      label: `${p.code} — ${p.addressLine}`,
-    }))
-    showNew.value = true
-  } catch (e) {
-    newModalLoadError.value = getApiErrorMessage(e)
-  } finally {
-    loadingNewModalData.value = false
-  }
-}
-
-function submitNew() {
-  if (!form.value.buyerClientId || !form.value.propertyId) return
-  createProcess(
-    {
-      buyerClientId: form.value.buyerClientId,
-      propertyId: form.value.propertyId,
-      agentId: form.value.agentId || null,
-      title: form.value.title || null,
-      pipelineStage: form.value.pipelineStage,
-    },
-    {
-      onSuccess: () => {
-        showNew.value = false
-        form.value = {
-          buyerClientId: '',
-          propertyId: '',
-          agentId: '',
-          title: '',
-          pipelineStage: 'PROSPECT',
-        }
-      },
-    },
-  )
-}
-
 function goDetail(row: SaleProcessListRow) {
   void router.push(`/ventas/procesos/${row.id}`)
 }
@@ -179,27 +99,11 @@ function goDetail(row: SaleProcessListRow) {
           <AppIcon icon="lucide:layout-grid" :size="18" />
           Pipeline
         </BaseButton>
-        <BaseButton
-          variant="primary"
-          class="flex items-center gap-2"
-          :loading="loadingNewModalData"
-          @click="openNewModal"
-        >
+        <BaseButton variant="primary" class="flex items-center gap-2" @click="router.push('/ventas/procesos/nuevo')">
           <AppIcon icon="lucide:plus" :size="18" />
           Nuevo proceso
         </BaseButton>
       </div>
-    </div>
-
-    <div
-      v-if="newModalLoadError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
-    >
-      <span class="max-w-xl" style="color: var(--color-error)">{{ newModalLoadError }}</span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" :loading="loadingNewModalData" @click="openNewModal">
-        Reintentar
-      </BaseButton>
     </div>
 
     <div
@@ -216,16 +120,6 @@ function goDetail(row: SaleProcessListRow) {
       <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
         Reintentar configuración
       </BaseButton>
-    </div>
-
-    <div
-      v-if="agentsQueryError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
-    >
-      <span :style="{ color: 'var(--color-text-primary)' }">No se pudieron cargar los asesores para el formulario.</span>
-      <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(agentsFetchError) }}</span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchAgents()">Reintentar</BaseButton>
     </div>
 
     <div
@@ -282,6 +176,13 @@ function goDetail(row: SaleProcessListRow) {
             <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{
               (row as SaleProcessListRow).buyer.fullName
             }}</span>
+            <p
+              v-if="(row as SaleProcessListRow).buyers && (row as SaleProcessListRow).buyers!.length > 1"
+              class="text-xs"
+              :style="{ color: 'var(--color-text-muted)' }"
+            >
+              +{{ (row as SaleProcessListRow).buyers!.length - 1 }} comprador(es)
+            </p>
           </td>
           <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
             {{ (row as SaleProcessListRow).property.code }}
@@ -319,36 +220,5 @@ function goDetail(row: SaleProcessListRow) {
       </div>
     </div>
 
-    <BaseModal v-model="showNew" title="Nuevo proceso de venta" size="lg">
-      <div class="p-4 space-y-4">
-        <FormSelect
-          v-model="form.buyerClientId"
-          label="Cliente (comprador / lead)"
-          :options="buyerOptions"
-          required
-        />
-        <FormSelect
-          v-model="form.propertyId"
-          label="Inmueble (disponible)"
-          :options="propertyOptions"
-          required
-        />
-        <FormSelect v-model="form.agentId" label="Asesor" :options="agentOptions" />
-        <FormSelect v-model="form.pipelineStage" label="Etapa inicial" :options="stageOptions" />
-        <div>
-          <label class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Título (opcional)</label>
-          <input
-            v-model="form.title"
-            class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-            :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-            placeholder="Ej. Familia Pérez — Torre Vista Mar"
-          />
-        </div>
-        <div class="flex justify-end gap-2 pt-2">
-          <BaseButton variant="outline" @click="showNew = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" :loading="creating" @click="submitNew">Crear</BaseButton>
-        </div>
-      </div>
-    </BaseModal>
   </div>
 </template>

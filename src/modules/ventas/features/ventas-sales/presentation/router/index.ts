@@ -8,6 +8,12 @@ export const ventasSalesProcesosRoutes: RouteRecordRaw[] = [
     meta: { title: 'Procesos de Venta' },
   },
   {
+    path: 'nuevo',
+    name: 'ventas-procesos-nuevo',
+    component: () => import('../views/VentasNuevoProcesoView.vue'),
+    meta: { title: 'Nuevo proceso de venta' },
+  },
+  {
     path: 'pipeline',
     name: 'ventas-procesos-pipeline',
     component: () => import('../views/VentasPipelineView.vue'),

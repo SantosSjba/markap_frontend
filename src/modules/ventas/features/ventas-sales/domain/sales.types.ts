@@ -7,6 +7,8 @@ export interface SaleProcessListRow {
   pipelineStage: string
   status: string
   buyer: { id: string; fullName: string; primaryPhone: string }
+  buyers?: { id: string; fullName: string; primaryPhone: string; isPrimary: boolean }[]
+  owners?: { id: string; fullName: string }[]
   property: { id: string; code: string; addressLine: string; salePrice: number | null }
   agent: { id: string; fullName: string } | null
 }

@@ -48,6 +48,13 @@ export interface VentasOwnerOption {
   primaryEmail: string
 }
 
+export interface VentasPropertyOwnerSummary {
+  id: string
+  fullName: string
+  documentNumber: string
+  isPrimary: boolean
+}
+
 export type VentasPropertyMediaItem = { url: string; kind: 'photo' | 'plan' }
 
 export interface VentasLocationCustom {
@@ -75,6 +82,7 @@ export interface VentasCreatePropertyPayload {
   partida2?: string | null
   partida3?: string | null
   ownerId: string
+  ownerClientIds?: string[]
   salePrice?: number | null
   saleCurrency?: string
   projectName?: string | null
@@ -113,6 +121,7 @@ export interface VentasPropertyDetail {
   partida2: string | null
   partida3: string | null
   ownerId: string
+  owners?: VentasPropertyOwnerSummary[]
   monthlyRent: number | null
   maintenanceAmount: number | null
   depositMonths: number | null

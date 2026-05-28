@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
 import { BaseButton, AppIcon } from '@shared/components'
@@ -166,7 +166,6 @@ const parkingSpacesBinds = defineComponentBinds('parkingSpaces')
 const partida1Binds = defineComponentBinds('partida1')
 const partida2Binds = defineComponentBinds('partida2')
 const partida3Binds = defineComponentBinds('partida3')
-const ownerIdBinds = defineComponentBinds('ownerId')
 const projectNameBinds = defineComponentBinds('projectName')
 const saleCurrencyBinds = defineComponentBinds('saleCurrency')
 const salePriceBinds = defineComponentBinds('salePrice')
@@ -186,6 +185,22 @@ const createMutation = useVentasCreateProperty()
 const { isOtherLocation } = useClientAddressUbigeo({ values, setFieldValue })
 
 const mediaRows = ref<{ url: string; kind: 'photo' | 'plan' }[]>([{ url: '', kind: 'photo' }])
+const ownerRows = ref<string[]>([''])
+
+function addOwnerRow() {
+  ownerRows.value.push('')
+}
+function removeOwnerRow(idx: number) {
+  ownerRows.value.splice(idx, 1)
+  if (!ownerRows.value.length) ownerRows.value = ['']
+}
+
+watch(
+  () => ownerRows.value[0],
+  (id) => {
+    if (id) setFieldValue('ownerId', id)
+  },
+)
 
 const loading = computed(
   () =>
@@ -258,6 +273,7 @@ onMounted(async () => {
   const id = route.query.selectedClientId
   if (typeof id === 'string' && id) {
     await refetchOwners()
+    ownerRows.value = [id]
     setFieldValue('ownerId', id)
   }
 })
@@ -280,6 +296,8 @@ function buildMediaItems(): VentasPropertyMediaItem[] | null {
 
 const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
   try {
+    const ownerClientIds = Array.from(new Set(ownerRows.value.filter(Boolean)))
+    if (!ownerClientIds.length) return
     const ubigeo = buildPropertyUbigeoPayload(formValues)
     await createMutation.mutateAsync({
       code: formValues.code.trim(),
@@ -297,7 +315,8 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
       partida1: formValues.partida1.trim() || null,
       partida2: formValues.partida2.trim() || null,
       partida3: formValues.partida3.trim() || null,
-      ownerId: formValues.ownerId,
+      ownerId: ownerClientIds[0]!,
+      ownerClientIds,
       projectName: formValues.projectName.trim() || null,
       salePrice: toNum(formValues.salePrice),
       saleCurrency: formValues.saleCurrency,
@@ -549,21 +568,46 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           class="p-5 rounded-xl"
           :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">Propietario</h2>
-          <div class="flex flex-wrap items-end gap-3">
-            <div class="flex-1 min-w-[200px]">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+              Propietarios
+            </h2>
+            <div class="flex gap-2">
+              <BaseButton type="button" variant="outline" size="sm" @click="addOwnerRow">
+                + Agregar propietario
+              </BaseButton>
+              <BaseButton type="button" variant="outline" size="sm" class="gap-1" @click="goToNewOwner">
+                <AppIcon icon="lucide:user-plus" :size="15" />
+                Nuevo
+              </BaseButton>
+            </div>
+          </div>
+          <p class="text-xs mb-3" :style="{ color: 'var(--color-text-muted)' }">
+            Puede registrar varios copropietarios (cónyuges, herederos, etc.). El primero es el propietario principal.
+          </p>
+          <div
+            v-for="(_, idx) in ownerRows"
+            :key="`owner-row-${idx}`"
+            class="flex gap-2 items-end mb-3"
+          >
+            <div class="flex-1">
               <FormSelect
-                v-bind="ownerIdBinds"
-                label="Propietario (cliente OWNER)"
+                v-model="ownerRows[idx]"
+                :label="idx === 0 ? 'Propietario principal' : `Propietario ${idx + 1}`"
                 placeholder="Seleccionar"
                 :options="ownerOptions"
-                :error="errors.ownerId"
+                :error="idx === 0 ? errors.ownerId : undefined"
                 required
               />
             </div>
-            <BaseButton type="button" variant="outline" class="flex items-center gap-1.5" @click="goToNewOwner">
-              <AppIcon icon="lucide:user-plus" :size="15" />
-              Nuevo propietario
+            <BaseButton
+              v-if="ownerRows.length > 1"
+              type="button"
+              variant="ghost"
+              size="sm"
+              @click="removeOwnerRow(idx)"
+            >
+              Quitar
             </BaseButton>
           </div>
         </section>
