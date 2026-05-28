@@ -103,7 +103,6 @@ function closeConfirm() {
 async function executeConfirm() {
   if (!confirmModal.value) return
   const { type, agent } = confirmModal.value
-  closeConfirm()
   try {
     if (type === 'deactivate') {
       await updateMutation.mutateAsync({ id: agent.id, data: { isActive: false } })
@@ -112,6 +111,7 @@ async function executeConfirm() {
     } else {
       await deleteMutation.mutateAsync(agent.id)
     }
+    closeConfirm()
   } catch {
     /* onError en composables; invalidación en onSuccess */
   }

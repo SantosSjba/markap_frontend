@@ -169,7 +169,6 @@ function isCommissionActionPending(key: string): boolean {
 
 function onMarkCommissionPaid(commissionId: string) {
   const key = `mark:${commissionId}`
-  if (pendingCommissionAction.value) return
   pendingCommissionAction.value = key
   markPaid(commissionId, {
     onSettled: () => {
@@ -180,7 +179,6 @@ function onMarkCommissionPaid(commissionId: string) {
 
 function onMarkCommissionPartPaid(partId: string) {
   const key = `part:${partId}`
-  if (pendingCommissionAction.value) return
   pendingCommissionAction.value = key
   markPartPaid(partId, {
     onSettled: () => {
@@ -191,7 +189,6 @@ function onMarkCommissionPartPaid(partId: string) {
 
 function onRecalcCommission(commissionId: string) {
   const key = `recalc:${commissionId}`
-  if (pendingCommissionAction.value) return
   pendingCommissionAction.value = key
   recalc(commissionId, {
     onSettled: () => {
@@ -312,7 +309,6 @@ function onRecalcCommission(commissionId: string) {
                     size="sm"
                     icon="lucide:circle-check"
                     :loading="isCommissionActionPending(`part:${part.id}`)"
-                    :disabled="!!pendingCommissionAction && !isCommissionActionPending(`part:${part.id}`)"
                     @click="onMarkCommissionPartPaid(part.id)"
                   >
                     Pagar cuota
@@ -329,7 +325,6 @@ function onRecalcCommission(commissionId: string) {
                   size="sm"
                   icon="lucide:calculator"
                   :loading="isCommissionActionPending(`recalc:${(row as CommissionRow).id}`)"
-                  :disabled="!!pendingCommissionAction && !isCommissionActionPending(`recalc:${(row as CommissionRow).id}`)"
                   @click="onRecalcCommission((row as CommissionRow).id)"
                 >
                   Recalcular
@@ -340,7 +335,6 @@ function onRecalcCommission(commissionId: string) {
                   size="sm"
                   icon="lucide:circle-check"
                   :loading="isCommissionActionPending(`mark:${(row as CommissionRow).id}`)"
-                  :disabled="!!pendingCommissionAction && !isCommissionActionPending(`mark:${(row as CommissionRow).id}`)"
                   @click="onMarkCommissionPaid((row as CommissionRow).id)"
                 >
                   Pagar todo

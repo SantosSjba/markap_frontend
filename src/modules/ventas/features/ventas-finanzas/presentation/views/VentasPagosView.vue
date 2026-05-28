@@ -342,7 +342,7 @@ function onMarkPaid(row: BuyerPaymentRow) {
 
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton type="button" variant="secondary" icon="lucide:x" @click="showNew = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" icon="lucide:save" :disabled="creating">Guardar</BaseButton>
+          <BaseButton type="submit" variant="primary" icon="lucide:save" :loading="creating">Guardar</BaseButton>
         </div>
       </form>
     </BaseModal>

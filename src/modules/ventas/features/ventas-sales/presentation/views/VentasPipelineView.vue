@@ -57,7 +57,6 @@ const { stageOptions, orderedCodes, query: configQuery } = useVentasPipelineStag
 const {
   data: listResult,
   isLoading,
-  isFetching,
   isError: boardIsError,
   error: boardError,
   refetch: refetchBoard,
@@ -101,12 +100,21 @@ watch(
 watch(
   () => [orderedCodes.value, listResult.value?.data] as const,
   () => {
+    if (savingMove.value) return
     const rows = listResult.value?.data
     if (!rows) return
     rebuildBoard(rows)
   },
   { immediate: true, deep: true },
 )
+
+function removeProcessFromBoards(processId: string) {
+  for (const code of orderedCodes.value) {
+    const list = boardList(code)
+    const idx = list.findIndex((r) => r.id === processId)
+    if (idx >= 0) list.splice(idx, 1)
+  }
+}
 
 function onUpdateBoardColumn(stage: string, v: SaleProcessListRow[]) {
   boards[stage] = v
@@ -212,6 +220,7 @@ function onMarkLostConfirmed(reason: string) {
     { id: p.id, body: { status: 'LOST', lostReason: reason } },
     {
       onSuccess: () => {
+        removeProcessFromBoards(p.id)
         markLostOpen.value = false
         markLostTarget.value = null
       },
@@ -246,7 +255,7 @@ const group = computed(() => ({
     return isForwardPipelineTransition(itemStage, toStage, orderedCodes.value)
   },
 }))
-const boardBusy = computed(() => isFetching.value || savingMove.value)
+const boardBusy = computed(() => savingMove.value)
 </script>
 
 <template>

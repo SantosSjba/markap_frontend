@@ -19,7 +19,6 @@ import type {
 } from '../../domain/sales.types'
 import { useVentasPipelineStages } from '@ventas/configuracion'
 import {
-  PROCESS_STATUS_OPTIONS,
   processStatusLabel,
   allowedForwardStageOptions,
 } from '../../domain/pipeline.constants'
@@ -56,6 +55,7 @@ const {
 } = useVentasClosingReadiness(complianceParams)
 
 const { mutate: updateProc, isPending: saving } = useVentasUpdateProcess()
+const markingLost = ref(false)
 const { mutate: markCommissionPaid } = useVentasMarkCommissionPaid()
 const { mutate: recalcCommission } = useVentasRecalculateCommission()
 const pendingCommissionAction = ref<string | null>(null)
@@ -66,7 +66,6 @@ function isCommissionDetailActionPending(key: string): boolean {
 
 function onRecalcCommissionInDetail(commissionId: string) {
   const key = `recalc:${commissionId}`
-  if (pendingCommissionAction.value) return
   pendingCommissionAction.value = key
   recalcCommission(commissionId, {
     onSuccess: () => refetchDetail(),
@@ -78,7 +77,6 @@ function onRecalcCommissionInDetail(commissionId: string) {
 
 function onMarkCommissionPaidInDetail(commissionId: string) {
   const key = `mark:${commissionId}`
-  if (pendingCommissionAction.value) return
   pendingCommissionAction.value = key
   markCommissionPaid(commissionId, {
     onSuccess: () => refetchDetail(),
@@ -89,7 +87,6 @@ function onMarkCommissionPaidInDetail(commissionId: string) {
 }
 
 const stageEdit = ref('')
-const statusEdit = ref('')
 const financingEdit = ref('')
 const markLostOpen = ref(false)
 
@@ -102,10 +99,6 @@ const stageOptionsForEdit = computed(() => {
   if (!d || d.status !== 'ACTIVE') return stageOptions.value
   return allowedForwardStageOptions(d.pipelineStage, stageOptions.value, orderedCodes.value)
 })
-
-const statusOptionsForEdit = computed(() =>
-  PROCESS_STATUS_OPTIONS.filter((o) => o.value !== 'LOST'),
-)
 
 const FINANCING_CATEGORY_LABEL: Record<string, string> = {
   BANK: 'Bancos',
@@ -132,7 +125,6 @@ watch(
     const row = p as SaleProcessDetail | undefined
     if (row) {
       stageEdit.value = row.pipelineStage ?? ''
-      statusEdit.value = row.status ?? ''
       financingEdit.value = row.financingChannel?.id ?? ''
     }
   },
@@ -195,13 +187,13 @@ function saveProcessFields() {
     id: id.value,
     body: {
       pipelineStage: isProcessActive.value ? stageEdit.value || undefined : undefined,
-      status: (statusEdit.value as 'ACTIVE' | 'WON' | 'LOST') || undefined,
       financingChannelId: financingEdit.value || null,
     },
   })
 }
 
 function confirmMarkLost(reason: string) {
+  markingLost.value = true
   updateProc(
     {
       id: id.value,
@@ -211,6 +203,9 @@ function confirmMarkLost(reason: string) {
       onSuccess: () => {
         markLostOpen.value = false
         refetchDetail()
+      },
+      onSettled: () => {
+        markingLost.value = false
       },
     },
   )
@@ -318,7 +313,7 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
 
       <FormSectionCard
         dense
-        title="Etapa y estado"
+        title="Etapa y financiamiento"
         subtitle="Solo avance de etapa en procesos activos; use venta caída si no continúa"
         icon="lucide:git-branch"
       >
@@ -328,14 +323,6 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
               v-model="stageEdit"
               label="Etapa"
               :options="stageOptionsForEdit"
-              :disabled="!isProcessActive"
-            />
-          </div>
-          <div class="min-w-[180px]">
-            <FormSelect
-              v-model="statusEdit"
-              label="Estado"
-              :options="statusOptionsForEdit"
               :disabled="!isProcessActive"
             />
           </div>
@@ -376,7 +363,7 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
       <MarkSaleLostModal
         v-model="markLostOpen"
         :process-code="detail.code"
-        :loading="saving"
+        :loading="markingLost"
         @confirm="confirmMarkLost"
       />
 
@@ -586,7 +573,6 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
                 size="sm"
                 icon="lucide:calculator"
                 :loading="isCommissionDetailActionPending(`recalc:${c.id}`)"
-                :disabled="!!pendingCommissionAction && !isCommissionDetailActionPending(`recalc:${c.id}`)"
                 @click="onRecalcCommissionInDetail(c.id)"
               >
                 Recalcular
@@ -596,7 +582,6 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
                 size="sm"
                 icon="lucide:circle-check"
                 :loading="isCommissionDetailActionPending(`mark:${c.id}`)"
-                :disabled="!!pendingCommissionAction && !isCommissionDetailActionPending(`mark:${c.id}`)"
                 @click="onMarkCommissionPaidInDetail(c.id)"
               >
                 Marcar pagada

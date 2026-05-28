@@ -119,10 +119,12 @@ async function openModal() {
       value: c.id,
       label: `${c.fullName} (${c.documentNumber})`,
     }))
-    propertyOptions.value = props.data.map((p) => ({
-      value: p.id,
-      label: `${p.code} — ${p.listingStatus ?? ''} — ${p.addressLine}`,
-    }))
+    propertyOptions.value = props.data
+      .filter((p) => p.listingStatus === 'AVAILABLE' || p.listingStatus === 'RESERVED')
+      .map((p) => ({
+        value: p.id,
+        label: `${p.code} — ${p.listingStatus ?? ''} — ${p.addressLine}`,
+      }))
     showNew.value = true
   } catch (e) {
     newModalLoadError.value = getApiErrorMessage(e)

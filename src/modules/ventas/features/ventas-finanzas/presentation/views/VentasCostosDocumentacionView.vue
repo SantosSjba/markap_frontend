@@ -14,7 +14,7 @@ import {
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { ventasClientsRepository } from '@modules/ventas/features/clientes'
-import { ventasSalesRepository } from '@ventas/sales'
+import { useVentasClosingsList } from '@ventas/sales'
 import type { DocumentationCostRow } from '../../domain/finanzas.types'
 import {
   useVentasDocumentationCostsList,
@@ -85,7 +85,15 @@ function costTypeLabel(t: string) {
 }
 
 const showNew = ref(false)
-const closingOptions = ref<{ value: string; label: string }[]>([])
+
+const closingsListParams = ref({ page: 1, limit: 500 })
+const { data: closingsListResult } = useVentasClosingsList(closingsListParams)
+const closingSelectOptions = computed(() =>
+  (closingsListResult.value?.data ?? []).map((c) => ({
+    value: c.id,
+    label: `${c.property.code} — ${c.buyer.fullName}`,
+  })),
+)
 
 const costSchema = toTypedSchema(
   yup.object({
@@ -129,12 +137,7 @@ const costTypeOptions = [
 
 const { mutate: createCost, isPending: creating } = useVentasCreateDocumentationCost()
 
-async function openNewModal() {
-  const closings = await ventasSalesRepository.listClosings({ page: 1, limit: 500 })
-  closingOptions.value = closings.data.map((c) => ({
-    value: c.id,
-    label: `${c.property.code} — ${c.buyer.fullName}`,
-  }))
+function openNewModal() {
   resetCostForm()
   showNew.value = true
 }
@@ -161,15 +164,6 @@ const {
   refetch: refetchProfit,
 } = useVentasClosingProfitability(profitabilityClosingId)
 
-const closingOptionsForProfit = ref<{ value: string; label: string }[]>([])
-async function loadClosingsForProfit() {
-  const closings = await ventasSalesRepository.listClosings({ page: 1, limit: 500 })
-  closingOptionsForProfit.value = closings.data.map((c) => ({
-    value: c.id,
-    label: `${c.property.code} — ${c.buyer.fullName}`,
-  }))
-}
-void loadClosingsForProfit()
 </script>
 
 <template>
@@ -194,7 +188,7 @@ void loadClosingsForProfit()
             v-model="profitabilityClosingId"
             label="Cierre"
             placeholder="Seleccione un cierre"
-            :options="closingOptionsForProfit"
+            :options="closingSelectOptions"
           />
         </div>
       </div>
@@ -290,7 +284,7 @@ void loadClosingsForProfit()
 
     <BaseModal v-model="showNew" title="Registrar costo de documentación" size="md">
       <form class="space-y-4" @submit.prevent="onSubmitCost">
-        <FormSelect label="Cierre de venta" v-bind="costBinds.saleClosingId" :options="closingOptions" />
+        <FormSelect label="Cierre de venta" v-bind="costBinds.saleClosingId" :options="closingSelectOptions" />
         <p v-if="costErrors.saleClosingId" class="text-sm text-red-600">{{ costErrors.saleClosingId }}</p>
 
         <FormSelect label="Tipo" v-bind="costBinds.costType" :options="costTypeOptions" />

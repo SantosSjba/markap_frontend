@@ -3,6 +3,7 @@ import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { ventasPropertyKeys } from '@modules/ventas/features/propiedades'
 import { ventasFinanzasKeys } from '@ventas/finanzas'
 import { invalidateVentasReportesCache } from '@ventas/reportes'
 import { ventasSalesApiRepository as ventasSalesRepository } from '../infrastructure/repositories/ventas-sales.api.repository'
@@ -33,6 +34,27 @@ export function invalidateVentasSalesCache(qc: QueryClient) {
 
 function touchVentasReportes(qc: QueryClient) {
   void invalidateVentasReportesCache(qc)
+}
+
+function touchVentasFinanzas(qc: QueryClient) {
+  void invalidateQuerySubtree(qc, ventasFinanzasKeys.root)
+}
+
+function touchVentasProperties(qc: QueryClient) {
+  void invalidateQuerySubtree(qc, ventasPropertyKeys.root)
+}
+
+type UpdateProcessBody = Parameters<typeof ventasSalesRepository.updateProcess>[1]
+
+function afterProcessMutation(
+  qc: QueryClient,
+  body?: UpdateProcessBody,
+) {
+  invalidateVentasSalesCache(qc)
+  touchVentasReportes(qc)
+  if (body?.status === 'LOST') {
+    touchVentasFinanzas(qc)
+  }
 }
 
 export function useVentasProcessesList(
@@ -72,6 +94,7 @@ export function useVentasCreateProcess() {
     mutationFn: ventasSalesRepository.createProcess,
     onSuccess: () => {
       invalidateVentasSalesCache(qc)
+      touchVentasFinanzas(qc)
       touchVentasReportes(qc)
       void markapAlert.toast.success('Proceso creado')
     },
@@ -84,9 +107,8 @@ export function useVentasUpdateProcess() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: Parameters<typeof ventasSalesRepository.updateProcess>[1] }) =>
       ventasSalesRepository.updateProcess(id, body),
-    onSuccess: () => {
-      invalidateVentasSalesCache(qc)
-      touchVentasReportes(qc)
+    onSuccess: (_data, { body }) => {
+      afterProcessMutation(qc, body)
       void markapAlert.toast.success('Proceso actualizado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -99,9 +121,8 @@ export function useVentasUpdateProcessQuiet() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: Parameters<typeof ventasSalesRepository.updateProcess>[1] }) =>
       ventasSalesRepository.updateProcess(id, body),
-    onSuccess: () => {
-      invalidateVentasSalesCache(qc)
-      touchVentasReportes(qc)
+    onSuccess: (_data, { body }) => {
+      afterProcessMutation(qc, body)
     },
     onError: (e) => void markapAlert.toast.error('No se pudo mover la tarjeta', getApiErrorMessage(e)),
   })
@@ -196,6 +217,7 @@ export function useVentasCreateSeparation() {
     mutationFn: ventasSalesRepository.createSeparation,
     onSuccess: () => {
       invalidateVentasSalesCache(qc)
+      touchVentasProperties(qc)
       touchVentasReportes(qc)
       void markapAlert.toast.success('Separación registrada — propiedad en estado Separada')
     },
@@ -216,7 +238,8 @@ export function useVentasCreateClosing() {
     mutationFn: ventasSalesRepository.createClosing,
     onSuccess: () => {
       invalidateVentasSalesCache(qc)
-      void invalidateQuerySubtree(qc, ventasFinanzasKeys.root)
+      touchVentasFinanzas(qc)
+      touchVentasProperties(qc)
       touchVentasReportes(qc)
       void markapAlert.toast.success('Cierre registrado — propiedad vendida y comisión pendiente')
     },
