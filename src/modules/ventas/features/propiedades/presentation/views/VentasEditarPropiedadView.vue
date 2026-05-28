@@ -8,6 +8,7 @@ import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
   useVentasPropertyById,
   useVentasPropertyTypes,
+  useVentasPropertyCurrencies,
   useVentasPropertyDepartments,
   useVentasPropertyProvinces,
   useVentasPropertyDistricts,
@@ -16,6 +17,7 @@ import {
 } from '../../application/useVentasProperties'
 import type {
   VentasPropertyType,
+  VentasCurrency,
   VentasOwnerOption,
   VentasPropertyDetail,
   VentasPropertyMediaItem,
@@ -56,6 +58,7 @@ type PropertyFormValues = {
   partida3: string
   ownerId: string
   projectName: string
+  saleCurrency: string
   salePrice: string | number
   listingStatus: ListingVentas
 }
@@ -108,6 +111,7 @@ const schema = yup.object({
   partida3: yup.string().trim().max(100),
   ownerId: yup.string().required('Seleccione el propietario'),
   projectName: yup.string().trim().max(200),
+  saleCurrency: yup.string().required('Seleccione la moneda'),
   salePrice: yup
     .number()
     .transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v)))
@@ -141,6 +145,7 @@ const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, reset
     partida3: '',
     ownerId: '',
     projectName: '',
+    saleCurrency: 'PEN',
     salePrice: '',
     listingStatus: 'AVAILABLE',
   },
@@ -168,6 +173,7 @@ const partida2Binds = defineComponentBinds('partida2')
 const partida3Binds = defineComponentBinds('partida3')
 const ownerIdBinds = defineComponentBinds('ownerId')
 const projectNameBinds = defineComponentBinds('projectName')
+const saleCurrencyBinds = defineComponentBinds('saleCurrency')
 const salePriceBinds = defineComponentBinds('salePrice')
 const listingStatusBinds = defineComponentBinds('listingStatus')
 
@@ -176,6 +182,7 @@ const selectedProvinceId = computed(() => values.provinceId || undefined)
 
 const { data: property, isLoading: loadingProperty, isError: propertyError } = useVentasPropertyById(id)
 const { data: propertyTypes, isLoading: loadingTypes } = useVentasPropertyTypes()
+const { data: currencies, isLoading: loadingCurrencies } = useVentasPropertyCurrencies()
 const { data: departments, isLoading: loadingDepartments } = useVentasPropertyDepartments()
 const { data: provinces, isLoading: loadingProvinces } = useVentasPropertyProvinces(selectedDepartmentId)
 const { data: districts, isLoading: loadingDistricts } = useVentasPropertyDistricts(selectedProvinceId)
@@ -191,8 +198,27 @@ const { isOtherLocation } = useClientAddressUbigeo({
 const mediaRows = ref<{ url: string; kind: 'photo' | 'plan' }[]>([{ url: '', kind: 'photo' }])
 
 const loading = computed(
-  () => loadingProperty.value || loadingTypes.value || loadingDepartments.value || loadingOwners.value,
+  () =>
+    loadingProperty.value ||
+    loadingTypes.value ||
+    loadingCurrencies.value ||
+    loadingDepartments.value ||
+    loadingOwners.value,
 )
+
+const currencyOptions = computed(() =>
+  (currencies.value ?? []).map((c: VentasCurrency) => ({
+    value: c.code,
+    label: `${c.name} (${c.symbol})`,
+  })),
+)
+
+const selectedCurrencySymbol = computed(() => {
+  const c = (currencies.value ?? []).find((x) => x.code === values.saleCurrency)
+  return c?.symbol ?? values.saleCurrency
+})
+
+const salePriceLabel = computed(() => `Precio de venta (${selectedCurrencySymbol.value})`)
 
 function normalizeListingStatus(p: VentasPropertyDetail): ListingVentas {
   const s = p.listingStatus
@@ -245,6 +271,7 @@ watch(
         partida3: p.partida3 ?? '',
         ownerId,
         projectName: p.projectName ?? '',
+        saleCurrency: p.saleCurrency ?? 'PEN',
         salePrice: p.salePrice ?? '',
         listingStatus: normalizeListingStatus(p),
       },
@@ -352,6 +379,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
         ownerId: formValues.ownerId,
         projectName: formValues.projectName.trim() || null,
         salePrice: toNum(formValues.salePrice),
+        saleCurrency: formValues.saleCurrency,
         listingStatus: formValues.listingStatus,
         mediaItems: buildMediaItems(),
       },
@@ -498,11 +526,20 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               :error="errors.listingStatus"
               required
             />
+            <FormSelect
+              v-bind="saleCurrencyBinds"
+              label="Moneda"
+              placeholder="Seleccionar moneda"
+              :options="currencyOptions"
+              :loading="loadingCurrencies"
+              :error="errors.saleCurrency"
+              required
+            />
             <FormInput
               v-bind="salePriceBinds"
               type="number"
               min="0"
-              label="Precio de venta (S/)"
+              :label="salePriceLabel"
               :error="errors.salePrice"
               required
             />

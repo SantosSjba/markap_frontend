@@ -10,6 +10,7 @@ import {
   type VentasPropertyDetail,
   type VentasPropertyStats,
   type VentasPropertyType,
+  type VentasCurrency,
   type VentasProvince,
   type VentasUpdatePropertyPayload,
 } from '../../domain/property.types'
@@ -20,6 +21,9 @@ const ventasScope = { applicationSlug: VENTAS_APP_SLUG }
 export const ventasPropertiesApiRepository: VentasPropertiesRepository = {
   getPropertyTypes: () =>
     apiClient.get<VentasPropertyType[]>('/properties/property-types').then((r) => r.data),
+
+  getCurrencies: () =>
+    apiClient.get<VentasCurrency[]>('/properties/currencies').then((r) => r.data),
 
   getDepartments: () =>
     apiClient.get<VentasDepartment[]>('/properties/departments').then((r) => r.data),

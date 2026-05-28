@@ -32,6 +32,7 @@ export const ventasPropertyKeys = {
       params?.maxSalePrice ?? '',
     ] as const,
   propertyTypes: () => [...ventasPropertyKeys.root, 'property-types'] as const,
+  currencies: () => [...ventasPropertyKeys.root, 'currencies'] as const,
   departments: () => [...ventasPropertyKeys.root, 'departments'] as const,
   provinces: (departmentId?: string) =>
     [...ventasPropertyKeys.root, 'provinces', departmentId ?? 'all'] as const,
@@ -45,6 +46,14 @@ export function useVentasPropertyTypes() {
   return useQuery({
     queryKey: ventasPropertyKeys.propertyTypes(),
     queryFn: () => ventasPropertiesRepository.getPropertyTypes(),
+  })
+}
+
+export function useVentasPropertyCurrencies() {
+  return useQuery({
+    queryKey: ventasPropertyKeys.currencies(),
+    queryFn: () => ventasPropertiesRepository.getCurrencies(),
+    staleTime: Infinity,
   })
 }
 

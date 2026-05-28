@@ -338,9 +338,17 @@ function listingStatusLabel(status: string | null): string {
   }
 }
 
-function formatSalePrice(salePrice: number | null): string {
+const SALE_CURRENCY_SYMBOL: Record<string, string> = {
+  PEN: 'S/',
+  USD: 'US$',
+  EUR: '€',
+}
+
+function formatSalePrice(salePrice: number | null, saleCurrency?: string | null): string {
   if (salePrice == null) return '—'
-  return `S/ ${Number(salePrice).toLocaleString('es-PE', { maximumFractionDigits: 0 })}`
+  const sym =
+    (saleCurrency && SALE_CURRENCY_SYMBOL[saleCurrency]) || saleCurrency || 'S/'
+  return `${sym} ${Number(salePrice).toLocaleString('es-PE', { maximumFractionDigits: 0 })}`
 }
 
 const { isExporting, exportToExcel } = useExcelExport()
@@ -626,7 +634,12 @@ async function handleExport() {
                 </Badge>
               </td>
               <td class="py-3 px-4 text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                {{ formatSalePrice((row as VentasPropertyListItem).salePrice) }}
+                {{
+                  formatSalePrice(
+                    (row as VentasPropertyListItem).salePrice,
+                    (row as VentasPropertyListItem).saleCurrency,
+                  )
+                }}
               </td>
               <td class="py-3 px-4 text-right">
                 <ActionsDropdown :items="getActions(row as VentasPropertyListItem)" />

@@ -8,6 +8,13 @@ export interface VentasPropertyType {
   isActive: boolean
 }
 
+export interface VentasCurrency {
+  id: string
+  code: string
+  name: string
+  symbol: string
+}
+
 export interface VentasDepartment {
   id: string
   name: string
@@ -69,6 +76,7 @@ export interface VentasCreatePropertyPayload {
   partida3?: string | null
   ownerId: string
   salePrice?: number | null
+  saleCurrency?: string
   projectName?: string | null
   mediaItems?: VentasPropertyMediaItem[] | null
   listingStatus?: string | null
@@ -109,6 +117,7 @@ export interface VentasPropertyDetail {
   maintenanceAmount: number | null
   depositMonths: number | null
   salePrice: number | null
+  saleCurrency: string
   projectName: string | null
   mediaItems: VentasPropertyMediaItem[] | null
   listingStatus: string | null
@@ -127,6 +136,7 @@ export interface VentasPropertyListItem {
   ownerId: string
   ownerFullName: string
   salePrice: number | null
+  saleCurrency: string
   projectName: string | null
   listingStatus: string | null
 }
