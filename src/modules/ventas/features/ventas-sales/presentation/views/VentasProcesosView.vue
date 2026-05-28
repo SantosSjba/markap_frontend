@@ -91,7 +91,7 @@ function goDetail(row: SaleProcessListRow) {
           Procesos de venta
         </h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Pipeline CRM: prospecto → visita → negociación → separación → cierre. Cliente + inmueble + asesor.
+          Separación → contrato de arras → minuta → escritura pública. Cliente + inmueble + asesor.
         </p>
       </div>
       <div class="flex flex-wrap gap-2">

@@ -113,11 +113,10 @@ function goReportes() {
 }
 
 const PIPELINE_STAGE_LABEL: Record<string, string> = {
-  PROSPECT: 'Prospecto',
-  VISIT: 'Visita',
-  NEGOTIATION: 'Negociación',
   SEPARATION: 'Separación',
-  CLOSING: 'Cierre',
+  ARRAS: 'Contrato de arras',
+  MINUTA: 'Minuta',
+  PUBLIC_DEED: 'Escritura pública',
 }
 
 const acciones: {

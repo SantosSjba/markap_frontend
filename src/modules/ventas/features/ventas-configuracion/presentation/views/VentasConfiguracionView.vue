@@ -64,7 +64,7 @@ function reorderPipeline(idx: number, dir: -1 | 1) {
 
 function submitPipeline() {
   const sorted = [...pipelineDraft.value].sort((a, b) => a.sortOrder - b.sortOrder)
-  if (sorted.length !== 5) {
+  if (sorted.length !== 4) {
     void markapAlert.toast.warning('Faltan etapas en la configuración')
     return
   }
@@ -192,7 +192,7 @@ const flowSteps = [
             Estados del pipeline CRM
           </h2>
           <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-            Etiquetas en español y orden de columnas en el Kanban. Los códigos técnicos (PROSPECT, …) no cambian.
+            Etiquetas en español y orden de columnas en el Kanban. Los códigos técnicos (SEPARATION, ARRAS, …) no cambian.
           </p>
           <div
             class="rounded-xl border overflow-hidden"

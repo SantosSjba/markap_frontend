@@ -30,7 +30,7 @@ const form = ref({
   propertyId: '',
   agentId: '',
   title: '',
-  pipelineStage: 'PROSPECT',
+  pipelineStage: 'SEPARATION',
   buyers: [''],
 })
 

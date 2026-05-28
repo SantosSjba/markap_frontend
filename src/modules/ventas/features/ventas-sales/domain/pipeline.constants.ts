@@ -1,10 +1,9 @@
-/** Etapas CRM Ventas (API = inglés, UI = español) — orden del pipeline Kanban */
+/** Etapas del proceso de venta (API = código, UI = español) — orden del pipeline Kanban */
 export const PIPELINE_STAGE_OPTIONS = [
-  { value: 'PROSPECT', label: 'Prospecto' },
-  { value: 'VISIT', label: 'Visita' },
-  { value: 'NEGOTIATION', label: 'Negociación' },
   { value: 'SEPARATION', label: 'Separación' },
-  { value: 'CLOSING', label: 'Cierre' },
+  { value: 'ARRAS', label: 'Contrato de arras' },
+  { value: 'MINUTA', label: 'Minuta' },
+  { value: 'PUBLIC_DEED', label: 'Escritura pública' },
 ] as const
 
 export type PipelineStageValue = (typeof PIPELINE_STAGE_OPTIONS)[number]['value']
@@ -13,7 +12,7 @@ const PIPELINE_STAGE_SET = new Set<string>(PIPELINE_STAGE_OPTIONS.map((o) => o.v
 
 export function normalizePipelineStage(code: string | null | undefined): PipelineStageValue {
   if (code && PIPELINE_STAGE_SET.has(code)) return code as PipelineStageValue
-  return 'PROSPECT'
+  return 'SEPARATION'
 }
 
 export function pipelineStageLabel(code: string): string {
