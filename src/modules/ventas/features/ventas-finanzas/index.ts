@@ -10,6 +10,7 @@ export {
   useVentasCommissionsList,
   useVentasCommissionProfiles,
   useVentasMarkCommissionPaid,
+  useVentasMarkCommissionPaymentPartPaid,
   useVentasRecalculateCommission,
   useVentasUpsertCommissionProfile,
   useVentasDocumentationCostsList,

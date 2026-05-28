@@ -97,6 +97,18 @@ export function useVentasMarkCommissionPaid() {
   })
 }
 
+export function useVentasMarkCommissionPaymentPartPaid() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (partId: string) => ventasFinanzasRepository.markCommissionPaymentPartPaid(partId),
+    onSuccess: () => {
+      void invalidateVentasSalesAndFinanzas(qc)
+      void markapAlert.toast.success('Cuota marcada como pagada')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
+  })
+}
+
 export function useVentasRecalculateCommission() {
   const qc = useQueryClient()
   return useMutation({

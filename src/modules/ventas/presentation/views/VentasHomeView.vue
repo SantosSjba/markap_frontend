@@ -271,12 +271,6 @@ const acciones: {
             </dd>
           </div>
           <div class="flex justify-between gap-4 text-sm">
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Costos documentación</dt>
-            <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
-              {{ formatPenDec(fin.documentationCostsTotal) }}
-            </dd>
-          </div>
-          <div class="flex justify-between gap-4 text-sm">
             <dt :style="{ color: 'var(--color-text-secondary)' }">Comisiones pagadas</dt>
             <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
               {{ formatPenDec(fin.commissionsPaidAmount) }}

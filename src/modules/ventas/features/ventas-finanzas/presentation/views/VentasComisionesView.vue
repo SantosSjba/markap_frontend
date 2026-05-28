@@ -13,6 +13,7 @@ import type { CommissionRow } from '../../domain/finanzas.types'
 import {
   useVentasCommissionsList,
   useVentasMarkCommissionPaid,
+  useVentasMarkCommissionPaymentPartPaid,
   useVentasRecalculateCommission,
 } from '../../application/useVentasFinanzas'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -53,8 +54,17 @@ const paginationProps = computed(() => {
 const statusOptions = [
   { value: '', label: 'Todos' },
   { value: 'PENDING', label: 'Pendiente' },
+  { value: 'PARTIAL', label: 'Parcial' },
   { value: 'PAID', label: 'Pagado' },
 ]
+
+const DEDUCTIBLE_LABELS: Record<string, string> = {
+  TRAVEL: 'Pasajes',
+  TAX: 'Impuestos',
+  NOTARY: 'Notaría',
+  REGISTRY: 'Registros',
+  OTHER: 'Otros',
+}
 
 const agentParams = ref({ page: 1, limit: 500, isActive: true })
 const {
@@ -100,6 +110,26 @@ function calculationLabel(row: CommissionRow): string {
   return 'Porcentaje'
 }
 
+function commissionGross(row: CommissionRow): number {
+  return row.grossAmount ?? row.amount
+}
+
+function commissionNet(row: CommissionRow): number {
+  return row.netPayable ?? row.amount
+}
+
+function commissionStatusLabel(status: string): string {
+  if (status === 'PAID') return 'Pagado'
+  if (status === 'PARTIAL') return 'Parcial'
+  return 'Pendiente'
+}
+
+function commissionStatusVariant(status: string): 'success' | 'warning' | 'info' {
+  if (status === 'PAID') return 'success'
+  if (status === 'PARTIAL') return 'info'
+  return 'warning'
+}
+
 const columns = [
   { key: 'prop', label: 'Inmueble', sortAccessor: (r: unknown) => commissionPropertyCode(r as CommissionRow) },
   { key: 'buyer', label: 'Cliente', sortAccessor: (r: unknown) => commissionBuyerName(r as CommissionRow) },
@@ -112,12 +142,13 @@ const columns = [
     label: 'Base',
     sortAccessor: (r: unknown) => commissionBasePrice(r as CommissionRow) ?? 0,
   },
-  { key: 'amt', label: 'Comisión', sortAccessor: (r: unknown) => (r as CommissionRow).amount },
+  { key: 'amt', label: 'Bruto / Neto', sortAccessor: (r: unknown) => commissionNet(r as CommissionRow) },
   { key: 'st', label: 'Estado', sortAccessor: (r: unknown) => (r as CommissionRow).status },
   { key: 'act', label: '' },
 ]
 
 const { mutate: markPaid, isPending: marking } = useVentasMarkCommissionPaid()
+const { mutate: markPartPaid, isPending: markingPart } = useVentasMarkCommissionPaymentPartPaid()
 const { mutate: recalc, isPending: recalcing } = useVentasRecalculateCommission()
 </script>
 
@@ -126,7 +157,7 @@ const { mutate: recalc, isPending: recalcing } = useVentasRecalculateCommission(
     <div>
       <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Comisiones</h1>
       <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-        Listado de comisiones registradas al crear procesos de venta. La configuración se hace en Nuevo proceso.
+        Comisiones con plan de pago en partes y deducibles configurados al crear el proceso.
       </p>
     </div>
 
@@ -168,47 +199,98 @@ const { mutate: recalc, isPending: recalcing } = useVentasRecalculateCommission(
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin comisiones registradas.">
         <template #row="{ row }">
-          <td class="py-3 px-4 text-sm">{{ commissionPropertyCode(row as CommissionRow) }}</td>
-          <td class="py-3 px-4">{{ commissionBuyerName(row as CommissionRow) }}</td>
-          <td class="py-3 px-4 text-sm">{{ commissionOriginLabel(row as CommissionRow) }}</td>
-          <td class="py-3 px-4 text-sm">{{ (row as CommissionRow).agent.fullName }}</td>
-          <td class="py-3 px-4 text-sm">{{ agentTypeLabel((row as CommissionRow).agent.type) }}</td>
-          <td class="py-3 px-4 text-sm">{{ calculationLabel(row as CommissionRow) }}</td>
-          <td class="py-3 px-4 text-sm">
+          <td class="py-3 px-4 text-sm align-top">{{ commissionPropertyCode(row as CommissionRow) }}</td>
+          <td class="py-3 px-4 align-top">{{ commissionBuyerName(row as CommissionRow) }}</td>
+          <td class="py-3 px-4 text-sm align-top">{{ commissionOriginLabel(row as CommissionRow) }}</td>
+          <td class="py-3 px-4 text-sm align-top">{{ (row as CommissionRow).agent.fullName }}</td>
+          <td class="py-3 px-4 text-sm align-top">{{ agentTypeLabel((row as CommissionRow).agent.type) }}</td>
+          <td class="py-3 px-4 text-sm align-top">{{ calculationLabel(row as CommissionRow) }}</td>
+          <td class="py-3 px-4 text-sm align-top">
             {{
               commissionBasePrice(row as CommissionRow) != null
                 ? `S/ ${commissionBasePrice(row as CommissionRow)!.toLocaleString('es-PE')}`
                 : '—'
             }}
           </td>
-          <td class="py-3 px-4 text-sm font-medium">
-            S/ {{ (row as CommissionRow).amount.toLocaleString('es-PE') }}
+          <td class="py-3 px-4 text-sm align-top">
+            <div>Bruto S/ {{ commissionGross(row as CommissionRow).toLocaleString('es-PE') }}</div>
+            <div
+              v-if="(row as CommissionRow).deductibles?.length"
+              class="text-xs mt-0.5"
+              :style="{ color: 'var(--color-text-muted)' }"
+            >
+              − deducibles S/ {{ ((row as CommissionRow).deductiblesTotal ?? 0).toLocaleString('es-PE') }}
+            </div>
+            <div class="font-medium mt-0.5">
+              Neto S/ {{ commissionNet(row as CommissionRow).toLocaleString('es-PE') }}
+            </div>
           </td>
-          <td class="py-3 px-4">
-            <Badge :variant="(row as CommissionRow).status === 'PAID' ? 'success' : 'warning'">
-              {{ (row as CommissionRow).status === 'PAID' ? 'Pagado' : 'Pendiente' }}
+          <td class="py-3 px-4 align-top">
+            <Badge :variant="commissionStatusVariant((row as CommissionRow).status)">
+              {{ commissionStatusLabel((row as CommissionRow).status) }}
             </Badge>
           </td>
-          <td class="py-3 px-4">
-            <div class="flex flex-wrap gap-1">
-              <BaseButton
-                v-if="(row as CommissionRow).status === 'PENDING' && (row as CommissionRow).calculationType !== 'FIXED'"
-                variant="secondary"
-                size="sm"
-                :disabled="recalcing"
-                @click="recalc((row as CommissionRow).id)"
+          <td class="py-3 px-4 align-top min-w-[200px]">
+            <div class="space-y-2">
+              <ul
+                v-if="(row as CommissionRow).paymentParts?.length"
+                class="text-xs space-y-1"
+                :style="{ color: 'var(--color-text-secondary)' }"
               >
-                Recalcular
-              </BaseButton>
-              <BaseButton
-                v-if="(row as CommissionRow).status === 'PENDING'"
-                variant="primary"
-                size="sm"
-                :disabled="marking"
-                @click="markPaid((row as CommissionRow).id)"
+                <li
+                  v-for="part in (row as CommissionRow).paymentParts"
+                  :key="part.id"
+                  class="flex flex-wrap items-center gap-2"
+                >
+                  <span>
+                    {{ part.label || `Parte ${part.partNumber}` }}:
+                    S/ {{ part.amount.toLocaleString('es-PE') }}
+                    <span v-if="part.status === 'PAID'" class="text-green-600">(pagada)</span>
+                  </span>
+                  <BaseButton
+                    v-if="part.status !== 'PAID'"
+                    variant="primary"
+                    size="sm"
+                    :disabled="markingPart"
+                    @click="markPartPaid(part.id)"
+                  >
+                    Pagar cuota
+                  </BaseButton>
+                </li>
+              </ul>
+              <div class="flex flex-wrap gap-1">
+                <BaseButton
+                  v-if="
+                    (row as CommissionRow).status !== 'PAID' &&
+                    (row as CommissionRow).calculationType !== 'FIXED'
+                  "
+                  variant="secondary"
+                  size="sm"
+                  :disabled="recalcing"
+                  @click="recalc((row as CommissionRow).id)"
+                >
+                  Recalcular
+                </BaseButton>
+                <BaseButton
+                  v-if="(row as CommissionRow).status !== 'PAID'"
+                  variant="outline"
+                  size="sm"
+                  :disabled="marking"
+                  @click="markPaid((row as CommissionRow).id)"
+                >
+                  Pagar todo
+                </BaseButton>
+              </div>
+              <ul
+                v-if="(row as CommissionRow).deductibles?.length"
+                class="text-xs"
+                :style="{ color: 'var(--color-text-muted)' }"
               >
-                Marcar pagada
-              </BaseButton>
+                <li v-for="d in (row as CommissionRow).deductibles" :key="d.id">
+                  {{ DEDUCTIBLE_LABELS[d.deductibleType] ?? d.deductibleType }}:
+                  S/ {{ d.amount.toLocaleString('es-PE') }}
+                </li>
+              </ul>
             </div>
           </td>
         </template>

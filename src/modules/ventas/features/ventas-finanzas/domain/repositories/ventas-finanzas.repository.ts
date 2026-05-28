@@ -28,6 +28,7 @@ export interface VentasFinanzasRepository {
     total: number
   }>
   markCommissionPaid: (id: string, body?: { paidAt?: string | null }) => Promise<unknown>
+  markCommissionPaymentPartPaid: (partId: string, body?: { paidAt?: string | null }) => Promise<unknown>
   recalculateCommission: (id: string) => Promise<unknown>
   listCommissionProfiles: () => Promise<CommissionProfileRow[]>
   upsertCommissionProfile: (body: { agentId: string; commissionPercent: number }) => Promise<unknown>

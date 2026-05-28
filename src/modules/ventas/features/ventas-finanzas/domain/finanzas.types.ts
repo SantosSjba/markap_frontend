@@ -19,13 +19,35 @@ export interface BuyerPaymentRow {
   }
 }
 
+export interface CommissionPaymentPartRow {
+  id: string
+  partNumber: number
+  label: string | null
+  amount: number
+  dueDate: string | null
+  status: string
+  paidAt: string | null
+}
+
+export interface CommissionDeductibleRow {
+  id: string
+  deductibleType: string
+  description: string | null
+  amount: number
+}
+
 export interface CommissionRow {
   id: string
   amount: number
+  grossAmount?: number
+  deductiblesTotal?: number
+  netPayable?: number
   percentApplied: number | null
   status: string
   paidAt: string | null
   calculationType?: 'PERCENT' | 'FIXED' | string
+  paymentParts?: CommissionPaymentPartRow[]
+  deductibles?: CommissionDeductibleRow[]
   agent: { id: string; fullName: string; type?: string }
   closing: {
     id: string

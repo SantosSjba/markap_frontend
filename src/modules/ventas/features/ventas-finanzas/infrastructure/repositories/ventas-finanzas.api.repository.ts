@@ -68,6 +68,14 @@ export const ventasFinanzasApiRepository: VentasFinanzasRepository = {
       )
       .then((r) => r.data),
 
+  markCommissionPaymentPartPaid: (partId: string, body?: { paidAt?: string | null }) =>
+    apiClient
+      .patch(
+        `/ventas-finanzas/commission-payment-parts/${encodeURIComponent(partId)}/mark-paid?${qs({ ...scope })}`,
+        body ?? {},
+      )
+      .then((r) => r.data),
+
   recalculateCommission: (id: string) =>
     apiClient
       .post(

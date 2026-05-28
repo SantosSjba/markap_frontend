@@ -10,10 +10,7 @@ import {
   ventasSalesSeparacionesRoutes,
   ventasSalesCierresRoutes,
 } from '@ventas/sales'
-import {
-  ventasFinanzasComisionesRoutes,
-  ventasFinanzasCostosDocRoutes,
-} from '@ventas/finanzas'
+import { ventasFinanzasComisionesRoutes } from '@ventas/finanzas'
 import { ventasReportesRoutes } from '@ventas/reportes'
 import { ventasConfiguracionRoutes } from '@ventas/configuracion'
 
@@ -76,12 +73,6 @@ export const ventasRoutes: RouteRecordRaw[] = [
         component: SectionLayout,
         meta: { title: 'Comisiones' },
         children: ventasFinanzasComisionesRoutes,
-      },
-      {
-        path: 'costos-documentacion',
-        component: SectionLayout,
-        meta: { title: 'Costos de Documentación' },
-        children: ventasFinanzasCostosDocRoutes,
       },
       {
         path: 'reportes',

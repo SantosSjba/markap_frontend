@@ -13,15 +13,57 @@ export interface SaleProcessParticipant {
 
 export type SaleCommissionCalculationType = 'PERCENT' | 'FIXED'
 
+export type SaleCommissionDeductibleType =
+  | 'TRAVEL'
+  | 'TAX'
+  | 'NOTARY'
+  | 'REGISTRY'
+  | 'OTHER'
+
+export interface SaleCommissionPaymentPart {
+  id: string
+  partNumber: number
+  label: string | null
+  amount: number
+  dueDate: string | null
+  status: string
+  paidAt: string | null
+}
+
+export interface SaleCommissionDeductible {
+  id: string
+  deductibleType: SaleCommissionDeductibleType | string
+  description: string | null
+  amount: number
+}
+
 export interface SaleProcessCommission {
   id: string
   amount: number
+  grossAmount?: number
+  deductiblesTotal?: number
+  netPayable?: number
   calculationType: SaleCommissionCalculationType | string
   percentApplied: number | null
   status: string
   paidAt: string | null
   saleClosingId: string | null
   agent: { id: string; fullName: string; type?: string }
+  paymentParts?: SaleCommissionPaymentPart[]
+  deductibles?: SaleCommissionDeductible[]
+}
+
+export interface CreateProcessCommissionPaymentPartInput {
+  label?: string | null
+  amount?: number | null
+  percentOfNet?: number | null
+  dueDate?: string | null
+}
+
+export interface CreateProcessCommissionDeductibleInput {
+  deductibleType: SaleCommissionDeductibleType | string
+  description?: string | null
+  amount: number
 }
 
 export interface CreateProcessCommissionInput {
@@ -29,6 +71,8 @@ export interface CreateProcessCommissionInput {
   calculationType: SaleCommissionCalculationType
   percent?: number | null
   fixedAmount?: number | null
+  paymentParts?: CreateProcessCommissionPaymentPartInput[]
+  deductibles?: CreateProcessCommissionDeductibleInput[]
 }
 
 export interface SaleFinancingChannel {

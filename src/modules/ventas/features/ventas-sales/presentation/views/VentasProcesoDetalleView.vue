@@ -145,7 +145,17 @@ function saveProcessFields() {
 }
 
 function commissionStatusLabel(status: string): string {
-  return status === 'PAID' ? 'Pagada' : 'Pendiente'
+  if (status === 'PAID') return 'Pagada'
+  if (status === 'PARTIAL') return 'Parcial'
+  return 'Pendiente'
+}
+
+const DEDUCTIBLE_LABELS: Record<string, string> = {
+  TRAVEL: 'Pasajes',
+  TAX: 'Impuestos',
+  NOTARY: 'Notaría',
+  REGISTRY: 'Registros',
+  OTHER: 'Otros',
 }
 
 function agentTypeLabel(type?: string): string {
@@ -409,11 +419,35 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
               </span>
             </div>
             <p :style="{ color: 'var(--color-text-secondary)' }">
-              {{ commissionCalcLabel(c) }} ·
-              <strong>S/ {{ c.amount.toLocaleString('es-PE') }}</strong>
+              {{ commissionCalcLabel(c) }} · bruto
+              <strong>S/ {{ (c.grossAmount ?? c.amount).toLocaleString('es-PE') }}</strong>
+              <template v-if="c.deductibles?.length">
+                · neto
+                <strong>S/ {{ (c.netPayable ?? c.amount).toLocaleString('es-PE') }}</strong>
+              </template>
               <span v-if="c.saleClosingId" class="text-xs ml-1">(cierre)</span>
             </p>
-            <div v-if="c.status === 'PENDING'" class="flex flex-wrap gap-2">
+            <ul
+              v-if="c.deductibles?.length"
+              class="text-xs space-y-0.5"
+              :style="{ color: 'var(--color-text-muted)' }"
+            >
+              <li v-for="d in c.deductibles" :key="d.id">
+                Deducible {{ DEDUCTIBLE_LABELS[d.deductibleType] ?? d.deductibleType }}:
+                S/ {{ d.amount.toLocaleString('es-PE') }}
+              </li>
+            </ul>
+            <ul
+              v-if="c.paymentParts?.length"
+              class="text-xs space-y-1 mt-1"
+              :style="{ color: 'var(--color-text-secondary)' }"
+            >
+              <li v-for="p in c.paymentParts" :key="p.id">
+                {{ p.label || `Parte ${p.partNumber}` }}: S/ {{ p.amount.toLocaleString('es-PE') }}
+                — {{ p.status === 'PAID' ? 'pagada' : 'pendiente' }}
+              </li>
+            </ul>
+            <div v-if="c.status !== 'PAID'" class="flex flex-wrap gap-2">
               <BaseButton
                 v-if="c.calculationType !== 'FIXED'"
                 variant="outline"
