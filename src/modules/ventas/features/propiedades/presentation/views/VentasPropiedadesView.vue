@@ -15,6 +15,7 @@ import {
   BaseModal,
   AppIcon,
   ExcelIcon,
+  PageHeader,
 } from '@shared/components'
 import { useExcelExport } from '@shared/composables'
 import {
@@ -396,16 +397,13 @@ async function handleExport() {
 
 <template>
   <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl sm:text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Propiedades en venta
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Inventario inmobiliario — aplicación Ventas
-        </p>
-      </div>
-      <div class="flex gap-2 w-full sm:w-auto">
+    <PageHeader
+      title="Propiedades en venta"
+      subtitle="Inventario inmobiliario — aplicación Ventas"
+      icon="lucide:building-2"
+      large
+    >
+      <template #actions>
         <BaseButton
           variant="outline"
           class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
@@ -420,8 +418,8 @@ async function handleExport() {
           <AppIcon icon="lucide:plus" :size="18" />
           Nueva propiedad
         </BaseButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div v-if="loadingStats" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20" />
     <div
@@ -430,7 +428,7 @@ async function handleExport() {
       :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
     >
       <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+      <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
     </div>
     <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
@@ -460,19 +458,19 @@ async function handleExport() {
       <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Algunos datos de filtros no cargaron</p>
       <div v-if="propertyTypesQueryError" class="flex flex-wrap items-center gap-2">
         <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(propertyTypesFetchError) }}</span>
-        <BaseButton variant="outline" size="sm" @click="() => refetchPropertyTypes()">Tipos</BaseButton>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchPropertyTypes()">Tipos</BaseButton>
       </div>
       <div v-if="departmentsQueryError" class="flex flex-wrap items-center gap-2">
         <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(departmentsFetchError) }}</span>
-        <BaseButton variant="outline" size="sm" @click="() => refetchDepartments()">Departamentos</BaseButton>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchDepartments()">Departamentos</BaseButton>
       </div>
       <div v-if="provincesQueryError" class="flex flex-wrap items-center gap-2">
         <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(provincesFetchError) }}</span>
-        <BaseButton variant="outline" size="sm" @click="() => refetchProvinces()">Provincias</BaseButton>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchProvinces()">Provincias</BaseButton>
       </div>
       <div v-if="districtsQueryError" class="flex flex-wrap items-center gap-2">
         <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(districtsFetchError) }}</span>
-        <BaseButton variant="outline" size="sm" @click="() => refetchDistricts()">Distritos</BaseButton>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchDistricts()">Distritos</BaseButton>
       </div>
     </div>
 
@@ -492,7 +490,7 @@ async function handleExport() {
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
           <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
-          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+          <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
@@ -677,9 +675,10 @@ async function handleExport() {
           placeholder="Seleccionar"
         />
         <div class="flex justify-end gap-3 mt-6">
-          <BaseButton variant="outline" @click="closeStatusModal">Cancelar</BaseButton>
+          <BaseButton variant="outline" icon="lucide:x" @click="closeStatusModal">Cancelar</BaseButton>
           <BaseButton
             variant="primary"
+            icon="lucide:save"
             :loading="updateListingStatusMutation.isPending.value"
             @click="saveListingStatus"
           >
@@ -708,9 +707,8 @@ async function handleExport() {
         </p>
       </div>
       <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border)">
-        <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
-        <BaseButton variant="danger" :loading="isDeletingProperty" @click="executeDeleteProperty">
-          <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
+        <BaseButton variant="ghost" icon="lucide:x" @click="closeDeleteModal">Cancelar</BaseButton>
+        <BaseButton variant="danger" icon="lucide:trash-2" :loading="isDeletingProperty" @click="executeDeleteProperty">
           Eliminar
         </BaseButton>
       </div>

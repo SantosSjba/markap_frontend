@@ -7,6 +7,7 @@ import {
   AppIcon,
   BasePagination,
   Badge,
+  PageHeader,
 } from '@shared/components'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import type { CommissionRow } from '../../domain/finanzas.types'
@@ -121,13 +122,21 @@ function commissionNet(row: CommissionRow): number {
 function commissionStatusLabel(status: string): string {
   if (status === 'PAID') return 'Pagado'
   if (status === 'PARTIAL') return 'Parcial'
+  if (status === 'CANCELLED') return 'Anulada'
   return 'Pendiente'
 }
 
-function commissionStatusVariant(status: string): 'success' | 'warning' | 'info' {
+function commissionStatusVariant(status: string): 'success' | 'warning' | 'info' | 'error' | 'neutral' {
   if (status === 'PAID') return 'success'
   if (status === 'PARTIAL') return 'info'
+  if (status === 'CANCELLED') return 'neutral'
   return 'warning'
+}
+
+function canPayCommission(row: CommissionRow): boolean {
+  if (row.status === 'CANCELLED' || row.status === 'PAID') return false
+  if (row.saleProcess?.status === 'LOST') return false
+  return true
 }
 
 const columns = [
@@ -147,19 +156,58 @@ const columns = [
   { key: 'act', label: '' },
 ]
 
-const { mutate: markPaid, isPending: marking } = useVentasMarkCommissionPaid()
-const { mutate: markPartPaid, isPending: markingPart } = useVentasMarkCommissionPaymentPartPaid()
-const { mutate: recalc, isPending: recalcing } = useVentasRecalculateCommission()
+const { mutate: markPaid } = useVentasMarkCommissionPaid()
+const { mutate: markPartPaid } = useVentasMarkCommissionPaymentPartPaid()
+const { mutate: recalc } = useVentasRecalculateCommission()
+
+/** Clave única por botón: mark:{commissionId} | recalc:{commissionId} | part:{partId} */
+const pendingCommissionAction = ref<string | null>(null)
+
+function isCommissionActionPending(key: string): boolean {
+  return pendingCommissionAction.value === key
+}
+
+function onMarkCommissionPaid(commissionId: string) {
+  const key = `mark:${commissionId}`
+  if (pendingCommissionAction.value) return
+  pendingCommissionAction.value = key
+  markPaid(commissionId, {
+    onSettled: () => {
+      pendingCommissionAction.value = null
+    },
+  })
+}
+
+function onMarkCommissionPartPaid(partId: string) {
+  const key = `part:${partId}`
+  if (pendingCommissionAction.value) return
+  pendingCommissionAction.value = key
+  markPartPaid(partId, {
+    onSettled: () => {
+      pendingCommissionAction.value = null
+    },
+  })
+}
+
+function onRecalcCommission(commissionId: string) {
+  const key = `recalc:${commissionId}`
+  if (pendingCommissionAction.value) return
+  pendingCommissionAction.value = key
+  recalc(commissionId, {
+    onSettled: () => {
+      pendingCommissionAction.value = null
+    },
+  })
+}
 </script>
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Comisiones</h1>
-      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-        Comisiones con plan de pago en partes y deducibles configurados al crear el proceso.
-      </p>
-    </div>
+    <PageHeader
+      title="Comisiones"
+      subtitle="Comisiones con plan de pago en partes y deducibles configurados al crear el proceso."
+      icon="lucide:percent"
+    />
 
     <div
       v-if="agentsQueryError"
@@ -168,18 +216,29 @@ const { mutate: recalc, isPending: recalcing } = useVentasRecalculateCommission(
     >
       <span :style="{ color: 'var(--color-text-primary)' }">No se pudieron cargar los asesores para filtros.</span>
       <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(agentsFetchError) }}</span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchAgents()">Reintentar</BaseButton>
+      <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" @click="() => refetchAgents()">Reintentar</BaseButton>
     </div>
 
     <div
-      class="flex flex-wrap gap-3 items-end rounded-xl border p-4"
+      class="rounded-xl border p-4 space-y-4"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
     >
+      <div class="flex items-center gap-2">
+        <div
+          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)' }"
+        >
+          <AppIcon icon="lucide:filter" :size="16" color="var(--color-primary)" />
+        </div>
+        <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Filtros</p>
+      </div>
+      <div class="flex flex-wrap gap-3 items-end">
       <div class="min-w-[140px]">
         <FormSelect v-model="listParams.status" label="Estado" :options="statusOptions" />
       </div>
       <div class="min-w-[220px] flex-1">
         <FormSelect v-model="listParams.agentId" label="Asesor" :options="agentFilterOptions" />
+      </div>
       </div>
     </div>
 
@@ -195,7 +254,7 @@ const { mutate: recalc, isPending: recalcing } = useVentasRecalculateCommission(
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
         <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
-        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin comisiones registradas.">
         <template #row="{ row }">
@@ -248,17 +307,19 @@ const { mutate: recalc, isPending: recalcing } = useVentasRecalculateCommission(
                     <span v-if="part.status === 'PAID'" class="text-green-600">(pagada)</span>
                   </span>
                   <BaseButton
-                    v-if="part.status !== 'PAID'"
+                    v-if="part.status !== 'PAID' && canPayCommission(row as CommissionRow)"
                     variant="primary"
                     size="sm"
-                    :disabled="markingPart"
-                    @click="markPartPaid(part.id)"
+                    icon="lucide:circle-check"
+                    :loading="isCommissionActionPending(`part:${part.id}`)"
+                    :disabled="!!pendingCommissionAction && !isCommissionActionPending(`part:${part.id}`)"
+                    @click="onMarkCommissionPartPaid(part.id)"
                   >
                     Pagar cuota
                   </BaseButton>
                 </li>
               </ul>
-              <div class="flex flex-wrap gap-1">
+              <div v-if="canPayCommission(row as CommissionRow)" class="flex flex-wrap gap-1">
                 <BaseButton
                   v-if="
                     (row as CommissionRow).status !== 'PAID' &&
@@ -266,8 +327,10 @@ const { mutate: recalc, isPending: recalcing } = useVentasRecalculateCommission(
                   "
                   variant="secondary"
                   size="sm"
-                  :disabled="recalcing"
-                  @click="recalc((row as CommissionRow).id)"
+                  icon="lucide:calculator"
+                  :loading="isCommissionActionPending(`recalc:${(row as CommissionRow).id}`)"
+                  :disabled="!!pendingCommissionAction && !isCommissionActionPending(`recalc:${(row as CommissionRow).id}`)"
+                  @click="onRecalcCommission((row as CommissionRow).id)"
                 >
                   Recalcular
                 </BaseButton>
@@ -275,12 +338,21 @@ const { mutate: recalc, isPending: recalcing } = useVentasRecalculateCommission(
                   v-if="(row as CommissionRow).status !== 'PAID'"
                   variant="outline"
                   size="sm"
-                  :disabled="marking"
-                  @click="markPaid((row as CommissionRow).id)"
+                  icon="lucide:circle-check"
+                  :loading="isCommissionActionPending(`mark:${(row as CommissionRow).id}`)"
+                  :disabled="!!pendingCommissionAction && !isCommissionActionPending(`mark:${(row as CommissionRow).id}`)"
+                  @click="onMarkCommissionPaid((row as CommissionRow).id)"
                 >
                   Pagar todo
                 </BaseButton>
               </div>
+              <p
+                v-else-if="(row as CommissionRow).status === 'CANCELLED' || (row as CommissionRow).saleProcess?.status === 'LOST'"
+                class="text-xs"
+                :style="{ color: 'var(--color-text-muted)' }"
+              >
+                Sin pagos: venta caída o comisión anulada.
+              </p>
               <ul
                 v-if="(row as CommissionRow).deductibles?.length"
                 class="text-xs"

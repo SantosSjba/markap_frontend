@@ -506,7 +506,7 @@ function submit() {
       :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
     >
       <span class="max-w-xl" style="color: var(--color-error)">{{ loadError }}</span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" :loading="loading" @click="loadCatalogs">
+      <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" :loading="loading" @click="loadCatalogs">
         Reintentar
       </BaseButton>
     </div>
@@ -540,8 +540,8 @@ function submit() {
         icon="lucide:percent"
       >
         <div class="flex justify-end mb-3">
-          <BaseButton type="button" variant="outline" size="sm" @click="addCommissionRow">
-            + Agregar asesor
+          <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addCommissionRow">
+            Agregar asesor
           </BaseButton>
         </div>
 
@@ -583,6 +583,7 @@ function submit() {
               type="button"
               variant="ghost"
               size="sm"
+              icon="lucide:trash-2"
               @click="removeCommissionRow(idx)"
             >
               Quitar
@@ -613,10 +614,11 @@ function submit() {
                   type="button"
                   variant="outline"
                   size="sm"
+                  icon="lucide:plus"
                   :disabled="row.paymentParts.length >= MAX_PAYMENT_PARTS"
                   @click="addPaymentPart(idx)"
                 >
-                  + Parte
+                  Parte
                 </BaseButton>
               </div>
             </div>
@@ -675,6 +677,7 @@ function submit() {
                   type="button"
                   variant="ghost"
                   size="sm"
+                  icon="lucide:trash-2"
                   @click="removePaymentPart(idx, pIdx)"
                 >
                   Quitar
@@ -691,8 +694,8 @@ function submit() {
               <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
                 Deducibles (pasajes, impuestos, etc.)
               </p>
-              <BaseButton type="button" variant="outline" size="sm" @click="addDeductible(idx)">
-                + Deducible
+              <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addDeductible(idx)">
+                Deducible
               </BaseButton>
             </div>
             <p v-if="!row.deductibles.length" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
@@ -717,7 +720,7 @@ function submit() {
                 <FormInput v-model="ded.amount" label="Monto (S/)" type="number" min="0" step="0.01" />
               </div>
               <div class="md:col-span-2 flex justify-end pb-1">
-                <BaseButton type="button" variant="ghost" size="sm" @click="removeDeductible(idx, dIdx)">
+                <BaseButton type="button" variant="ghost" size="sm" icon="lucide:trash-2" @click="removeDeductible(idx, dIdx)">
                   Quitar
                 </BaseButton>
               </div>
@@ -778,8 +781,8 @@ function submit() {
         icon="lucide:users"
       >
         <div class="flex justify-end mb-3">
-          <BaseButton type="button" variant="outline" size="sm" @click="addBuyer">
-            + Agregar comprador
+          <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addBuyer">
+            Agregar comprador
           </BaseButton>
         </div>
         <div v-for="(_, idx) in form.buyers" :key="`buyer-${idx}`" class="flex gap-2 items-end">
@@ -797,6 +800,7 @@ function submit() {
             type="button"
             variant="ghost"
             size="sm"
+            icon="lucide:trash-2"
             @click="removeBuyer(idx)"
           >
             Quitar
@@ -834,8 +838,8 @@ function submit() {
       </FormSectionCard>
 
       <div class="flex justify-end gap-2 pt-2">
-        <BaseButton variant="outline" @click="router.push('/ventas/procesos')">Cancelar</BaseButton>
-        <BaseButton variant="primary" :loading="isPending" @click="submit">Crear proceso</BaseButton>
+        <BaseButton variant="outline" icon="lucide:x" @click="router.push('/ventas/procesos')">Cancelar</BaseButton>
+        <BaseButton variant="primary" icon="lucide:plus-circle" :loading="isPending" @click="submit">Crear proceso</BaseButton>
       </div>
     </div>
   </div>

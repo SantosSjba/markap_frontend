@@ -75,6 +75,7 @@ const api: VentasSalesRepository = {
       agentId?: string | null
       title?: string | null
       financingChannelId?: string | null
+      lostReason?: string | null
     },
   ) =>
     apiClient

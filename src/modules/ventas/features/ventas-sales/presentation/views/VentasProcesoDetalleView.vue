@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, AppIcon, FormSelect } from '@shared/components'
+import { BaseButton, AppIcon, FormSelect, FormSectionCard } from '@shared/components'
 import {
   useVentasClosingReadiness,
   useVentasFinancingChannels,
@@ -18,15 +18,21 @@ import type {
   SaleProcessDetail,
 } from '../../domain/sales.types'
 import { useVentasPipelineStages } from '@ventas/configuracion'
-import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../../domain/pipeline.constants'
+import {
+  PROCESS_STATUS_OPTIONS,
+  processStatusLabel,
+  allowedForwardStageOptions,
+} from '../../domain/pipeline.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import SaleProcessFollowUpPanel from '../components/SaleProcessFollowUpPanel.vue'
+import MarkSaleLostModal from '../components/MarkSaleLostModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
 
-const { stageOptions, labelFor: pipelineStageLabel, query: pipelineConfigQuery } = useVentasPipelineStages()
+const { stageOptions, orderedCodes, labelFor: pipelineStageLabel, query: pipelineConfigQuery } =
+  useVentasPipelineStages()
 
 const {
   data: proc,
@@ -50,12 +56,56 @@ const {
 } = useVentasClosingReadiness(complianceParams)
 
 const { mutate: updateProc, isPending: saving } = useVentasUpdateProcess()
-const { mutate: markCommissionPaid, isPending: markingCommission } = useVentasMarkCommissionPaid()
-const { mutate: recalcCommission, isPending: recalcingCommission } = useVentasRecalculateCommission()
+const { mutate: markCommissionPaid } = useVentasMarkCommissionPaid()
+const { mutate: recalcCommission } = useVentasRecalculateCommission()
+const pendingCommissionAction = ref<string | null>(null)
+
+function isCommissionDetailActionPending(key: string): boolean {
+  return pendingCommissionAction.value === key
+}
+
+function onRecalcCommissionInDetail(commissionId: string) {
+  const key = `recalc:${commissionId}`
+  if (pendingCommissionAction.value) return
+  pendingCommissionAction.value = key
+  recalcCommission(commissionId, {
+    onSuccess: () => refetchDetail(),
+    onSettled: () => {
+      pendingCommissionAction.value = null
+    },
+  })
+}
+
+function onMarkCommissionPaidInDetail(commissionId: string) {
+  const key = `mark:${commissionId}`
+  if (pendingCommissionAction.value) return
+  pendingCommissionAction.value = key
+  markCommissionPaid(commissionId, {
+    onSuccess: () => refetchDetail(),
+    onSettled: () => {
+      pendingCommissionAction.value = null
+    },
+  })
+}
 
 const stageEdit = ref('')
 const statusEdit = ref('')
 const financingEdit = ref('')
+const markLostOpen = ref(false)
+
+const detail = computed(() => proc.value as SaleProcessDetail | undefined)
+const isProcessLost = computed(() => detail.value?.status === 'LOST')
+const isProcessActive = computed(() => detail.value?.status === 'ACTIVE')
+
+const stageOptionsForEdit = computed(() => {
+  const d = detail.value
+  if (!d || d.status !== 'ACTIVE') return stageOptions.value
+  return allowedForwardStageOptions(d.pipelineStage, stageOptions.value, orderedCodes.value)
+})
+
+const statusOptionsForEdit = computed(() =>
+  PROCESS_STATUS_OPTIONS.filter((o) => o.value !== 'LOST'),
+)
 
 const FINANCING_CATEGORY_LABEL: Record<string, string> = {
   BANK: 'Bancos',
@@ -102,8 +152,6 @@ const financingOptions = computed(() => {
   return [{ value: '', label: 'Sin especificar' }, ...grouped]
 })
 
-const detail = computed(() => proc.value as SaleProcessDetail | undefined)
-
 const buyersList = computed(() => {
   const d = detail.value
   if (!d) return []
@@ -112,7 +160,15 @@ const buyersList = computed(() => {
   return []
 })
 
-const ownersList = computed(() => detail.value?.owners ?? [])
+const ownersList = computed(() => {
+  const d = detail.value
+  if (!d) return []
+  if (d.owners?.length) return d.owners
+  if (d.property?.primaryOwner) return [d.property.primaryOwner]
+  return []
+})
+
+const primaryOwner = computed(() => ownersList.value[0] ?? null)
 
 const commissionsList = computed((): SaleProcessCommission[] => {
   const d = detail.value
@@ -134,19 +190,42 @@ function listingLabel(status: string | null | undefined): string {
 }
 
 function saveProcessFields() {
+  if (isProcessLost.value) return
   updateProc({
     id: id.value,
     body: {
-      pipelineStage: stageEdit.value || undefined,
+      pipelineStage: isProcessActive.value ? stageEdit.value || undefined : undefined,
       status: (statusEdit.value as 'ACTIVE' | 'WON' | 'LOST') || undefined,
       financingChannelId: financingEdit.value || null,
     },
   })
 }
 
+function confirmMarkLost(reason: string) {
+  updateProc(
+    {
+      id: id.value,
+      body: { status: 'LOST', lostReason: reason },
+    },
+    {
+      onSuccess: () => {
+        markLostOpen.value = false
+        refetchDetail()
+      },
+    },
+  )
+}
+
+function canManageCommission(c: SaleProcessCommission): boolean {
+  if (isProcessLost.value) return false
+  if (c.status === 'CANCELLED') return false
+  return true
+}
+
 function commissionStatusLabel(status: string): string {
   if (status === 'PAID') return 'Pagada'
   if (status === 'PARTIAL') return 'Parcial'
+  if (status === 'CANCELLED') return 'Anulada'
   return 'Pendiente'
 }
 
@@ -199,7 +278,7 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
       <span :style="{ color: 'var(--color-text-primary)' }">
         No se cargó la configuración de etapas; se muestran valores por defecto.
       </span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
+      <BaseButton variant="outline" size="sm" icon="lucide:settings" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
         Reintentar configuración
       </BaseButton>
     </div>
@@ -216,20 +295,49 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
       <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">
         {{ getApiErrorMessage(detailFetchError) }}
       </p>
-      <BaseButton variant="outline" size="sm" @click="() => refetchDetail()">Reintentar</BaseButton>
+      <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchDetail()">Reintentar</BaseButton>
     </div>
 
     <template v-else-if="detail">
       <div
-        class="p-4 rounded-xl border space-y-4"
-        :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        v-if="isProcessLost"
+        class="rounded-xl border px-4 py-3 text-sm space-y-1"
+        :style="{ borderColor: 'var(--color-error)', backgroundColor: 'var(--color-warning-light)' }"
+      >
+        <p class="font-semibold flex items-center gap-2" style="color: var(--color-error)">
+          <AppIcon icon="lucide:ban" :size="18" />
+          Venta registrada como caída
+        </p>
+        <p v-if="detail.lostReason" :style="{ color: 'var(--color-text-secondary)' }">
+          Motivo: {{ detail.lostReason }}
+        </p>
+        <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+          Las comisiones pendientes fueron anuladas. No se puede modificar la etapa ni retroceder en el pipeline.
+        </p>
+      </div>
+
+      <FormSectionCard
+        dense
+        title="Etapa y estado"
+        subtitle="Solo avance de etapa en procesos activos; use venta caída si no continúa"
+        icon="lucide:git-branch"
       >
         <div class="flex flex-wrap gap-4 items-end">
           <div class="min-w-[200px]">
-            <FormSelect v-model="stageEdit" label="Etapa" :options="stageOptions" />
+            <FormSelect
+              v-model="stageEdit"
+              label="Etapa"
+              :options="stageOptionsForEdit"
+              :disabled="!isProcessActive"
+            />
           </div>
           <div class="min-w-[180px]">
-            <FormSelect v-model="statusEdit" label="Estado" :options="[...PROCESS_STATUS_OPTIONS]" />
+            <FormSelect
+              v-model="statusEdit"
+              label="Estado"
+              :options="statusOptionsForEdit"
+              :disabled="!isProcessActive"
+            />
           </div>
           <div class="min-w-[280px] flex-1">
             <FormSelect
@@ -237,25 +345,48 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
               label="Banco / medio de pago del proceso"
               :options="financingOptions"
               :loading="loadingFinancing"
+              :disabled="isProcessLost"
             />
           </div>
-          <BaseButton variant="primary" :loading="saving" @click="saveProcessFields">Guardar cambios</BaseButton>
+          <BaseButton
+            v-if="isProcessActive"
+            variant="danger"
+            icon="lucide:ban"
+            @click="markLostOpen = true"
+          >
+            Venta caída
+          </BaseButton>
+          <BaseButton
+            v-if="!isProcessLost"
+            variant="primary"
+            icon="lucide:save"
+            :loading="saving"
+            @click="saveProcessFields"
+          >
+            Guardar cambios
+          </BaseButton>
         </div>
-        <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+        <p class="text-xs mt-3" :style="{ color: 'var(--color-text-muted)' }">
           Etapa actual: {{ pipelineStageLabel(detail.pipelineStage) }} · Estado:
-          {{ processStatusLabel(detail.status) }}
+          {{ processStatusLabel(detail.status) }}.
+          <template v-if="isProcessActive"> Solo puede avanzar de etapa, no retroceder.</template>
         </p>
-      </div>
+      </FormSectionCard>
+
+      <MarkSaleLostModal
+        v-model="markLostOpen"
+        :process-code="detail.code"
+        :loading="saving"
+        @confirm="confirmMarkLost"
+      />
 
       <div class="grid lg:grid-cols-2 gap-4">
-        <section
-          class="p-4 rounded-xl border space-y-3"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        <FormSectionCard
+          dense
+          title="Inmueble"
+          subtitle="Datos del inmueble en el proceso"
+          icon="lucide:building-2"
         >
-          <h2 class="text-base font-semibold flex items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
-            <AppIcon icon="lucide:building-2" :size="18" />
-            Inmueble
-          </h2>
           <dl class="grid sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
             <div>
               <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Código</dt>
@@ -291,6 +422,23 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
                 {{ formatSalePrice(detail.property?.salePrice, detail.property?.saleCurrency) }}
               </dd>
             </div>
+            <div v-if="primaryOwner" class="sm:col-span-2">
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Propietario</dt>
+              <dd class="mt-0.5">
+                <p class="font-medium flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
+                  <AppIcon icon="lucide:user-round" :size="14" color="var(--color-primary)" />
+                  {{ primaryOwner.fullName }}
+                </p>
+                <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+                  {{ primaryOwner.documentTypeName ? `${primaryOwner.documentTypeName}: ` : '' }}{{
+                    primaryOwner.documentNumber || '—'
+                  }}
+                </p>
+                <p v-if="primaryOwner.primaryPhone" class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                  Tel: {{ primaryOwner.primaryPhone }}
+                </p>
+              </dd>
+            </div>
             <div v-if="detail.property?.area != null">
               <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Área</dt>
               <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.area }} m²</dd>
@@ -304,20 +452,18 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
               <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.bathrooms }}</dd>
             </div>
           </dl>
-        </section>
+        </FormSectionCard>
 
-        <section
-          class="p-4 rounded-xl border space-y-4"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        <FormSectionCard
+          dense
+          title="Participantes"
+          subtitle="Compradores, propietarios y asesor"
+          icon="lucide:users"
         >
           <div>
-            <h2
-              class="text-base font-semibold flex items-center gap-2 mb-2"
-              :style="{ color: 'var(--color-text-primary)' }"
-            >
-              <AppIcon icon="lucide:users" :size="18" />
+            <p class="text-xs font-medium mb-2 uppercase tracking-wide" :style="{ color: 'var(--color-text-muted)' }">
               Compradores
-            </h2>
+            </p>
             <ul v-if="buyersList.length" class="space-y-2">
               <li
                 v-for="b in buyersList"
@@ -345,14 +491,10 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
             <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Sin compradores registrados.</p>
           </div>
 
-          <div>
-            <h2
-              class="text-base font-semibold flex items-center gap-2 mb-2"
-              :style="{ color: 'var(--color-text-primary)' }"
-            >
-              <AppIcon icon="lucide:user-check" :size="18" />
+          <div class="mt-4 pt-4 border-t" :style="{ borderColor: 'var(--color-border)' }">
+            <p class="text-xs font-medium mb-2 uppercase tracking-wide" :style="{ color: 'var(--color-text-muted)' }">
               Propietarios
-            </h2>
+            </p>
             <ul v-if="ownersList.length" class="space-y-2">
               <li
                 v-for="o in ownersList"
@@ -368,38 +510,28 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
               </li>
             </ul>
             <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
-              Sin propietarios adicionales en la ficha del inmueble.
+              Sin propietario registrado en la ficha del inmueble (Venta → Propiedades).
             </p>
           </div>
 
-          <p v-if="detail.agent" class="text-sm pt-2 border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <p v-if="detail.agent" class="text-sm pt-4 mt-4 border-t" :style="{ borderColor: 'var(--color-border)' }">
             <strong :style="{ color: 'var(--color-text-primary)' }">Asesor principal:</strong>
             {{ detail.agent.fullName }}
           </p>
-        </section>
+        </FormSectionCard>
       </div>
 
-      <section
-        class="p-4 rounded-xl border space-y-3"
-        :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+      <FormSectionCard
+        dense
+        title="Comisiones"
+        subtitle="Configuradas al crear el proceso"
+        icon="lucide:percent"
       >
-        <div class="flex items-center justify-between gap-2">
-          <h2
-            class="text-base font-semibold flex items-center gap-2"
-            :style="{ color: 'var(--color-text-primary)' }"
-          >
-            <AppIcon icon="lucide:percent" :size="18" />
-            Comisiones
-          </h2>
-          <BaseButton
-            v-if="commissionsList.length"
-            variant="outline"
-            size="sm"
-            @click="router.push('/ventas/comisiones')"
-          >
+        <template v-if="commissionsList.length" #actions>
+          <BaseButton variant="outline" size="sm" icon="lucide:percent" @click="router.push('/ventas/comisiones')">
             Ver listado
           </BaseButton>
-        </div>
+        </template>
         <ul v-if="commissionsList.length" class="space-y-3">
           <li
             v-for="c in commissionsList"
@@ -447,43 +579,55 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
                 — {{ p.status === 'PAID' ? 'pagada' : 'pendiente' }}
               </li>
             </ul>
-            <div v-if="c.status !== 'PAID'" class="flex flex-wrap gap-2">
+            <div v-if="c.status !== 'PAID' && canManageCommission(c)" class="flex flex-wrap gap-2">
               <BaseButton
                 v-if="c.calculationType !== 'FIXED'"
                 variant="outline"
                 size="sm"
-                :loading="recalcingCommission"
-                @click="recalcCommission(c.id, { onSuccess: () => refetchDetail() })"
+                icon="lucide:calculator"
+                :loading="isCommissionDetailActionPending(`recalc:${c.id}`)"
+                :disabled="!!pendingCommissionAction && !isCommissionDetailActionPending(`recalc:${c.id}`)"
+                @click="onRecalcCommissionInDetail(c.id)"
               >
                 Recalcular
               </BaseButton>
               <BaseButton
                 variant="primary"
                 size="sm"
-                :loading="markingCommission"
-                @click="markCommissionPaid(c.id, { onSuccess: () => refetchDetail() })"
+                icon="lucide:circle-check"
+                :loading="isCommissionDetailActionPending(`mark:${c.id}`)"
+                :disabled="!!pendingCommissionAction && !isCommissionDetailActionPending(`mark:${c.id}`)"
+                @click="onMarkCommissionPaidInDetail(c.id)"
               >
                 Marcar pagada
               </BaseButton>
             </div>
+            <p
+              v-else-if="c.status === 'CANCELLED' || isProcessLost"
+              class="text-xs"
+              :style="{ color: 'var(--color-text-muted)' }"
+            >
+              Comisión sin efecto (venta caída).
+            </p>
           </li>
         </ul>
         <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
           Sin comisiones. Defínalas al crear el proceso (asesores internos o externos, % o monto fijo).
         </p>
-      </section>
+      </FormSectionCard>
 
-      <div
-        class="rounded-lg border p-3"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+      <FormSectionCard
+        dense
+        title="Cumplimiento para cierre"
+        subtitle="Checklist legal, tributario y compliance"
+        icon="lucide:clipboard-check"
       >
-        <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Cumplimiento para cierre</p>
-        <p v-if="loadingReadiness" class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+        <p v-if="loadingReadiness" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
           Validando checklist legal/tributario/compliance...
         </p>
         <div v-else-if="readinessQueryError" class="mt-2 flex flex-wrap items-center gap-2 text-sm">
           <span style="color: var(--color-error)">{{ getApiErrorMessage(readinessFetchError) }}</span>
-          <BaseButton variant="outline" size="sm" @click="() => refetchReadiness()">Reintentar</BaseButton>
+          <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchReadiness()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <p
@@ -504,7 +648,7 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
             <li v-for="m in closingReadiness.missing" :key="m">{{ m }}</li>
           </ul>
         </template>
-      </div>
+      </FormSectionCard>
 
       <SaleProcessFollowUpPanel :process-id="id" layout="grid" />
     </template>

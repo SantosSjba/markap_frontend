@@ -12,6 +12,7 @@ import {
   SearchInput,
   AppIcon,
   ExcelIcon,
+  PageHeader,
 } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useExcelExport } from '@shared/composables'
@@ -257,16 +258,13 @@ async function handleExport() {
 
 <template>
   <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl sm:text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Agentes
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Agentes de ventas: internos (usuarios del sistema) y externos (terceros)
-        </p>
-      </div>
-      <div class="flex gap-2 w-full sm:w-auto">
+    <PageHeader
+      title="Agentes"
+      subtitle="Agentes de ventas: internos (usuarios del sistema) y externos (terceros)"
+      icon="lucide:user-check"
+      large
+    >
+      <template #actions>
         <BaseButton
           variant="outline"
           class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
@@ -281,8 +279,8 @@ async function handleExport() {
           <AppIcon icon="lucide:plus" :size="18" />
           Nuevo Agente
         </BaseButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div
       class="rounded-xl border overflow-hidden"
@@ -297,7 +295,7 @@ async function handleExport() {
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
           <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
-          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+          <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
@@ -471,22 +469,19 @@ async function handleExport() {
 
       <template #footer>
         <div class="flex justify-end gap-3">
-          <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
+          <BaseButton variant="ghost" icon="lucide:x" @click="closeConfirm">Cancelar</BaseButton>
           <BaseButton
             :variant="confirmModal?.type === 'delete' ? 'danger' : 'primary'"
+            :icon="
+              confirmModal?.type === 'delete'
+                ? 'lucide:trash-2'
+                : confirmModal?.type === 'activate'
+                  ? 'lucide:user-check'
+                  : 'lucide:user-x'
+            "
             :loading="confirmActionPending"
             @click="executeConfirm"
           >
-            <AppIcon
-              :icon="
-                confirmModal?.type === 'delete'
-                  ? 'lucide:trash-2'
-                  : confirmModal?.type === 'activate'
-                    ? 'lucide:user-check'
-                    : 'lucide:user-x'
-              "
-              :size="16"
-            />
             {{
               confirmModal?.type === 'delete'
                 ? 'Eliminar'

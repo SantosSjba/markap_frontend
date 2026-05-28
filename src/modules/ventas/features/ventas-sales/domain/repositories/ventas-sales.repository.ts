@@ -47,6 +47,7 @@ export interface VentasSalesRepository {
       agentId?: string | null
       title?: string | null
       financingChannelId?: string | null
+      lostReason?: string | null
     },
   ) => Promise<unknown>
 

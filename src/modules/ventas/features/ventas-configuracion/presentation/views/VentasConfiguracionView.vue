@@ -2,7 +2,7 @@
 import { ref, watch, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, DataTable, FormInput, BaseTabs } from '@shared/components'
+import { BaseButton, AppIcon, DataTable, FormInput, BaseTabs, PageHeader } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { markapAlert } from '@/shared/composables'
 import {
@@ -128,15 +128,11 @@ const flowSteps = [
 
 <template>
   <div class="space-y-6 max-w-5xl">
-    <div>
-      <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-        Configuración — Ventas
-      </h1>
-      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-        Ajustes propios de <strong>Ventas</strong> (independiente de Alquileres): pipeline, numeración de procesos,
-        tipos de inmueble y enlaces operativos del módulo.
-      </p>
-    </div>
+    <PageHeader
+      title="Configuración — Ventas"
+      subtitle="Ajustes propios de Ventas (independiente de Alquileres): pipeline, numeración de procesos, tipos de inmueble y enlaces operativos del módulo."
+      icon="lucide:sliders-horizontal"
+    />
 
     <BaseTabs v-model="activeTab" :tabs="tabs" />
 
@@ -182,7 +178,7 @@ const flowSteps = [
         <p class="text-xs max-w-lg mx-auto" :style="{ color: 'var(--color-text-secondary)' }">
           {{ configLoadError }}
         </p>
-        <BaseButton type="button" @click="() => refetch()">Reintentar</BaseButton>
+        <BaseButton type="button" icon="lucide:settings" @click="() => refetch()">Reintentar</BaseButton>
       </div>
 
       <template v-else>
@@ -240,10 +236,10 @@ const flowSteps = [
                   </td>
                   <td class="py-2 px-3">
                     <div class="flex gap-1">
-                      <BaseButton type="button" variant="ghost" size="sm" @click="reorderPipeline(idx, -1)">
+                      <BaseButton type="button" variant="ghost" size="sm" icon="lucide:chevron-up" @click="reorderPipeline(idx, -1)">
                         ↑
                       </BaseButton>
-                      <BaseButton type="button" variant="ghost" size="sm" @click="reorderPipeline(idx, 1)">
+                      <BaseButton type="button" variant="ghost" size="sm" icon="lucide:chevron-down" @click="reorderPipeline(idx, 1)">
                         ↓
                       </BaseButton>
                     </div>
@@ -252,7 +248,7 @@ const flowSteps = [
               </tbody>
             </table>
             <div class="p-3 border-t flex justify-end" :style="{ borderColor: 'var(--color-border)' }">
-              <BaseButton variant="primary" :loading="savingPipeline" @click="submitPipeline">
+              <BaseButton variant="primary" icon="lucide:save" :loading="savingPipeline" @click="submitPipeline">
                 Guardar pipeline
               </BaseButton>
             </div>
@@ -282,7 +278,7 @@ const flowSteps = [
               <p v-if="numErrors.prefix" class="text-xs text-red-600">{{ numErrors.prefix }}</p>
               <FormInput label="Último número (correlativo)" type="number" v-bind="numBinds.lastNumber" />
               <p v-if="numErrors.lastNumber" class="text-xs text-red-600">{{ numErrors.lastNumber }}</p>
-              <BaseButton type="submit" variant="primary" :loading="savingNum">Guardar numeración</BaseButton>
+              <BaseButton type="submit" variant="primary" icon="lucide:save" :loading="savingNum">Guardar numeración</BaseButton>
             </form>
           </div>
         </section>

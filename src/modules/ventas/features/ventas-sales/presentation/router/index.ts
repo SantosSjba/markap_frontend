@@ -43,4 +43,10 @@ export const ventasSalesCierresRoutes: RouteRecordRaw[] = [
     component: () => import('../views/VentasCierresView.vue'),
     meta: { title: 'Cierres' },
   },
+  {
+    path: ':closingId/cumplimiento',
+    name: 'ventas-cierre-cumplimiento',
+    component: () => import('../views/VentasCierreCumplimientoView.vue'),
+    meta: { title: 'Cumplimiento legal del cierre' },
+  },
 ]

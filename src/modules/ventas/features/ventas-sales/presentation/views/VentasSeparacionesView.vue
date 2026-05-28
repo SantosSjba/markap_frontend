@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { DataTable, BaseButton, FormSelect, AppIcon, BasePagination } from '@shared/components'
+import { DataTable, BaseButton, FormSelect, AppIcon, BasePagination, PageHeader } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useVentasSeparationsList, useVentasCreateSeparation } from '../../application/useVentasSales'
 import type { SaleSeparationRow } from '../../domain/sales.types'
@@ -108,18 +108,17 @@ function submit() {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Separaciones</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Reserva con dinero — la propiedad pasa a estado Separada (bloqueo de inventario).
-        </p>
-      </div>
-      <BaseButton variant="primary" class="flex items-center gap-2" :loading="loadingNewModalData" @click="openModal">
-        <AppIcon icon="lucide:plus" :size="18" />
-        Nueva separación
-      </BaseButton>
-    </div>
+    <PageHeader
+      title="Separaciones"
+      subtitle="Reserva con dinero — la propiedad pasa a estado Separada (bloqueo de inventario)."
+      icon="lucide:bookmark"
+    >
+      <template #actions>
+        <BaseButton variant="primary" icon="lucide:plus" :loading="loadingNewModalData" @click="openModal">
+          Nueva separación
+        </BaseButton>
+      </template>
+    </PageHeader>
 
     <div
       v-if="newModalLoadError"
@@ -127,7 +126,7 @@ function submit() {
       :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
     >
       <span class="max-w-xl" style="color: var(--color-error)">{{ newModalLoadError }}</span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" :loading="loadingNewModalData" @click="openModal">
+      <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" :loading="loadingNewModalData" @click="openModal">
         Reintentar
       </BaseButton>
     </div>
@@ -144,7 +143,7 @@ function submit() {
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
         <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
-        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin separaciones.">
         <template #toolbar>
@@ -210,8 +209,8 @@ function submit() {
           />
         </div>
         <div class="flex justify-end gap-2 pt-2">
-          <BaseButton variant="outline" @click="showNew = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" :loading="isPending" @click="submit">Guardar</BaseButton>
+          <BaseButton variant="outline" icon="lucide:x" @click="showNew = false">Cancelar</BaseButton>
+          <BaseButton variant="primary" icon="lucide:save" :loading="isPending" @click="submit">Guardar</BaseButton>
         </div>
       </div>
     </BaseModal>

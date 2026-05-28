@@ -551,8 +551,8 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           icon="lucide:user-check"
         >
           <div class="flex flex-wrap justify-end gap-2 mb-4">
-            <BaseButton type="button" variant="outline" size="sm" @click="addOwnerRow">
-              + Agregar propietario
+            <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addOwnerRow">
+              Agregar propietario
             </BaseButton>
             <BaseButton type="button" variant="outline" size="sm" class="gap-1" @click="goToNewOwner">
               <AppIcon icon="lucide:user-plus" :size="15" />
@@ -579,6 +579,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               type="button"
               variant="ghost"
               size="sm"
+              icon="lucide:trash-2"
               @click="removeOwnerRow(idx)"
             >
               Quitar
@@ -602,13 +603,13 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           <BaseButton
             type="submit"
             variant="primary"
-            class="flex-1 flex items-center justify-center gap-2"
+            class="flex-1"
+            icon="lucide:save"
             :loading="createMutation.isPending.value"
           >
-            <AppIcon icon="lucide:save" :size="16" />
             Guardar
           </BaseButton>
-          <BaseButton type="button" variant="outline" @click="goBack">Cancelar</BaseButton>
+          <BaseButton type="button" variant="outline" icon="lucide:x" @click="goBack">Cancelar</BaseButton>
         </div>
       </div>
 
@@ -646,13 +647,14 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             <BaseButton
               type="submit"
               variant="primary"
-              class="w-full justify-center gap-2"
+              class="w-full"
+              icon="lucide:save"
+              block
               :loading="createMutation.isPending.value"
             >
-              <AppIcon icon="lucide:save" :size="16" />
               Guardar propiedad
             </BaseButton>
-            <BaseButton type="button" variant="outline" class="w-full justify-center" @click="goBack">
+            <BaseButton type="button" variant="outline" icon="lucide:x" class="w-full justify-center" @click="goBack">
               Cancelar
             </BaseButton>
           </div>

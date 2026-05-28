@@ -3,7 +3,9 @@
  * BaseButton Component
  * Reusable button component with multiple variants and sizes
  */
+import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
+import AppIcon from './AppIcon.vue'
 
 interface Props {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
@@ -12,6 +14,8 @@ interface Props {
   disabled?: boolean
   loading?: boolean
   block?: boolean
+  /** Icono lucide/iconify antes del texto (ej. lucide:save) */
+  icon?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -21,7 +25,10 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   loading: false,
   block: false,
+  icon: undefined,
 })
+
+const iconSize = computed(() => (props.size === 'sm' ? 15 : props.size === 'lg' ? 18 : 16))
 
 const emit = defineEmits<{
   click: [event: MouseEvent]
@@ -69,7 +76,16 @@ const handleClick = (event: MouseEvent) => {
       <span>Cargando...</span>
     </template>
 
-    <!-- Estado normal: contenido del slot -->
-    <slot v-else />
+    <!-- Estado normal: icono opcional + contenido del slot -->
+    <template v-else>
+      <AppIcon
+        v-if="icon"
+        :icon="icon"
+        :size="iconSize"
+        color="currentColor"
+        class="shrink-0"
+      />
+      <slot />
+    </template>
   </button>
 </template>

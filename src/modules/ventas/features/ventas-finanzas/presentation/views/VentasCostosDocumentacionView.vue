@@ -208,7 +208,7 @@ void loadClosingsForProfit()
           class="flex flex-col sm:flex-row sm:items-center gap-2 py-4 text-sm"
         >
           <span style="color: var(--color-error)">{{ getApiErrorMessage(profitFetchError) }}</span>
-          <BaseButton variant="outline" size="sm" class="self-start shrink-0" @click="() => refetchProfit()">Reintentar</BaseButton>
+          <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="self-start shrink-0" @click="() => refetchProfit()">Reintentar</BaseButton>
         </div>
         <div
           v-else-if="profit"
@@ -241,8 +241,7 @@ void loadClosingsForProfit()
       <div class="min-w-[240px] flex-1 max-w-md">
         <FormSelect v-model="listParams.buyerClientId" label="Filtrar por cliente" :options="buyerOptions" />
       </div>
-      <BaseButton variant="primary" class="flex items-center gap-2 shrink-0" @click="openNewModal">
-        <AppIcon icon="lucide:plus" :size="18" />
+      <BaseButton variant="primary" icon="lucide:plus" class="shrink-0" @click="openNewModal">
         Registrar costo
       </BaseButton>
     </div>
@@ -259,7 +258,7 @@ void loadClosingsForProfit()
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
         <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
-        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin costos registrados.">
         <template #row="{ row }">
@@ -305,8 +304,8 @@ void loadClosingsForProfit()
         <FormTextarea label="Descripción (opcional)" v-bind="costBinds.description" />
 
         <div class="flex justify-end gap-2 pt-2">
-          <BaseButton type="button" variant="secondary" @click="showNew = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" :disabled="creating">Guardar</BaseButton>
+          <BaseButton type="button" variant="secondary" icon="lucide:x" @click="showNew = false">Cancelar</BaseButton>
+          <BaseButton type="submit" variant="primary" icon="lucide:save" :disabled="creating">Guardar</BaseButton>
         </div>
       </form>
     </BaseModal>

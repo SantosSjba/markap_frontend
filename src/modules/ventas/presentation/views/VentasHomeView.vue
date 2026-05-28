@@ -203,7 +203,7 @@ const acciones: {
         No se pudieron cargar los indicadores principales
       </p>
       <p class="text-xs max-w-lg mx-auto" :style="{ color: 'var(--color-text-secondary)' }">{{ convErr }}</p>
-      <BaseButton type="button" @click="() => conversionQuery.refetch()">Reintentar</BaseButton>
+      <BaseButton type="button" icon="lucide:refresh-cw" @click="() => conversionQuery.refetch()">Reintentar</BaseButton>
     </div>
     <div v-else-if="conv" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <StatsCard title="Procesos en embudo" :value="String(pipelineTotal(conv))">
@@ -253,7 +253,7 @@ const acciones: {
         </div>
         <div v-else-if="financialQuery.isError.value && !fin" class="text-center space-y-3 py-6">
           <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ finErr }}</p>
-          <BaseButton size="sm" type="button" variant="outline" @click="() => financialQuery.refetch()">
+          <BaseButton size="sm" type="button" variant="outline" icon="lucide:refresh-cw" @click="() => financialQuery.refetch()">
             Reintentar
           </BaseButton>
         </div>
@@ -310,7 +310,7 @@ const acciones: {
         </div>
         <div v-else-if="conversionQuery.isError.value" class="text-center space-y-3 py-6">
           <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ convErr }}</p>
-          <BaseButton size="sm" type="button" variant="outline" @click="() => conversionQuery.refetch()">
+          <BaseButton size="sm" type="button" variant="outline" icon="lucide:refresh-cw" @click="() => conversionQuery.refetch()">
             Reintentar
           </BaseButton>
         </div>
@@ -376,7 +376,7 @@ const acciones: {
       </div>
       <div v-else-if="salesQuery.isError.value" class="text-center space-y-3 py-6">
         <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ salesErr }}</p>
-        <BaseButton size="sm" type="button" variant="outline" @click="() => salesQuery.refetch()">
+        <BaseButton size="sm" type="button" variant="outline" icon="lucide:refresh-cw" @click="() => salesQuery.refetch()">
           Reintentar
         </BaseButton>
       </div>

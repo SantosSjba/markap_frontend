@@ -167,7 +167,8 @@ const kindOptions = [
 ]
 
 const { mutate: createPayment, isPending: creating } = useVentasCreateBuyerPayment()
-const { mutate: markPaid, isPending: marking } = useVentasMarkBuyerPaymentPaid()
+const { mutate: markPaid } = useVentasMarkBuyerPaymentPaid()
+const markingPaymentId = ref<string | null>(null)
 
 async function openNewModal() {
   loadingNewModalData.value = true
@@ -204,8 +205,16 @@ const onSubmitPayment = submitPayment((values) => {
 })
 
 function onMarkPaid(row: BuyerPaymentRow) {
-  if (row.displayStatus === 'PAID') return
-  markPaid({ id: row.id })
+  if (row.displayStatus === 'PAID' || markingPaymentId.value) return
+  markingPaymentId.value = row.id
+  markPaid(
+    { id: row.id },
+    {
+      onSettled: () => {
+        markingPaymentId.value = null
+      },
+    },
+  )
 }
 </script>
 
@@ -239,7 +248,7 @@ function onMarkPaid(row: BuyerPaymentRow) {
         style="border-color: var(--color-border); color: var(--color-error)"
       >
         <span>No se pudieron cargar los clientes del filtro: {{ buyersErrorMsg }}</span>
-        <BaseButton variant="secondary" size="sm" @click="loadBuyers">Reintentar</BaseButton>
+        <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="loadBuyers">Reintentar</BaseButton>
       </div>
       <div class="min-w-[200px] flex-1">
         <FormSelect
@@ -269,7 +278,7 @@ function onMarkPaid(row: BuyerPaymentRow) {
         :style="{ color: 'var(--color-text-secondary)' }"
       >
         <p class="text-sm" style="color: var(--color-error)">{{ getApiErrorMessage(listQueryError) }}</p>
-        <BaseButton variant="secondary" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+        <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin pagos registrados.">
         <template #row="{ row }">
@@ -296,7 +305,9 @@ function onMarkPaid(row: BuyerPaymentRow) {
               v-if="(row as BuyerPaymentRow).displayStatus !== 'PAID'"
               variant="secondary"
               size="sm"
-              :disabled="marking"
+              icon="lucide:circle-check"
+              :loading="markingPaymentId === (row as BuyerPaymentRow).id"
+              :disabled="!!markingPaymentId && markingPaymentId !== (row as BuyerPaymentRow).id"
               @click="onMarkPaid(row as BuyerPaymentRow)"
             >
               Marcar pagado
@@ -330,8 +341,8 @@ function onMarkPaid(row: BuyerPaymentRow) {
         <FormTextarea label="Notas (opcional)" v-bind="binds.notes" />
 
         <div class="flex justify-end gap-2 pt-2">
-          <BaseButton type="button" variant="secondary" @click="showNew = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" :disabled="creating">Guardar</BaseButton>
+          <BaseButton type="button" variant="secondary" icon="lucide:x" @click="showNew = false">Cancelar</BaseButton>
+          <BaseButton type="submit" variant="primary" icon="lucide:save" :disabled="creating">Guardar</BaseButton>
         </div>
       </form>
     </BaseModal>

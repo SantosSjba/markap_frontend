@@ -449,7 +449,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
       <p class="text-sm font-medium" :style="{ color: 'var(--color-error)' }">
         No se encontró la propiedad.
       </p>
-      <BaseButton variant="outline" size="sm" @click="goBack">Volver</BaseButton>
+      <BaseButton variant="outline" size="sm" icon="lucide:arrow-left" @click="goBack">Volver</BaseButton>
     </div>
 
     <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">
@@ -619,11 +619,10 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           icon="lucide:user-check"
         >
           <div class="flex flex-wrap justify-end gap-2 mb-4">
-            <BaseButton type="button" variant="outline" size="sm" @click="addOwnerRow">
-              + Agregar propietario
+            <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addOwnerRow">
+              Agregar propietario
             </BaseButton>
-            <BaseButton type="button" variant="outline" size="sm" @click="goToNewOwner">
-              <AppIcon icon="lucide:user-plus" :size="15" class="mr-1" />
+            <BaseButton type="button" variant="outline" size="sm" icon="lucide:user-plus" @click="goToNewOwner">
               Nuevo
             </BaseButton>
           </div>
@@ -646,6 +645,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               type="button"
               variant="ghost"
               size="sm"
+              icon="lucide:trash-2"
               @click="removeOwnerRow(idx)"
             >
               Quitar
@@ -669,12 +669,13 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           <BaseButton
             type="submit"
             variant="primary"
+            icon="lucide:save"
             class="flex-1"
             :loading="updateMutation.isPending.value"
           >
             Guardar
           </BaseButton>
-          <BaseButton type="button" variant="outline" @click="goBack">Cancelar</BaseButton>
+          <BaseButton type="button" variant="outline" icon="lucide:x" @click="goBack">Cancelar</BaseButton>
         </div>
       </div>
 
@@ -702,12 +703,13 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             <BaseButton
               type="submit"
               variant="primary"
+              icon="lucide:save"
               class="w-full justify-center"
               :loading="updateMutation.isPending.value"
             >
               Guardar cambios
             </BaseButton>
-            <BaseButton type="button" variant="outline" class="w-full justify-center" @click="goBack">
+            <BaseButton type="button" variant="outline" icon="lucide:x" class="w-full justify-center" @click="goBack">
               Cancelar
             </BaseButton>
           </div>

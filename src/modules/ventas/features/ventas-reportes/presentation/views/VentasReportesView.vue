@@ -10,6 +10,7 @@ import {
   DataTable,
   FormInput,
   FormSelect,
+  PageHeader,
 } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useExcelExport } from '@shared/composables'
@@ -139,7 +140,14 @@ const pipelineColumns = [
   { key: 'c', label: 'Activos', sortAccessor: (r: unknown) => (r as { count: number }).count },
 ]
 
-const { isExporting, exportToExcel } = useExcelExport()
+const { isExportingKey, exportToExcel } = useExcelExport()
+
+const EXPORT_KEYS = {
+  sales: 'ventas-periodo',
+  agents: 'asesores',
+  conversion: 'conversion',
+  financial: 'flujo',
+} as const
 
 const rangeLabel = computed(() => `${applied.value.startDate}_${applied.value.endDate}`)
 
@@ -162,7 +170,7 @@ async function exportSalesExcel() {
       closingsCount: r.closingsCount,
       totalAmount: r.totalAmount,
     })),
-  })
+  }, EXPORT_KEYS.sales)
   void markapAlert.toast.success('Excel generado')
 }
 
@@ -187,7 +195,7 @@ async function exportAgentsExcel() {
       totalSales: r.totalSales,
       totalCommissionAmount: r.totalCommissionAmount,
     })),
-  })
+  }, EXPORT_KEYS.agents)
   void markapAlert.toast.success('Excel generado')
 }
 
@@ -229,7 +237,7 @@ async function exportConversionExcel() {
         rows: pipelineTableRows.value as unknown as Record<string, string | number | null | undefined>[],
       },
     ],
-  })
+  }, EXPORT_KEYS.conversion)
   void markapAlert.toast.success('Excel generado')
 }
 
@@ -254,7 +262,7 @@ async function exportFinancialExcel() {
       { concepto: 'Comisiones pendientes (cierres en periodo)', monto: f.commissionsPendingAmount },
       { concepto: 'Neto estimado (cobranza − docs − com. pagadas)', monto: f.estimatedNetAfterCosts },
     ],
-  })
+  }, EXPORT_KEYS.financial)
   void markapAlert.toast.success('Excel generado')
 }
 
@@ -266,24 +274,34 @@ function printToPdf() {
 
 <template>
   <div id="ventas-reportes-print" class="space-y-6">
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Reportes</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Indicadores para decisiones: ventas, asesores, conversión y flujo financiero. Exporte a Excel o PDF.
-        </p>
-      </div>
-      <BaseButton variant="secondary" class="flex items-center gap-2 shrink-0" @click="printToPdf">
-        <AppIcon icon="lucide:printer" :size="18" />
-        PDF / Imprimir
-      </BaseButton>
-    </div>
+    <PageHeader
+      title="Reportes"
+      subtitle="Indicadores para decisiones: ventas, asesores, conversión y flujo financiero. Exporte a Excel o PDF."
+      icon="lucide:bar-chart-2"
+    >
+      <template #actions>
+        <BaseButton variant="secondary" class="flex items-center gap-2 shrink-0" @click="printToPdf">
+          <AppIcon icon="lucide:printer" :size="18" />
+          PDF / Imprimir
+        </BaseButton>
+      </template>
+    </PageHeader>
 
     <form
-      class="rounded-xl border p-4 flex flex-wrap gap-4 items-end"
+      class="rounded-xl border p-4 space-y-4"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
       @submit.prevent="applyFilters"
     >
+      <div class="flex items-center gap-2">
+        <div
+          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)' }"
+        >
+          <AppIcon icon="lucide:calendar-range" :size="16" color="var(--color-primary)" />
+        </div>
+        <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Período y agrupación</p>
+      </div>
+      <div class="flex flex-wrap gap-4 items-end">
       <div class="min-w-[140px]">
         <FormInput label="Desde" type="date" v-bind="filterBinds.startDate" />
         <p v-if="errors.startDate" class="text-xs text-red-600 mt-1">{{ errors.startDate }}</p>
@@ -299,7 +317,8 @@ function printToPdf() {
           :options="granularityOptions"
         />
       </div>
-      <BaseButton type="submit" variant="primary">Aplicar</BaseButton>
+      <BaseButton type="submit" variant="primary" icon="lucide:check">Aplicar</BaseButton>
+      </div>
     </form>
 
     <BaseTabs v-model="activeTab" :tabs="reportTabs" />
@@ -314,7 +333,7 @@ function printToPdf() {
             <BaseButton
               variant="secondary"
               class="flex items-center gap-2"
-              :loading="isExporting"
+              :loading="isExportingKey(EXPORT_KEYS.sales)"
               :disabled="salesQuery.isLoading.value"
               @click="exportSalesExcel"
             >
@@ -333,7 +352,7 @@ function printToPdf() {
             <p class="text-sm" style="color: var(--color-error)">
               {{ getApiErrorMessage(salesQuery.error.value) }}
             </p>
-            <BaseButton variant="secondary" size="sm" @click="() => salesQuery.refetch()">Reintentar</BaseButton>
+            <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => salesQuery.refetch()">Reintentar</BaseButton>
           </div>
           <DataTable v-else :columns="salesColumns" :data="salesRows" row-key="period" empty-text="Sin cierres en el rango.">
             <template #row="{ row }">
@@ -353,7 +372,7 @@ function printToPdf() {
             <BaseButton
               variant="secondary"
               class="flex items-center gap-2"
-              :loading="isExporting"
+              :loading="isExportingKey(EXPORT_KEYS.agents)"
               :disabled="agentsQuery.isLoading.value"
               @click="exportAgentsExcel"
             >
@@ -372,7 +391,7 @@ function printToPdf() {
             <p class="text-sm" style="color: var(--color-error)">
               {{ getApiErrorMessage(agentsQuery.error.value) }}
             </p>
-            <BaseButton variant="secondary" size="sm" @click="() => agentsQuery.refetch()">Reintentar</BaseButton>
+            <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => agentsQuery.refetch()">Reintentar</BaseButton>
           </div>
           <DataTable v-else :columns="agentColumns" :data="agentRows" row-key="agentId" empty-text="Sin datos de asesores.">
             <template #row="{ row }">
@@ -395,7 +414,7 @@ function printToPdf() {
             <BaseButton
               variant="secondary"
               class="flex items-center gap-2"
-              :loading="isExporting"
+              :loading="isExportingKey(EXPORT_KEYS.conversion)"
               :disabled="conversionQuery.isLoading.value"
               @click="exportConversionExcel"
             >
@@ -414,7 +433,7 @@ function printToPdf() {
             <p class="text-sm" style="color: var(--color-error)">
               {{ getApiErrorMessage(conversionQuery.error.value) }}
             </p>
-            <BaseButton variant="secondary" size="sm" @click="() => conversionQuery.refetch()">Reintentar</BaseButton>
+            <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => conversionQuery.refetch()">Reintentar</BaseButton>
           </div>
           <template v-else-if="conversion">
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -461,7 +480,7 @@ function printToPdf() {
             <BaseButton
               variant="secondary"
               class="flex items-center gap-2"
-              :loading="isExporting"
+              :loading="isExportingKey(EXPORT_KEYS.financial)"
               :disabled="financialQuery.isLoading.value"
               @click="exportFinancialExcel"
             >
@@ -480,7 +499,7 @@ function printToPdf() {
             <p class="text-sm" style="color: var(--color-error)">
               {{ getApiErrorMessage(financialQuery.error.value) }}
             </p>
-            <BaseButton variant="secondary" size="sm" @click="() => financialQuery.refetch()">Reintentar</BaseButton>
+            <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => financialQuery.refetch()">Reintentar</BaseButton>
           </div>
           <div v-else-if="financial" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatsCard

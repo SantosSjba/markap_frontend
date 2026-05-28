@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useForm, toTypedSchema } from '@shared/components/forms'
-import { BaseButton, Badge, AppIcon, FormInput, FormSelect, FormTextarea } from '@shared/components'
+import { BaseButton, Badge, AppIcon, FormInput, FormSelect, FormTextarea, FormSectionCard } from '@shared/components'
 import {
   useVentasProcessDetail,
   useVentasAddProcessNote,
@@ -56,7 +56,8 @@ const tabItems = [
 const { mutateAsync: addNoteAsync, isPending: addingNote } = useVentasAddProcessNote()
 const { mutateAsync: addActAsync, isPending: addingAct } = useVentasAddActivity()
 const { mutateAsync: addRemAsync, isPending: addingRem } = useVentasAddReminder()
-const { mutate: completeRem, isPending: completingRem } = useVentasCompleteReminder()
+const { mutate: completeRem } = useVentasCompleteReminder()
+const completingReminderId = ref<string | null>(null)
 
 const {
   handleSubmit: submitNoteForm,
@@ -126,7 +127,16 @@ const onReminderSubmit = submitReminderForm(async (values) => {
 })
 
 function doneReminder(reminderId: string) {
-  completeRem({ reminderId, processId: props.processId })
+  if (completingReminderId.value) return
+  completingReminderId.value = reminderId
+  completeRem(
+    { reminderId, processId: props.processId },
+    {
+      onSettled: () => {
+        completingReminderId.value = null
+      },
+    },
+  )
 }
 
 function showSection(id: 'notes' | 'activities' | 'reminders') {
@@ -150,7 +160,7 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
       :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
     >
       <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(detailFetchError) }}</p>
-      <BaseButton variant="outline" size="sm" @click="() => refetchProcDetail()">Reintentar</BaseButton>
+      <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchProcDetail()">Reintentar</BaseButton>
     </div>
 
     <template v-else-if="proc">
@@ -177,16 +187,13 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
       </div>
 
       <div :class="layout === 'grid' ? 'grid lg:grid-cols-3 gap-6' : 'space-y-0'">
-        <!-- Notas -->
-        <section
+        <FormSectionCard
           v-show="showSection('notes')"
-          class="p-4 rounded-xl border"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+          dense
+          title="Notas"
+          subtitle="Seguimiento y acuerdos del proceso"
+          icon="lucide:notebook-pen"
         >
-          <h2 class="font-semibold mb-3 flex items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
-            <AppIcon icon="lucide:sticky-note" :size="18" />
-            Notas
-          </h2>
           <div class="space-y-2 overflow-y-auto mb-3" :class="listMaxClass">
             <div
               v-for="n in proc.notes ?? []"
@@ -215,20 +222,17 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
               placeholder="Escriba el seguimiento o acuerdos..."
               :error="noteErrors.text"
             />
-            <BaseButton type="submit" size="sm" :loading="addingNote">Agregar nota</BaseButton>
+            <BaseButton type="submit" size="sm" icon="lucide:sticky-note" :loading="addingNote">Agregar nota</BaseButton>
           </form>
-        </section>
+        </FormSectionCard>
 
-        <!-- Actividades -->
-        <section
+        <FormSectionCard
           v-show="showSection('activities')"
-          class="p-4 rounded-xl border"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+          dense
+          title="Actividades"
+          subtitle="Llamadas, visitas y gestiones"
+          icon="lucide:calendar-clock"
         >
-          <h2 class="font-semibold mb-3 flex items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
-            <AppIcon icon="lucide:calendar-clock" :size="18" />
-            Actividades
-          </h2>
           <div class="space-y-2 overflow-y-auto mb-3 text-sm" :class="listMaxClass">
             <div v-for="a in proc.activities ?? []" :key="a.id" class="flex flex-wrap gap-2 items-baseline">
               <Badge variant="neutral">{{ a.activityType }}</Badge>
@@ -265,20 +269,17 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
               placeholder="Resumen o próximos pasos"
               :error="activityErrors.description"
             />
-            <BaseButton type="submit" size="sm" :loading="addingAct">Registrar actividad</BaseButton>
+            <BaseButton type="submit" size="sm" icon="lucide:calendar-plus" :loading="addingAct">Registrar actividad</BaseButton>
           </form>
-        </section>
+        </FormSectionCard>
 
-        <!-- Recordatorios -->
-        <section
+        <FormSectionCard
           v-show="showSection('reminders')"
-          class="p-4 rounded-xl border"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+          dense
+          title="Recordatorios"
+          subtitle="Alertas y fechas pendientes"
+          icon="lucide:bell"
         >
-          <h2 class="font-semibold mb-3 flex items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
-            <AppIcon icon="lucide:bell" :size="18" />
-            Recordatorios
-          </h2>
           <ul class="space-y-2 text-sm mb-3 overflow-y-auto" :class="listMaxClass">
             <li
               v-for="r in proc.reminders ?? []"
@@ -296,7 +297,8 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
                 v-if="!r.completedAt"
                 size="sm"
                 variant="outline"
-                :loading="completingRem"
+                :loading="completingReminderId === r.id"
+                :disabled="!!completingReminderId && completingReminderId !== r.id"
                 @click="doneReminder(r.id)"
               >
                 Hecho
@@ -320,9 +322,9 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
               label="Fecha y hora"
               :error="reminderErrors.dueAt"
             />
-            <BaseButton type="submit" size="sm" :loading="addingRem">Agregar recordatorio</BaseButton>
+            <BaseButton type="submit" size="sm" icon="lucide:bell-plus" :loading="addingRem">Agregar recordatorio</BaseButton>
           </form>
-        </section>
+        </FormSectionCard>
       </div>
     </template>
   </div>

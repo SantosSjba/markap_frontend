@@ -9,6 +9,7 @@ import {
   Badge,
   AppIcon,
   BasePagination,
+  PageHeader,
 } from '@shared/components'
 import { useVentasProcessesList } from '../../application/useVentasSales'
 import type { SaleProcessListRow } from '../../domain/sales.types'
@@ -85,26 +86,20 @@ function goDetail(row: SaleProcessListRow) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Procesos de venta
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Separación → contrato de arras → minuta → escritura pública. Cliente + inmueble + asesor.
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <BaseButton variant="secondary" class="flex items-center gap-2" @click="router.push('/ventas/procesos/pipeline')">
-          <AppIcon icon="lucide:layout-grid" :size="18" />
+    <PageHeader
+      title="Procesos de venta"
+      subtitle="Separación → contrato de arras → minuta → escritura pública. Cliente + inmueble + asesor."
+      icon="lucide:git-branch"
+    >
+      <template #actions>
+        <BaseButton variant="secondary" icon="lucide:layout-grid" @click="router.push('/ventas/procesos/pipeline')">
           Pipeline
         </BaseButton>
-        <BaseButton variant="primary" class="flex items-center gap-2" @click="router.push('/ventas/procesos/nuevo')">
-          <AppIcon icon="lucide:plus" :size="18" />
+        <BaseButton variant="primary" icon="lucide:plus" @click="router.push('/ventas/procesos/nuevo')">
           Nuevo proceso
         </BaseButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div
       v-if="pipelineConfigQuery.isError.value"
@@ -117,7 +112,7 @@ function goDetail(row: SaleProcessListRow) {
       <span class="text-xs max-w-md" style="color: var(--color-error)">{{
         getApiErrorMessage(pipelineConfigQuery.error.value)
       }}</span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
+      <BaseButton variant="outline" size="sm" icon="lucide:settings" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
         Reintentar configuración
       </BaseButton>
     </div>
@@ -134,7 +129,7 @@ function goDetail(row: SaleProcessListRow) {
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
         <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
-        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable
         v-else
@@ -204,7 +199,7 @@ function goDetail(row: SaleProcessListRow) {
             </Badge>
           </td>
           <td class="py-3 px-4 text-right">
-            <BaseButton variant="ghost" size="sm" @click="goDetail(row as SaleProcessListRow)">
+            <BaseButton variant="ghost" size="sm" icon="lucide:eye" @click="goDetail(row as SaleProcessListRow)">
               Ver detalle
             </BaseButton>
           </td>

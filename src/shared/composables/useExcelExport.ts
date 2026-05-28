@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import ExcelJS from 'exceljs'
 import { markapAlert } from '@/shared/composables'
 
@@ -104,14 +104,21 @@ async function generateExcel(options: ExcelExportOptions): Promise<void> {
 
 /**
  * Composable reutilizable para exportaciones Excel en cualquier vista.
- * `isExporting` se puede bindear directamente al prop `:loading` de BaseButton.
+ * - Una sola exportación: `:loading="isExporting"`.
+ * - Varios botones: pasa `exportKey` a `exportToExcel` y usa `isExportingKey(key)`.
  */
 export function useExcelExport() {
-  const isExporting = ref(false)
+  const exportingKey = ref<string | null>(null)
+  const isExporting = computed(() => exportingKey.value !== null)
   const exportError = ref<string | null>(null)
 
-  async function exportToExcel(options: ExcelExportOptions) {
-    isExporting.value = true
+  function isExportingKey(key: string): boolean {
+    return exportingKey.value === key
+  }
+
+  async function exportToExcel(options: ExcelExportOptions, exportKey = 'default') {
+    if (exportingKey.value) return
+    exportingKey.value = exportKey
     exportError.value = null
     try {
       await generateExcel(options)
@@ -121,9 +128,11 @@ export function useExcelExport() {
       void markapAlert.toast.error('Exportación fallida', msg)
       console.error('[useExcelExport]', err)
     } finally {
-      isExporting.value = false
+      if (exportingKey.value === exportKey) {
+        exportingKey.value = null
+      }
     }
   }
 
-  return { isExporting, exportError, exportToExcel }
+  return { isExporting, isExportingKey, exportingKey, exportError, exportToExcel }
 }

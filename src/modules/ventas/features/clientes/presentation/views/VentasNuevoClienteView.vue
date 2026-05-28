@@ -617,14 +617,8 @@ const onSubmit = handleSubmit(async (formValues) => {
       </FormSectionCard>
 
       <div class="flex justify-end gap-3">
-        <BaseButton variant="outline" type="button" @click="goBack">Cancelar</BaseButton>
-        <BaseButton type="submit" :loading="createMutation.isPending.value" variant="primary">
-          <AppIcon
-            v-if="!createMutation.isPending.value"
-            icon="lucide:save"
-            :size="20"
-            color="currentColor"
-          />
+        <BaseButton variant="outline" type="button" icon="lucide:x" @click="goBack">Cancelar</BaseButton>
+        <BaseButton type="submit" icon="lucide:save" :loading="createMutation.isPending.value" variant="primary">
           Guardar
         </BaseButton>
       </div>

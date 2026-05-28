@@ -14,6 +14,7 @@ import {
   SearchInput,
   AppIcon,
   ExcelIcon,
+  PageHeader,
 } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import { useExcelExport } from '@shared/composables'
@@ -184,6 +185,9 @@ const pageSubtitle = computed(() =>
     ? 'Titulares registrados en Ventas (vinculados al inventario)'
     : 'Compradores / leads y propietarios de inventario (misma idea que en Alquileres)',
 )
+const pageIcon = computed(() =>
+  route.name === 'ventas-clientes-propietarios' ? 'lucide:building-2' : 'lucide:users',
+)
 
 const goToNew = () => router.push('/ventas/clientes/nuevo')
 const goToEdit = (client: VentasClientListItem) =>
@@ -289,19 +293,13 @@ async function handleExport() {
 
 <template>
   <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1
-          class="text-xl sm:text-2xl font-bold"
-          :style="{ color: 'var(--color-text-primary)' }"
-        >
-          {{ pageTitle }}
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          {{ pageSubtitle }}
-        </p>
-      </div>
-      <div class="flex gap-2 w-full sm:w-auto">
+    <PageHeader
+      :title="pageTitle"
+      :subtitle="pageSubtitle"
+      :icon="pageIcon"
+      large
+    >
+      <template #actions>
         <BaseButton
           variant="outline"
           class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
@@ -320,8 +318,8 @@ async function handleExport() {
           <AppIcon icon="lucide:plus" :size="18" />
           Nuevo Cliente
         </BaseButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div v-if="loadingStats" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 h-20" />
     <div
@@ -330,7 +328,7 @@ async function handleExport() {
       :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
     >
       <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+      <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
     </div>
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
       <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
@@ -376,7 +374,7 @@ async function handleExport() {
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
           <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
-          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+          <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
@@ -523,9 +521,8 @@ async function handleExport() {
       </p>
     </div>
     <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border)">
-      <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
-      <BaseButton variant="danger" :loading="isDeletingClient" @click="executeDelete">
-        <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
+      <BaseButton variant="ghost" icon="lucide:x" @click="closeConfirm">Cancelar</BaseButton>
+      <BaseButton variant="danger" icon="lucide:trash-2" :loading="isDeletingClient" @click="executeDelete">
         Eliminar
       </BaseButton>
     </div>

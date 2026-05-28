@@ -95,6 +95,8 @@ export interface SaleProcessPropertyDetail {
   bathrooms?: number | null
   propertyTypeName?: string | null
   locationLabel?: string | null
+  /** Propietario principal según ficha del inmueble */
+  primaryOwner?: SaleProcessParticipant | null
 }
 
 export interface SaleProcessListRow {
@@ -103,6 +105,8 @@ export interface SaleProcessListRow {
   title: string | null
   pipelineStage: string
   status: string
+  lostReason?: string | null
+  closedAt?: string | null
   buyer: { id: string; fullName: string; primaryPhone: string }
   buyers?: SaleProcessParticipant[]
   owners?: SaleProcessParticipant[]
