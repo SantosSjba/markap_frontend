@@ -36,6 +36,12 @@ export interface VentasSalesRepository {
     title?: string | null
     pipelineStage?: string
     financingChannelId?: string | null
+    commissions?: {
+      agentId: string
+      calculationType: 'PERCENT' | 'FIXED'
+      percent?: number | null
+      fixedAmount?: number | null
+    }[]
   }) => Promise<unknown>
 
   updateProcess: (

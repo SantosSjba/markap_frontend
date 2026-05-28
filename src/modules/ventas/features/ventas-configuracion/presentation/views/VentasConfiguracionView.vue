@@ -121,7 +121,6 @@ const flowSteps = [
   { label: 'Proceso de venta', path: '/ventas/procesos', icon: 'lucide:git-branch' },
   { label: 'Separación', path: '/ventas/separaciones', icon: 'lucide:bookmark' },
   { label: 'Cierre', path: '/ventas/cierres', icon: 'lucide:check-circle' },
-  { label: 'Pagos', path: '/ventas/pagos', icon: 'lucide:banknote' },
   { label: 'Comisiones', path: '/ventas/comisiones', icon: 'lucide:percent' },
   { label: 'Reportes', path: '/ventas/reportes', icon: 'lucide:line-chart' },
 ]

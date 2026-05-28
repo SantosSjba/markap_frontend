@@ -25,14 +25,22 @@ export interface CommissionRow {
   percentApplied: number | null
   status: string
   paidAt: string | null
-  agent: { id: string; fullName: string }
+  calculationType?: 'PERCENT' | 'FIXED' | string
+  agent: { id: string; fullName: string; type?: string }
   closing: {
     id: string
     finalPrice: number
     closedAt: string
     buyer: { id: string; fullName: string }
     property: { id: string; code: string; addressLine: string }
-  }
+  } | null
+  saleProcess: {
+    id: string
+    code: string
+    status: string
+    property: { id: string; code: string; addressLine: string; salePrice?: number | null }
+    buyer: { id: string; fullName: string }
+  } | null
 }
 
 export interface CommissionProfileRow {

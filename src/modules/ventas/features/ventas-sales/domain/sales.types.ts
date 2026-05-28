@@ -11,6 +11,26 @@ export interface SaleProcessParticipant {
   isPrimary?: boolean
 }
 
+export type SaleCommissionCalculationType = 'PERCENT' | 'FIXED'
+
+export interface SaleProcessCommission {
+  id: string
+  amount: number
+  calculationType: SaleCommissionCalculationType | string
+  percentApplied: number | null
+  status: string
+  paidAt: string | null
+  saleClosingId: string | null
+  agent: { id: string; fullName: string; type?: string }
+}
+
+export interface CreateProcessCommissionInput {
+  agentId: string
+  calculationType: SaleCommissionCalculationType
+  percent?: number | null
+  fixedAmount?: number | null
+}
+
 export interface SaleFinancingChannel {
   id: string
   code: string
@@ -45,6 +65,9 @@ export interface SaleProcessListRow {
   property: SaleProcessPropertyDetail
   agent: { id: string; fullName: string } | null
   financingChannel?: SaleFinancingChannel | null
+  commissions?: SaleProcessCommission[]
+  /** @deprecated use commissions */
+  commission?: SaleProcessCommission | null
 }
 
 export interface SaleSeparationRow {

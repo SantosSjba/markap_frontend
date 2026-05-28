@@ -11,7 +11,6 @@ import {
   ventasSalesCierresRoutes,
 } from '@ventas/sales'
 import {
-  ventasFinanzasPagosRoutes,
   ventasFinanzasComisionesRoutes,
   ventasFinanzasCostosDocRoutes,
 } from '@ventas/finanzas'
@@ -71,12 +70,6 @@ export const ventasRoutes: RouteRecordRaw[] = [
         component: SectionLayout,
         meta: { title: 'Cierres' },
         children: ventasSalesCierresRoutes,
-      },
-      {
-        path: 'pagos',
-        component: SectionLayout,
-        meta: { title: 'Pagos' },
-        children: ventasFinanzasPagosRoutes,
       },
       {
         path: 'comisiones',

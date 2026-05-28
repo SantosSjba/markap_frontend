@@ -63,6 +63,12 @@ const api: VentasSalesRepository = {
     title?: string | null
     pipelineStage?: string
     financingChannelId?: string | null
+    commissions?: {
+      agentId: string
+      calculationType: 'PERCENT' | 'FIXED'
+      percent?: number | null
+      fixedAmount?: number | null
+    }[]
   }) =>
     apiClient.post(`/ventas-sales/processes?${qs({ ...scope })}`, body).then((r) => r.data),
 

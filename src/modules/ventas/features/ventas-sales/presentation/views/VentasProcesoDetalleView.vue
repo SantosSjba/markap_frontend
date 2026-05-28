@@ -8,7 +8,15 @@ import {
   useVentasProcessDetail,
   useVentasUpdateProcess,
 } from '../../application/useVentasSales'
-import type { SaleFinancingChannel, SaleProcessDetail } from '../../domain/sales.types'
+import {
+  useVentasMarkCommissionPaid,
+  useVentasRecalculateCommission,
+} from '@ventas/finanzas'
+import type {
+  SaleFinancingChannel,
+  SaleProcessCommission,
+  SaleProcessDetail,
+} from '../../domain/sales.types'
 import { useVentasPipelineStages } from '@ventas/configuracion'
 import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../../domain/pipeline.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -42,6 +50,8 @@ const {
 } = useVentasClosingReadiness(complianceParams)
 
 const { mutate: updateProc, isPending: saving } = useVentasUpdateProcess()
+const { mutate: markCommissionPaid, isPending: markingCommission } = useVentasMarkCommissionPaid()
+const { mutate: recalcCommission, isPending: recalcingCommission } = useVentasRecalculateCommission()
 
 const stageEdit = ref('')
 const statusEdit = ref('')
@@ -104,6 +114,14 @@ const buyersList = computed(() => {
 
 const ownersList = computed(() => detail.value?.owners ?? [])
 
+const commissionsList = computed((): SaleProcessCommission[] => {
+  const d = detail.value
+  if (!d) return []
+  if (d.commissions?.length) return d.commissions
+  if (d.commission) return [d.commission]
+  return []
+})
+
 function formatSalePrice(price: number | null | undefined, currency?: string | null): string {
   if (price == null) return '—'
   const sym = (currency && SALE_CURRENCY_SYMBOL[currency]) || currency || 'S/'
@@ -124,6 +142,22 @@ function saveProcessFields() {
       financingChannelId: financingEdit.value || null,
     },
   })
+}
+
+function commissionStatusLabel(status: string): string {
+  return status === 'PAID' ? 'Pagada' : 'Pendiente'
+}
+
+function agentTypeLabel(type?: string): string {
+  if (type === 'INTERNAL') return 'Interno'
+  if (type === 'EXTERNAL') return 'Externo'
+  return '—'
+}
+
+function commissionCalcLabel(c: SaleProcessCommission): string {
+  if (c.calculationType === 'FIXED') return 'Monto fijo'
+  if (c.percentApplied != null) return `${c.percentApplied}%`
+  return 'Porcentaje'
 }
 </script>
 
@@ -329,11 +363,81 @@ function saveProcessFields() {
           </div>
 
           <p v-if="detail.agent" class="text-sm pt-2 border-t" :style="{ borderColor: 'var(--color-border)' }">
-            <strong :style="{ color: 'var(--color-text-primary)' }">Asesor:</strong>
+            <strong :style="{ color: 'var(--color-text-primary)' }">Asesor principal:</strong>
             {{ detail.agent.fullName }}
           </p>
         </section>
       </div>
+
+      <section
+        class="p-4 rounded-xl border space-y-3"
+        :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <h2
+            class="text-base font-semibold flex items-center gap-2"
+            :style="{ color: 'var(--color-text-primary)' }"
+          >
+            <AppIcon icon="lucide:percent" :size="18" />
+            Comisiones
+          </h2>
+          <BaseButton
+            v-if="commissionsList.length"
+            variant="outline"
+            size="sm"
+            @click="router.push('/ventas/comisiones')"
+          >
+            Ver listado
+          </BaseButton>
+        </div>
+        <ul v-if="commissionsList.length" class="space-y-3">
+          <li
+            v-for="c in commissionsList"
+            :key="c.id"
+            class="rounded-lg border px-3 py-3 space-y-2 text-sm"
+            :style="{ borderColor: 'var(--color-border)' }"
+          >
+            <div class="flex flex-wrap justify-between gap-2">
+              <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                {{ c.agent.fullName }}
+                <span class="text-xs font-normal ml-1" :style="{ color: 'var(--color-text-muted)' }">
+                  ({{ agentTypeLabel(c.agent.type) }})
+                </span>
+              </p>
+              <span :style="{ color: 'var(--color-text-secondary)' }">
+                {{ commissionStatusLabel(c.status) }}
+              </span>
+            </div>
+            <p :style="{ color: 'var(--color-text-secondary)' }">
+              {{ commissionCalcLabel(c) }} ·
+              <strong>S/ {{ c.amount.toLocaleString('es-PE') }}</strong>
+              <span v-if="c.saleClosingId" class="text-xs ml-1">(cierre)</span>
+            </p>
+            <div v-if="c.status === 'PENDING'" class="flex flex-wrap gap-2">
+              <BaseButton
+                v-if="c.calculationType !== 'FIXED'"
+                variant="outline"
+                size="sm"
+                :loading="recalcingCommission"
+                @click="recalcCommission(c.id, { onSuccess: () => refetchDetail() })"
+              >
+                Recalcular
+              </BaseButton>
+              <BaseButton
+                variant="primary"
+                size="sm"
+                :loading="markingCommission"
+                @click="markCommissionPaid(c.id, { onSuccess: () => refetchDetail() })"
+              >
+                Marcar pagada
+              </BaseButton>
+            </div>
+          </li>
+        </ul>
+        <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+          Sin comisiones. Defínalas al crear el proceso (asesores internos o externos, % o monto fijo).
+        </p>
+      </section>
 
       <div
         class="rounded-lg border p-3"
