@@ -2,6 +2,7 @@ import type {
   CompliancePendingItem,
   SaleComplianceChecklist,
   SaleComplianceDocument,
+  SaleFinancingChannel,
   SaleTaxPreview,
   SaleClosingReadiness,
   SaleClosingRow,
@@ -24,6 +25,8 @@ export interface VentasSalesRepository {
 
   getProcess: (id: string) => Promise<SaleProcessDetail>
 
+  listFinancingChannels: () => Promise<SaleFinancingChannel[]>
+
   createProcess: (body: {
     buyerClientId: string
     buyerClientIds?: string[]
@@ -32,6 +35,7 @@ export interface VentasSalesRepository {
     agentId?: string | null
     title?: string | null
     pipelineStage?: string
+    financingChannelId?: string | null
   }) => Promise<unknown>
 
   updateProcess: (
@@ -41,6 +45,7 @@ export interface VentasSalesRepository {
       status?: 'ACTIVE' | 'WON' | 'LOST'
       agentId?: string | null
       title?: string | null
+      financingChannelId?: string | null
     },
   ) => Promise<unknown>
 

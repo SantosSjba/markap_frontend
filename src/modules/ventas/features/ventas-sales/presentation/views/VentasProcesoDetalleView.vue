@@ -4,10 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, AppIcon, FormSelect } from '@shared/components'
 import {
   useVentasClosingReadiness,
+  useVentasFinancingChannels,
   useVentasProcessDetail,
   useVentasUpdateProcess,
 } from '../../application/useVentasSales'
-import type { SaleProcessDetail } from '../../domain/sales.types'
+import type { SaleFinancingChannel, SaleProcessDetail } from '../../domain/sales.types'
 import { useVentasPipelineStages } from '@ventas/configuracion'
 import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../../domain/pipeline.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -26,6 +27,8 @@ const {
   error: detailFetchError,
   refetch: refetchDetail,
 } = useVentasProcessDetail(id)
+const { data: financingChannels, isLoading: loadingFinancing } = useVentasFinancingChannels()
+
 const complianceParams = computed(() => ({
   propertyId: (proc.value as SaleProcessDetail | undefined)?.property?.id ?? '',
   buyerClientId: (proc.value as SaleProcessDetail | undefined)?.buyer?.id ?? '',
@@ -42,6 +45,26 @@ const { mutate: updateProc, isPending: saving } = useVentasUpdateProcess()
 
 const stageEdit = ref('')
 const statusEdit = ref('')
+const financingEdit = ref('')
+
+const FINANCING_CATEGORY_LABEL: Record<string, string> = {
+  BANK: 'Bancos',
+  PAYMENT_METHOD: 'Medios de pago',
+  OWN_FUNDS: 'Fondos propios',
+  OTHER: 'Otros',
+}
+
+const LISTING_STATUS_LABEL: Record<string, string> = {
+  AVAILABLE: 'Disponible',
+  RESERVED: 'Separada',
+  SOLD: 'Vendida',
+}
+
+const SALE_CURRENCY_SYMBOL: Record<string, string> = {
+  PEN: 'S/',
+  USD: 'US$',
+  EUR: '€',
+}
 
 watch(
   proc,
@@ -50,17 +73,55 @@ watch(
     if (row) {
       stageEdit.value = row.pipelineStage ?? ''
       statusEdit.value = row.status ?? ''
+      financingEdit.value = row.financingChannel?.id ?? ''
     }
   },
   { immediate: true },
 )
 
-function saveStage() {
+const financingOptions = computed(() => {
+  const rows = financingChannels.value ?? []
+  const order = ['BANK', 'PAYMENT_METHOD', 'OWN_FUNDS', 'OTHER']
+  const grouped = order.flatMap((cat) => {
+    const items = rows.filter((r: SaleFinancingChannel) => r.category === cat)
+    return items.map((r) => ({
+      value: r.id,
+      label: `${FINANCING_CATEGORY_LABEL[cat] ?? cat}: ${r.name}`,
+    }))
+  })
+  return [{ value: '', label: 'Sin especificar' }, ...grouped]
+})
+
+const detail = computed(() => proc.value as SaleProcessDetail | undefined)
+
+const buyersList = computed(() => {
+  const d = detail.value
+  if (!d) return []
+  if (d.buyers?.length) return d.buyers
+  if (d.buyer) return [{ ...d.buyer, documentNumber: '', isPrimary: true }]
+  return []
+})
+
+const ownersList = computed(() => detail.value?.owners ?? [])
+
+function formatSalePrice(price: number | null | undefined, currency?: string | null): string {
+  if (price == null) return '—'
+  const sym = (currency && SALE_CURRENCY_SYMBOL[currency]) || currency || 'S/'
+  return `${sym} ${price.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+}
+
+function listingLabel(status: string | null | undefined): string {
+  if (!status) return '—'
+  return LISTING_STATUS_LABEL[status] ?? status
+}
+
+function saveProcessFields() {
   updateProc({
     id: id.value,
     body: {
       pipelineStage: stageEdit.value || undefined,
       status: (statusEdit.value as 'ACTIVE' | 'WON' | 'LOST') || undefined,
+      financingChannelId: financingEdit.value || null,
     },
   })
 }
@@ -78,10 +139,10 @@ function saveStage() {
       </button>
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          {{ (proc as SaleProcessDetail | undefined)?.code ?? 'Proceso' }}
+          {{ detail?.code ?? 'Proceso' }}
         </h1>
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-          Seguimiento: notas, actividades y recordatorios (validado con formularios)
+        <p v-if="detail?.title" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          {{ detail.title }}
         </p>
       </div>
     </div>
@@ -94,9 +155,6 @@ function saveStage() {
       <span :style="{ color: 'var(--color-text-primary)' }">
         No se cargó la configuración de etapas; se muestran valores por defecto.
       </span>
-      <span class="text-xs max-w-md" style="color: var(--color-error)">{{
-        getApiErrorMessage(pipelineConfigQuery.error.value)
-      }}</span>
       <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
         Reintentar configuración
       </BaseButton>
@@ -111,24 +169,13 @@ function saveStage() {
       class="flex flex-col items-center justify-center gap-3 py-16 rounded-xl border px-4 text-center"
       :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
     >
-      <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-      <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(detailFetchError) }}</p>
-      <div class="flex flex-wrap justify-center gap-2">
-        <BaseButton variant="outline" size="sm" @click="() => refetchDetail()">Reintentar</BaseButton>
-        <BaseButton variant="outline" size="sm" @click="router.push('/ventas/procesos')">Volver al listado</BaseButton>
-      </div>
+      <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">
+        {{ getApiErrorMessage(detailFetchError) }}
+      </p>
+      <BaseButton variant="outline" size="sm" @click="() => refetchDetail()">Reintentar</BaseButton>
     </div>
 
-    <div
-      v-else-if="!proc"
-      class="flex flex-col items-center justify-center gap-3 py-16 rounded-xl border px-4 text-center"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-text-muted)' }">No se encontró el proceso.</p>
-      <BaseButton variant="outline" size="sm" @click="router.push('/ventas/procesos')">Volver al listado</BaseButton>
-    </div>
-
-    <template v-else-if="proc">
+    <template v-else-if="detail">
       <div
         class="p-4 rounded-xl border space-y-4"
         :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
@@ -140,62 +187,185 @@ function saveStage() {
           <div class="min-w-[180px]">
             <FormSelect v-model="statusEdit" label="Estado" :options="[...PROCESS_STATUS_OPTIONS]" />
           </div>
-          <BaseButton variant="primary" :loading="saving" @click="saveStage">Guardar etapa</BaseButton>
-        </div>
-        <div class="grid sm:grid-cols-2 gap-2 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-          <p>
-            <strong :style="{ color: 'var(--color-text-primary)' }">Cliente:</strong>
-            {{ (proc as SaleProcessDetail).buyer?.fullName }}
-          </p>
-          <p>
-            <strong :style="{ color: 'var(--color-text-primary)' }">Inmueble:</strong>
-            {{ (proc as SaleProcessDetail).property?.code }}
-          </p>
-          <p>
-            <strong :style="{ color: 'var(--color-text-primary)' }">Etapa:</strong>
-            {{ pipelineStageLabel((proc as SaleProcessDetail).pipelineStage) }}
-          </p>
-          <p>
-            <strong :style="{ color: 'var(--color-text-primary)' }">Estado:</strong>
-            {{ processStatusLabel((proc as SaleProcessDetail).status) }}
-          </p>
-        </div>
-        <div
-          class="rounded-lg border p-3"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
-        >
-          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-            Cumplimiento para cierre
-          </p>
-          <p v-if="loadingReadiness" class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-            Validando checklist legal/tributario/compliance...
-          </p>
-          <div v-else-if="readinessQueryError" class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
-            <span style="color: var(--color-error)">{{ getApiErrorMessage(readinessFetchError) }}</span>
-            <BaseButton variant="outline" size="sm" class="self-start sm:ml-auto shrink-0" @click="() => refetchReadiness()">
-              Reintentar
-            </BaseButton>
+          <div class="min-w-[280px] flex-1">
+            <FormSelect
+              v-model="financingEdit"
+              label="Banco / medio de pago del proceso"
+              :options="financingOptions"
+              :loading="loadingFinancing"
+            />
           </div>
-          <template v-else>
-            <p
-              class="text-sm mt-1"
-              :style="{ color: closingReadiness?.ok ? 'var(--color-success)' : 'var(--color-warning)' }"
-            >
-              {{
-                closingReadiness?.ok
-                  ? 'Operación lista para cierre.'
-                  : 'Faltan validaciones para habilitar el cierre.'
-              }}
-            </p>
-            <ul
-              v-if="!closingReadiness?.ok && closingReadiness?.missing?.length"
-              class="mt-2 list-disc pl-5 text-sm"
-              :style="{ color: 'var(--color-text-secondary)' }"
-            >
-              <li v-for="m in closingReadiness.missing" :key="m">{{ m }}</li>
-            </ul>
-          </template>
+          <BaseButton variant="primary" :loading="saving" @click="saveProcessFields">Guardar cambios</BaseButton>
         </div>
+        <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+          Etapa actual: {{ pipelineStageLabel(detail.pipelineStage) }} · Estado:
+          {{ processStatusLabel(detail.status) }}
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-4">
+        <section
+          class="p-4 rounded-xl border space-y-3"
+          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        >
+          <h2 class="text-base font-semibold flex items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
+            <AppIcon icon="lucide:building-2" :size="18" />
+            Inmueble
+          </h2>
+          <dl class="grid sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <div>
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Código</dt>
+              <dd class="font-mono font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                {{ detail.property?.code }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Estado comercial</dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">
+                {{ listingLabel(detail.property?.listingStatus) }}
+              </dd>
+            </div>
+            <div class="sm:col-span-2">
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Dirección</dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property?.addressLine }}</dd>
+            </div>
+            <div v-if="detail.property?.locationLabel" class="sm:col-span-2">
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Ubicación</dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.locationLabel }}</dd>
+            </div>
+            <div v-if="detail.property?.projectName">
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Proyecto</dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.projectName }}</dd>
+            </div>
+            <div v-if="detail.property?.propertyTypeName">
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Tipo</dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.propertyTypeName }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Precio de venta</dt>
+              <dd class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                {{ formatSalePrice(detail.property?.salePrice, detail.property?.saleCurrency) }}
+              </dd>
+            </div>
+            <div v-if="detail.property?.area != null">
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Área</dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.area }} m²</dd>
+            </div>
+            <div v-if="detail.property?.bedrooms != null">
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Dormitorios</dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.bedrooms }}</dd>
+            </div>
+            <div v-if="detail.property?.bathrooms != null">
+              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Baños</dt>
+              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.bathrooms }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section
+          class="p-4 rounded-xl border space-y-4"
+          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        >
+          <div>
+            <h2
+              class="text-base font-semibold flex items-center gap-2 mb-2"
+              :style="{ color: 'var(--color-text-primary)' }"
+            >
+              <AppIcon icon="lucide:users" :size="18" />
+              Compradores
+            </h2>
+            <ul v-if="buyersList.length" class="space-y-2">
+              <li
+                v-for="b in buyersList"
+                :key="b.id"
+                class="rounded-lg border px-3 py-2 text-sm"
+                :style="{ borderColor: 'var(--color-border)' }"
+              >
+                <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                  {{ b.fullName }}
+                  <span
+                    v-if="b.isPrimary"
+                    class="text-xs font-normal ml-1"
+                    :style="{ color: 'var(--color-text-muted)' }"
+                  >(principal)</span>
+                </p>
+                <p :style="{ color: 'var(--color-text-secondary)' }">
+                  {{ b.documentTypeName ? `${b.documentTypeName}: ` : '' }}{{ b.documentNumber || '—' }}
+                </p>
+                <p v-if="b.primaryPhone" :style="{ color: 'var(--color-text-secondary)' }">
+                  Tel: {{ b.primaryPhone }}
+                </p>
+                <p v-if="b.primaryEmail" :style="{ color: 'var(--color-text-secondary)' }">{{ b.primaryEmail }}</p>
+              </li>
+            </ul>
+            <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Sin compradores registrados.</p>
+          </div>
+
+          <div>
+            <h2
+              class="text-base font-semibold flex items-center gap-2 mb-2"
+              :style="{ color: 'var(--color-text-primary)' }"
+            >
+              <AppIcon icon="lucide:user-check" :size="18" />
+              Propietarios
+            </h2>
+            <ul v-if="ownersList.length" class="space-y-2">
+              <li
+                v-for="o in ownersList"
+                :key="o.id"
+                class="rounded-lg border px-3 py-2 text-sm"
+                :style="{ borderColor: 'var(--color-border)' }"
+              >
+                <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ o.fullName }}</p>
+                <p :style="{ color: 'var(--color-text-secondary)' }">
+                  {{ o.documentTypeName ? `${o.documentTypeName}: ` : '' }}{{ o.documentNumber || '—' }}
+                </p>
+                <p v-if="o.primaryPhone" :style="{ color: 'var(--color-text-secondary)' }">Tel: {{ o.primaryPhone }}</p>
+              </li>
+            </ul>
+            <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+              Sin propietarios adicionales en la ficha del inmueble.
+            </p>
+          </div>
+
+          <p v-if="detail.agent" class="text-sm pt-2 border-t" :style="{ borderColor: 'var(--color-border)' }">
+            <strong :style="{ color: 'var(--color-text-primary)' }">Asesor:</strong>
+            {{ detail.agent.fullName }}
+          </p>
+        </section>
+      </div>
+
+      <div
+        class="rounded-lg border p-3"
+        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+      >
+        <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Cumplimiento para cierre</p>
+        <p v-if="loadingReadiness" class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+          Validando checklist legal/tributario/compliance...
+        </p>
+        <div v-else-if="readinessQueryError" class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+          <span style="color: var(--color-error)">{{ getApiErrorMessage(readinessFetchError) }}</span>
+          <BaseButton variant="outline" size="sm" @click="() => refetchReadiness()">Reintentar</BaseButton>
+        </div>
+        <template v-else>
+          <p
+            class="text-sm mt-1"
+            :style="{ color: closingReadiness?.ok ? 'var(--color-success)' : 'var(--color-warning)' }"
+          >
+            {{
+              closingReadiness?.ok
+                ? 'Operación lista para cierre.'
+                : 'Faltan validaciones para habilitar el cierre.'
+            }}
+          </p>
+          <ul
+            v-if="!closingReadiness?.ok && closingReadiness?.missing?.length"
+            class="mt-2 list-disc pl-5 text-sm"
+            :style="{ color: 'var(--color-text-secondary)' }"
+          >
+            <li v-for="m in closingReadiness.missing" :key="m">{{ m }}</li>
+          </ul>
+        </template>
       </div>
 
       <SaleProcessFollowUpPanel :process-id="id" layout="grid" />

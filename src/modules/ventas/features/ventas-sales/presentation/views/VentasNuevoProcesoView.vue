@@ -3,7 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { BaseButton, FormInput, FormSelect, AppIcon } from '@shared/components'
 import { useVentasPipelineStages } from '@ventas/configuracion'
-import { useVentasCreateProcess } from '../../application/useVentasSales'
+import { useVentasCreateProcess, useVentasFinancingChannels } from '../../application/useVentasSales'
+import type { SaleFinancingChannel } from '../../domain/sales.types'
 import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
@@ -31,10 +32,32 @@ const form = ref({
   agentId: '',
   title: '',
   pipelineStage: 'SEPARATION',
+  financingChannelId: '',
   buyers: [''],
 })
 
 const { mutate: createProcess, isPending } = useVentasCreateProcess()
+const { data: financingChannels, isLoading: loadingFinancing } = useVentasFinancingChannels()
+
+const FINANCING_CATEGORY_LABEL: Record<string, string> = {
+  BANK: 'Bancos',
+  PAYMENT_METHOD: 'Medios de pago',
+  OWN_FUNDS: 'Fondos propios',
+  OTHER: 'Otros',
+}
+
+const financingOptions = computed(() => {
+  const rows = financingChannels.value ?? []
+  const order = ['BANK', 'PAYMENT_METHOD', 'OWN_FUNDS', 'OTHER']
+  const grouped = order.flatMap((cat) => {
+    const items = rows.filter((r: SaleFinancingChannel) => r.category === cat)
+    return items.map((r) => ({
+      value: r.id,
+      label: `${FINANCING_CATEGORY_LABEL[cat] ?? cat}: ${r.name}`,
+    }))
+  })
+  return [{ value: '', label: 'Sin especificar' }, ...grouped]
+})
 
 function ensureOneEmpty(items: string[]) {
   const cleaned = items.filter((x) => !!x)
@@ -113,6 +136,7 @@ function submit() {
       agentId: form.value.agentId || null,
       title: form.value.title || null,
       pipelineStage: form.value.pipelineStage,
+      financingChannelId: form.value.financingChannelId || null,
     },
     {
       onSuccess: () => router.push('/ventas/procesos'),
@@ -136,7 +160,7 @@ function submit() {
           Nuevo proceso de venta
         </h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Múltiples compradores. Los propietarios se cargan del inmueble seleccionado.
+          Múltiples compradores, banco o medio de pago. Los propietarios se cargan del inmueble.
         </p>
       </div>
     </div>
@@ -170,6 +194,12 @@ function submit() {
           v-model="form.title"
           label="Título (opcional)"
           placeholder="Ej. Familia Pérez — Torre Vista Mar"
+        />
+        <FormSelect
+          v-model="form.financingChannelId"
+          label="Banco o medio de pago del proceso"
+          :options="financingOptions"
+          :loading="loadingFinancing"
         />
       </div>
 

@@ -3,6 +3,7 @@ import {
   type CompliancePendingItem,
   type SaleComplianceChecklist,
   type SaleComplianceDocument,
+  type SaleFinancingChannel,
   VENTAS_SALES_APP_SLUG,
   type SaleTaxPreview,
   type SaleClosingReadiness,
@@ -48,6 +49,11 @@ const api: VentasSalesRepository = {
       .get<SaleProcessDetail>(`/ventas-sales/processes/${encodeURIComponent(id)}?${qs({ ...scope })}`)
       .then((r) => mapSaleProcessDetail(r.data)),
 
+  listFinancingChannels: () =>
+    apiClient
+      .get<SaleFinancingChannel[]>(`/ventas-sales/financing-channels?${qs({ ...scope })}`)
+      .then((r) => r.data),
+
   createProcess: (body: {
     buyerClientId: string
     buyerClientIds?: string[]
@@ -56,6 +62,7 @@ const api: VentasSalesRepository = {
     agentId?: string | null
     title?: string | null
     pipelineStage?: string
+    financingChannelId?: string | null
   }) =>
     apiClient.post(`/ventas-sales/processes?${qs({ ...scope })}`, body).then((r) => r.data),
 
@@ -66,11 +73,12 @@ const api: VentasSalesRepository = {
       status?: 'ACTIVE' | 'WON' | 'LOST'
       agentId?: string | null
       title?: string | null
+      financingChannelId?: string | null
     },
   ) =>
     apiClient
-      .patch(`/ventas-sales/processes/${encodeURIComponent(id)}?${qs({ ...scope })}`, body)
-      .then((r) => r.data),
+      .patch<SaleProcessDetail>(`/ventas-sales/processes/${encodeURIComponent(id)}?${qs({ ...scope })}`, body)
+      .then((r) => mapSaleProcessDetail(r.data)),
 
   addNote: (processId: string, text: string) =>
     apiClient

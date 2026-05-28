@@ -58,6 +58,14 @@ export function useVentasProcessDetail(id: Ref<string> | string) {
   })
 }
 
+export function useVentasFinancingChannels() {
+  return useQuery({
+    queryKey: [...ventasSalesKeys.root, 'financing-channels'] as const,
+    queryFn: () => ventasSalesRepository.listFinancingChannels(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export function useVentasCreateProcess() {
   const qc = useQueryClient()
   return useMutation({

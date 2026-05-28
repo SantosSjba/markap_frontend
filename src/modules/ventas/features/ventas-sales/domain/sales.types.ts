@@ -1,5 +1,38 @@
 export const VENTAS_SALES_APP_SLUG = 'ventas' as const
 
+export interface SaleProcessParticipant {
+  id: string
+  fullName: string
+  documentNumber: string
+  documentTypeName?: string | null
+  primaryPhone: string
+  primaryEmail?: string | null
+  clientType?: string
+  isPrimary?: boolean
+}
+
+export interface SaleFinancingChannel {
+  id: string
+  code: string
+  name: string
+  category: 'BANK' | 'PAYMENT_METHOD' | 'OWN_FUNDS' | 'OTHER' | string
+}
+
+export interface SaleProcessPropertyDetail {
+  id: string
+  code: string
+  addressLine: string
+  salePrice: number | null
+  saleCurrency?: string
+  projectName?: string | null
+  listingStatus?: string | null
+  area?: number | null
+  bedrooms?: number | null
+  bathrooms?: number | null
+  propertyTypeName?: string | null
+  locationLabel?: string | null
+}
+
 export interface SaleProcessListRow {
   id: string
   code: string
@@ -7,10 +40,11 @@ export interface SaleProcessListRow {
   pipelineStage: string
   status: string
   buyer: { id: string; fullName: string; primaryPhone: string }
-  buyers?: { id: string; fullName: string; primaryPhone: string; isPrimary: boolean }[]
-  owners?: { id: string; fullName: string }[]
-  property: { id: string; code: string; addressLine: string; salePrice: number | null }
+  buyers?: SaleProcessParticipant[]
+  owners?: SaleProcessParticipant[]
+  property: SaleProcessPropertyDetail
   agent: { id: string; fullName: string } | null
+  financingChannel?: SaleFinancingChannel | null
 }
 
 export interface SaleSeparationRow {
