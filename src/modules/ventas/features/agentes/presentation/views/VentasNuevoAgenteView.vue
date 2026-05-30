@@ -9,6 +9,7 @@ import { useVentasCreateAgent } from '../../application/useAgents'
 import { useUsers } from '@modules/settings'
 import type { VentasAgentType } from '../../domain/agent.types'
 import { ventasAgentCreateFormSchema } from '../../infrastructure/schemas/agentFormSchema'
+import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,7 +29,7 @@ const presetAgentType = computed((): VentasAgentType | null => {
   return t === 'INTERNAL' || t === 'EXTERNAL' ? t : null
 })
 
-const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm({
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm({
   validationSchema: toTypedSchema(ventasAgentCreateFormSchema),
   initialValues: {
     type: 'EXTERNAL' as VentasAgentType,
@@ -114,17 +115,18 @@ const onSubmit = handleSubmit(
         documentTypeId: formValues.documentTypeId || null,
         documentNumber: formValues.documentNumber?.trim() || null,
       })
-      if (returnTo.value && data?.id) {
-        router.push({
-          path: returnTo.value,
-          query: {
-            selectedAgentId: data.id,
-            ...(agentField.value ? { agentField: agentField.value } : {}),
-          },
-        })
-        return
-      }
-      router.push('/ventas/agentes')
+      resetForm()
+      await navigateAfterVentasSave(router, {
+        listPath: '/ventas/agentes',
+        returnTo: returnTo.value || undefined,
+        returnQuery:
+          returnTo.value && data?.id
+            ? {
+                selectedAgentId: data.id,
+                ...(agentField.value ? { agentField: agentField.value } : {}),
+              }
+            : undefined,
+      })
     } catch {
       void 0
     }

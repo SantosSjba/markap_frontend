@@ -13,6 +13,7 @@ import type {
 import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
+import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
@@ -453,6 +454,20 @@ function buildCommissionsPayload(): CreateProcessCommissionInput[] | null {
   return out
 }
 
+function resetProcessForm() {
+  form.value = {
+    propertyId: '',
+    title: '',
+    pipelineStage: 'SEPARATION',
+    financingChannelId: '',
+    buyers: [''],
+  }
+  commissionRows.value = [newCommissionRow()]
+  propertyOwners.value = []
+  propertySalePrice.value = null
+  commissionFormError.value = ''
+}
+
 function submit() {
   commissionFormError.value = ''
   const buyerIds = Array.from(new Set(form.value.buyers.filter(Boolean)))
@@ -474,7 +489,10 @@ function submit() {
       commissions,
     },
     {
-      onSuccess: () => router.push('/ventas/procesos'),
+      onSuccess: async () => {
+        resetProcessForm()
+        await navigateAfterVentasSave(router, { listPath: '/ventas/procesos' })
+      },
     },
   )
 }

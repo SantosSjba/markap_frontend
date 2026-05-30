@@ -199,6 +199,7 @@ const onSubmitPayment = submitPayment((values) => {
     {
       onSuccess: () => {
         showNew.value = false
+        resetPaymentForm()
       },
     },
   )

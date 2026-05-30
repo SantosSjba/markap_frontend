@@ -52,7 +52,7 @@ const loadingNewModalData = ref(false)
 const newModalLoadError = ref('')
 const buyerOptions = ref<{ value: string; label: string }[]>([])
 const propertyOptions = ref<{ value: string; label: string }[]>([])
-const form = ref({
+const initialSeparationForm = () => ({
   buyerClientId: '',
   propertyId: '',
   amount: 0,
@@ -60,10 +60,17 @@ const form = ref({
   notes: '',
 })
 
+const form = ref(initialSeparationForm())
+
+function resetSeparationForm() {
+  form.value = initialSeparationForm()
+}
+
 const { mutate: createSep, isPending } = useVentasCreateSeparation()
 
 async function openModal() {
   newModalLoadError.value = ''
+  resetSeparationForm()
   loadingNewModalData.value = true
   try {
     const [buyers, props] = await Promise.all([
@@ -99,7 +106,7 @@ function submit() {
     {
       onSuccess: () => {
         showNew.value = false
-        form.value.amount = 0
+        resetSeparationForm()
       },
     },
   )

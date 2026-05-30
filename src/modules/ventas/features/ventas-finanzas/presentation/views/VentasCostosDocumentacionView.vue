@@ -151,7 +151,12 @@ const onSubmitCost = submitCost((values) => {
       expenseDate: values.expenseDate,
       description: values.description || null,
     },
-    { onSuccess: () => (showNew.value = false) },
+    {
+      onSuccess: () => {
+        showNew.value = false
+        resetCostForm()
+      },
+    },
   )
 })
 

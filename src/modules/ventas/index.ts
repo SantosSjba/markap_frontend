@@ -1,3 +1,5 @@
 export { ventasRoutes } from './presentation/router'
 export { useVentasAppLayout } from './presentation/composables/useVentasAppLayout'
 export { VENTAS_BASE_PATH } from './config/routes.constants'
+export { navigateAfterVentasSave } from './application/navigateAfterVentasSave'
+export type { NavigateAfterVentasSaveOptions } from './application/navigateAfterVentasSave'

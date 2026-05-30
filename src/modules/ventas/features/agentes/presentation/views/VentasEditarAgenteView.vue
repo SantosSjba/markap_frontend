@@ -5,6 +5,7 @@ import { BaseButton, AppIcon, Badge, FormSectionCard } from '@shared/components'
 import { FormInput, FormSelect } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { markapAlert } from '@/shared/composables'
+import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
 import {
   useVentasAgent,
   useVentasUpdateAgent,
@@ -144,7 +145,7 @@ const onSubmit = handleSubmit(
           isActive: formValues.isActive,
         },
       })
-      router.push('/ventas/agentes')
+      await navigateAfterVentasSave(router, { listPath: '/ventas/agentes' })
     } catch {
       void 0
     }
@@ -159,7 +160,7 @@ const handleDeactivate = async () => {
       id: id.value,
       data: { isActive: false },
     })
-    router.push('/ventas/agentes')
+    await navigateAfterVentasSave(router, { listPath: '/ventas/agentes' })
   } catch {
     void 0
   }
@@ -172,7 +173,7 @@ const handleActivate = async () => {
       id: id.value,
       data: { isActive: true },
     })
-    router.push('/ventas/agentes')
+    await navigateAfterVentasSave(router, { listPath: '/ventas/agentes' })
   } catch {
     void 0
   }
@@ -182,7 +183,7 @@ const handleDelete = async () => {
   showDeleteConfirm.value = false
   try {
     await deleteMutation.mutateAsync(id.value)
-    router.push('/ventas/agentes')
+    await navigateAfterVentasSave(router, { listPath: '/ventas/agentes' })
   } catch {
     void 0
   }

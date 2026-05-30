@@ -15,6 +15,7 @@ import {
   useVentasClientDistricts,
 } from '../../application/useVentasClients'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
+import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
 import type { VentasDocumentType } from '../../domain/client.types'
 import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../../domain/leadOrigins.constants'
 import type { VentasLeadOriginCode } from '../../domain/leadOrigins.constants'
@@ -370,7 +371,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         },
       })
     }
-    void router.push('/ventas/clientes')
+    await navigateAfterVentasSave(router, { listPath: '/ventas/clientes' })
   } catch {
     void 0
   }

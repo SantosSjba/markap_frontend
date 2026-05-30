@@ -16,6 +16,7 @@ import {
 } from '../../application/useVentasClients'
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import { ventasPropertyKeys } from '@modules/ventas/features/propiedades'
+import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type { VentasDocumentType } from '../../domain/client.types'
 import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../../domain/leadOrigins.constants'
@@ -273,12 +274,17 @@ const onSubmit = handleSubmit(async (formValues) => {
         leadOrigin: formValues.leadOrigin || null,
         assignedAgentId: formValues.assignedAgentId?.trim() || null,
       })
-      if (returnTo.value && data?.id) {
-        await invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
-        void router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
-      } else {
-        void router.push('/ventas/clientes')
-      }
+      resetForm()
+      await navigateAfterVentasSave(router, {
+        listPath: '/ventas/clientes',
+        returnTo: returnTo.value || undefined,
+        returnQuery:
+          returnTo.value && data?.id ? { selectedClientId: data.id } : undefined,
+        invalidate:
+          returnTo.value && data?.id
+            ? () => invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
+            : undefined,
+      })
       return
     }
 
@@ -314,12 +320,17 @@ const onSubmit = handleSubmit(async (formValues) => {
           : {}),
       },
     })
-    if (returnTo.value && data?.id) {
-      await invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
-      void router.push({ path: returnTo.value, query: { selectedClientId: data.id } })
-    } else {
-      void router.push('/ventas/clientes')
-    }
+    resetForm()
+    await navigateAfterVentasSave(router, {
+      listPath: '/ventas/clientes',
+      returnTo: returnTo.value || undefined,
+      returnQuery:
+        returnTo.value && data?.id ? { selectedClientId: data.id } : undefined,
+      invalidate:
+        returnTo.value && data?.id
+          ? () => invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
+          : undefined,
+    })
   } catch {
     void 0
   }

@@ -78,7 +78,7 @@ const agentOptions = computed(() =>
   (agentsRes.value?.data ?? []).map((a) => ({ value: a.id, label: a.fullName })),
 )
 
-const form = ref({
+const initialClosingForm = () => ({
   buyerClientId: '',
   propertyId: '',
   agentId: '',
@@ -88,6 +88,12 @@ const form = ref({
   commissionPercent: null as number | null,
   notes: '',
 })
+
+const form = ref(initialClosingForm())
+
+function resetClosingForm() {
+  form.value = initialClosingForm()
+}
 
 const { mutate: createClosing, isPending } = useVentasCreateClosing()
 const boardFilters = ref({
@@ -109,6 +115,7 @@ const alertDispatchAction = ref<'simulate' | 'send' | null>(null)
 
 async function openModal() {
   newModalLoadError.value = ''
+  resetClosingForm()
   loadingNewModalData.value = true
   try {
     const [buyers, props] = await Promise.all([
@@ -153,6 +160,7 @@ function submit() {
     {
       onSuccess: () => {
         showNew.value = false
+        resetClosingForm()
       },
     },
   )

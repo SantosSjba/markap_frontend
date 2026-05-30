@@ -26,6 +26,7 @@ import {
   buildPropertyUbigeoPayload,
 } from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
+import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
 
 type ListingVentas = 'AVAILABLE' | 'RESERVED' | 'SOLD'
 
@@ -115,7 +116,7 @@ const schema = yup.object({
     .required(),
 })
 
-const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm<PropertyFormValues>({
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm<PropertyFormValues>({
   validationSchema: toTypedSchema(schema) as never,
   initialValues: {
     code: 'VNT-',
@@ -323,8 +324,13 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
       listingStatus: formValues.listingStatus,
       mediaItems: buildMediaItems(),
     })
-    await createMutation.invalidateList()
-    router.push('/ventas/propiedades')
+    resetForm()
+    ownerRows.value = ['']
+    mediaRows.value = [{ url: '', kind: 'photo' }]
+    await navigateAfterVentasSave(router, {
+      listPath: '/ventas/propiedades',
+      invalidate: () => createMutation.invalidateList(),
+    })
   } catch {
     void 0
   }

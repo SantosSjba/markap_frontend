@@ -32,6 +32,7 @@ import {
   stripLocationFromDescription,
 } from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
+import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
 
 type ListingVentas = 'AVAILABLE' | 'RESERVED' | 'SOLD'
 
@@ -405,8 +406,10 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
         mediaItems: buildMediaItems(),
       },
     })
-    await updateMutation.invalidateList()
-    router.push('/ventas/propiedades')
+    await navigateAfterVentasSave(router, {
+      listPath: '/ventas/propiedades',
+      invalidate: () => updateMutation.invalidateList(),
+    })
   } catch {
     void 0
   }
