@@ -198,7 +198,8 @@ function milestoneDone(m: { completedAt: string | null }) {
                 <h3 class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">Responsables</h3>
                 <ul class="space-y-1" :style="{ color: 'var(--color-text-secondary)' }">
                   <li>Diseñador: {{ p.designerAgent?.fullName ?? '—' }}</li>
-                  <li>Arquitecto: {{ p.architectAgent?.fullName ?? '—' }}</li>
+                  <li>Arquitecto Jr: {{ p.architectJrAgent?.fullName ?? '—' }}</li>
+                  <li>Arquitecto Sr: {{ p.architectSrAgent?.fullName ?? '—' }}</li>
                   <li>Supervisor: {{ p.supervisorAgent?.fullName ?? '—' }}</li>
                   <li>Asesor comercial: {{ p.commercialAgent?.fullName ?? '—' }}</li>
                 </ul>

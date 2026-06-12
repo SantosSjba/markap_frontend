@@ -89,7 +89,8 @@ export interface InteriorProjectDetail extends InteriorProjectListItem {
   environmentsNote: string | null
   startDate: string | null
   designerAgent: InteriorProjectAgentRef | null
-  architectAgent: InteriorProjectAgentRef | null
+  architectJrAgent: InteriorProjectAgentRef | null
+  architectSrAgent: InteriorProjectAgentRef | null
   supervisorAgent: InteriorProjectAgentRef | null
   commercialAgent: InteriorProjectAgentRef | null
   estimatedBudget: number | null
@@ -134,7 +135,8 @@ export interface CreateInteriorProjectPayload {
   startDate?: string | null
   estimatedEndDate?: string | null
   designerAgentId?: string | null
-  architectAgentId?: string | null
+  architectJrAgentId?: string | null
+  architectSrAgentId?: string | null
   supervisorAgentId?: string | null
   commercialAgentId?: string | null
   estimatedBudget?: number | null
@@ -156,7 +158,8 @@ export interface UpdateInteriorProjectPayload {
   startDate?: string | null
   estimatedEndDate?: string | null
   designerAgentId?: string | null
-  architectAgentId?: string | null
+  architectJrAgentId?: string | null
+  architectSrAgentId?: string | null
   supervisorAgentId?: string | null
   commercialAgentId?: string | null
   estimatedBudget?: number | null

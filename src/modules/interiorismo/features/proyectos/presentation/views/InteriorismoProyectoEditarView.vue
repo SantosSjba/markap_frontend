@@ -78,7 +78,8 @@ const schema = yup.object({
   startDate: yup.string().trim(),
   estimatedEndDate: yup.string().trim(),
   designerAgentId: yup.string().trim(),
-  architectAgentId: yup.string().trim(),
+  architectJrAgentId: yup.string().trim(),
+  architectSrAgentId: yup.string().trim(),
   supervisorAgentId: yup.string().trim(),
   commercialAgentId: yup.string().trim(),
   estimatedBudget: yup.number().nullable(),
@@ -100,7 +101,8 @@ const { handleSubmit, errors, defineComponentBinds, resetForm } = useForm({
     startDate: '',
     estimatedEndDate: '',
     designerAgentId: '',
-    architectAgentId: '',
+    architectJrAgentId: '',
+    architectSrAgentId: '',
     supervisorAgentId: '',
     commercialAgentId: '',
     estimatedBudget: undefined as number | undefined,
@@ -126,7 +128,8 @@ watch(
         startDate: p.startDate?.slice(0, 10) ?? '',
         estimatedEndDate: p.estimatedEndDate?.slice(0, 10) ?? '',
         designerAgentId: p.designerAgent?.id ?? '',
-        architectAgentId: p.architectAgent?.id ?? '',
+        architectJrAgentId: p.architectJrAgent?.id ?? '',
+        architectSrAgentId: p.architectSrAgent?.id ?? '',
         supervisorAgentId: p.supervisorAgent?.id ?? '',
         commercialAgentId: p.commercialAgent?.id ?? '',
         estimatedBudget: p.estimatedBudget ?? undefined,
@@ -149,7 +152,8 @@ const environmentsNoteB = defineComponentBinds('environmentsNote')
 const startDateB = defineComponentBinds('startDate')
 const estimatedEndDateB = defineComponentBinds('estimatedEndDate')
 const designerB = defineComponentBinds('designerAgentId')
-const architectB = defineComponentBinds('architectAgentId')
+const architectJrB = defineComponentBinds('architectJrAgentId')
+const architectSrB = defineComponentBinds('architectSrAgentId')
 const supervisorB = defineComponentBinds('supervisorAgentId')
 const commercialB = defineComponentBinds('commercialAgentId')
 const estimatedBudgetB = defineComponentBinds('estimatedBudget')
@@ -181,7 +185,8 @@ const onSubmit = handleSubmit(async (v) => {
         startDate: emptyToUndef(v.startDate) ?? null,
         estimatedEndDate: emptyToUndef(v.estimatedEndDate) ?? null,
         designerAgentId: emptyToUndef(v.designerAgentId) ?? null,
-        architectAgentId: emptyToUndef(v.architectAgentId) ?? null,
+        architectJrAgentId: emptyToUndef(v.architectJrAgentId) ?? null,
+        architectSrAgentId: emptyToUndef(v.architectSrAgentId) ?? null,
         supervisorAgentId: emptyToUndef(v.supervisorAgentId) ?? null,
         commercialAgentId: emptyToUndef(v.commercialAgentId) ?? null,
         estimatedBudget: v.estimatedBudget ?? null,
@@ -315,7 +320,20 @@ const onSubmit = handleSubmit(async (v) => {
             placeholder="Opcional"
             :error="errors.designerAgentId"
           />
-          <FormSelect v-bind="architectB" label="Arquitecto" :options="agentOptions" placeholder="Opcional" />
+          <FormSelect
+            v-bind="architectJrB"
+            label="Arquitecto Jr"
+            :options="agentOptions"
+            placeholder="Opcional"
+            :error="errors.architectJrAgentId"
+          />
+          <FormSelect
+            v-bind="architectSrB"
+            label="Arquitecto Sr"
+            :options="agentOptions"
+            placeholder="Opcional"
+            :error="errors.architectSrAgentId"
+          />
           <FormSelect v-bind="supervisorB" label="Supervisor" :options="agentOptions" placeholder="Opcional" />
           <FormSelect
             v-bind="commercialB"
