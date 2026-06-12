@@ -14,7 +14,8 @@ import {
 } from '@shared/components'
 import { useInteriorProjectsList, useUpdateInteriorProject } from '../../application/useInteriorProjects'
 import type { InteriorProjectListItem, InteriorProjectStatus, ListInteriorProjectsParams } from '../../domain/project.types'
-import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../labels'
+import { PROJECT_TYPE_LABELS, projectStatusLabel } from '../labels'
+import { useInteriorProjectStageOptions } from '../../application/useInteriorProjectStageOptions'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
@@ -75,10 +76,14 @@ const columns = [
   { key: 'actions', label: '', align: 'right' as const },
 ]
 
-const statusOptions = [
+const { filterOptions: stageFilterOptions, stageLabelMap } = useInteriorProjectStageOptions({
+  includeCancelled: true,
+})
+
+const statusOptions = computed(() => [
   { value: 'ALL', label: 'Todos los estados' },
-  ...Object.entries(PROJECT_STATUS_LABELS).map(([value, label]) => ({ value, label })),
-]
+  ...stageFilterOptions.value,
+])
 
 const paginationProps = computed(() => {
   const page = listParams.value.page ?? 1
@@ -229,7 +234,7 @@ const pageSubtitle = computed(() =>
             </td>
             <td class="py-3 px-4">
               <Badge variant="info">
-                {{ PROJECT_STATUS_LABELS[(row as InteriorProjectListItem).status] }}
+                {{ projectStatusLabel((row as InteriorProjectListItem).status, stageLabelMap) }}
               </Badge>
             </td>
             <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">

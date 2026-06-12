@@ -4,14 +4,14 @@ export type InteriorProjectType =
   | 'IMPLEMENTATION'
   | 'FURNITURE'
 
-export type InteriorProjectStatus =
-  | 'PROSPECT'
+export type InteriorProjectLifecycleStatus =
   | 'DESIGN'
   | 'QUOTE'
   | 'APPROVED'
   | 'IN_PROGRESS'
   | 'FINISHED'
-  | 'CANCELLED'
+
+export type InteriorProjectStatus = InteriorProjectLifecycleStatus | 'CANCELLED'
 
 export interface InteriorProjectClientRef {
   id: string

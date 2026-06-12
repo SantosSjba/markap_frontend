@@ -15,16 +15,10 @@ import { useExcelExport } from '@shared/composables'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { useInteriorReportsDashboard } from '../../application/useInteriorReportes'
+import { projectStatusLabel } from '@modules/interiorismo/features/proyectos/presentation/labels'
+import { useInteriorProjectStageOptions } from '@modules/interiorismo/features/proyectos/application/useInteriorProjectStageOptions'
 
-const PROJECT_STATUS_LABEL: Record<string, string> = {
-  PROSPECT: 'Prospecto',
-  DESIGN: 'Diseño',
-  QUOTE: 'Cotización',
-  APPROVED: 'Aprobado',
-  IN_PROGRESS: 'En ejecución',
-  FINISHED: 'Finalizado',
-  CANCELLED: 'Cancelado',
-}
+const { stageLabelMap } = useInteriorProjectStageOptions()
 
 const COST_CAT_LABEL: Record<string, string> = {
   LABOR: 'Mano de obra',
@@ -103,7 +97,8 @@ const estadoColumns = [
   {
     key: 's',
     label: 'Estado',
-    sortAccessor: (r: unknown) => PROJECT_STATUS_LABEL[(r as { status: string }).status] ?? '',
+    sortAccessor: (r: unknown) =>
+      projectStatusLabel((r as { status: string }).status, stageLabelMap.value),
   },
   { key: 'c', label: 'Proyectos', sortAccessor: (r: unknown) => (r as { count: number }).count },
 ]
@@ -227,7 +222,7 @@ async function exportDashboardExcel() {
           { header: 'Cantidad', key: 'cantidad' },
         ],
         rows: estadoRows.value.map((x) => ({
-          estado: PROJECT_STATUS_LABEL[x.status] ?? x.status,
+          estado: projectStatusLabel(x.status, stageLabelMap.value),
           cantidad: x.count,
         })) as Record<string, string | number>[],
       },
@@ -360,7 +355,7 @@ async function exportDashboardExcel() {
           <DataTable :columns="estadoColumns" :data="estadoRows" row-key="status" empty-text="Sin proyectos.">
             <template #row="{ row }">
               <td class="py-3 px-4 font-medium">
-                {{ PROJECT_STATUS_LABEL[(row as { status: string }).status] ?? (row as { status: string }).status }}
+                {{ projectStatusLabel((row as { status: string }).status, stageLabelMap) }}
               </td>
               <td class="py-3 px-4">{{ (row as { count: number }).count }}</td>
             </template>

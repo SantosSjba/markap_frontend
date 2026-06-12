@@ -73,12 +73,12 @@ function reorderPipeline(idx: number, dir: -1 | 1) {
   })
 }
 
-const REQUIRED_STAGE_COUNT = 7
+const REQUIRED_STAGE_COUNT = 5
 
 function submitPipeline() {
   const sorted = [...pipelineDraft.value].sort((a, b) => a.sortOrder - b.sortOrder)
   if (sorted.length !== REQUIRED_STAGE_COUNT) {
-    void markapAlert.toast.warning('La configuración debe incluir las siete etapas del ciclo de proyecto')
+    void markapAlert.toast.warning('La configuración debe incluir las cinco etapas del ciclo de proyecto')
     return
   }
   const rows = sorted.map((s, i) => ({ ...s, sortOrder: i }))
@@ -200,8 +200,8 @@ const flowSteps = [
             Estados del ciclo de proyecto
           </h2>
           <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-            Etiquetas en español y orden visual (listados, filtros). Los códigos técnicos (PROSPECT, DESIGN, …) no
-            cambian.
+            Ciclo comercial: Diseño → Cotización → Aprobación → Ejecución → Finalizado. Las etiquetas se
+            personalizan aquí; los códigos técnicos (DESIGN, QUOTE, …) no cambian.
           </p>
           <div
             class="rounded-xl border overflow-hidden"

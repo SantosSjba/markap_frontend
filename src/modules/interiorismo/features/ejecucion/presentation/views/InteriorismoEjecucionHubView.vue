@@ -13,11 +13,13 @@ import {
 } from '@shared/components'
 import { useInteriorProjectsList, useUpdateInteriorProject } from '@modules/interiorismo/features/proyectos/application/useInteriorProjects'
 import type { InteriorProjectListItem, ListInteriorProjectsParams } from '@modules/interiorismo/features/proyectos/domain/project.types'
-import { PROJECT_STATUS_LABELS } from '@modules/interiorismo/features/proyectos/presentation/labels'
+import { projectStatusLabel } from '@modules/interiorismo/features/proyectos/presentation/labels'
+import { useInteriorProjectStageOptions } from '@modules/interiorismo/features/proyectos/application/useInteriorProjectStageOptions'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const router = useRouter()
+const { stageLabelMap } = useInteriorProjectStageOptions()
 const ITEMS = 12
 
 const listParams = ref<ListInteriorProjectsParams>({
@@ -195,7 +197,7 @@ const goProjects = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)
             </td>
             <td class="py-3 px-4 text-sm">{{ Math.round((row as InteriorProjectListItem).progressPct) }}%</td>
             <td class="py-3 px-4">
-              <Badge variant="neutral">{{ PROJECT_STATUS_LABELS[(row as InteriorProjectListItem).status] }}</Badge>
+              <Badge variant="neutral">{{ projectStatusLabel((row as InteriorProjectListItem).status, stageLabelMap) }}</Badge>
             </td>
             <td class="py-3 px-4 text-right">
               <ActionsDropdown :items="getActions(row as InteriorProjectListItem)" />

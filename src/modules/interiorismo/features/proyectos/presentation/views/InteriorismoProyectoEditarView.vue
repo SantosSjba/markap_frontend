@@ -17,7 +17,8 @@ import type {
   ClientListItem,
   ListClientsParams,
 } from '@modules/interiorismo/features/clientes/domain/client.types'
-import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../labels'
+import { PROJECT_TYPE_LABELS } from '../labels'
+import { useInteriorProjectStageOptions } from '../../application/useInteriorProjectStageOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -63,12 +64,7 @@ const typeOptions = computed(() =>
   })),
 )
 
-const statusOptions = computed(() =>
-  (Object.keys(PROJECT_STATUS_LABELS) as InteriorProjectStatus[]).map((k) => ({
-    value: k,
-    label: PROJECT_STATUS_LABELS[k],
-  })),
-)
+const { filterOptions: statusOptions } = useInteriorProjectStageOptions({ includeCancelled: true })
 
 const schema = yup.object({
   name: yup.string().required('Ingrese el nombre').trim(),
@@ -96,7 +92,7 @@ const { handleSubmit, errors, defineComponentBinds, resetForm } = useForm({
     name: '',
     clientId: '',
     projectType: 'INTERIOR_DESIGN' as InteriorProjectType,
-    status: 'PROSPECT' as InteriorProjectStatus,
+    status: 'DESIGN' as InteriorProjectStatus,
     addressLine: '',
     areaSqm: undefined as number | undefined,
     levelsCount: undefined as number | undefined,

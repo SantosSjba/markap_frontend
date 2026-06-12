@@ -3,7 +3,8 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, BaseTabs, Badge, StatsCard, AppIcon, DataTable } from '@shared/components'
 import { useInteriorProjectDetail } from '../../application/useInteriorProjects'
-import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, formatSol } from '../labels'
+import { PROJECT_TYPE_LABELS, projectStatusLabel, formatSol } from '../labels'
+import { useInteriorProjectStageOptions } from '../../application/useInteriorProjectStageOptions'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
 
 const route = useRoute()
@@ -13,6 +14,8 @@ const id = computed(() => String(route.params.id ?? ''))
 const activeTab = ref('resumen')
 
 const { data: p, isLoading, isError } = useInteriorProjectDetail(id)
+
+const { stageLabelMap } = useInteriorProjectStageOptions()
 
 const tabs = [
   { id: 'resumen', label: 'Resumen', icon: 'lucide:layout-dashboard' },
@@ -117,7 +120,7 @@ function milestoneDone(m: { completedAt: string | null }) {
             </h1>
             <Badge v-if="p" variant="neutral">{{ p.code }}</Badge>
             <Badge v-if="p" variant="info">{{ PROJECT_TYPE_LABELS[p.projectType] }}</Badge>
-            <Badge v-if="p" variant="success">{{ PROJECT_STATUS_LABELS[p.status] }}</Badge>
+            <Badge v-if="p" variant="success">{{ projectStatusLabel(p.status, stageLabelMap) }}</Badge>
           </div>
           <p v-if="p" class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
             Cliente: {{ p.client.fullName }} · {{ p.client.documentNumber }}
