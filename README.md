@@ -5,18 +5,23 @@ El proyecto usa **arquitectura modular (Clean + FSD)**. **Imports de dominio**: 
 - **[Arquitectura](docs/ARCHITECTURE.md)** — Capas, dependencias y convenciones.
 - **[Cómo agregar funcionalidades](docs/ADDING_FEATURES.md)** — Pasos para nuevas aplicaciones, funciones o features.
 
+## Requisitos
+
+- Node.js 20+
+- [pnpm](https://pnpm.io/) 11 (`corepack enable pnpm`)
+
 ## Pasos de ejecución
 
 ```bash
 # 1. Instalar dependencias
-npm install
+pnpm install
 
 # 2. (Opcional) Copiar variables de entorno
 cp .env.example .env
 # Configurar VITE_API_BASE_URL si la API no está en localhost:3000
 
 # 3. Iniciar servidor de desarrollo
-npm run dev
+pnpm run dev
 ```
 
 La aplicación estará disponible en `http://localhost:5173`

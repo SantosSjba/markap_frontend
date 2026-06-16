@@ -2,8 +2,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm install
+RUN corepack enable pnpm
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
@@ -24,15 +26,14 @@ ENV VITE_APP_ENV=$VITE_APP_ENV
 ENV VITE_ENABLE_DEV_TOOLS=$VITE_ENABLE_DEV_TOOLS
 
 # Compilar SIN verificación de TypeScript (solo vite build)
-RUN npx vite build
+RUN pnpm exec vite build
 
 # --- Servidor de producción ---
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Instala un servidor HTTP simple
-RUN npm install -g serve
+RUN corepack enable pnpm && pnpm add -g serve
 
 # Copia solo los archivos de producción
 COPY --from=builder /app/dist ./dist
