@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, BaseTabs, Badge, StatsCard, AppIcon, DataTable } from '@shared/components'
 import { useInteriorProjectDetail } from '../../application/useInteriorProjects'
+import {
+  ProjectBudgetTab,
+  ProjectPurchasesTab,
+  ProjectSettlementTab,
+  ProjectBudgetAlerts,
+  useProjectBudget,
+  useProjectSettlement,
+} from '@modules/interiorismo/features/proyecto-presupuesto'
 import { PROJECT_TYPE_LABELS, projectStatusLabel, formatSol } from '../labels'
 import { useInteriorProjectStageOptions } from '../../application/useInteriorProjectStageOptions'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
@@ -11,18 +19,38 @@ const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
 
-const activeTab = ref('resumen')
+const TAB_IDS = ['resumen', 'presupuesto', 'compras', 'liquidacion', 'ejecucion', 'documentos', 'actividad'] as const
+type TabId = (typeof TAB_IDS)[number]
+
+const activeTab = ref<TabId>('resumen')
 
 const { data: p, isLoading, isError } = useInteriorProjectDetail(id)
+const { data: budget, isLoading: budgetLoading, isError: budgetError } = useProjectBudget(id)
+const { data: settlement } = useProjectSettlement(id)
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (typeof tab === 'string' && TAB_IDS.includes(tab as TabId)) {
+      activeTab.value = tab as TabId
+    }
+  },
+  { immediate: true },
+)
+
+watch(activeTab, (tab) => {
+  if (route.query.tab === tab) return
+  router.replace({ query: { ...route.query, tab } })
+})
 
 const { stageLabelMap } = useInteriorProjectStageOptions()
 
 const tabs = [
   { id: 'resumen', label: 'Resumen', icon: 'lucide:layout-dashboard' },
-  { id: 'presupuestos', label: 'Presupuestos', icon: 'lucide:file-text' },
+  { id: 'presupuesto', label: 'Presupuesto', icon: 'lucide:file-spreadsheet' },
+  { id: 'compras', label: 'Compras', icon: 'lucide:shopping-cart' },
+  { id: 'liquidacion', label: 'Liquidación', icon: 'lucide:pie-chart' },
   { id: 'ejecucion', label: 'Ejecución', icon: 'lucide:flame' },
-  { id: 'materiales', label: 'Materiales', icon: 'lucide:layers' },
-  { id: 'finanzas', label: 'Finanzas', icon: 'lucide:wallet' },
   { id: 'documentos', label: 'Documentos', icon: 'lucide:files' },
   { id: 'actividad', label: 'Actividad', icon: 'lucide:history' },
 ]
@@ -45,51 +73,15 @@ const activityLabel = (t: string) => {
   return m[t] ?? t
 }
 
-const budgetCols = [
-  { key: 'code', label: 'Código', align: 'left' as const },
-  { key: 'version', label: 'Ver.', align: 'left' as const },
-  { key: 'title', label: 'Título', align: 'left' as const },
-  { key: 'amount', label: 'Monto', align: 'left' as const },
-  { key: 'status', label: 'Estado', align: 'left' as const },
-]
-
-const goBudgetDetail = (budgetId: string) =>
-  router.push(`${INTERIORISMO_BASE_PATH}/presupuestos/${budgetId}`)
-const goNewBudgetForProject = () => {
-  if (!p.value) return
-  router.push({
-    path: `${INTERIORISMO_BASE_PATH}/presupuestos/nuevo`,
-    query: { clientId: p.value.client.id, projectId: p.value.id },
-  })
-}
-
 const goExecutionBoard = () => {
   if (!p.value) return
   router.push(`${INTERIORISMO_BASE_PATH}/ejecucion/${p.value.id}`)
-}
-
-const goFinanceBoard = () => {
-  if (!p.value) return
-  router.push(`${INTERIORISMO_BASE_PATH}/finanzas/${p.value.id}`)
 }
 
 const goProjectCalendar = () => {
   if (!p.value) return
   router.push({ path: `${INTERIORISMO_BASE_PATH}/calendario`, query: { projectId: p.value.id } })
 }
-
-const materialCols = [
-  { key: 'name', label: 'Material', align: 'left' as const },
-  { key: 'qty', label: 'Cant.', align: 'left' as const },
-  { key: 'cost', label: 'Costo est.', align: 'left' as const },
-]
-
-const paymentCols = [
-  { key: 'paidAt', label: 'Fecha', align: 'left' as const },
-  { key: 'concept', label: 'Concepto', align: 'left' as const },
-  { key: 'amount', label: 'Monto', align: 'left' as const },
-  { key: 'status', label: 'Estado', align: 'left' as const },
-]
 
 const docCols = [
   { key: 'type', label: 'Tipo', align: 'left' as const },
@@ -156,12 +148,18 @@ function milestoneDone(m: { completedAt: string | null }) {
       >
         <BaseTabs v-model="activeTab" :tabs="tabs" />
         <div class="p-5 space-y-6">
+          <ProjectBudgetAlerts
+            v-if="['resumen', 'compras', 'liquidacion'].includes(activeTab) && budget"
+            :budget="budget"
+            :settlement="settlement"
+          />
+
           <div v-show="activeTab === 'resumen'" class="space-y-6">
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <StatsCard title="Avance" :value="`${Math.round(p.progressPct)}%`">
                 <template #icon><AppIcon icon="lucide:gauge" :size="20" color="var(--color-primary)" /></template>
               </StatsCard>
-              <StatsCard title="Presupuesto est." :value="formatSol(p.estimatedBudget)">
+              <StatsCard title="Presupuesto est." :value="formatSol(budget?.totals.priceTotal ?? p.estimatedBudget)">
                 <template #icon><AppIcon icon="lucide:wallet" :size="20" color="#2563eb" /></template>
               </StatsCard>
               <StatsCard title="Costo proyectado" :value="formatSol(p.projectedCost)">
@@ -207,57 +205,28 @@ function milestoneDone(m: { completedAt: string | null }) {
             </div>
           </div>
 
-          <div v-show="activeTab === 'presupuestos'" class="space-y-3">
-            <div class="flex justify-end">
-              <BaseButton size="sm" variant="primary" @click="goNewBudgetForProject">
-                Nuevo presupuesto
-              </BaseButton>
+          <div v-show="activeTab === 'presupuesto'" class="space-y-4">
+            <div v-if="budgetLoading" class="flex justify-center py-16">
+              <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
             </div>
-            <DataTable
-              empty-text="Sin presupuestos asociados."
-              :columns="budgetCols"
-              :data="
-                p.budgets.map((b) => ({
-                  ...b,
-                  code: b.code ?? '—',
-                  version: `v${b.version}`,
-                  title: b.title ?? '—',
-                  amount: formatSol(b.totalAmount),
-                  status: b.status,
-                }))
-              "
-              row-key="id"
-            >
-              <template #row="{ row }">
-                <td
-                  class="py-2 px-3 text-sm cursor-pointer hover:underline"
-                  @click="goBudgetDetail((row as { id: string }).id)"
-                >
-                  {{ (row as any).code }}
-                </td>
-                <td
-                  class="py-2 px-3 text-sm cursor-pointer"
-                  @click="goBudgetDetail((row as { id: string }).id)"
-                >
-                  {{ (row as any).version }}
-                </td>
-                <td
-                  class="py-2 px-3 text-sm cursor-pointer"
-                  @click="goBudgetDetail((row as { id: string }).id)"
-                >
-                  {{ (row as any).title }}
-                </td>
-                <td
-                  class="py-2 px-3 text-sm cursor-pointer"
-                  @click="goBudgetDetail((row as { id: string }).id)"
-                >
-                  {{ (row as any).amount }}
-                </td>
-                <td class="py-2 px-3 cursor-pointer" @click="goBudgetDetail((row as { id: string }).id)">
-                  <Badge variant="neutral">{{ (row as any).status }}</Badge>
-                </td>
-              </template>
-            </DataTable>
+            <div v-else-if="budgetError" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+              No se pudo cargar el presupuesto.
+            </div>
+            <ProjectBudgetTab v-else-if="budget" :project-id="p.id" :budget="budget" />
+          </div>
+
+          <div v-show="activeTab === 'compras'" class="space-y-4">
+            <div v-if="budgetLoading" class="flex justify-center py-16">
+              <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+            </div>
+            <div v-else-if="!budget?.sections.length" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+              Crea partidas en la pestaña Presupuesto para gestionar compras.
+            </div>
+            <ProjectPurchasesTab v-else-if="budget" :project-id="p.id" :budget="budget" />
+          </div>
+
+          <div v-show="activeTab === 'liquidacion'">
+            <ProjectSettlementTab :project-id="p.id" :payments="p.payments" />
           </div>
 
           <div v-show="activeTab === 'ejecucion'" class="space-y-4">
@@ -313,62 +282,6 @@ function milestoneDone(m: { completedAt: string | null }) {
                 Sin hitos registrados.
               </p>
             </div>
-          </div>
-
-          <div v-show="activeTab === 'materiales'">
-            <DataTable
-              empty-text="Sin materiales registrados."
-              :columns="materialCols"
-              :data="
-                p.materials.map((m) => ({
-                  ...m,
-                  qty:
-                    m.quantity != null && m.unit
-                      ? `${m.quantity} ${m.unit}`
-                      : m.quantity != null
-                        ? String(m.quantity)
-                        : '—',
-                  cost: formatSol(m.estimatedCost),
-                }))
-              "
-              row-key="id"
-            >
-              <template #row="{ row }">
-                <td class="py-2 px-3 text-sm">{{ (row as any).name }}</td>
-                <td class="py-2 px-3 text-sm">{{ (row as any).qty }}</td>
-                <td class="py-2 px-3 text-sm">{{ (row as any).cost }}</td>
-              </template>
-            </DataTable>
-          </div>
-
-          <div v-show="activeTab === 'finanzas'" class="space-y-4">
-            <div class="flex justify-end">
-              <BaseButton variant="primary" size="sm" @click="goFinanceBoard">
-                Abrir panel financiero completo
-              </BaseButton>
-            </div>
-            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-              Vista rápida de pagos registrados. Adelantos, cuotas, flujo de caja y rentabilidad están en el panel financiero.
-            </p>
-            <DataTable
-              empty-text="Sin pagos registrados."
-              :columns="paymentCols"
-              :data="
-                p.payments.map((x) => ({
-                  ...x,
-                  paidAt: new Date(x.paidAt).toLocaleDateString('es-PE'),
-                  amount: formatSol(x.amount),
-                }))
-              "
-              row-key="id"
-            >
-              <template #row="{ row }">
-                <td class="py-2 px-3 text-sm">{{ (row as any).paidAt }}</td>
-                <td class="py-2 px-3 text-sm max-w-[280px] truncate">{{ (row as any).concept }}</td>
-                <td class="py-2 px-3 text-sm">{{ (row as any).amount }}</td>
-                <td class="py-2 px-3"><Badge variant="neutral">{{ (row as any).status }}</Badge></td>
-              </template>
-            </DataTable>
           </div>
 
           <div v-show="activeTab === 'documentos'">

@@ -4,13 +4,11 @@ import { SectionLayout } from '@layouts'
 import { INTERIORISMO_BASE_PATH } from '../../config/routes.constants'
 import { interiorismoClientesRoutes } from '../../features/clientes'
 import { interiorismoProyectosRoutes } from '../../features/proyectos'
-import { interiorismoPresupuestosRoutes } from '../../features/presupuestos'
 import {
   interiorismoMaterialesCatalogoRoutes,
   interiorismoMaterialesProveedoresRoutes,
 } from '../../features/materiales'
 import { interiorismoEjecucionRoutes } from '../../features/ejecucion'
-import { interiorismoFinanzasRoutes } from '../../features/finanzas'
 import { interiorismoDocumentosRoutes } from '../../features/documentos'
 import { interiorismoReportesRoutes } from '../../features/reportes'
 import { interiorismoConfiguracionRoutes } from '../../features/configuracion'
@@ -47,9 +45,11 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'presupuestos',
-        component: SectionLayout,
-        meta: { title: 'Presupuestos' },
-        children: interiorismoPresupuestosRoutes,
+        redirect: `${INTERIORISMO_BASE_PATH}/proyectos`,
+      },
+      {
+        path: 'presupuestos/:pathMatch(.*)*',
+        redirect: `${INTERIORISMO_BASE_PATH}/proyectos`,
       },
       {
         path: 'materiales',
@@ -82,9 +82,14 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'finanzas',
-        component: SectionLayout,
-        meta: { title: 'Finanzas' },
-        children: interiorismoFinanzasRoutes,
+        redirect: `${INTERIORISMO_BASE_PATH}/proyectos`,
+      },
+      {
+        path: 'finanzas/:projectId',
+        redirect: (to) => ({
+          path: `${INTERIORISMO_BASE_PATH}/proyectos/${String(to.params.projectId)}`,
+          query: { tab: 'liquidacion' },
+        }),
       },
       {
         path: 'calendario',

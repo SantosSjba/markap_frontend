@@ -19,6 +19,10 @@ import type {
 } from '@modules/interiorismo/features/clientes/domain/client.types'
 import { PROJECT_TYPE_LABELS } from '../labels'
 import { useInteriorProjectStageOptions } from '../../application/useInteriorProjectStageOptions'
+import {
+  CURRENCY_OPTIONS,
+  INTERVENTION_LEVEL_OPTIONS,
+} from '@modules/interiorismo/features/proyecto-presupuesto/presentation/labels'
 
 const router = useRouter()
 
@@ -69,6 +73,12 @@ const schema = yup.object({
   projectType: yup.string().required(),
   status: yup.string().required(),
   addressLine: yup.string().trim(),
+  city: yup.string().trim(),
+  interventionLevel: yup.string().trim(),
+  executionTimeNote: yup.string().trim(),
+  currency: yup.string().required(),
+  defaultUtilityPct: yup.number().nullable().min(0),
+  defaultIgvPct: yup.number().nullable().min(0),
   areaSqm: yup.number().nullable(),
   levelsCount: yup.number().integer().nullable(),
   environmentsNote: yup.string().trim(),
@@ -93,6 +103,12 @@ const { handleSubmit, errors, defineComponentBinds } = useForm({
     projectType: 'INTERIOR_DESIGN' as InteriorProjectType,
     status: 'DESIGN' as InteriorProjectStatus,
     addressLine: '',
+    city: '',
+    interventionLevel: '',
+    executionTimeNote: '',
+    currency: 'PEN',
+    defaultUtilityPct: 20,
+    defaultIgvPct: 18,
     areaSqm: undefined as number | undefined,
     levelsCount: undefined as number | undefined,
     environmentsNote: '',
@@ -115,6 +131,12 @@ const clientIdB = defineComponentBinds('clientId')
 const projectTypeB = defineComponentBinds('projectType')
 const statusB = defineComponentBinds('status')
 const addressLineB = defineComponentBinds('addressLine')
+const cityB = defineComponentBinds('city')
+const interventionLevelB = defineComponentBinds('interventionLevel')
+const executionTimeNoteB = defineComponentBinds('executionTimeNote')
+const currencyB = defineComponentBinds('currency')
+const defaultUtilityPctB = defineComponentBinds('defaultUtilityPct')
+const defaultIgvPctB = defineComponentBinds('defaultIgvPct')
 const areaSqmB = defineComponentBinds('areaSqm')
 const levelsCountB = defineComponentBinds('levelsCount')
 const environmentsNoteB = defineComponentBinds('environmentsNote')
@@ -147,6 +169,12 @@ const onSubmit = handleSubmit(async (v) => {
       projectType: v.projectType as InteriorProjectType,
       status: v.status as InteriorProjectStatus,
       addressLine: emptyToUndef(v.addressLine) ?? null,
+      city: emptyToUndef(v.city) ?? null,
+      interventionLevel: emptyToUndef(v.interventionLevel) ?? null,
+      executionTimeNote: emptyToUndef(v.executionTimeNote) ?? null,
+      currency: v.currency || 'PEN',
+      defaultUtilityPct: v.defaultUtilityPct ?? 20,
+      defaultIgvPct: v.defaultIgvPct ?? 18,
       areaSqm: v.areaSqm ?? null,
       levelsCount: v.levelsCount ?? null,
       environmentsNote: emptyToUndef(v.environmentsNote) ?? null,
@@ -224,6 +252,54 @@ const onSubmit = handleSubmit(async (v) => {
             required
             :error="errors.status"
             class="md:col-span-2"
+          />
+        </div>
+      </section>
+
+      <section
+        class="p-5 rounded-xl space-y-4"
+        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      >
+        <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+          Presupuesto / cotización
+        </h2>
+        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          Cabecera del modelo Excel (ciudad, nivel, plazo y parámetros de cálculo).
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput v-bind="cityB" label="Ciudad" placeholder="TRUJILLO" :error="errors.city" />
+          <FormSelect
+            v-bind="interventionLevelB"
+            label="Nivel de intervención"
+            :options="INTERVENTION_LEVEL_OPTIONS"
+            placeholder="Seleccionar"
+            :error="errors.interventionLevel"
+          />
+          <FormInput
+            v-bind="executionTimeNoteB"
+            class="md:col-span-2"
+            label="Tiempo de ejecución"
+            placeholder="30 DÍAS HÁBILES"
+            :error="errors.executionTimeNote"
+          />
+          <FormSelect
+            v-bind="currencyB"
+            label="Moneda"
+            :options="CURRENCY_OPTIONS"
+            required
+            :error="errors.currency"
+          />
+          <FormInput
+            v-bind="defaultUtilityPctB"
+            type="number"
+            label="Utilidad por defecto (%)"
+            :error="errors.defaultUtilityPct"
+          />
+          <FormInput
+            v-bind="defaultIgvPctB"
+            type="number"
+            label="IGV por defecto (%)"
+            :error="errors.defaultIgvPct"
           />
         </div>
       </section>

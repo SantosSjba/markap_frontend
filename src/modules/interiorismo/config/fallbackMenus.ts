@@ -66,34 +66,11 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
-    id: 'int-fb-presupuestos',
-    label: 'Presupuestos',
-    icon: 'file-text',
-    path: null,
-    order: 3,
-    children: [
-      {
-        id: 'int-fb-pre-list',
-        label: 'Listado',
-        icon: null,
-        path: '/interiorismo/presupuestos',
-        order: 0,
-      },
-      {
-        id: 'int-fb-pre-new',
-        label: 'Nuevo presupuesto',
-        icon: null,
-        path: '/interiorismo/presupuestos/nuevo',
-        order: 1,
-      },
-    ],
-  },
-  {
     id: 'int-fb-materiales',
     label: 'Materiales',
     icon: 'layers',
     path: null,
-    order: 4,
+    order: 3,
     children: [
       {
         id: 'int-fb-mat-cat',
@@ -116,28 +93,21 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     label: 'Ejecución',
     icon: 'flame',
     path: '/interiorismo/ejecucion',
-    order: 5,
-  },
-  {
-    id: 'int-fb-finanzas',
-    label: 'Finanzas',
-    icon: 'wallet',
-    path: '/interiorismo/finanzas',
-    order: 6,
+    order: 4,
   },
   {
     id: 'int-fb-calendario',
     label: 'Calendario',
     icon: 'calendar',
     path: '/interiorismo/calendario',
-    order: 7,
+    order: 5,
   },
   {
     id: 'int-fb-documentos',
     label: 'Documentos',
     icon: 'files',
     path: null,
-    order: 8,
+    order: 6,
     children: [
       {
         id: 'int-fb-doc-contratos',
@@ -188,14 +158,14 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     label: 'Configuración',
     icon: 'settings',
     path: '/interiorismo/configuracion',
-    order: 9,
+    order: 7,
   },
   {
     id: 'int-fb-reportes',
     label: 'Reportes',
     icon: 'bar-chart',
     path: '/interiorismo/reportes',
-    order: 10,
+    order: 8,
   },
 ]
 

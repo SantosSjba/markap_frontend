@@ -9,6 +9,7 @@ import type {
   UpdateInteriorProjectPayload,
 } from '../domain/project.types'
 import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+import { projectBudgetKeys } from '@modules/interiorismo/features/proyecto-presupuesto/application/useProjectBudget'
 import { interiorProjectsApiRepository as repo } from '../infrastructure/projects.api.repository'
 
 export const interiorProjectKeys = {
@@ -53,6 +54,7 @@ export function useUpdateInteriorProject() {
       repo.update(args.id, args.payload),
     onSuccess: (_data, vars) => {
       invalidateQuerySubtree(qc, interiorProjectKeys.all)
+      qc.invalidateQueries({ queryKey: projectBudgetKeys.budget(vars.id) })
       void markapAlert.toast.success(
         vars.payload.status === 'CANCELLED' ? 'Proyecto cancelado' : 'Proyecto actualizado',
       )

@@ -35,15 +35,6 @@ export interface InteriorProjectListItem {
   client: InteriorProjectClientRef
 }
 
-export interface InteriorProjectBudgetDto {
-  id: string
-  code: string | null
-  title: string | null
-  version: number
-  totalAmount: number
-  status: string
-}
-
 export interface InteriorProjectMaterialDto {
   id: string
   name: string
@@ -64,6 +55,7 @@ export interface InteriorProjectPaymentDto {
   paidAt: string
   amount: number
   concept: string
+  paymentType?: string
   status: string
 }
 
@@ -84,6 +76,12 @@ export interface InteriorProjectMilestoneDto {
 
 export interface InteriorProjectDetail extends InteriorProjectListItem {
   addressLine: string | null
+  city: string | null
+  interventionLevel: string | null
+  executionTimeNote: string | null
+  currency: string
+  defaultUtilityPct: number
+  defaultIgvPct: number
   areaSqm: number | null
   levelsCount: number | null
   environmentsNote: string | null
@@ -96,7 +94,6 @@ export interface InteriorProjectDetail extends InteriorProjectListItem {
   estimatedBudget: number | null
   projectedCost: number | null
   expectedMargin: number | null
-  budgets: InteriorProjectBudgetDto[]
   materials: InteriorProjectMaterialDto[]
   documents: InteriorProjectDocumentDto[]
   payments: InteriorProjectPaymentDto[]
@@ -129,6 +126,12 @@ export interface CreateInteriorProjectPayload {
   projectType: InteriorProjectType
   status: InteriorProjectStatus
   addressLine?: string | null
+  city?: string | null
+  interventionLevel?: string | null
+  executionTimeNote?: string | null
+  currency?: string
+  defaultUtilityPct?: number | null
+  defaultIgvPct?: number | null
   areaSqm?: number | null
   levelsCount?: number | null
   environmentsNote?: string | null
@@ -152,6 +155,12 @@ export interface UpdateInteriorProjectPayload {
   projectType?: InteriorProjectType
   status?: InteriorProjectStatus
   addressLine?: string | null
+  city?: string | null
+  interventionLevel?: string | null
+  executionTimeNote?: string | null
+  currency?: string
+  defaultUtilityPct?: number | null
+  defaultIgvPct?: number | null
   areaSqm?: number | null
   levelsCount?: number | null
   environmentsNote?: string | null

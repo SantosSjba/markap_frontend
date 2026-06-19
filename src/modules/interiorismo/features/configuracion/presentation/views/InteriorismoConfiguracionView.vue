@@ -127,9 +127,8 @@ const onSubmitNumbering = submitNum((vals) => {
 const flowSteps = [
   { label: 'Cliente', path: `${INTERIORISMO_BASE_PATH}/clientes`, icon: 'lucide:user' },
   { label: 'Proyecto', path: `${INTERIORISMO_BASE_PATH}/proyectos`, icon: 'lucide:folder-kanban' },
-  { label: 'Presupuesto', path: `${INTERIORISMO_BASE_PATH}/presupuestos`, icon: 'lucide:file-text' },
+  { label: 'Presupuesto', path: `${INTERIORISMO_BASE_PATH}/proyectos`, icon: 'lucide:file-text' },
   { label: 'Ejecución', path: `${INTERIORISMO_BASE_PATH}/ejecucion`, icon: 'lucide:hard-hat' },
-  { label: 'Finanzas', path: `${INTERIORISMO_BASE_PATH}/finanzas`, icon: 'lucide:wallet' },
   { label: 'Documentos', path: `${INTERIORISMO_BASE_PATH}/documentos`, icon: 'lucide:files' },
   { label: 'Reportes', path: `${INTERIORISMO_BASE_PATH}/reportes`, icon: 'lucide:line-chart' },
 ]

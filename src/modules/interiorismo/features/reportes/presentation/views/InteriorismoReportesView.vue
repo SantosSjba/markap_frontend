@@ -339,13 +339,13 @@ async function exportDashboardExcel() {
             >
               <template #icon><AppIcon icon="lucide:percent" :size="20" color="var(--color-primary)" /></template>
             </StatsCard>
-            <StatsCard title="Presup. aprobados" :value="String(d.conversion.presupuestosAprobadosPeriodo)">
+            <StatsCard title="Proyectos aprobados" :value="String(d.conversion.presupuestosAprobadosPeriodo)">
               <template #icon><AppIcon icon="lucide:check" :size="20" color="var(--color-success)" /></template>
             </StatsCard>
-            <StatsCard title="Presup. rechazados" :value="String(d.conversion.presupuestosRechazadosPeriodo)">
+            <StatsCard title="Proyectos cancelados" :value="String(d.conversion.presupuestosRechazadosPeriodo)">
               <template #icon><AppIcon icon="lucide:x-circle" :size="20" color="var(--color-error)" /></template>
             </StatsCard>
-            <StatsCard title="Enviados (snapshot)" :value="String(d.conversion.presupuestosEnviadosSnapshot)">
+            <StatsCard title="En cotización" :value="String(d.conversion.presupuestosEnviadosSnapshot)">
               <template #icon><AppIcon icon="lucide:send" :size="20" color="var(--color-primary)" /></template>
             </StatsCard>
           </div>
@@ -453,7 +453,7 @@ async function exportDashboardExcel() {
             <StatsCard title="Clientes" :value="String(d.kpis.clientesTotales)">
               <template #icon><AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" /></template>
             </StatsCard>
-            <StatsCard title="Presupuestos borrador" :value="String(d.kpis.presupuestosBorrador)">
+            <StatsCard title="Proyectos en cotización" :value="String(d.kpis.presupuestosBorrador)">
               <template #icon><AppIcon icon="lucide:file-pen" :size="20" color="var(--color-primary)" /></template>
             </StatsCard>
           </div>

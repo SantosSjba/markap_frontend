@@ -68,8 +68,8 @@ const acciones = [
   },
   {
     label: 'Presupuesto',
-    sub: 'Generar cotización',
-    to: `${INTERIORISMO_BASE_PATH}/presupuestos/nuevo`,
+    sub: 'Desde un proyecto',
+    to: `${INTERIORISMO_BASE_PATH}/proyectos`,
     icon: 'lucide:file-spreadsheet' as const,
   },
   {
@@ -168,7 +168,7 @@ const dashboardErrorDetail = computed(() =>
             <AppIcon icon="lucide:users" :size="20" color="#16a34a" />
           </template>
         </StatsCard>
-        <StatsCard title="Presupuestos borrador" :value="String(d.kpis.presupuestosBorrador)">
+        <StatsCard title="Proyectos en cotización" :value="String(d.kpis.presupuestosBorrador)">
           <template #icon>
             <AppIcon icon="lucide:file-edit" :size="20" color="#d97706" />
           </template>

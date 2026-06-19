@@ -5,6 +5,7 @@ import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
 import { interiorProjectKeys } from '@modules/interiorismo/features/proyectos/application/useInteriorProjects'
+import { projectBudgetKeys } from '@modules/interiorismo/features/proyecto-presupuesto/application/useProjectBudget'
 import type {
   CreateFinancePaymentPayload,
   CreateFinanceSchedulePayload,
@@ -20,6 +21,7 @@ export const interiorFinanceKeys = {
 
 function invalidateFinance(qc: ReturnType<typeof useQueryClient>, projectId: string) {
   qc.invalidateQueries({ queryKey: interiorFinanceKeys.overview(projectId) })
+  qc.invalidateQueries({ queryKey: projectBudgetKeys.settlement(projectId) })
   invalidateQuerySubtree(qc, interiorProjectKeys.detail(projectId))
   invalidateQuerySubtree(qc, interiorProjectKeys.all)
 }

@@ -93,7 +93,7 @@ const addrText = computed(() => {
             [
               { id: 'datos' as const, label: 'Datos' },
               { id: 'proyectos' as const, label: 'Proyectos' },
-              { id: 'presupuestos' as const, label: 'Presupuestos' },
+              { id: 'presupuestos' as const, label: 'Cotizaciones' },
               { id: 'notas' as const, label: 'Notas internas' },
             ]
           )"
@@ -174,13 +174,20 @@ const addrText = computed(() => {
         class="p-8 rounded-xl border text-center"
         :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
       >
-        <AppIcon icon="lucide:file-text" :size="40" class="mx-auto mb-3 opacity-40" />
+        <AppIcon icon="lucide:file-spreadsheet" :size="40" class="mx-auto mb-3 opacity-40" />
         <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
-          Presupuestos
+          Presupuestos del cliente
         </p>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          El historial de presupuestos aparecerá aquí al integrar la app de presupuestos con el cliente.
+        <p class="text-sm mt-1 mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+          Cada proyecto incluye su presupuesto en la pestaña correspondiente.
         </p>
+        <BaseButton
+          variant="outline"
+          size="sm"
+          @click="router.push(`${INTERIORISMO_BASE_PATH}/proyectos?clientId=${client.id}`)"
+        >
+          Ver proyectos
+        </BaseButton>
       </div>
 
       <div
