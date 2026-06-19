@@ -25,6 +25,8 @@ import {
 import { useProjectBudget, useProjectSettlement } from '../../application/useProjectBudget'
 import { formatSol, PAYMENT_TYPE_LABELS, PAYMENT_TYPE_OPTIONS } from '../labels'
 
+const PAYMENT_FORM_ID = 'project-settlement-payment-form'
+
 const props = defineProps<{
   projectId: string
   payments: InteriorProjectPaymentDto[]
@@ -280,7 +282,7 @@ async function removePayment(id: string) {
     </template>
 
     <BaseModal v-model="payModal" :title="payEditId ? 'Editar pago' : 'Registrar pago'" size="lg">
-      <form class="space-y-3" @submit.prevent="onSubmitPayment">
+      <form :id="PAYMENT_FORM_ID" class="space-y-3" @submit.prevent="onSubmitPayment">
         <FormInput v-bind="payBinds.paidAt" type="datetime-local" label="Fecha y hora de pago" />
         <div class="grid sm:grid-cols-2 gap-3">
           <FormInput v-bind="payBinds.amount" type="number" step="0.01" min="0.01" label="Monto (S/)" />
@@ -288,13 +290,20 @@ async function removePayment(id: string) {
         </div>
         <FormInput v-bind="payBinds.concept" label="Concepto" placeholder="Ej. Transferencia — abono a cuenta" />
         <FormSelect v-bind="payBinds.status" label="Estado" :options="STATUS_OPTIONS" />
-        <div class="flex justify-end gap-2 pt-2">
-          <BaseButton variant="ghost" type="button" @click="payModal = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="submit" :loading="createPay.isPending.value || updatePay.isPending.value">
+      </form>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <BaseButton variant="outline" type="button" @click="payModal = false">Cancelar</BaseButton>
+          <BaseButton
+            variant="primary"
+            type="submit"
+            :form="PAYMENT_FORM_ID"
+            :loading="createPay.isPending.value || updatePay.isPending.value"
+          >
             {{ payEditId ? 'Guardar cambios' : 'Registrar' }}
           </BaseButton>
         </div>
-      </form>
+      </template>
     </BaseModal>
   </div>
 </template>

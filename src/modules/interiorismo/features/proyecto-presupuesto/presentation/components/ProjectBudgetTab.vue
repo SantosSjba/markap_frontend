@@ -343,10 +343,12 @@ const lineCols = [
     <BaseModal v-model="showSectionModal" title="Nueva sección">
       <FormInput v-model="newSectionName" label="Nombre de la sección" placeholder="Ej. PRIMER NIVEL" />
       <template #footer>
-        <BaseButton variant="outline" @click="showSectionModal = false">Cancelar</BaseButton>
-        <BaseButton variant="primary" :loading="createSection.isPending.value" @click="submitSection">
-          Crear
-        </BaseButton>
+        <div class="flex justify-end gap-2">
+          <BaseButton variant="outline" type="button" @click="showSectionModal = false">Cancelar</BaseButton>
+          <BaseButton variant="primary" type="button" :loading="createSection.isPending.value" @click="submitSection">
+            Crear
+          </BaseButton>
+        </div>
       </template>
     </BaseModal>
 
@@ -357,10 +359,12 @@ const lineCols = [
         <FormCheckbox v-model="lineDraft.hasIgv" label="Aplica IGV" />
       </div>
       <template #footer>
-        <BaseButton variant="outline" @click="showLineModal = false">Cancelar</BaseButton>
-        <BaseButton variant="primary" :loading="createLine.isPending.value" @click="submitLine">
-          Agregar
-        </BaseButton>
+        <div class="flex justify-end gap-2">
+          <BaseButton variant="outline" type="button" @click="showLineModal = false">Cancelar</BaseButton>
+          <BaseButton variant="primary" type="button" :loading="createLine.isPending.value" @click="submitLine">
+            Agregar
+          </BaseButton>
+        </div>
       </template>
     </BaseModal>
 
@@ -373,15 +377,18 @@ const lineCols = [
         <FormCheckbox v-model="importReplace" label="Reemplazar secciones existentes" />
       </div>
       <template #footer>
-        <BaseButton variant="outline" @click="showImportModal = false">Cancelar</BaseButton>
-        <BaseButton
-          variant="primary"
-          :disabled="!importFile"
-          :loading="importExcel.isPending.value"
-          @click="submitImportExcel"
-        >
-          Importar
-        </BaseButton>
+        <div class="flex justify-end gap-2">
+          <BaseButton variant="outline" type="button" @click="showImportModal = false">Cancelar</BaseButton>
+          <BaseButton
+            variant="primary"
+            type="button"
+            :disabled="!importFile"
+            :loading="importExcel.isPending.value"
+            @click="submitImportExcel"
+          >
+            Importar
+          </BaseButton>
+        </div>
       </template>
     </BaseModal>
   </div>

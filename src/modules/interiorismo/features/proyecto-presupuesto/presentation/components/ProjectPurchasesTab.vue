@@ -300,10 +300,12 @@ const totalSaldo = () =>
         <FormInput v-model="paymentDraft.paidAt" label="Fecha" type="date" />
       </div>
       <template #footer>
-        <BaseButton variant="outline" @click="showPaymentModal = false">Cancelar</BaseButton>
-        <BaseButton variant="primary" :loading="createPayment.isPending.value" @click="submitPayment">
-          Registrar
-        </BaseButton>
+        <div class="flex justify-end gap-2">
+          <BaseButton variant="outline" type="button" @click="showPaymentModal = false">Cancelar</BaseButton>
+          <BaseButton variant="primary" type="button" :loading="createPayment.isPending.value" @click="submitPayment">
+            Registrar
+          </BaseButton>
+        </div>
       </template>
     </BaseModal>
   </div>
