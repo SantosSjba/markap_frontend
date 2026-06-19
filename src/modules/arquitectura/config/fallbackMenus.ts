@@ -3,6 +3,8 @@ import type { MenuItem } from '@shared/domain/menu.types'
 /**
  * Menú lateral HITO Arquitectura cuando la API aún no tiene el árbol completo.
  * Alineado con `prisma/seed/data/menus-arquitectura.ts` y el router.
+ *
+ * Flujo: Cliente → Proyecto → Presupuesto → Cronograma → Reportes → Config
  */
 export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
   {
@@ -13,11 +15,34 @@ export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
     order: 0,
   },
   {
+    id: 'arq-fb-clientes',
+    label: 'Clientes',
+    icon: 'users',
+    path: null,
+    order: 1,
+    children: [
+      {
+        id: 'arq-fb-cli-list',
+        label: 'Listado de clientes',
+        icon: null,
+        path: '/arquitectura/clientes',
+        order: 0,
+      },
+      {
+        id: 'arq-fb-cli-new',
+        label: 'Nuevo cliente',
+        icon: null,
+        path: '/arquitectura/clientes/nuevo',
+        order: 1,
+      },
+    ],
+  },
+  {
     id: 'arq-fb-proyectos',
     label: 'Proyectos',
     icon: 'folder-kanban',
     path: null,
-    order: 1,
+    order: 2,
     children: [
       {
         id: 'arq-fb-proy-list',
@@ -39,29 +64,6 @@ export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
         icon: null,
         path: '/arquitectura/proyectos/en-ejecucion',
         order: 2,
-      },
-    ],
-  },
-  {
-    id: 'arq-fb-clientes',
-    label: 'Clientes',
-    icon: 'users',
-    path: null,
-    order: 2,
-    children: [
-      {
-        id: 'arq-fb-cli-list',
-        label: 'Listado de clientes',
-        icon: null,
-        path: '/arquitectura/clientes',
-        order: 0,
-      },
-      {
-        id: 'arq-fb-cli-new',
-        label: 'Nuevo cliente',
-        icon: null,
-        path: '/arquitectura/clientes/nuevo',
-        order: 1,
       },
     ],
   },

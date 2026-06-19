@@ -1,6 +1,10 @@
 import type { MenuItem } from '@shared/domain/menu.types'
 
-/** Menú cuando la API no devuelve aún el árbol completo (sin seed). */
+/**
+ * Menú cuando la API no devuelve aún el árbol completo (sin seed).
+ *
+ * Flujo: Productos → Inventario → Proveedores → Órdenes → Producción → Reportes → Config
+ */
 export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
   {
     id: 'prod-fb-dashboard',
@@ -10,41 +14,11 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
     order: 0,
   },
   {
-    id: 'prod-fb-ot',
-    label: 'Órdenes de trabajo',
-    icon: 'clipboard-list',
-    path: null,
-    order: 1,
-    children: [
-      {
-        id: 'prod-fb-ot-list',
-        label: 'Listado de órdenes',
-        icon: null,
-        path: '/produccion/ordenes-trabajo',
-        order: 0,
-      },
-      {
-        id: 'prod-fb-ot-new',
-        label: 'Nueva orden',
-        icon: null,
-        path: '/produccion/ordenes-trabajo/nueva',
-        order: 1,
-      },
-      {
-        id: 'prod-fb-ot-run',
-        label: 'En proceso',
-        icon: null,
-        path: '/produccion/ordenes-trabajo/en-proceso',
-        order: 2,
-      },
-    ],
-  },
-  {
     id: 'prod-fb-productos',
     label: 'Productos',
     icon: 'boxes',
     path: null,
-    order: 2,
+    order: 1,
     children: [
       {
         id: 'prod-fb-prod-cat',
@@ -67,7 +41,7 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
     label: 'Inventario',
     icon: 'warehouse',
     path: null,
-    order: 3,
+    order: 2,
     children: [
       {
         id: 'prod-fb-inv-mat',
@@ -97,7 +71,7 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
     label: 'Proveedores',
     icon: 'truck',
     path: null,
-    order: 4,
+    order: 3,
     children: [
       {
         id: 'prod-fb-prov-list',
@@ -118,6 +92,36 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
         label: 'Órdenes de compra',
         icon: null,
         path: '/produccion/proveedores/ordenes-compra',
+        order: 2,
+      },
+    ],
+  },
+  {
+    id: 'prod-fb-ot',
+    label: 'Órdenes de trabajo',
+    icon: 'clipboard-list',
+    path: null,
+    order: 4,
+    children: [
+      {
+        id: 'prod-fb-ot-list',
+        label: 'Listado de órdenes',
+        icon: null,
+        path: '/produccion/ordenes-trabajo',
+        order: 0,
+      },
+      {
+        id: 'prod-fb-ot-new',
+        label: 'Nueva orden',
+        icon: null,
+        path: '/produccion/ordenes-trabajo/nueva',
+        order: 1,
+      },
+      {
+        id: 'prod-fb-ot-run',
+        label: 'En proceso',
+        icon: null,
+        path: '/produccion/ordenes-trabajo/en-proceso',
         order: 2,
       },
     ],

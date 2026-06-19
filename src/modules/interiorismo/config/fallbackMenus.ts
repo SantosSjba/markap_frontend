@@ -3,6 +3,8 @@ import type { MenuItem } from '@shared/domain/menu.types'
 /**
  * Menú lateral de Interiorismo cuando la API aún no tiene el árbol (sin seed / datos viejos).
  * Debe mantenerse alineado con `prisma/seed/data/menus-interiorismo.ts` y el router.
+ *
+ * Flujo: Cliente → Proyecto → Materiales → Ejecución → Calendario → Documentos → Reportes → Config
  */
 export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
   {
@@ -13,11 +15,34 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     order: 0,
   },
   {
+    id: 'int-fb-clientes',
+    label: 'Clientes',
+    icon: 'users',
+    path: null,
+    order: 1,
+    children: [
+      {
+        id: 'int-fb-cli-list',
+        label: 'Listado de clientes',
+        icon: null,
+        path: '/interiorismo/clientes',
+        order: 0,
+      },
+      {
+        id: 'int-fb-cli-new',
+        label: 'Nuevo cliente',
+        icon: null,
+        path: '/interiorismo/clientes/nuevo',
+        order: 1,
+      },
+    ],
+  },
+  {
     id: 'int-fb-proyectos',
     label: 'Proyectos',
     icon: 'folder-kanban',
     path: null,
-    order: 1,
+    order: 2,
     children: [
       {
         id: 'int-fb-proy-list',
@@ -39,29 +64,6 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
         icon: null,
         path: '/interiorismo/proyectos/en-progreso',
         order: 2,
-      },
-    ],
-  },
-  {
-    id: 'int-fb-clientes',
-    label: 'Clientes',
-    icon: 'users',
-    path: null,
-    order: 2,
-    children: [
-      {
-        id: 'int-fb-cli-list',
-        label: 'Listado de clientes',
-        icon: null,
-        path: '/interiorismo/clientes',
-        order: 0,
-      },
-      {
-        id: 'int-fb-cli-new',
-        label: 'Nuevo cliente',
-        icon: null,
-        path: '/interiorismo/clientes/nuevo',
-        order: 1,
       },
     ],
   },
@@ -117,10 +119,10 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
         order: 0,
       },
       {
-        id: 'int-fb-doc-pdfs',
-        label: 'PDFs',
+        id: 'int-fb-doc-planos',
+        label: 'Planos',
         icon: null,
-        path: '/interiorismo/documentos/pdfs',
+        path: '/interiorismo/documentos/planos',
         order: 1,
       },
       {
@@ -131,10 +133,10 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
         order: 2,
       },
       {
-        id: 'int-fb-doc-planos',
-        label: 'Planos',
+        id: 'int-fb-doc-pdfs',
+        label: 'PDFs',
         icon: null,
-        path: '/interiorismo/documentos/planos',
+        path: '/interiorismo/documentos/pdfs',
         order: 3,
       },
       {
@@ -154,17 +156,17 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
-    id: 'int-fb-config',
-    label: 'Configuración',
-    icon: 'settings',
-    path: '/interiorismo/configuracion',
-    order: 7,
-  },
-  {
     id: 'int-fb-reportes',
     label: 'Reportes',
     icon: 'bar-chart',
     path: '/interiorismo/reportes',
+    order: 7,
+  },
+  {
+    id: 'int-fb-config',
+    label: 'Configuración',
+    icon: 'settings',
+    path: '/interiorismo/configuracion',
     order: 8,
   },
 ]
