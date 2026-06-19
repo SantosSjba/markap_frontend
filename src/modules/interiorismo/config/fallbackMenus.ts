@@ -1,5 +1,8 @@
 import type { MenuItem } from '@shared/domain/menu.types'
 
+/** Retirados del sidebar: presupuesto/compras/liquidación viven en detalle de Proyecto. */
+const OBSOLETE_PARENT_LABELS = new Set(['Presupuestos', 'Finanzas'])
+
 /**
  * Menú lateral de Interiorismo cuando la API aún no tiene el árbol (sin seed / datos viejos).
  * Debe mantenerse alineado con `prisma/seed/data/menus-interiorismo.ts` y el router.
@@ -171,9 +174,10 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
   },
 ]
 
-/** El árbol de la API incluye submenús de Proyectos y Documentos (criterio seed / datos completos). */
+/** El árbol de la API incluye submenús de Proyectos y Documentos y no trae ítems obsoletos del seed viejo. */
 export function interiorismoMenusLookComplete(apiMenus: MenuItem[]): boolean {
   if (!apiMenus.length) return false
+  if (apiMenus.some((m) => OBSOLETE_PARENT_LABELS.has(m.label.trim()))) return false
   const proyectos = apiMenus.find((m) => m.label.trim() === 'Proyectos')
   const documentos = apiMenus.find((m) => m.label.trim() === 'Documentos')
   return !!(
