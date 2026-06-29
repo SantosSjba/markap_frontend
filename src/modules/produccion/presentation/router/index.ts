@@ -9,6 +9,7 @@ import { produccionInventarioRoutes } from '../../features/inventario'
 import { produccionComprasRoutes } from '../../features/compras'
 import { produccionTallerRoutes, produccionSeguimientoRoutes } from '../../features/taller'
 import { produccionVentasRoutes } from '../../features/ventas'
+import { produccionReportesRoutes } from '../../features/reportes'
 
 const placeholder = () => import('../views/ProduccionPlaceholderView.vue')
 
@@ -105,9 +106,9 @@ export const produccionRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'reportes',
-        name: 'produccion-reportes',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Reportes' },
+        children: produccionReportesRoutes,
       },
       {
         path: 'configuracion',
