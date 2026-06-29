@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { BaseButton, AppIcon, BaseTabs, FormInput, FormCheckbox } from '@shared/components'
+import { BaseButton, AppIcon, BaseTabs, FormInput, FormCheckbox, FormSelect } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import {
@@ -159,6 +159,17 @@ function saveNumberingRow(row: ContabilidadDocumentSeriesDTO) {
 function seriesLabel(seriesKey: string) {
   return CONTABILIDAD_DOCUMENT_SERIES_LABELS[seriesKey] ?? seriesKey
 }
+
+const taxRegimeOptions = CONTABILIDAD_TAX_REGIME_OPTIONS.map((o) => ({ value: o.value, label: o.label }))
+const fiscalMonthOptions = CONTABILIDAD_FISCAL_MONTH_OPTIONS.map((o) => ({ value: o.value, label: o.label }))
+
+const fiscalYearStartMonthModel = computed({
+  get: () => settingsDraft.value.fiscalYearStartMonth,
+  set: (value: string | number | null) => {
+    const month = Number(value)
+    settingsDraft.value.fiscalYearStartMonth = month >= 1 && month <= 12 ? month : 1
+  },
+})
 </script>
 
 <template>
@@ -229,24 +240,11 @@ function seriesLabel(seriesKey: string) {
     <!-- Tributario -->
     <section v-else-if="activeTab === 'tributario'" class="space-y-4 max-w-2xl">
       <form class="space-y-4" @submit.prevent="submitSettings">
-        <div>
-          <label class="block text-sm font-medium mb-1" :style="{ color: 'var(--color-text-primary)' }">
-            Régimen tributario
-          </label>
-          <select
-            v-model="settingsDraft.taxRegime"
-            class="w-full px-3 py-2 rounded-lg border text-sm"
-            :style="{
-              borderColor: 'var(--color-border)',
-              backgroundColor: 'var(--color-surface-elevated)',
-              color: 'var(--color-text-primary)',
-            }"
-          >
-            <option v-for="opt in CONTABILIDAD_TAX_REGIME_OPTIONS" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
+        <FormSelect
+          v-model="settingsDraft.taxRegime"
+          label="Régimen tributario"
+          :options="taxRegimeOptions"
+        />
 
         <div class="space-y-2">
           <FormCheckbox v-model="settingsDraft.isDetractionAgent" label="Agente de detracción (SPOT)" />
@@ -260,24 +258,11 @@ function seriesLabel(seriesKey: string) {
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-sm font-medium mb-1" :style="{ color: 'var(--color-text-primary)' }">
-              Inicio año fiscal
-            </label>
-            <select
-              v-model.number="settingsDraft.fiscalYearStartMonth"
-              class="w-full px-3 py-2 rounded-lg border text-sm"
-              :style="{
-                borderColor: 'var(--color-border)',
-                backgroundColor: 'var(--color-surface-elevated)',
-                color: 'var(--color-text-primary)',
-              }"
-            >
-              <option v-for="m in CONTABILIDAD_FISCAL_MONTH_OPTIONS" :key="m.value" :value="m.value">
-                {{ m.label }}
-              </option>
-            </select>
-          </div>
+          <FormSelect
+            v-model="fiscalYearStartMonthModel"
+            label="Inicio año fiscal"
+            :options="fiscalMonthOptions"
+          />
           <FormInput v-model.number="settingsDraft.amountDecimals" type="number" label="Decimales en montos" />
         </div>
 
@@ -361,32 +346,19 @@ function seriesLabel(seriesKey: string) {
                 {{ seriesLabel(row.seriesKey) }}
               </td>
               <td class="py-3 px-4">
-                <input
+                <FormInput
                   v-if="numberingDraft[row.seriesKey]"
                   v-model.number="numberingDraft[row.seriesKey]!.lastNumber"
                   type="number"
-                  min="0"
-                  class="w-28 px-2 py-1.5 rounded border text-sm"
-                  :style="{
-                    borderColor: 'var(--color-border)',
-                    backgroundColor: 'var(--color-surface-elevated)',
-                    color: 'var(--color-text-primary)',
-                  }"
+                  input-class="w-28"
                 />
               </td>
               <td class="py-3 px-4">
-                <input
+                <FormInput
                   v-if="numberingDraft[row.seriesKey]"
                   v-model.number="numberingDraft[row.seriesKey]!.padLength"
                   type="number"
-                  min="1"
-                  max="8"
-                  class="w-20 px-2 py-1.5 rounded border text-sm"
-                  :style="{
-                    borderColor: 'var(--color-border)',
-                    backgroundColor: 'var(--color-surface-elevated)',
-                    color: 'var(--color-text-primary)',
-                  }"
+                  input-class="w-20"
                 />
               </td>
               <td class="py-3 px-4 font-mono text-xs" :style="{ color: 'var(--color-text-muted)' }">

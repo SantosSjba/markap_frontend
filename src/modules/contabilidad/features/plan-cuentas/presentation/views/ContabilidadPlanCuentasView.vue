@@ -6,6 +6,7 @@ import {
   BaseModal,
   FormInput,
   FormCheckbox,
+  FormSelect,
   SearchInput,
 } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
@@ -207,6 +208,8 @@ function exportPlan() {
   })
 }
 
+const accountTypeOptions = CONTABILIDAD_ACCOUNT_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))
+
 const codeReadonly = computed(
   () => modalMode.value === 'edit' && Boolean(editingAccount.value?.hasMovements),
 )
@@ -370,24 +373,11 @@ const codeReadonly = computed(
           :hint="codeReadonly ? 'No editable: la cuenta tiene movimientos' : 'Debe iniciar con el código del padre'"
         />
         <FormInput v-model="form.name" label="Nombre de la cuenta" required />
-        <div>
-          <label class="block text-sm font-medium mb-1" :style="{ color: 'var(--color-text-primary)' }">
-            Tipo de cuenta
-          </label>
-          <select
-            v-model="form.accountType"
-            class="w-full px-3 py-2 rounded-lg border text-sm"
-            :style="{
-              borderColor: 'var(--color-border)',
-              backgroundColor: 'var(--color-surface-elevated)',
-              color: 'var(--color-text-primary)',
-            }"
-          >
-            <option v-for="opt in CONTABILIDAD_ACCOUNT_TYPE_OPTIONS" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
+        <FormSelect
+          v-model="form.accountType"
+          label="Tipo de cuenta"
+          :options="accountTypeOptions"
+        />
         <FormCheckbox v-model="form.isMovement" label="Cuenta de movimiento (admite asientos)" />
         <FormInput v-model.number="form.sortOrder" type="number" label="Orden" />
         <div class="flex justify-end gap-2 pt-2">

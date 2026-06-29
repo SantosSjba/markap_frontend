@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { AppLayoutSidebar, AppHeader } from '@layouts/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { useContabilidadAppLayout } from '../composables'
+import ContabilidadPeriodBar from '../components/ContabilidadPeriodBar.vue'
 
 const { application, menus, menusLoading } = useContabilidadAppLayout()
 
@@ -68,7 +69,10 @@ const applicationInfo = computed(() =>
         <div v-if="menusLoading" class="flex justify-center py-12">
           <AppIcon icon="line-md:loading-loop" :size="32" color="var(--color-primary)" />
         </div>
-        <router-view v-else />
+        <template v-else>
+          <ContabilidadPeriodBar />
+          <router-view />
+        </template>
       </main>
     </div>
 
