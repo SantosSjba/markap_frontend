@@ -6,6 +6,7 @@ import { produccionClientesRoutes } from '../../features/clientes'
 import { produccionCatalogoRoutes } from '../../features/catalogo'
 import { produccionCostosRoutes } from '../../features/costos'
 import { produccionInventarioRoutes } from '../../features/inventario'
+import { produccionComprasRoutes } from '../../features/compras'
 
 const placeholder = () => import('../views/ProduccionPlaceholderView.vue')
 
@@ -112,20 +113,7 @@ export const produccionRoutes: RouteRecordRaw[] = [
         path: 'compras',
         component: SectionLayout,
         meta: { title: 'Compras' },
-        children: [
-          {
-            path: 'proveedores',
-            name: 'produccion-compras-proveedores',
-            component: placeholder,
-            meta: { title: 'Proveedores' },
-          },
-          {
-            path: 'ordenes-compra',
-            name: 'produccion-compras-ordenes-compra',
-            component: placeholder,
-            meta: { title: 'Órdenes de compra' },
-          },
-        ],
+        children: produccionComprasRoutes,
       },
       { path: 'proveedores', redirect: '/produccion/compras/proveedores' },
       { path: 'proveedores/nuevo', redirect: '/produccion/compras/proveedores' },
