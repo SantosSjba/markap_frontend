@@ -7,6 +7,8 @@ export {
   useContabilidadCancelSalesInvoice,
   useContabilidadSalesCreditNotes,
   useContabilidadCreateSalesCreditNote,
+  useContabilidadSalesDebitNotes,
+  useContabilidadCreateSalesDebitNote,
   useContabilidadSalesCollections,
   useContabilidadCreateSalesCollection,
   contabilidadSalesKeys,

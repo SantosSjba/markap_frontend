@@ -9,6 +9,22 @@ export interface ClosingChecklistItemDTO {
   message: string
 }
 
+export interface ClosingRegularizationLineDTO {
+  accountCode: string
+  accountName: string
+  debit: string
+  credit: string
+}
+
+export interface ClosingRegularizationPreviewDTO {
+  required: boolean
+  expenseTotal: string
+  incomeTotal: string
+  netAmount: string
+  description: string | null
+  lines: ClosingRegularizationLineDTO[]
+}
+
 export interface ClosingPreviewDTO {
   periodId: string
   year: number
@@ -25,4 +41,5 @@ export interface ClosingPreviewDTO {
   incomeStatementPreview: {
     netIncome: string
   }
+  regularizationPreview?: ClosingRegularizationPreviewDTO | null
 }

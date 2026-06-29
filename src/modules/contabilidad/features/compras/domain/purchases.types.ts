@@ -171,7 +171,40 @@ export interface CreatePurchaseInvoiceBody {
   notes?: string | null
 }
 
+export interface ContabilidadPurchaseDebitNoteDTO {
+  id: string
+  supplierId: string
+  supplierRuc: string
+  supplierName: string
+  invoiceId: string | null
+  invoiceFullNumber: string | null
+  periodId: string
+  series: string
+  number: string
+  fullNumber: string
+  issueDate: string
+  taxableBase: string
+  igvAmount: string
+  totalAmount: string
+  reason: string | null
+  status: string
+  journalEntryId: string | null
+  createdAt: string
+}
+
 export interface CreatePurchaseCreditNoteBody {
+  supplierId: string
+  invoiceId?: string | null
+  periodId: string
+  series: string
+  number: string
+  issueDate: string
+  taxableBase: number | string
+  igvAmount?: number | string
+  reason?: string | null
+}
+
+export interface CreatePurchaseDebitNoteBody {
   supplierId: string
   invoiceId?: string | null
   periodId: string

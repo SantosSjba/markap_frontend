@@ -25,6 +25,12 @@ export const contabilidadVentasContablesRoutes: RouteRecordRaw[] = [
     meta: { title: 'Notas de crédito' },
   },
   {
+    path: 'notas-debito',
+    name: 'contabilidad-ventas-notas-debito',
+    component: () => import('../views/ContabilidadVentasNotasDebitoView.vue'),
+    meta: { title: 'Notas de débito' },
+  },
+  {
     path: 'clientes',
     name: 'contabilidad-ventas-clientes',
     component: () => import('../views/ContabilidadVentasClientesView.vue'),

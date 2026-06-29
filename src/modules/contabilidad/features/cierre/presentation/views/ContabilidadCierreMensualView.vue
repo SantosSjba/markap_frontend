@@ -115,6 +115,56 @@ async function onClose() {
         </div>
       </div>
 
+      <div
+        v-if="data.regularizationPreview?.required"
+        class="rounded-xl border p-4 space-y-3"
+        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+      >
+        <h3 class="text-sm font-semibold">Asiento de regularización (vista previa)</h3>
+        <p v-if="data.regularizationPreview.description" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          {{ data.regularizationPreview.description }}
+        </p>
+        <dl class="grid gap-2 sm:grid-cols-3 text-sm">
+          <div>
+            <dt :style="{ color: 'var(--color-text-secondary)' }">Total gastos (clase 6)</dt>
+            <dd class="font-mono font-semibold">{{ formatPen(data.regularizationPreview.expenseTotal) }}</dd>
+          </div>
+          <div>
+            <dt :style="{ color: 'var(--color-text-secondary)' }">Total ingresos (clase 7)</dt>
+            <dd class="font-mono font-semibold">{{ formatPen(data.regularizationPreview.incomeTotal) }}</dd>
+          </div>
+          <div>
+            <dt :style="{ color: 'var(--color-text-secondary)' }">Resultado a regularizar</dt>
+            <dd class="font-mono font-semibold">{{ formatPen(data.regularizationPreview.netAmount) }}</dd>
+          </div>
+        </dl>
+        <div v-if="data.regularizationPreview.lines.length" class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
+                <th class="text-left py-2 px-3 font-medium">Cuenta</th>
+                <th class="text-left py-2 px-3 font-medium">Nombre</th>
+                <th class="text-right py-2 px-3 font-medium">Debe</th>
+                <th class="text-right py-2 px-3 font-medium">Haber</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(line, idx) in data.regularizationPreview.lines"
+                :key="idx"
+                class="border-b"
+                :style="{ borderColor: 'var(--color-border)' }"
+              >
+                <td class="py-2 px-3 font-mono">{{ line.accountCode }}</td>
+                <td class="py-2 px-3">{{ line.accountName }}</td>
+                <td class="py-2 px-3 text-right font-mono">{{ formatPen(line.debit) }}</td>
+                <td class="py-2 px-3 text-right font-mono">{{ formatPen(line.credit) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="flex flex-wrap gap-3">
         <BaseButton variant="secondary" @click="refetch()">Actualizar checklist</BaseButton>
         <BaseButton

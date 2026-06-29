@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AppIcon, PageHeader } from '@shared/components'
+import { AppIcon, BaseButton, PageHeader } from '@shared/components'
 import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
 import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
 import { useContabilidadIncomeStatement } from '../../application/useContabilidadFinancialStatements'
+import { useContabilidadFinancialExport } from '../../application/useContabilidadFinancialExport'
 import FinancialStatementSection from '../components/FinancialStatementSection.vue'
 
 const { activePeriod } = useContabilidadActivePeriod()
@@ -11,6 +12,12 @@ const periodId = computed(() => activePeriod.value?.id)
 
 const { data, isLoading, isError, refetch } = useContabilidadIncomeStatement(periodId)
 const showPrior = computed(() => Boolean(data.value?.priorPeriodId))
+const { exportFinancialStatement, isExporting } = useContabilidadFinancialExport()
+
+function exportExcel() {
+  if (!periodId.value) return
+  void exportFinancialStatement('income-statement', periodId.value)
+}
 </script>
 
 <template>
@@ -19,7 +26,19 @@ const showPrior = computed(() => Boolean(data.value?.priorPeriodId))
       icon="lucide:trending-up"
       title="Estado de resultados"
       subtitle="Ingresos y gastos del periodo con comparativo mensual"
-    />
+    >
+      <template #actions>
+        <BaseButton
+          variant="secondary"
+          :disabled="!activePeriod"
+          :loading="isExporting('income-statement')"
+          @click="exportExcel"
+        >
+          <AppIcon icon="lucide:file-spreadsheet" :size="16" class="mr-1" />
+          Exportar Excel
+        </BaseButton>
+      </template>
+    </PageHeader>
 
     <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
       Seleccione un periodo activo en la barra superior.

@@ -7,6 +7,8 @@ export {
   useContabilidadCancelPurchaseInvoice,
   useContabilidadPurchaseCreditNotes,
   useContabilidadCreatePurchaseCreditNote,
+  useContabilidadPurchaseDebitNotes,
+  useContabilidadCreatePurchaseDebitNote,
   useContabilidadPurchasePayments,
   useContabilidadCreatePurchasePayment,
   contabilidadPurchasesKeys,

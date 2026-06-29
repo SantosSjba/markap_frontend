@@ -47,6 +47,14 @@ export const contabilidadPurchasesApiRepository: ContabilidadPurchasesRepository
   createCreditNote: (body) =>
     apiClient.post(`/contabilidad-purchases/credit-notes?${qs()}`, body).then((r) => r.data),
 
+  listDebitNotes: (params) =>
+    apiClient
+      .get(`/contabilidad-purchases/debit-notes?${qs(params as Record<string, string | undefined>)}`)
+      .then((r) => r.data),
+
+  createDebitNote: (body) =>
+    apiClient.post(`/contabilidad-purchases/debit-notes?${qs()}`, body).then((r) => r.data),
+
   listPayments: (params) =>
     apiClient
       .get(`/contabilidad-purchases/payments?${qs(params as Record<string, string | undefined>)}`)

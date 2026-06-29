@@ -5,6 +5,7 @@ import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type {
   CreatePurchaseCreditNoteBody,
+  CreatePurchaseDebitNoteBody,
   CreatePurchaseInvoiceBody,
   CreatePurchasePaymentBody,
   CreateSupplierBody,
@@ -21,6 +22,8 @@ export const contabilidadPurchasesKeys = {
   invoice: (id: string) => [...contabilidadPurchasesKeys.root, 'invoice', id] as const,
   creditNotes: (params: Record<string, string | undefined>) =>
     [...contabilidadPurchasesKeys.root, 'credit-notes', params] as const,
+  debitNotes: (params: Record<string, string | undefined>) =>
+    [...contabilidadPurchasesKeys.root, 'debit-notes', params] as const,
   payments: (params: Record<string, string | undefined>) =>
     [...contabilidadPurchasesKeys.root, 'payments', params] as const,
 }
@@ -109,6 +112,26 @@ export function useContabilidadCreatePurchaseCreditNote() {
     onSuccess: () => {
       void invalidateContabilidadPurchasesCache(qc)
       void markapAlert.toast.success('Nota de crédito registrada')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
+  })
+}
+
+export function useContabilidadPurchaseDebitNotes(params: Ref<Record<string, string | undefined>>) {
+  return useQuery({
+    queryKey: computed(() => contabilidadPurchasesKeys.debitNotes(params.value)),
+    queryFn: () => purchasesRepository.listDebitNotes(params.value),
+    staleTime: 10_000,
+  })
+}
+
+export function useContabilidadCreatePurchaseDebitNote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreatePurchaseDebitNoteBody) => purchasesRepository.createDebitNote(body),
+    onSuccess: () => {
+      void invalidateContabilidadPurchasesCache(qc)
+      void markapAlert.toast.success('Nota de débito registrada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
   })

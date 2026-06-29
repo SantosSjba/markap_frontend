@@ -13,6 +13,8 @@ import { contabilidadVentasContablesRoutes } from '../../features/ventas-contabl
 import { contabilidadTributosRoutes } from '../../features/tributos'
 import { contabilidadLibrosERoutes } from '../../features/libros-e'
 import { contabilidadReportesFinancierosRoutes } from '../../features/reportes-financieros'
+import { contabilidadPlantillasAsientoRoutes } from '../../features/plantillas-asiento'
+import { contabilidadTiposCambioRoutes } from '../../features/tipos-cambio'
 import { ContabilidadCierreMensualView } from '../../features/cierre'
 
 export const contabilidadRoutes: RouteRecordRaw[] = [
@@ -45,7 +47,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'asientos',
         component: SectionLayout,
         meta: { title: 'Asientos contables' },
-        children: contabilidadAsientosRoutes,
+        children: [...contabilidadAsientosRoutes, ...contabilidadPlantillasAsientoRoutes],
       },
       {
         path: 'periodos',
@@ -119,7 +121,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'configuracion',
         component: SectionLayout,
         meta: { title: 'Configuración' },
-        children: contabilidadConfiguracionRoutes,
+        children: [...contabilidadConfiguracionRoutes, ...contabilidadTiposCambioRoutes],
       },
     ],
   },

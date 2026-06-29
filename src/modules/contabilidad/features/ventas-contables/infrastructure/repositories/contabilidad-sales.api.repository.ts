@@ -38,6 +38,14 @@ export const contabilidadSalesApiRepository: ContabilidadSalesRepository = {
   createCreditNote: (body) =>
     apiClient.post(`/contabilidad-sales/credit-notes?${qs()}`, body).then((r) => r.data),
 
+  listDebitNotes: (params) =>
+    apiClient
+      .get(`/contabilidad-sales/debit-notes?${qs(params as Record<string, string | undefined>)}`)
+      .then((r) => r.data),
+
+  createDebitNote: (body) =>
+    apiClient.post(`/contabilidad-sales/debit-notes?${qs()}`, body).then((r) => r.data),
+
   listCollections: (params) =>
     apiClient.get(`/contabilidad-sales/collections?${qs(params as Record<string, string | undefined>)}`).then((r) => r.data),
 

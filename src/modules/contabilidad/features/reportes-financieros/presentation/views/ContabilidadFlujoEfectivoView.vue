@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AppIcon, PageHeader } from '@shared/components'
+import { AppIcon, BaseButton, PageHeader } from '@shared/components'
 import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
 import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
 import { useContabilidadCashFlowStatement } from '../../application/useContabilidadFinancialStatements'
+import { useContabilidadFinancialExport } from '../../application/useContabilidadFinancialExport'
 
 const { activePeriod } = useContabilidadActivePeriod()
 const periodId = computed(() => activePeriod.value?.id)
 
 const { data, isLoading, isError, refetch } = useContabilidadCashFlowStatement(periodId)
 const showPrior = computed(() => Boolean(data.value?.priorPeriodId))
+const { exportFinancialStatement, isExporting } = useContabilidadFinancialExport()
+
+function exportExcel() {
+  if (!periodId.value) return
+  void exportFinancialStatement('cash-flow', periodId.value)
+}
 </script>
 
 <template>
@@ -18,7 +25,19 @@ const showPrior = computed(() => Boolean(data.value?.priorPeriodId))
       icon="lucide:arrow-left-right"
       title="Flujo de efectivo"
       subtitle="Método indirecto (v1) — operativo, inversión y financiamiento"
-    />
+    >
+      <template #actions>
+        <BaseButton
+          variant="secondary"
+          :disabled="!activePeriod"
+          :loading="isExporting('cash-flow')"
+          @click="exportExcel"
+        >
+          <AppIcon icon="lucide:file-spreadsheet" :size="16" class="mr-1" />
+          Exportar Excel
+        </BaseButton>
+      </template>
+    </PageHeader>
 
     <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
       Seleccione un periodo activo en la barra superior.

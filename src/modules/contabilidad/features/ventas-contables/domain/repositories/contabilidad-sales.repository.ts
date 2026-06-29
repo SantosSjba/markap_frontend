@@ -2,10 +2,12 @@ import type {
   ContabilidadCustomerDTO,
   ContabilidadSalesCollectionDTO,
   ContabilidadSalesCreditNoteDTO,
+  ContabilidadSalesDebitNoteDTO,
   ContabilidadSalesInvoiceDTO,
   CreateCustomerBody,
   CreateSalesCollectionBody,
   CreateSalesCreditNoteBody,
+  CreateSalesDebitNoteBody,
   CreateSalesInvoiceBody,
   ListSalesInvoicesParams,
   UpdateCustomerBody,
@@ -29,6 +31,11 @@ export interface ContabilidadSalesRepository {
     creditNotes: ContabilidadSalesCreditNoteDTO[]
   }>
   createCreditNote(body: CreateSalesCreditNoteBody): Promise<ContabilidadSalesCreditNoteDTO>
+
+  listDebitNotes(params?: { periodId?: string; customerId?: string; search?: string }): Promise<{
+    debitNotes: ContabilidadSalesDebitNoteDTO[]
+  }>
+  createDebitNote(body: CreateSalesDebitNoteBody): Promise<ContabilidadSalesDebitNoteDTO>
 
   listCollections(params?: { periodId?: string; customerId?: string; invoiceId?: string }): Promise<{
     collections: ContabilidadSalesCollectionDTO[]

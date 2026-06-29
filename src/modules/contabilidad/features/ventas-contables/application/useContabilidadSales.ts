@@ -7,6 +7,7 @@ import type {
   CreateCustomerBody,
   CreateSalesCollectionBody,
   CreateSalesCreditNoteBody,
+  CreateSalesDebitNoteBody,
   CreateSalesInvoiceBody,
   ListSalesInvoicesParams,
   UpdateCustomerBody,
@@ -19,6 +20,8 @@ export const contabilidadSalesKeys = {
   invoices: (params: ListSalesInvoicesParams) => [...contabilidadSalesKeys.root, 'invoices', params] as const,
   creditNotes: (params: Record<string, string | undefined>) =>
     [...contabilidadSalesKeys.root, 'credit-notes', params] as const,
+  debitNotes: (params: Record<string, string | undefined>) =>
+    [...contabilidadSalesKeys.root, 'debit-notes', params] as const,
   collections: (params: Record<string, string | undefined>) =>
     [...contabilidadSalesKeys.root, 'collections', params] as const,
 }
@@ -107,6 +110,26 @@ export function useContabilidadCreateSalesCreditNote() {
     onSuccess: () => {
       void invalidateContabilidadSalesCache(qc)
       void markapAlert.toast.success('Nota de crédito registrada')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
+  })
+}
+
+export function useContabilidadSalesDebitNotes(params: Ref<Record<string, string | undefined>>) {
+  return useQuery({
+    queryKey: computed(() => contabilidadSalesKeys.debitNotes(params.value)),
+    queryFn: () => salesRepository.listDebitNotes(params.value),
+    staleTime: 10_000,
+  })
+}
+
+export function useContabilidadCreateSalesDebitNote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateSalesDebitNoteBody) => salesRepository.createDebitNote(body),
+    onSuccess: () => {
+      void invalidateContabilidadSalesCache(qc)
+      void markapAlert.toast.success('Nota de débito registrada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
   })

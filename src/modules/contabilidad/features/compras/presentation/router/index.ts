@@ -18,6 +18,12 @@ export const contabilidadComprasRoutes: RouteRecordRaw[] = [
     meta: { title: 'Notas de crédito' },
   },
   {
+    path: 'notas-debito',
+    name: 'contabilidad-compras-notas-debito',
+    component: () => import('../views/ContabilidadComprasNotasDebitoView.vue'),
+    meta: { title: 'Notas de débito' },
+  },
+  {
     path: 'proveedores',
     name: 'contabilidad-compras-proveedores',
     component: () => import('../views/ContabilidadComprasProveedoresView.vue'),

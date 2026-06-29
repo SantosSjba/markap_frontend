@@ -156,7 +156,40 @@ export interface CreateSalesInvoiceBody {
   notes?: string | null
 }
 
+export interface ContabilidadSalesDebitNoteDTO {
+  id: string
+  customerId: string
+  customerRuc: string
+  customerName: string
+  invoiceId: string | null
+  invoiceFullNumber: string | null
+  periodId: string
+  series: string
+  number: string
+  fullNumber: string
+  issueDate: string
+  taxableBase: string
+  igvAmount: string
+  totalAmount: string
+  reason: string | null
+  status: string
+  journalEntryId: string | null
+  createdAt: string
+}
+
 export interface CreateSalesCreditNoteBody {
+  customerId: string
+  invoiceId?: string | null
+  periodId: string
+  series: string
+  number: string
+  issueDate: string
+  taxableBase: number | string
+  igvAmount?: number | string
+  reason?: string | null
+}
+
+export interface CreateSalesDebitNoteBody {
   customerId: string
   invoiceId?: string | null
   periodId: string

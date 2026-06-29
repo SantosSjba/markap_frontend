@@ -25,4 +25,19 @@ export const contabilidadFinancialApiRepository: ContabilidadFinancialRepository
     apiClient
       .get(`/contabilidad-financial-statements/cash-flow?${qs(periodId, comparePrior)}`)
       .then((r) => r.data),
+
+  exportBalanceSheet: (periodId) =>
+    apiClient
+      .get(`/contabilidad-financial-statements/balance-sheet/export?${qs(periodId)}`)
+      .then((r) => r.data),
+
+  exportIncomeStatement: (periodId) =>
+    apiClient
+      .get(`/contabilidad-financial-statements/income-statement/export?${qs(periodId)}`)
+      .then((r) => r.data),
+
+  exportCashFlowStatement: (periodId) =>
+    apiClient
+      .get(`/contabilidad-financial-statements/cash-flow/export?${qs(periodId)}`)
+      .then((r) => r.data),
 }

@@ -15,6 +15,13 @@ export interface FinancialStatementSectionDTO {
   total: string
 }
 
+export interface FinancialStatementExportDTO {
+  fileName: string
+  sheetName: string
+  columns: { header: string; key: string; width?: number }[]
+  rows: Record<string, string | number | boolean | null | undefined>[]
+}
+
 export interface BalanceSheetDTO {
   periodId: string
   priorPeriodId: string | null

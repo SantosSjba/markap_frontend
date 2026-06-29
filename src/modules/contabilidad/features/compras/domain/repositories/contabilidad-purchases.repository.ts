@@ -1,9 +1,11 @@
 import type {
   ContabilidadPurchaseCreditNoteDTO,
+  ContabilidadPurchaseDebitNoteDTO,
   ContabilidadPurchaseInvoiceDTO,
   ContabilidadPurchasePaymentDTO,
   ContabilidadSupplierDTO,
   CreatePurchaseCreditNoteBody,
+  CreatePurchaseDebitNoteBody,
   CreatePurchaseInvoiceBody,
   CreatePurchasePaymentBody,
   CreateSupplierBody,
@@ -31,6 +33,11 @@ export interface ContabilidadPurchasesRepository {
     creditNotes: ContabilidadPurchaseCreditNoteDTO[]
   }>
   createCreditNote(body: CreatePurchaseCreditNoteBody): Promise<ContabilidadPurchaseCreditNoteDTO>
+
+  listDebitNotes(params?: { periodId?: string; supplierId?: string; search?: string }): Promise<{
+    debitNotes: ContabilidadPurchaseDebitNoteDTO[]
+  }>
+  createDebitNote(body: CreatePurchaseDebitNoteBody): Promise<ContabilidadPurchaseDebitNoteDTO>
 
   listPayments(params?: { periodId?: string; supplierId?: string; invoiceId?: string }): Promise<{
     payments: ContabilidadPurchasePaymentDTO[]

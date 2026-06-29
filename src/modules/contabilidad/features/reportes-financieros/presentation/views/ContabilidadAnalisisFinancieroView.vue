@@ -10,6 +10,10 @@ const periodId = computed(() => activePeriod.value?.id)
 const { data, isLoading, isError, refetch } = useContabilidadFinancialAnalysis(periodId)
 const showPrior = computed(() => Boolean(data.value?.priorPeriodId))
 
+const hasAnyValue = computed(() =>
+  (data.value?.ratios ?? []).some((r) => r.value != null && r.value !== ''),
+)
+
 function formatValue(unit: string, value: string | null) {
   if (value == null || value === '') return '—'
   if (unit === 'percent') return `${value}%`
@@ -19,7 +23,7 @@ function formatValue(unit: string, value: string | null) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[960px] mx-auto">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1200px] mx-auto w-full">
     <PageHeader
       icon="lucide:line-chart"
       title="Análisis financiero"
@@ -38,28 +42,42 @@ function formatValue(unit: string, value: string | null) {
       <button type="button" class="text-sm underline" @click="refetch()">Reintentar</button>
     </div>
 
-    <div v-else-if="data" class="space-y-3">
-      <div
-        v-for="ratio in data.ratios"
-        :key="ratio.key"
-        class="rounded-xl border p-4"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+    <template v-else-if="data">
+      <p
+        v-if="!hasAnyValue"
+        class="text-sm rounded-lg border px-4 py-3"
+        :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }"
       >
-        <div class="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p class="font-semibold">{{ ratio.label }}</p>
-            <p class="text-xs mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+        Sin movimientos publicados en el periodo: los ratios se calcularán cuando haya asientos y saldos en el libro mayor.
+      </p>
+
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div
+          v-for="ratio in data.ratios"
+          :key="ratio.key"
+          class="rounded-xl border p-4 flex flex-col gap-2 min-h-[7.5rem]"
+          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+        >
+          <div class="min-w-0">
+            <p class="font-semibold text-sm leading-snug">{{ ratio.label }}</p>
+            <p class="text-xs mt-1 line-clamp-2" :style="{ color: 'var(--color-text-secondary)' }">
               {{ ratio.description }}
             </p>
           </div>
-          <div class="text-right">
-            <p class="font-mono font-bold text-xl">{{ formatValue(ratio.unit, ratio.value) }}</p>
-            <p v-if="showPrior && ratio.priorValue != null" class="text-xs mt-1 font-mono" :style="{ color: 'var(--color-text-muted)' }">
-              Ant.: {{ formatValue(ratio.unit, ratio.priorValue) }}
+          <div class="mt-auto pt-1">
+            <p class="font-mono font-bold text-2xl tabular-nums">
+              {{ formatValue(ratio.unit, ratio.value) }}
+            </p>
+            <p
+              v-if="showPrior && ratio.priorValue != null"
+              class="text-xs mt-1 font-mono tabular-nums"
+              :style="{ color: 'var(--color-text-muted)' }"
+            >
+              Periodo ant.: {{ formatValue(ratio.unit, ratio.priorValue) }}
             </p>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
