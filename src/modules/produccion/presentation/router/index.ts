@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import ProduccionLayout from '../views/ProduccionLayout.vue'
 import { SectionLayout } from '@layouts'
 import { PRODUCCION_BASE_PATH } from '../../config/routes.constants'
+import { produccionClientesRoutes } from '../../features/clientes'
 
 const placeholder = () => import('../views/ProduccionPlaceholderView.vue')
 
@@ -28,20 +29,7 @@ export const produccionRoutes: RouteRecordRaw[] = [
         path: 'clientes',
         component: SectionLayout,
         meta: { title: 'Clientes' },
-        children: [
-          {
-            path: '',
-            name: 'produccion-clientes',
-            component: placeholder,
-            meta: { title: 'Listado de clientes' },
-          },
-          {
-            path: 'nuevo',
-            name: 'produccion-clientes-nuevo',
-            component: placeholder,
-            meta: { title: 'Nuevo cliente' },
-          },
-        ],
+        children: produccionClientesRoutes,
       },
       { path: 'ventas/clientes', redirect: '/produccion/clientes' },
       { path: 'ventas/clientes/nuevo', redirect: '/produccion/clientes/nuevo' },

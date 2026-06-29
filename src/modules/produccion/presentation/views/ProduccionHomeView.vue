@@ -27,9 +27,9 @@ const actividad = [
 ]
 
 const acciones = [
+  { label: 'Nuevo cliente', sub: 'Registrar', to: '/produccion/clientes/nuevo', icon: 'lucide:user-plus' as const },
   { label: 'Nueva orden', sub: 'Crear OT', to: '/produccion/ordenes-trabajo', icon: 'lucide:plus-circle' as const },
   { label: 'Nuevo mueble', sub: 'Catálogo', to: '/produccion/catalogo/nuevo', icon: 'lucide:boxes' as const },
-  { label: 'Órdenes de compra', sub: 'Compras', to: '/produccion/compras/ordenes-compra', icon: 'lucide:truck' as const },
   { label: 'Producción en proceso', sub: 'Seguimiento', to: '/produccion/produccion/en-proceso', icon: 'lucide:kanban' as const },
 ]
 

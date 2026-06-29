@@ -1,0 +1,5 @@
+export * from './domain'
+export * from './application'
+export * from './presentation'
+export type { ProduccionClientsRepository } from './domain/repositories/clients.repository'
+export { produccionClientsApiRepository as produccionClientsRepository } from './infrastructure/repositories/clients.api.repository'
