@@ -10,6 +10,7 @@ import { contabilidadAsientosRoutes } from '../../features/asientos'
 import { contabilidadTesoreriaRoutes } from '../../features/tesoreria'
 import { contabilidadComprasRoutes } from '../../features/compras'
 import { contabilidadVentasContablesRoutes } from '../../features/ventas-contables'
+import { contabilidadTributosRoutes } from '../../features/tributos'
 
 const placeholder = () => import('../views/ContabilidadPlaceholderView.vue')
 
@@ -94,32 +95,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'tributos',
         component: SectionLayout,
         meta: { title: 'Tributos' },
-        children: [
-          {
-            path: 'igv',
-            name: 'contabilidad-tributos-igv',
-            component: placeholder,
-            meta: { title: 'IGV' },
-          },
-          {
-            path: 'detracciones',
-            name: 'contabilidad-tributos-detracciones',
-            component: placeholder,
-            meta: { title: 'Detracciones' },
-          },
-          {
-            path: 'retenciones',
-            name: 'contabilidad-tributos-retenciones',
-            component: placeholder,
-            meta: { title: 'Retenciones' },
-          },
-          {
-            path: 'percepciones',
-            name: 'contabilidad-tributos-percepciones',
-            component: placeholder,
-            meta: { title: 'Percepciones' },
-          },
-        ],
+        children: contabilidadTributosRoutes,
       },
       { path: 'impuestos/igv', redirect: '/contabilidad/tributos/igv' },
       { path: 'impuestos/renta', redirect: '/contabilidad/tributos/retenciones' },
