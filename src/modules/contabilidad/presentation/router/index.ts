@@ -9,6 +9,7 @@ import { contabilidadCentrosCostoRoutes } from '../../features/centros-costo'
 import { contabilidadAsientosRoutes } from '../../features/asientos'
 import { contabilidadTesoreriaRoutes } from '../../features/tesoreria'
 import { contabilidadComprasRoutes } from '../../features/compras'
+import { contabilidadVentasContablesRoutes } from '../../features/ventas-contables'
 
 const placeholder = () => import('../views/ContabilidadPlaceholderView.vue')
 
@@ -86,42 +87,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'ventas',
         component: SectionLayout,
         meta: { title: 'Ventas' },
-        children: [
-          {
-            path: 'facturas',
-            name: 'contabilidad-ventas-facturas',
-            component: placeholder,
-            meta: { title: 'Facturas' },
-          },
-          {
-            path: 'boletas',
-            name: 'contabilidad-ventas-boletas',
-            component: placeholder,
-            meta: { title: 'Boletas' },
-          },
-          {
-            path: 'notas-credito',
-            name: 'contabilidad-ventas-notas-credito',
-            component: placeholder,
-            meta: { title: 'Notas de crédito' },
-          },
-          {
-            path: 'clientes',
-            name: 'contabilidad-ventas-clientes',
-            component: placeholder,
-            meta: { title: 'Clientes' },
-          },
-          {
-            path: 'cobros',
-            name: 'contabilidad-ventas-cobros',
-            component: placeholder,
-            meta: { title: 'Cobros' },
-          },
-          {
-            path: 'nueva-factura',
-            redirect: '/contabilidad/ventas/facturas',
-          },
-        ],
+        children: contabilidadVentasContablesRoutes,
       },
       // Tributos
       {
