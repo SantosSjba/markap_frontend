@@ -12,6 +12,7 @@ import {
 import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
 import { flattenMovementAccounts } from '@modules/contabilidad/features/asientos/domain/journal.utils'
 import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import { useContabilidadCurrencies } from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
 import {
   useContabilidadBankAccounts,
   useContabilidadCreateBankAccount,
@@ -43,8 +44,14 @@ const form = ref({
   accountId: '',
 })
 const { mutate: createBank, isPending: creating } = useContabilidadCreateBankAccount()
+const { data: currenciesData } = useContabilidadCurrencies()
 
-const currencyOptions = [{ value: 'PEN', label: 'PEN — Soles' }]
+const currencyOptions = computed(() =>
+  (currenciesData.value ?? [{ code: 'PEN', name: 'Soles', symbol: 'S/' }]).map((c) => ({
+    value: c.code,
+    label: `${c.code} — ${c.name}`,
+  })),
+)
 
 function openNew() {
   form.value = { code: '', bankName: '', accountNumber: '', cci: '', currency: 'PEN', accountId: '' }

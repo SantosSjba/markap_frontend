@@ -16,7 +16,13 @@ function qs(extra?: Record<string, string | undefined>) {
 export const contabilidadExchangeRatesApiRepository: ContabilidadExchangeRatesRepository = {
   listRates: (params) =>
     apiClient
-      .get(`/contabilidad-extensions/exchange-rates?${qs(params as Record<string, string | undefined>)}`)
+      .get(
+        `/contabilidad-extensions/exchange-rates?${qs({
+          dateFrom: params?.fromDate,
+          dateTo: params?.toDate,
+          currencyCode: params?.currencyCode,
+        })}`,
+      )
       .then((r) => r.data),
 
   upsertRate: (body) =>

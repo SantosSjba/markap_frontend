@@ -32,7 +32,12 @@ import {
   linesToBody,
   newJournalLineRow,
   sumLineAmounts,
+  applyForeignToPenLine,
 } from '../../domain/journal.utils'
+import {
+  FUNCTIONAL_CURRENCY,
+  useContabilidadCurrencies,
+} from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
 
 const route = useRoute()
 const router = useRouter()
@@ -56,6 +61,14 @@ const { mutate: postJournal, isPending: posting } = useContabilidadPostJournal()
 const { data: templatesData } = useContabilidadJournalTemplates()
 const { mutate: applyTemplate, isPending: applyingTemplate } = useContabilidadApplyJournalTemplate()
 const selectedTemplateId = ref('')
+const { data: currenciesData } = useContabilidadCurrencies()
+
+const currencyOptions = computed(() => [
+  { value: '', label: 'PEN (soles)' },
+  ...(currenciesData.value ?? [])
+    .filter((c) => c.code !== FUNCTIONAL_CURRENCY)
+    .map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` })),
+])
 
 const templateOptions = computed(() => [
   { value: '', label: 'Sin plantilla' },
@@ -129,6 +142,10 @@ function onDebitInput(line: JournalLineFormRow) {
 
 function onCreditInput(line: JournalLineFormRow) {
   if (line.credit.trim()) line.debit = ''
+}
+
+function onForeignBlur(line: JournalLineFormRow) {
+  applyForeignToPenLine(line)
 }
 
 function buildPayload() {
@@ -228,6 +245,9 @@ function applySelectedTemplate() {
         accountId: line.accountId,
         debit: Number(line.debit) > 0 ? line.debit : '',
         credit: Number(line.credit) > 0 ? line.credit : '',
+        foreignCurrency: '',
+        foreignAmount: '',
+        exchangeRate: '',
         costCenterId: line.costCenterId ?? '',
         auxiliaryRuc: '',
         auxiliaryDoc: '',
@@ -305,15 +325,18 @@ function applySelectedTemplate() {
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-sm min-w-[960px]">
+          <table class="w-full text-sm min-w-[1200px]">
             <thead>
               <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-                <th class="text-left py-2.5 px-3 font-medium w-[34%]" :style="{ color: 'var(--color-text-secondary)' }">Cuenta</th>
-                <th class="text-right py-2.5 px-3 font-medium w-[10%]" :style="{ color: 'var(--color-text-secondary)' }">Debe</th>
-                <th class="text-right py-2.5 px-3 font-medium w-[10%]" :style="{ color: 'var(--color-text-secondary)' }">Haber</th>
-                <th class="text-left py-2.5 px-3 font-medium w-[18%]" :style="{ color: 'var(--color-text-secondary)' }">Centro costo</th>
-                <th class="text-left py-2.5 px-3 font-medium w-[10%]" :style="{ color: 'var(--color-text-secondary)' }">RUC aux.</th>
-                <th class="text-left py-2.5 px-3 font-medium w-[10%]" :style="{ color: 'var(--color-text-secondary)' }">Doc. aux.</th>
+                <th class="text-left py-2.5 px-3 font-medium w-[26%]" :style="{ color: 'var(--color-text-secondary)' }">Cuenta</th>
+                <th class="text-left py-2.5 px-3 font-medium w-[8%]" :style="{ color: 'var(--color-text-secondary)' }">Moneda</th>
+                <th class="text-right py-2.5 px-3 font-medium w-[9%]" :style="{ color: 'var(--color-text-secondary)' }">Importe ME</th>
+                <th class="text-right py-2.5 px-3 font-medium w-[8%]" :style="{ color: 'var(--color-text-secondary)' }">TC</th>
+                <th class="text-right py-2.5 px-3 font-medium w-[9%]" :style="{ color: 'var(--color-text-secondary)' }">Debe</th>
+                <th class="text-right py-2.5 px-3 font-medium w-[9%]" :style="{ color: 'var(--color-text-secondary)' }">Haber</th>
+                <th class="text-left py-2.5 px-3 font-medium w-[14%]" :style="{ color: 'var(--color-text-secondary)' }">Centro costo</th>
+                <th class="text-left py-2.5 px-3 font-medium w-[8%]" :style="{ color: 'var(--color-text-secondary)' }">RUC aux.</th>
+                <th class="text-left py-2.5 px-3 font-medium w-[8%]" :style="{ color: 'var(--color-text-secondary)' }">Doc. aux.</th>
                 <th class="py-2.5 px-3 w-10" />
               </tr>
             </thead>
@@ -326,6 +349,31 @@ function applySelectedTemplate() {
               >
                 <td class="py-2 px-3">
                   <FormSelect v-model="line.accountId" :options="accountOptions" placeholder="Cuenta de movimiento…" />
+                </td>
+                <td class="py-2 px-3">
+                  <FormSelect v-model="line.foreignCurrency" :options="currencyOptions" />
+                </td>
+                <td class="py-2 px-3">
+                  <FormInput
+                    v-model="line.foreignAmount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    :disabled="!line.foreignCurrency"
+                    @blur="onForeignBlur(line)"
+                  />
+                </td>
+                <td class="py-2 px-3">
+                  <FormInput
+                    v-model="line.exchangeRate"
+                    type="number"
+                    min="0"
+                    step="0.000001"
+                    placeholder="TC"
+                    :disabled="!line.foreignCurrency"
+                    @blur="onForeignBlur(line)"
+                  />
                 </td>
                 <td class="py-2 px-3">
                   <FormInput
@@ -374,7 +422,7 @@ function applySelectedTemplate() {
                 <td class="py-3 px-3 text-right font-mono font-semibold">
                   {{ formatPen(totals.totalCredit) }}
                 </td>
-                <td colspan="4" class="py-3 px-3">
+                <td colspan="6" class="py-3 px-3">
                   <span
                     class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
                     :style="{

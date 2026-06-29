@@ -64,6 +64,9 @@ export interface ContabilidadTreasuryMovementDTO {
   offsetAccountCode: string | null
   offsetAccountName: string | null
   transferGroupId: string | null
+  currencyCode: string
+  foreignAmount: string | null
+  exchangeRate: string | null
   amount: string
   movementDate: string
   description: string

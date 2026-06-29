@@ -1,5 +1,6 @@
 import type { ContabilidadAccountDTO } from '@modules/contabilidad/features/plan-cuentas/domain/account.types'
 import type { JournalLineFormRow } from './journal.types'
+import { convertForeignToPen, FUNCTIONAL_CURRENCY } from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
 
 export function formatPen(amount: number | string | null | undefined): string {
   if (amount == null || amount === '') return '—'
@@ -55,6 +56,9 @@ export function newJournalLineRow(): JournalLineFormRow {
     accountId: '',
     debit: '',
     credit: '',
+    foreignCurrency: '',
+    foreignAmount: '',
+    exchangeRate: '',
     costCenterId: '',
     auxiliaryRuc: '',
     auxiliaryDoc: '',
@@ -62,26 +66,59 @@ export function newJournalLineRow(): JournalLineFormRow {
   }
 }
 
+export function applyForeignToPenLine(line: JournalLineFormRow) {
+  const currency = line.foreignCurrency.trim().toUpperCase()
+  if (!currency || currency === FUNCTIONAL_CURRENCY) return
+  const foreign = parsePenInput(line.foreignAmount)
+  const rate = Number(line.exchangeRate.replace(',', '.'))
+  if (!Number.isFinite(foreign) || foreign <= 0 || !Number.isFinite(rate) || rate <= 0) return
+  const pen = convertForeignToPen(foreign, rate).toFixed(2)
+  if (line.debit.trim()) line.debit = pen
+  else if (line.credit.trim()) line.credit = pen
+}
+
 export function linesToBody(lines: JournalLineFormRow[]) {
-  return lines.map((line) => ({
-    accountId: line.accountId,
-    debit: line.debit ? parsePenInput(line.debit) : 0,
-    credit: line.credit ? parsePenInput(line.credit) : 0,
-    costCenterId: line.costCenterId || null,
-    auxiliaryRuc: line.auxiliaryRuc.trim() || null,
-    auxiliaryDoc: line.auxiliaryDoc.trim() || null,
-    description: line.description.trim() || null,
-  }))
+  return lines.map((line) => {
+    const currency = line.foreignCurrency.trim().toUpperCase()
+    const hasForeign =
+      currency && currency !== FUNCTIONAL_CURRENCY && line.foreignAmount.trim()
+    return {
+      accountId: line.accountId,
+      debit: line.debit ? parsePenInput(line.debit) : 0,
+      credit: line.credit ? parsePenInput(line.credit) : 0,
+      foreignCurrency: hasForeign ? currency : null,
+      foreignAmount: hasForeign ? parsePenInput(line.foreignAmount) : null,
+      exchangeRate: hasForeign && line.exchangeRate.trim() ? line.exchangeRate : null,
+      costCenterId: line.costCenterId || null,
+      auxiliaryRuc: line.auxiliaryRuc.trim() || null,
+      auxiliaryDoc: line.auxiliaryDoc.trim() || null,
+      description: line.description.trim() || null,
+    }
+  })
 }
 
 export function linesFromDetail(
-  lines: { accountId: string; debit: string; credit: string; costCenterId: string | null; auxiliaryRuc: string | null; auxiliaryDoc: string | null; description: string | null }[],
+  lines: {
+    accountId: string
+    debit: string
+    credit: string
+    foreignCurrency: string | null
+    foreignAmount: string | null
+    exchangeRate: string | null
+    costCenterId: string | null
+    auxiliaryRuc: string | null
+    auxiliaryDoc: string | null
+    description: string | null
+  }[],
 ): JournalLineFormRow[] {
   return lines.map((line) => ({
     key: crypto.randomUUID(),
     accountId: line.accountId,
     debit: Number(line.debit) > 0 ? line.debit : '',
     credit: Number(line.credit) > 0 ? line.credit : '',
+    foreignCurrency: line.foreignCurrency ?? '',
+    foreignAmount: line.foreignAmount ?? '',
+    exchangeRate: line.exchangeRate ?? '',
     costCenterId: line.costCenterId ?? '',
     auxiliaryRuc: line.auxiliaryRuc ?? '',
     auxiliaryDoc: line.auxiliaryDoc ?? '',

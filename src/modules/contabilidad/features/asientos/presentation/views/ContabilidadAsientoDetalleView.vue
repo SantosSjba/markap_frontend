@@ -14,6 +14,7 @@ import {
   CONTABILIDAD_JOURNAL_STATUS_LABELS,
 } from '../../domain/journal.types'
 import { formatPen, journalStatusVariant } from '../../domain/journal.utils'
+import { formatMoney } from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
 
 const route = useRoute()
 const router = useRouter()
@@ -194,8 +195,28 @@ async function confirmReverse() {
                 </div>
                 <span v-else :style="{ color: 'var(--color-text-muted)' }">—</span>
               </td>
-              <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(line.debit) }}</td>
-              <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(line.credit) }}</td>
+              <td class="py-2.5 px-4 text-right font-mono">
+                {{ formatPen(line.debit) }}
+                <div
+                  v-if="line.foreignCurrency && line.foreignAmount"
+                  class="text-[11px] font-normal mt-0.5"
+                  :style="{ color: 'var(--color-text-muted)' }"
+                >
+                  {{ formatMoney(line.foreignAmount, line.foreignCurrency) }}
+                  <span v-if="line.exchangeRate"> · TC {{ line.exchangeRate }}</span>
+                </div>
+              </td>
+              <td class="py-2.5 px-4 text-right font-mono">
+                {{ formatPen(line.credit) }}
+                <div
+                  v-if="line.foreignCurrency && line.foreignAmount && Number(line.credit) > 0"
+                  class="text-[11px] font-normal mt-0.5"
+                  :style="{ color: 'var(--color-text-muted)' }"
+                >
+                  {{ formatMoney(line.foreignAmount, line.foreignCurrency) }}
+                  <span v-if="line.exchangeRate"> · TC {{ line.exchangeRate }}</span>
+                </div>
+              </td>
             </tr>
           </tbody>
           <tfoot>

@@ -19,6 +19,13 @@ import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/
 import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
 import { flattenMovementAccounts, formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
 import {
+  FUNCTIONAL_CURRENCY,
+  formatMoney,
+  isForeignCurrency,
+  useContabilidadCurrencies,
+} from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
+import { useContabilidadExchangeRateLookup } from '@modules/contabilidad/presentation/composables/useContabilidadExchangeRateLookup'
+import {
   useContabilidadCustomers,
   useContabilidadSalesInvoices,
   useContabilidadCreateSalesInvoice,
@@ -89,9 +96,37 @@ const form = ref({
   issueDate: '',
   dueDate: '',
   taxAffectation: SALES_TAX_AFFECTATION.TAXABLE,
+  currencyCode: FUNCTIONAL_CURRENCY,
+  exchangeRate: '',
   incomeAccountId: '',
   taxableBase: '',
   notes: '',
+})
+
+const formCurrency = computed(() => form.value.currencyCode)
+const formIssueDate = computed(() => form.value.issueDate)
+const { data: currenciesData } = useContabilidadCurrencies()
+const { sellRate, isLoading: loadingRate } = useContabilidadExchangeRateLookup(formCurrency, formIssueDate)
+
+const currencyOptions = computed(() =>
+  (currenciesData.value ?? []).map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` })),
+)
+
+const isForeignInvoice = computed(() => isForeignCurrency(form.value.currencyCode))
+const taxableBaseLabel = computed(() =>
+  isForeignInvoice.value
+    ? `Base imponible (${form.value.currencyCode})`
+    : 'Base imponible (S/)',
+)
+
+watch(sellRate, (rate) => {
+  if (rate && isForeignInvoice.value && !form.value.exchangeRate) {
+    form.value.exchangeRate = rate
+  }
+})
+
+watch(() => form.value.currencyCode, (code) => {
+  if (code === FUNCTIONAL_CURRENCY) form.value.exchangeRate = ''
 })
 
 watch(activePeriod, (p) => {
@@ -146,6 +181,9 @@ function submitInvoice() {
       issueDate: form.value.issueDate,
       dueDate: form.value.dueDate || null,
       taxAffectation: form.value.taxAffectation,
+      currencyCode: form.value.currencyCode,
+      exchangeRate: isForeignInvoice.value ? form.value.exchangeRate || sellRate.value : null,
+      foreignTaxableBase: isForeignInvoice.value ? form.value.taxableBase : null,
       incomeAccountId: form.value.incomeAccountId,
       taxableBase: form.value.taxableBase,
       notes: form.value.notes.trim() || null,
@@ -215,6 +253,13 @@ function goJournal(row: ContabilidadSalesInvoiceDTO) {
           </td>
           <td class="py-3 px-4 text-sm">
             <div class="font-mono font-medium">{{ (row as ContabilidadSalesInvoiceDTO).fullNumber }}</div>
+            <Badge
+              v-if="isForeignCurrency((row as ContabilidadSalesInvoiceDTO).currencyCode)"
+              variant="neutral"
+              class="mt-1"
+            >
+              {{ (row as ContabilidadSalesInvoiceDTO).currencyCode }}
+            </Badge>
           </td>
           <td class="py-3 px-4 text-sm">
             <div>{{ (row as ContabilidadSalesInvoiceDTO).customerName }}</div>
@@ -224,6 +269,13 @@ function goJournal(row: ContabilidadSalesInvoiceDTO) {
           </td>
           <td class="py-3 px-4 text-sm text-right font-mono">
             {{ formatPen((row as ContabilidadSalesInvoiceDTO).totalAmount) }}
+            <div
+              v-if="(row as ContabilidadSalesInvoiceDTO).foreignTaxableBase"
+              class="text-xs font-normal"
+              :style="{ color: 'var(--color-text-muted)' }"
+            >
+              {{ formatMoney((row as ContabilidadSalesInvoiceDTO).foreignTaxableBase, (row as ContabilidadSalesInvoiceDTO).currencyCode) }} + IGV
+            </div>
           </td>
           <td class="py-3 px-4 text-sm text-right font-mono font-semibold">
             {{ formatPen((row as ContabilidadSalesInvoiceDTO).balanceAmount) }}
@@ -264,6 +316,20 @@ function goJournal(row: ContabilidadSalesInvoiceDTO) {
         </div>
         <div class="grid gap-4 sm:grid-cols-2 w-full">
           <div class="min-w-0">
+            <FormSelect v-model="form.currencyCode" label="Moneda" :options="currencyOptions" />
+          </div>
+          <div class="min-w-0">
+            <FormInput
+              v-model="form.exchangeRate"
+              label="Tipo de cambio (venta)"
+              type="number"
+              min="0"
+              step="0.000001"
+              :disabled="!isForeignInvoice"
+              :placeholder="loadingRate ? 'Buscando…' : 'Manual o del día'"
+            />
+          </div>
+          <div class="min-w-0">
             <FormSelect v-model="form.taxAffectation" label="Afectación IGV" :options="SALES_TAX_AFFECTATION_OPTIONS" />
           </div>
           <div class="min-w-0">
@@ -279,7 +345,7 @@ function goJournal(row: ContabilidadSalesInvoiceDTO) {
             <FormInput v-model="form.dueDate" label="Fecha vencimiento" type="date" />
           </div>
           <div class="min-w-0">
-            <FormInput v-model="form.taxableBase" label="Base imponible (S/)" type="number" min="0" step="0.01" required />
+            <FormInput v-model="form.taxableBase" :label="taxableBaseLabel" type="number" min="0" step="0.01" required />
           </div>
         </div>
         <div class="w-full min-w-0">

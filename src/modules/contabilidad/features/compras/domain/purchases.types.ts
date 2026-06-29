@@ -95,6 +95,9 @@ export interface ContabilidadPurchaseInvoiceDTO {
   issueDate: string
   dueDate: string | null
   taxAffectation: string
+  currencyCode: string
+  exchangeRate: string | null
+  foreignTaxableBase: string | null
   expenseAccountId: string
   expenseAccountCode: string
   expenseAccountName: string
@@ -183,6 +186,9 @@ export interface CreatePurchaseInvoiceBody {
   issueDate: string
   dueDate?: string | null
   taxAffectation: string
+  currencyCode?: string
+  exchangeRate?: number | string | null
+  foreignTaxableBase?: number | string | null
   expenseAccountId: string
   taxableBase: number | string
   igvAmount?: number | string

@@ -19,6 +19,12 @@ import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/
 import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
 import { flattenMovementAccounts, formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
 import {
+  FUNCTIONAL_CURRENCY,
+  isForeignCurrency,
+  useContabilidadCurrencies,
+} from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
+import { useContabilidadExchangeRateLookup } from '@modules/contabilidad/presentation/composables/useContabilidadExchangeRateLookup'
+import {
   useContabilidadSuppliers,
   useContabilidadPurchaseInvoices,
   useContabilidadCreatePurchaseInvoice,
@@ -78,10 +84,31 @@ const form = ref({
   issueDate: '',
   dueDate: '',
   taxAffectation: PURCHASE_TAX_AFFECTATION.TAXABLE,
+  currencyCode: FUNCTIONAL_CURRENCY,
+  exchangeRate: '',
   expenseAccountId: '',
   taxableBase: '',
   detraccionAmount: '',
   notes: '',
+})
+
+const formCurrency = computed(() => form.value.currencyCode)
+const formIssueDate = computed(() => form.value.issueDate)
+const { data: currenciesData } = useContabilidadCurrencies()
+const { sellRate, isLoading: loadingRate } = useContabilidadExchangeRateLookup(formCurrency, formIssueDate)
+const currencyOptions = computed(() =>
+  (currenciesData.value ?? []).map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` })),
+)
+const isForeignInvoice = computed(() => isForeignCurrency(form.value.currencyCode))
+const taxableBaseLabel = computed(() =>
+  isForeignInvoice.value ? `Base imponible (${form.value.currencyCode})` : 'Base imponible (S/)',
+)
+
+watch(sellRate, (rate) => {
+  if (rate && isForeignInvoice.value && !form.value.exchangeRate) form.value.exchangeRate = rate
+})
+watch(() => form.value.currencyCode, (code) => {
+  if (code === FUNCTIONAL_CURRENCY) form.value.exchangeRate = ''
 })
 
 watch(activePeriod, (p) => {
@@ -141,6 +168,9 @@ function submitInvoice() {
       issueDate: form.value.issueDate,
       dueDate: form.value.dueDate || null,
       taxAffectation: form.value.taxAffectation,
+      currencyCode: form.value.currencyCode,
+      exchangeRate: isForeignInvoice.value ? form.value.exchangeRate || sellRate.value : null,
+      foreignTaxableBase: isForeignInvoice.value ? form.value.taxableBase : null,
       expenseAccountId: form.value.expenseAccountId,
       taxableBase: form.value.taxableBase,
       detraccionAmount: form.value.detraccionAmount || 0,
@@ -211,6 +241,13 @@ function goJournal(row: ContabilidadPurchaseInvoiceDTO) {
           </td>
           <td class="py-3 px-4 text-sm">
             <div class="font-mono font-medium">{{ (row as ContabilidadPurchaseInvoiceDTO).fullNumber }}</div>
+            <Badge
+              v-if="isForeignCurrency((row as ContabilidadPurchaseInvoiceDTO).currencyCode)"
+              variant="neutral"
+              class="mt-1"
+            >
+              {{ (row as ContabilidadPurchaseInvoiceDTO).currencyCode }}
+            </Badge>
             <div class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
               {{ docTypeLabel((row as ContabilidadPurchaseInvoiceDTO).documentType) }}
             </div>
@@ -266,6 +303,20 @@ function goJournal(row: ContabilidadPurchaseInvoiceDTO) {
             <FormSelect v-model="form.documentType" label="Tipo comprobante" :options="PURCHASE_DOCUMENT_TYPE_OPTIONS" />
           </div>
           <div class="min-w-0">
+            <FormSelect v-model="form.currencyCode" label="Moneda" :options="currencyOptions" />
+          </div>
+          <div class="min-w-0">
+            <FormInput
+              v-model="form.exchangeRate"
+              label="Tipo de cambio (venta)"
+              type="number"
+              min="0"
+              step="0.000001"
+              :disabled="!isForeignInvoice"
+              :placeholder="loadingRate ? 'Buscando…' : 'Manual o del día'"
+            />
+          </div>
+          <div class="min-w-0">
             <FormSelect v-model="form.taxAffectation" label="Afectación IGV" :options="PURCHASE_TAX_AFFECTATION_OPTIONS" />
           </div>
           <div class="min-w-0">
@@ -291,7 +342,7 @@ function goJournal(row: ContabilidadPurchaseInvoiceDTO) {
         </div>
         <div class="grid gap-4 sm:grid-cols-2 w-full">
           <div class="min-w-0">
-            <FormInput v-model="form.taxableBase" label="Base imponible (S/)" type="number" min="0" step="0.01" required />
+            <FormInput v-model="form.taxableBase" :label="taxableBaseLabel" type="number" min="0" step="0.01" required />
           </div>
           <div class="min-w-0">
             <FormInput v-model="form.detraccionAmount" label="Detracción (S/)" type="number" min="0" step="0.01" />
