@@ -13,6 +13,8 @@ export interface ContabilidadPleValidationIssueDTO {
   code: string
   message: string
   context?: string
+  lineNumber?: number
+  linePreview?: string
 }
 
 export interface ContabilidadPleGeneratedFileDTO {
@@ -34,6 +36,31 @@ export interface ContabilidadPleGenerateResultDTO {
   errors: ContabilidadPleValidationIssueDTO[]
   warnings: ContabilidadPleValidationIssueDTO[]
   generatedAt: string
+  blocked: boolean
+  exportLogId?: string
+}
+
+export interface ContabilidadPleMandatoryProfileDTO {
+  taxRegime: string
+  taxRegimeLabel: string
+  mandatoryBookCodes: string[]
+  optionalBookCodes: string[]
+  books: { code: string; name: string; mandatory: boolean }[]
+}
+
+export interface ContabilidadPleExportLogDTO {
+  id: string
+  periodId: string
+  year: number
+  month: number
+  userId: string | null
+  bookCodes: string[]
+  fileCount: number
+  zipHash: string
+  errorCount: number
+  warningCount: number
+  status: string
+  createdAt: string
 }
 
 export interface ContabilidadLibroMayorLineDTO {
@@ -68,8 +95,23 @@ export function downloadTextFile(fileName: string, content: string) {
   URL.revokeObjectURL(url)
 }
 
+export function downloadBlobFile(fileName: string, blob: Blob) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export function downloadAllPleFiles(files: ContabilidadPleGeneratedFileDTO[]) {
   for (const file of files) {
     downloadTextFile(file.fileName, file.content)
   }
+}
+
+export const PLE_EXPORT_STATUS_LABELS: Record<string, string> = {
+  SUCCESS: 'Exitoso',
+  WITH_WARNINGS: 'Con advertencias',
+  BLOCKED: 'Bloqueado',
 }
