@@ -7,6 +7,7 @@ import { contabilidadPlanCuentasRoutes } from '../../features/plan-cuentas'
 import { contabilidadPeriodosRoutes } from '../../features/periodos'
 import { contabilidadCentrosCostoRoutes } from '../../features/centros-costo'
 import { contabilidadAsientosRoutes } from '../../features/asientos'
+import { contabilidadTesoreriaRoutes } from '../../features/tesoreria'
 
 const placeholder = () => import('../views/ContabilidadPlaceholderView.vue')
 
@@ -65,38 +66,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'tesoreria',
         component: SectionLayout,
         meta: { title: 'Tesorería' },
-        children: [
-          {
-            path: 'caja',
-            name: 'contabilidad-tesoreria-caja',
-            component: placeholder,
-            meta: { title: 'Caja' },
-          },
-          {
-            path: 'bancos',
-            name: 'contabilidad-tesoreria-bancos',
-            component: placeholder,
-            meta: { title: 'Bancos' },
-          },
-          {
-            path: 'conciliaciones',
-            name: 'contabilidad-tesoreria-conciliaciones',
-            component: placeholder,
-            meta: { title: 'Conciliaciones' },
-          },
-          {
-            path: 'movimientos',
-            name: 'contabilidad-tesoreria-movimientos',
-            component: placeholder,
-            meta: { title: 'Movimientos' },
-          },
-          {
-            path: 'transferencias',
-            name: 'contabilidad-tesoreria-transferencias',
-            component: placeholder,
-            meta: { title: 'Transferencias' },
-          },
-        ],
+        children: contabilidadTesoreriaRoutes,
       },
       { path: 'bancos/cuentas', redirect: '/contabilidad/tesoreria/bancos' },
       { path: 'bancos/movimientos', redirect: '/contabilidad/tesoreria/movimientos' },
