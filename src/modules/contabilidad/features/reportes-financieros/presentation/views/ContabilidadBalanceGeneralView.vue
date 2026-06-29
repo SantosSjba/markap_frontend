@@ -16,27 +16,43 @@ const { exportFinancialStatement, isExporting } = useContabilidadFinancialExport
 
 function exportExcel() {
   if (!periodId.value) return
-  void exportFinancialStatement('balance-sheet', periodId.value)
+  void exportFinancialStatement('balance-sheet', periodId.value, 'excel')
+}
+
+function exportPdf() {
+  if (!periodId.value) return
+  void exportFinancialStatement('balance-sheet', periodId.value, 'pdf')
 }
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
+  <div class="financial-report-print px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
     <PageHeader
       icon="lucide:scale"
       title="Balance general"
       :subtitle="data ? `Al ${data.asOfLabel} · comparativo con periodo anterior` : 'Saldos acumulados por cuenta PCGE'"
     >
       <template #actions>
-        <BaseButton
-          variant="secondary"
-          :disabled="!activePeriod"
-          :loading="isExporting('balance-sheet')"
-          @click="exportExcel"
-        >
-          <AppIcon icon="lucide:file-spreadsheet" :size="16" class="mr-1" />
-          Exportar Excel
-        </BaseButton>
+        <div class="flex flex-wrap gap-2 print:hidden">
+          <BaseButton
+            variant="secondary"
+            :disabled="!activePeriod"
+            :loading="isExporting('balance-sheet', 'excel')"
+            @click="exportExcel"
+          >
+            <AppIcon icon="lucide:file-spreadsheet" :size="16" class="mr-1" />
+            Excel
+          </BaseButton>
+          <BaseButton
+            variant="secondary"
+            :disabled="!activePeriod"
+            :loading="isExporting('balance-sheet', 'pdf')"
+            @click="exportPdf"
+          >
+            <AppIcon icon="lucide:file-text" :size="16" class="mr-1" />
+            PDF
+          </BaseButton>
+        </div>
       </template>
     </PageHeader>
 
@@ -81,22 +97,27 @@ function exportExcel() {
       />
 
       <div
-        class="rounded-xl border p-4 flex flex-wrap gap-6 justify-between text-sm"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+        class="rounded-xl border p-4 flex flex-col sm:flex-row sm:justify-between gap-2"
+        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
       >
         <div>
-          <span :style="{ color: 'var(--color-text-secondary)' }">Total activo</span>
-          <p class="font-mono font-semibold text-lg">{{ formatPen(data.assets.total) }}</p>
+          <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">Resultado del periodo</p>
+          <p class="text-lg font-semibold font-mono">{{ formatPen(data.netIncomePeriod) }}</p>
         </div>
-        <div>
-          <span :style="{ color: 'var(--color-text-secondary)' }">Pasivo + patrimonio</span>
-          <p class="font-mono font-semibold text-lg">{{ formatPen(data.totalLiabilitiesAndEquity) }}</p>
-        </div>
-        <div>
-          <span :style="{ color: 'var(--color-text-secondary)' }">Resultado acumulado (ejercicio)</span>
-          <p class="font-mono font-semibold">{{ formatPen(data.netIncomePeriod) }}</p>
+        <div class="text-right">
+          <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">Pasivo + patrimonio</p>
+          <p class="text-lg font-semibold font-mono">{{ formatPen(data.totalLiabilitiesAndEquity) }}</p>
         </div>
       </div>
     </template>
   </div>
 </template>
+
+<style scoped>
+@media print {
+  .financial-report-print {
+    max-width: none;
+    padding: 0;
+  }
+}
+</style>

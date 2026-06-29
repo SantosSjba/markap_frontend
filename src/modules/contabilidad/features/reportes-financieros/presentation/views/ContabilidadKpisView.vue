@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { AppIcon, FormSelect, PageHeader } from '@shared/components'
+import { AppIcon, BaseButton, FormSelect, PageHeader } from '@shared/components'
 import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
 import { useContabilidadCostCentersList } from '@modules/contabilidad/features/centros-costo/application/useContabilidadCostCenters'
 import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
@@ -8,6 +8,7 @@ import {
   useContabilidadReportsDashboard,
   useContabilidadTrialBalance,
 } from '../../application/useContabilidadReports'
+import { useContabilidadFinancialExport } from '../../application/useContabilidadFinancialExport'
 import type { ContabilidadDashboardKpiDTO } from '../../domain/reports.types'
 
 const { activePeriod } = useContabilidadActivePeriod()
@@ -23,6 +24,17 @@ const costCenterOptions = computed(() => [
 const { data: dashboard, isLoading: loadingDash } = useContabilidadReportsDashboard(periodId)
 const costCenterParam = computed(() => costCenterId.value || undefined)
 const { data: trial, isLoading: loadingTrial } = useContabilidadTrialBalance(periodId, costCenterParam)
+const { exportFinancialStatement, isExporting } = useContabilidadFinancialExport()
+
+function exportTrialExcel() {
+  if (!periodId.value) return
+  void exportFinancialStatement('trial-balance', periodId.value, 'excel', costCenterParam.value)
+}
+
+function exportTrialPdf() {
+  if (!periodId.value) return
+  void exportFinancialStatement('trial-balance', periodId.value, 'pdf', costCenterParam.value)
+}
 
 function formatKpi(kpi: ContabilidadDashboardKpiDTO) {
   if (kpi.format === 'money') return formatPen(kpi.value)
@@ -77,8 +89,30 @@ const kpiIcons: Record<string, string> = {
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-end gap-4 justify-between">
         <h2 class="text-lg font-semibold">Balance de comprobación</h2>
-        <div class="w-full max-w-xs">
-          <FormSelect v-model="costCenterId" label="Centro de costo" :options="costCenterOptions" />
+        <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+          <div class="w-full max-w-xs">
+            <FormSelect v-model="costCenterId" label="Centro de costo" :options="costCenterOptions" />
+          </div>
+          <div class="flex gap-2 print:hidden">
+            <BaseButton
+              variant="secondary"
+              size="sm"
+              :disabled="!activePeriod"
+              :loading="isExporting('trial-balance', 'excel')"
+              @click="exportTrialExcel"
+            >
+              Excel
+            </BaseButton>
+            <BaseButton
+              variant="secondary"
+              size="sm"
+              :disabled="!activePeriod"
+              :loading="isExporting('trial-balance', 'pdf')"
+              @click="exportTrialPdf"
+            >
+              PDF
+            </BaseButton>
+          </div>
         </div>
       </div>
 

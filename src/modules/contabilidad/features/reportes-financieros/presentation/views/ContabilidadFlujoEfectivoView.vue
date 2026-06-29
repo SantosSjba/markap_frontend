@@ -15,27 +15,43 @@ const { exportFinancialStatement, isExporting } = useContabilidadFinancialExport
 
 function exportExcel() {
   if (!periodId.value) return
-  void exportFinancialStatement('cash-flow', periodId.value)
+  void exportFinancialStatement('cash-flow', periodId.value, 'excel')
+}
+
+function exportPdf() {
+  if (!periodId.value) return
+  void exportFinancialStatement('cash-flow', periodId.value, 'pdf')
 }
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
+  <div class="financial-report-print px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
     <PageHeader
       icon="lucide:arrow-left-right"
       title="Flujo de efectivo"
       subtitle="Método indirecto (v1) — operativo, inversión y financiamiento"
     >
       <template #actions>
-        <BaseButton
-          variant="secondary"
-          :disabled="!activePeriod"
-          :loading="isExporting('cash-flow')"
-          @click="exportExcel"
-        >
-          <AppIcon icon="lucide:file-spreadsheet" :size="16" class="mr-1" />
-          Exportar Excel
-        </BaseButton>
+        <div class="flex flex-wrap gap-2 print:hidden">
+          <BaseButton
+            variant="secondary"
+            :disabled="!activePeriod"
+            :loading="isExporting('cash-flow', 'excel')"
+            @click="exportExcel"
+          >
+            <AppIcon icon="lucide:file-spreadsheet" :size="16" class="mr-1" />
+            Excel
+          </BaseButton>
+          <BaseButton
+            variant="secondary"
+            :disabled="!activePeriod"
+            :loading="isExporting('cash-flow', 'pdf')"
+            @click="exportPdf"
+          >
+            <AppIcon icon="lucide:file-text" :size="16" class="mr-1" />
+            PDF
+          </BaseButton>
+        </div>
       </template>
     </PageHeader>
 
@@ -111,3 +127,12 @@ function exportExcel() {
     </template>
   </div>
 </template>
+
+<style scoped>
+@media print {
+  .financial-report-print {
+    max-width: none;
+    padding: 0;
+  }
+}
+</style>
