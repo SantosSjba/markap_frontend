@@ -17,6 +17,7 @@ import { contabilidadPlantillasAsientoRoutes } from '../../features/plantillas-a
 import { contabilidadTiposCambioRoutes } from '../../features/tipos-cambio'
 import { contabilidadCpeLogRoutes } from '../../features/cpe-log'
 import { contabilidadInventarioContableRoutes } from '../../features/inventario-contable'
+import { contabilidadAuditoriaRoutes } from '../../features/auditoria'
 import { ContabilidadCierreMensualView } from '../../features/cierre'
 
 export const contabilidadRoutes: RouteRecordRaw[] = [
@@ -130,7 +131,12 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'configuracion',
         component: SectionLayout,
         meta: { title: 'Configuración' },
-        children: [...contabilidadConfiguracionRoutes, ...contabilidadTiposCambioRoutes, ...contabilidadCpeLogRoutes],
+        children: [
+          ...contabilidadConfiguracionRoutes,
+          ...contabilidadTiposCambioRoutes,
+          ...contabilidadCpeLogRoutes,
+          ...contabilidadAuditoriaRoutes.map((r) => ({ ...r, path: r.path === '' ? 'auditoria' : r.path })),
+        ],
       },
     ],
   },

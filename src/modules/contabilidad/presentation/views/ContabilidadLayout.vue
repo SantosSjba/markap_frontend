@@ -4,6 +4,7 @@ import { AppLayoutSidebar, AppHeader } from '@layouts/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { useContabilidadAppLayout } from '../composables'
 import ContabilidadPeriodBar from '../components/ContabilidadPeriodBar.vue'
+import ContabilidadLegalEntityBar from '../components/ContabilidadLegalEntityBar.vue'
 
 const { application, menus, menusLoading } = useContabilidadAppLayout()
 
@@ -70,6 +71,7 @@ const applicationInfo = computed(() =>
           <AppIcon icon="line-md:loading-loop" :size="32" color="var(--color-primary)" />
         </div>
         <template v-else>
+          <ContabilidadLegalEntityBar />
           <ContabilidadPeriodBar />
           <router-view />
         </template>

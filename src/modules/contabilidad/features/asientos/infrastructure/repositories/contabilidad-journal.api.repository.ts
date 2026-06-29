@@ -1,5 +1,5 @@
 import { apiClient } from '@core/api/apiClient'
-import { CONTABILIDAD_JOURNAL_APP_SLUG } from '../../domain/journal.types'
+import { getContabilidadApiScope } from '@modules/contabilidad/config/api-scope'
 import type {
   ContabilidadJournalDetailResponse,
   ContabilidadJournalEntryDetailDTO,
@@ -10,12 +10,9 @@ import type { ContabilidadJournalRepository } from '../../domain/repositories/co
 
 function qs(extra?: ListContabilidadJournalParams) {
   const u = new URLSearchParams()
-  u.set('applicationSlug', CONTABILIDAD_JOURNAL_APP_SLUG)
-  if (extra) {
-    Object.entries(extra).forEach(([k, v]) => {
-      if (v !== undefined && v !== '') u.set(k, String(v))
-    })
-  }
+  Object.entries({ ...getContabilidadApiScope(), ...extra }).forEach(([k, v]) => {
+    if (v !== undefined && v !== '') u.set(k, String(v))
+  })
   return u.toString()
 }
 

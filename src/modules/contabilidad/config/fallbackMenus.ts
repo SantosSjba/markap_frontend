@@ -416,6 +416,13 @@ export const CONTABILIDAD_FALLBACK_MENUS: MenuItem[] = [
         path: '/contabilidad/configuracion/cpe-log',
         order: 2,
       },
+      {
+        id: 'cont-fb-cfg-audit',
+        label: 'Auditoría',
+        icon: null,
+        path: '/contabilidad/configuracion/auditoria',
+        order: 3,
+      },
     ],
   },
 ]

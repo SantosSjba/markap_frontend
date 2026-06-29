@@ -6,6 +6,7 @@ export type ContabilidadPeriodStatus = 'OPEN' | 'CLOSED'
 
 export interface ContabilidadPeriodDTO {
   id: string
+  legalEntityId?: string
   year: number
   month: number
   status: ContabilidadPeriodStatus
@@ -14,6 +15,7 @@ export interface ContabilidadPeriodDTO {
 
 export interface ContabilidadPeriodsResponse {
   year: number
+  legalEntityId?: string
   periods: ContabilidadPeriodDTO[]
   monthLabels: Record<number, string>
 }
