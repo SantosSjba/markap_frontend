@@ -15,4 +15,7 @@ export const contabilidadJournalTemplatesApiRepository: ContabilidadJournalTempl
 
   updateTemplate: (id, body) =>
     apiClient.patch(`/contabilidad-extensions/journal-templates/${id}?${qs()}`, body).then((r) => r.data),
+
+  applyTemplate: (id) =>
+    apiClient.post(`/contabilidad-extensions/journal-templates/${id}/apply?${qs()}`).then((r) => r.data),
 }

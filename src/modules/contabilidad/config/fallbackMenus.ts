@@ -233,6 +233,13 @@ export const CONTABILIDAD_FALLBACK_MENUS: MenuItem[] = [
         path: '/contabilidad/tributos/percepciones',
         order: 3,
       },
+      {
+        id: 'cont-fb-trib-renta',
+        label: 'Impuesto a la renta',
+        icon: null,
+        path: '/contabilidad/tributos/renta',
+        order: 4,
+      },
     ],
   },
   {
@@ -364,6 +371,13 @@ export const CONTABILIDAD_FALLBACK_MENUS: MenuItem[] = [
         icon: null,
         path: '/contabilidad/configuracion/tipos-cambio',
         order: 1,
+      },
+      {
+        id: 'cont-fb-cfg-cpe',
+        label: 'Trazabilidad CPE',
+        icon: null,
+        path: '/contabilidad/configuracion/cpe-log',
+        order: 2,
       },
     ],
   },

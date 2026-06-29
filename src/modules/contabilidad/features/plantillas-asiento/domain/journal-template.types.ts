@@ -78,6 +78,22 @@ export function linesFromTemplate(template: ContabilidadJournalTemplateDTO): Jou
   }))
 }
 
+export interface ApplyJournalTemplateResultDTO {
+  templateId: string
+  templateName: string
+  description: string
+  lines: {
+    lineNumber: number
+    accountId: string
+    accountCode: string
+    accountName: string
+    debit: string
+    credit: string
+    costCenterId: string | null
+    description: string | null
+  }[]
+}
+
 export function linesToBody(lines: JournalTemplateLineFormRow[]): JournalTemplateLineInput[] {
   return lines
     .filter((line) => line.accountId)

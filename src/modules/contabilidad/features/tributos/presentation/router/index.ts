@@ -29,4 +29,10 @@ export const contabilidadTributosRoutes: RouteRecordRaw[] = [
     component: () => import('../views/ContabilidadTributosPercepcionesView.vue'),
     meta: { title: 'Percepciones' },
   },
+  {
+    path: 'renta',
+    name: 'contabilidad-tributos-renta',
+    component: () => import('../views/ContabilidadTributosRentaView.vue'),
+    meta: { title: 'Impuesto a la renta' },
+  },
 ]

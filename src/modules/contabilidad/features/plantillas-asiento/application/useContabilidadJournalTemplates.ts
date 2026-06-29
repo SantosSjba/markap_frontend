@@ -49,3 +49,10 @@ export function useContabilidadUpdateJournalTemplate() {
     onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
   })
 }
+
+export function useContabilidadApplyJournalTemplate() {
+  return useMutation({
+    mutationFn: (id: string) => templatesRepository.applyTemplate(id),
+    onError: (e) => void markapAlert.toast.error('No se pudo aplicar la plantilla', getApiErrorMessage(e)),
+  })
+}

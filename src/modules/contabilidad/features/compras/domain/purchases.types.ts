@@ -57,6 +57,8 @@ export interface ContabilidadSupplierDTO {
   id: string
   ruc: string
   businessName: string
+  countryCode: string
+  isNonDomiciled: boolean
   tradeName: string | null
   address: string | null
   email: string | null
@@ -66,6 +68,19 @@ export interface ContabilidadSupplierDTO {
   invoiceCount: number
   createdAt: string
 }
+
+export const SUPPLIER_COUNTRY_OPTIONS = [
+  { value: 'PE', label: 'PE — Perú' },
+  { value: 'US', label: 'US — Estados Unidos' },
+  { value: 'EC', label: 'EC — Ecuador' },
+  { value: 'CO', label: 'CO — Colombia' },
+  { value: 'CL', label: 'CL — Chile' },
+  { value: 'BO', label: 'BO — Bolivia' },
+  { value: 'AR', label: 'AR — Argentina' },
+  { value: 'MX', label: 'MX — México' },
+  { value: 'ES', label: 'ES — España' },
+  { value: 'OT', label: 'OT — Otro' },
+] as const
 
 export interface ContabilidadPurchaseInvoiceDTO {
   id: string
@@ -140,6 +155,8 @@ export interface ContabilidadPurchasePaymentDTO {
 export interface CreateSupplierBody {
   ruc: string
   businessName: string
+  countryCode?: string
+  isNonDomiciled?: boolean
   tradeName?: string | null
   address?: string | null
   email?: string | null
@@ -148,6 +165,8 @@ export interface CreateSupplierBody {
 
 export interface UpdateSupplierBody {
   businessName?: string
+  countryCode?: string
+  isNonDomiciled?: boolean
   tradeName?: string | null
   address?: string | null
   email?: string | null

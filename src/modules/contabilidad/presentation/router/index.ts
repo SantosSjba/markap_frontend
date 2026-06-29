@@ -15,6 +15,7 @@ import { contabilidadLibrosERoutes } from '../../features/libros-e'
 import { contabilidadReportesFinancierosRoutes } from '../../features/reportes-financieros'
 import { contabilidadPlantillasAsientoRoutes } from '../../features/plantillas-asiento'
 import { contabilidadTiposCambioRoutes } from '../../features/tipos-cambio'
+import { contabilidadCpeLogRoutes } from '../../features/cpe-log'
 import { ContabilidadCierreMensualView } from '../../features/cierre'
 
 export const contabilidadRoutes: RouteRecordRaw[] = [
@@ -101,7 +102,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         children: contabilidadTributosRoutes,
       },
       { path: 'impuestos/igv', redirect: '/contabilidad/tributos/igv' },
-      { path: 'impuestos/renta', redirect: '/contabilidad/tributos/retenciones' },
+      { path: 'impuestos/renta', redirect: '/contabilidad/tributos/renta' },
       { path: 'impuestos/declaraciones', redirect: '/contabilidad/tributos/igv' },
       // Libros electrónicos
       {
@@ -121,7 +122,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'configuracion',
         component: SectionLayout,
         meta: { title: 'Configuración' },
-        children: [...contabilidadConfiguracionRoutes, ...contabilidadTiposCambioRoutes],
+        children: [...contabilidadConfiguracionRoutes, ...contabilidadTiposCambioRoutes, ...contabilidadCpeLogRoutes],
       },
     ],
   },

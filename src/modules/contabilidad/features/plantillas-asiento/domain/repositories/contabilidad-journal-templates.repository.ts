@@ -1,4 +1,5 @@
 import type {
+  ApplyJournalTemplateResultDTO,
   ContabilidadJournalTemplateDTO,
   CreateJournalTemplateBody,
   UpdateJournalTemplateBody,
@@ -8,4 +9,5 @@ export interface ContabilidadJournalTemplatesRepository {
   listTemplates(): Promise<{ templates: ContabilidadJournalTemplateDTO[] }>
   createTemplate(body: CreateJournalTemplateBody): Promise<ContabilidadJournalTemplateDTO>
   updateTemplate(id: string, body: UpdateJournalTemplateBody): Promise<ContabilidadJournalTemplateDTO>
+  applyTemplate(id: string): Promise<ApplyJournalTemplateResultDTO>
 }

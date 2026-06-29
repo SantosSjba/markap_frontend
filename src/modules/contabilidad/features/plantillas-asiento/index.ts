@@ -2,6 +2,7 @@ export {
   useContabilidadJournalTemplates,
   useContabilidadCreateJournalTemplate,
   useContabilidadUpdateJournalTemplate,
+  useContabilidadApplyJournalTemplate,
   contabilidadJournalTemplatesKeys,
 } from './application/useContabilidadJournalTemplates'
 

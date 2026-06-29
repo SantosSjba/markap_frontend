@@ -8,6 +8,7 @@ import {
   FormInput,
   FormCheckbox,
   SearchInput,
+  FormSelect,
 } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
@@ -18,6 +19,7 @@ import {
   useContabilidadUpdateSupplier,
 } from '../../application/useContabilidadPurchases'
 import type { ContabilidadSupplierDTO } from '../../domain/purchases.types'
+import { SUPPLIER_COUNTRY_OPTIONS } from '../../domain/purchases.types'
 
 const searchInput = ref('')
 const debouncedSearch = useDebouncedRef(searchInput)
@@ -37,6 +39,8 @@ const editing = ref<ContabilidadSupplierDTO | null>(null)
 const form = ref({
   ruc: '',
   businessName: '',
+  countryCode: 'PE',
+  isNonDomiciled: false,
   tradeName: '',
   address: '',
   email: '',
@@ -44,9 +48,15 @@ const form = ref({
   isActive: true,
 })
 
+const countryOptions = SUPPLIER_COUNTRY_OPTIONS.map((o) => ({ value: o.value, label: o.label }))
+
+function isForeignSupplier(row: ContabilidadSupplierDTO) {
+  return row.isNonDomiciled || row.countryCode !== 'PE'
+}
+
 function openNew() {
   editing.value = null
-  form.value = { ruc: '', businessName: '', tradeName: '', address: '', email: '', phone: '', isActive: true }
+  form.value = { ruc: '', businessName: '', countryCode: 'PE', isNonDomiciled: false, tradeName: '', address: '', email: '', phone: '', isActive: true }
   modalOpen.value = true
 }
 
@@ -55,6 +65,8 @@ function openEdit(row: ContabilidadSupplierDTO) {
   form.value = {
     ruc: row.ruc,
     businessName: row.businessName,
+    countryCode: row.countryCode || 'PE',
+    isNonDomiciled: row.isNonDomiciled,
     tradeName: row.tradeName ?? '',
     address: row.address ?? '',
     email: row.email ?? '',
@@ -75,6 +87,8 @@ function submitForm() {
         id: editing.value.id,
         body: {
           businessName: form.value.businessName.trim(),
+          countryCode: form.value.countryCode,
+          isNonDomiciled: form.value.isNonDomiciled,
           tradeName: form.value.tradeName.trim() || null,
           address: form.value.address.trim() || null,
           email: form.value.email.trim() || null,
@@ -93,6 +107,8 @@ function submitForm() {
       {
         ruc: form.value.ruc.trim(),
         businessName: form.value.businessName.trim(),
+        countryCode: form.value.countryCode,
+        isNonDomiciled: form.value.isNonDomiciled,
         tradeName: form.value.tradeName.trim() || null,
         address: form.value.address.trim() || null,
         email: form.value.email.trim() || null,
@@ -135,6 +151,7 @@ function submitForm() {
           <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
             <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">RUC</th>
             <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Razón social</th>
+            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">País</th>
             <th class="text-right py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Saldo CxP</th>
             <th class="text-center py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Facturas</th>
             <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Estado</th>
@@ -153,6 +170,10 @@ function submitForm() {
               <div class="font-medium">{{ row.businessName }}</div>
               <div v-if="row.tradeName" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ row.tradeName }}</div>
             </td>
+            <td class="py-2.5 px-4">
+              <span class="font-mono text-xs">{{ row.countryCode }}</span>
+              <Badge v-if="isForeignSupplier(row)" variant="warning" class="ml-2">No dom.</Badge>
+            </td>
             <td class="py-2.5 px-4 text-right font-mono font-semibold">{{ formatPen(row.payableBalance) }}</td>
             <td class="py-2.5 px-4 text-center">{{ row.invoiceCount }}</td>
             <td class="py-2.5 px-4">
@@ -163,7 +184,7 @@ function submitForm() {
             </td>
           </tr>
           <tr v-if="!rows.length">
-            <td colspan="6" class="py-8 text-center" :style="{ color: 'var(--color-text-muted)' }">
+            <td colspan="7" class="py-8 text-center" :style="{ color: 'var(--color-text-muted)' }">
               Sin proveedores registrados
             </td>
           </tr>
@@ -182,6 +203,15 @@ function submitForm() {
           :disabled="Boolean(editing)"
         />
         <FormInput v-model="form.businessName" label="Razón social" required />
+        <div class="grid gap-4 sm:grid-cols-2">
+          <FormSelect v-model="form.countryCode" label="País" :options="countryOptions" />
+          <div class="flex items-end pb-1">
+            <FormCheckbox
+              v-model="form.isNonDomiciled"
+              label="Proveedor no domiciliado (PLE 8.2)"
+            />
+          </div>
+        </div>
         <FormInput v-model="form.tradeName" label="Nombre comercial" />
         <FormInput v-model="form.address" label="Dirección" />
         <div class="grid gap-4 sm:grid-cols-2">

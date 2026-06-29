@@ -14,6 +14,10 @@ import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/
 import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
 import { useContabilidadCostCentersList } from '@modules/contabilidad/features/centros-costo/application/useContabilidadCostCenters'
 import {
+  useContabilidadJournalTemplates,
+  useContabilidadApplyJournalTemplate,
+} from '@modules/contabilidad/features/plantillas-asiento/application/useContabilidadJournalTemplates'
+import {
   useContabilidadCreateJournal,
   useContabilidadUpdateJournal,
   useContabilidadJournalDetail,
@@ -48,6 +52,17 @@ const { data: costCenters } = useContabilidadCostCentersList(emptySearch)
 const { mutate: createJournal, isPending: creating } = useContabilidadCreateJournal()
 const { mutate: updateJournal, isPending: updating } = useContabilidadUpdateJournal()
 const { mutate: postJournal, isPending: posting } = useContabilidadPostJournal()
+
+const { data: templatesData } = useContabilidadJournalTemplates()
+const { mutate: applyTemplate, isPending: applyingTemplate } = useContabilidadApplyJournalTemplate()
+const selectedTemplateId = ref('')
+
+const templateOptions = computed(() => [
+  { value: '', label: 'Sin plantilla' },
+  ...(templatesData.value?.templates ?? [])
+    .filter((t) => t.isActive)
+    .map((t) => ({ value: t.id, label: t.name })),
+])
 
 const form = ref({
   entryDate: new Date().toISOString().slice(0, 10),
@@ -195,6 +210,36 @@ function goBack() {
   }
   void router.push({ name: 'contabilidad-asientos-libro-diario' })
 }
+
+function applySelectedTemplate() {
+  if (!selectedTemplateId.value) {
+    void markapAlert.toast.warning('Seleccione una plantilla')
+    return
+  }
+  applyTemplate(selectedTemplateId.value, {
+    onSuccess: (result) => {
+      if (result.description?.trim()) {
+        form.value.description = result.description.trim()
+      } else if (result.templateName) {
+        form.value.description = result.templateName
+      }
+      lines.value = result.lines.map((line) => ({
+        key: crypto.randomUUID(),
+        accountId: line.accountId,
+        debit: Number(line.debit) > 0 ? line.debit : '',
+        credit: Number(line.credit) > 0 ? line.credit : '',
+        costCenterId: line.costCenterId ?? '',
+        auxiliaryRuc: '',
+        auxiliaryDoc: '',
+        description: line.description ?? '',
+      }))
+      if (lines.value.length < 2) {
+        while (lines.value.length < 2) lines.value.push(newJournalLineRow())
+      }
+      void markapAlert.toast.success(`Plantilla «${result.templateName}» aplicada`)
+    },
+  })
+}
 </script>
 
 <template>
@@ -227,6 +272,23 @@ function goBack() {
         <FormInput v-model="form.entryDate" label="Fecha" type="date" required />
         <div class="sm:col-span-2">
           <FormTextarea v-model="form.description" label="Glosa" :rows="2" required />
+        </div>
+        <div v-if="!isEdit" class="sm:col-span-2 flex flex-col sm:flex-row sm:items-end gap-3">
+          <FormSelect
+            v-model="selectedTemplateId"
+            label="Plantilla de asiento"
+            :options="templateOptions"
+            class="flex-1"
+          />
+          <BaseButton
+            variant="secondary"
+            :loading="applyingTemplate"
+            :disabled="!selectedTemplateId"
+            @click="applySelectedTemplate"
+          >
+            <AppIcon icon="lucide:layout-template" :size="16" class="mr-1" />
+            Aplicar plantilla
+          </BaseButton>
         </div>
       </div>
 
