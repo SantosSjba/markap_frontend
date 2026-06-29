@@ -240,6 +240,13 @@ export const CONTABILIDAD_FALLBACK_MENUS: MenuItem[] = [
         path: '/contabilidad/tributos/renta',
         order: 4,
       },
+      {
+        id: 'cont-fb-trib-decl',
+        label: 'Declaraciones SOL',
+        icon: null,
+        path: '/contabilidad/tributos/declaraciones-sol',
+        order: 5,
+      },
     ],
   },
   {

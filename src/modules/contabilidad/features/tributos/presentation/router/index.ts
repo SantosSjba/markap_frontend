@@ -35,4 +35,10 @@ export const contabilidadTributosRoutes: RouteRecordRaw[] = [
     component: () => import('../views/ContabilidadTributosRentaView.vue'),
     meta: { title: 'Impuesto a la renta' },
   },
+  {
+    path: 'declaraciones-sol',
+    name: 'contabilidad-tributos-declaraciones-sol',
+    component: () => import('@modules/contabilidad/features/declaraciones-sol/presentation/views/ContabilidadTributosDeclaracionesSolView.vue'),
+    meta: { title: 'Declaraciones SOL' },
+  },
 ]

@@ -106,7 +106,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
       },
       { path: 'impuestos/igv', redirect: '/contabilidad/tributos/igv' },
       { path: 'impuestos/renta', redirect: '/contabilidad/tributos/renta' },
-      { path: 'impuestos/declaraciones', redirect: '/contabilidad/tributos/igv' },
+      { path: 'impuestos/declaraciones', redirect: '/contabilidad/tributos/declaraciones-sol' },
       // Inventario permanente
       {
         path: 'inventario-permanente',
