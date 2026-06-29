@@ -7,6 +7,7 @@ import { produccionCatalogoRoutes } from '../../features/catalogo'
 import { produccionCostosRoutes } from '../../features/costos'
 import { produccionInventarioRoutes } from '../../features/inventario'
 import { produccionComprasRoutes } from '../../features/compras'
+import { produccionTallerRoutes, produccionSeguimientoRoutes } from '../../features/taller'
 
 const placeholder = () => import('../views/ProduccionPlaceholderView.vue')
 
@@ -52,44 +53,13 @@ export const produccionRoutes: RouteRecordRaw[] = [
         path: 'ordenes-trabajo',
         component: SectionLayout,
         meta: { title: 'Órdenes de trabajo' },
-        children: [
-          {
-            path: '',
-            name: 'produccion-ordenes-trabajo',
-            component: placeholder,
-            meta: { title: 'Órdenes de trabajo' },
-          },
-          {
-            path: 'nueva',
-            redirect: '/produccion/ordenes-trabajo',
-          },
-        ],
+        children: produccionTallerRoutes,
       },
-      // Producción (seguimiento y etapas)
       {
         path: 'produccion',
         component: SectionLayout,
         meta: { title: 'Producción' },
-        children: [
-          {
-            path: 'en-proceso',
-            name: 'produccion-en-proceso',
-            component: placeholder,
-            meta: { title: 'Producción en proceso' },
-          },
-          {
-            path: 'etapas',
-            name: 'produccion-etapas',
-            component: placeholder,
-            meta: { title: 'Etapas de producción' },
-          },
-          {
-            path: 'terminados',
-            name: 'produccion-terminados',
-            component: placeholder,
-            meta: { title: 'Productos terminados' },
-          },
-        ],
+        children: produccionSeguimientoRoutes,
       },
       { path: 'ordenes-trabajo/en-proceso', redirect: '/produccion/produccion/en-proceso' },
       {
