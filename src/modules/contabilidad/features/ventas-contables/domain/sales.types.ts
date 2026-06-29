@@ -79,6 +79,8 @@ export interface ContabilidadSalesInvoiceDTO {
   collectedAmount: string
   balanceAmount: string
   status: string
+  electronicStatus: string
+  electronicLogId: string | null
   notes: string | null
   journalEntryId: string | null
   cancelledAt: string | null

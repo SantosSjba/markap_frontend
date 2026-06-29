@@ -18,6 +18,7 @@ import { contabilidadTiposCambioRoutes } from '../../features/tipos-cambio'
 import { contabilidadCpeLogRoutes } from '../../features/cpe-log'
 import { contabilidadInventarioContableRoutes } from '../../features/inventario-contable'
 import { contabilidadAuditoriaRoutes } from '../../features/auditoria'
+import { contabilidadFacturacionElectronicaRoutes } from '../../features/facturacion-electronica'
 import { ContabilidadCierreMensualView } from '../../features/cierre'
 
 export const contabilidadRoutes: RouteRecordRaw[] = [
@@ -135,6 +136,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
           ...contabilidadConfiguracionRoutes,
           ...contabilidadTiposCambioRoutes,
           ...contabilidadCpeLogRoutes,
+          ...contabilidadFacturacionElectronicaRoutes,
           ...contabilidadAuditoriaRoutes.map((r) => ({ ...r, path: r.path === '' ? 'auditoria' : r.path })),
         ],
       },

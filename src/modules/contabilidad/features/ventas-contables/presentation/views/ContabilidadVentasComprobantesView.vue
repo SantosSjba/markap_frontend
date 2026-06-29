@@ -32,6 +32,13 @@ import {
   useContabilidadCancelSalesInvoice,
 } from '../../application/useContabilidadSales'
 import {
+  useContabilidadEmitSalesInvoice,
+  CPE_ELECTRONIC_STATUS,
+  CPE_ELECTRONIC_STATUS_LABELS,
+  cpeElectronicStatusVariant,
+  contabilidadCpeApiRepository,
+} from '@modules/contabilidad/features/facturacion-electronica'
+import {
   SALES_DOCUMENT_TYPE,
   SALES_STATUS_FILTER_OPTIONS,
   SALES_TAX_AFFECTATION,
@@ -87,6 +94,7 @@ const incomeOptions = computed(() =>
 
 const { mutate: createInvoice, isPending: saving } = useContabilidadCreateSalesInvoice()
 const { mutate: cancelInvoice, isPending: cancelling } = useContabilidadCancelSalesInvoice()
+const { mutate: emitInvoice, isPending: emitting } = useContabilidadEmitSalesInvoice()
 
 const modalOpen = ref(false)
 const form = ref({
@@ -150,6 +158,7 @@ const columns = [
   { key: 'totalAmount', label: 'Total', align: 'right' as const },
   { key: 'balanceAmount', label: 'Saldo', align: 'right' as const },
   { key: 'status', label: 'Estado' },
+  { key: 'electronicStatus', label: 'SUNAT' },
   { key: 'actions', label: '', align: 'right' as const },
 ]
 
@@ -205,6 +214,40 @@ async function onCancel(row: ContabilidadSalesInvoiceDTO) {
 function goJournal(row: ContabilidadSalesInvoiceDTO) {
   if (!row.journalEntryId) return
   void router.push({ name: 'contabilidad-asiento-detalle', params: { id: row.journalEntryId } })
+}
+
+function electronicLabel(status: string) {
+  return CPE_ELECTRONIC_STATUS_LABELS[status] ?? status
+}
+
+function canEmitElectronic(row: ContabilidadSalesInvoiceDTO) {
+  return row.status !== 'CANCELLED' && row.electronicStatus !== CPE_ELECTRONIC_STATUS.ACCEPTED
+}
+
+async function onEmitElectronic(row: ContabilidadSalesInvoiceDTO) {
+  const ok = await markapAlert.confirm({
+    title: 'Emitir electrónicamente',
+    text: `Se generará XML UBL y se enviará al proveedor configurado (${row.fullNumber}).`,
+    confirmText: 'Emitir',
+  })
+  if (!ok) return
+  emitInvoice(row.id, { onSuccess: () => void refetch() })
+}
+
+async function downloadXml(logId: string) {
+  try {
+    await contabilidadCpeApiRepository.downloadArtifact(logId, 'xml')
+  } catch {
+    void markapAlert.toast.error('No se pudo descargar el XML')
+  }
+}
+
+async function downloadCdr(logId: string) {
+  try {
+    await contabilidadCpeApiRepository.downloadArtifact(logId, 'cdr')
+  } catch {
+    void markapAlert.toast.error('No se pudo descargar el CDR')
+  }
 }
 </script>
 
@@ -285,7 +328,40 @@ function goJournal(row: ContabilidadSalesInvoiceDTO) {
               {{ statusLabel((row as ContabilidadSalesInvoiceDTO).status) }}
             </Badge>
           </td>
+          <td class="py-3 px-4">
+            <Badge :variant="cpeElectronicStatusVariant((row as ContabilidadSalesInvoiceDTO).electronicStatus)">
+              {{ electronicLabel((row as ContabilidadSalesInvoiceDTO).electronicStatus) }}
+            </Badge>
+          </td>
           <td class="py-3 px-4 text-right whitespace-nowrap">
+            <BaseButton
+              v-if="canEmitElectronic(row as ContabilidadSalesInvoiceDTO)"
+              variant="primary"
+              size="sm"
+              class="mr-1"
+              :loading="emitting"
+              @click="onEmitElectronic(row as ContabilidadSalesInvoiceDTO)"
+            >
+              Emitir
+            </BaseButton>
+            <BaseButton
+              v-if="(row as ContabilidadSalesInvoiceDTO).electronicLogId"
+              variant="secondary"
+              size="sm"
+              class="mr-1"
+              @click="downloadXml((row as ContabilidadSalesInvoiceDTO).electronicLogId!)"
+            >
+              XML
+            </BaseButton>
+            <BaseButton
+              v-if="(row as ContabilidadSalesInvoiceDTO).electronicLogId && (row as ContabilidadSalesInvoiceDTO).electronicStatus === CPE_ELECTRONIC_STATUS.ACCEPTED"
+              variant="secondary"
+              size="sm"
+              class="mr-1"
+              @click="downloadCdr((row as ContabilidadSalesInvoiceDTO).electronicLogId!)"
+            >
+              CDR
+            </BaseButton>
             <BaseButton
               v-if="(row as ContabilidadSalesInvoiceDTO).journalEntryId"
               variant="secondary"

@@ -9,6 +9,8 @@ export const CPE_DOCUMENT_KIND_OPTIONS = [
 ] as const
 
 export const CPE_SUNAT_STATUS_OPTIONS = [
+  { value: 'NONE', label: 'Sin emitir' },
+  { value: 'DRAFT', label: 'Borrador' },
   { value: 'REGISTERED', label: 'Registrado local' },
   { value: 'SENT', label: 'Enviado' },
   { value: 'ACCEPTED', label: 'Aceptado' },
