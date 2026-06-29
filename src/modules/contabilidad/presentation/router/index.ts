@@ -12,6 +12,8 @@ import { contabilidadComprasRoutes } from '../../features/compras'
 import { contabilidadVentasContablesRoutes } from '../../features/ventas-contables'
 import { contabilidadTributosRoutes } from '../../features/tributos'
 import { contabilidadLibrosERoutes } from '../../features/libros-e'
+import { contabilidadReportesFinancierosRoutes } from '../../features/reportes-financieros'
+import { ContabilidadCierreMensualView } from '../../features/cierre'
 
 const placeholder = () => import('../views/ContabilidadPlaceholderView.vue')
 
@@ -62,7 +64,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
       {
         path: 'cierre-mensual',
         name: 'contabilidad-cierre-mensual',
-        component: placeholder,
+        component: ContabilidadCierreMensualView,
         meta: { title: 'Cierre mensual' },
       },
       // Tesorería
@@ -114,29 +116,12 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         component: SectionLayout,
         meta: { title: 'Reportes financieros' },
         children: [
-          {
-            path: 'balance-general',
-            name: 'contabilidad-reportes-balance-general',
-            component: placeholder,
-            meta: { title: 'Balance general' },
-          },
-          {
-            path: 'estado-resultados',
-            name: 'contabilidad-reportes-estado-resultados',
-            component: placeholder,
-            meta: { title: 'Estado de resultados' },
-          },
+          ...contabilidadReportesFinancierosRoutes,
           {
             path: 'flujo-caja',
             name: 'contabilidad-reportes-flujo-caja',
             component: placeholder,
             meta: { title: 'Flujo de caja' },
-          },
-          {
-            path: 'flujo-efectivo',
-            name: 'contabilidad-reportes-flujo-efectivo',
-            component: placeholder,
-            meta: { title: 'Flujo de efectivo' },
           },
           {
             path: 'analisis-financiero',
