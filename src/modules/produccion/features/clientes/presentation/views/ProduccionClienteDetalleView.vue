@@ -3,6 +3,15 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, Badge, AppIcon } from '@shared/components'
 import { useProduccionClient } from '../../application/useClients'
+import { useProduccionQuotationsList, useProduccionOrdersList } from '../../../ventas/application/useProduccionSales'
+import {
+  formatSol,
+  formatDate,
+  QUOTATION_STATUS_LABELS,
+  quotationStatusClass,
+  ORDER_STATUS_LABELS,
+  orderStatusClass,
+} from '../../../ventas/presentation/labels'
 import { PRODUCCION_BASE_PATH } from '@modules/produccion/config/routes.constants'
 import type { ClientDetail } from '../../domain/client.types'
 
@@ -14,6 +23,13 @@ const id = computed(() => String(route.params.id ?? ''))
 const activeTab = ref<'datos' | 'cotizaciones' | 'pedidos' | 'notas'>('datos')
 
 const { data: client, isLoading, isError } = useProduccionClient(id)
+
+const salesListParams = computed(() => ({ page: 1, limit: 10, clientId: id.value }))
+const { data: quotationsRes } = useProduccionQuotationsList(salesListParams)
+const { data: ordersRes } = useProduccionOrdersList(salesListParams)
+
+const clientQuotations = computed(() => quotationsRes.value?.data ?? [])
+const clientOrders = computed(() => ordersRes.value?.data ?? [])
 
 watch(isError, (e) => {
   if (e) void router.replace(`${PRODUCCION_BASE_PATH}/clientes`)
@@ -157,44 +173,68 @@ const addrText = computed(() => {
 
       <div
         v-show="activeTab === 'cotizaciones'"
-        class="p-8 rounded-xl border text-center"
+        class="p-6 rounded-xl border space-y-4"
         :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
       >
-        <AppIcon icon="lucide:file-text" :size="40" class="mx-auto mb-3 opacity-40" />
-        <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
-          Cotizaciones del cliente
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Cotizaciones</h3>
+          <BaseButton
+            variant="outline"
+            size="sm"
+            @click="router.push(`${PRODUCCION_BASE_PATH}/ventas/cotizaciones?clientId=${client.id}`)"
+          >
+            Ver todas
+          </BaseButton>
+        </div>
+        <p v-if="!clientQuotations.length" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          Sin cotizaciones para este cliente.
         </p>
-        <p class="text-sm mt-1 mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Aquí se listarán las cotizaciones cuando el módulo de ventas esté conectado.
-        </p>
-        <BaseButton
-          variant="outline"
-          size="sm"
-          @click="router.push(`${PRODUCCION_BASE_PATH}/ventas/cotizaciones?clientId=${client.id}`)"
-        >
-          Ir a cotizaciones
-        </BaseButton>
+        <ul v-else class="divide-y" :style="{ borderColor: 'var(--color-border)' }">
+          <li
+            v-for="q in clientQuotations"
+            :key="q.id"
+            class="py-3 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:opacity-80"
+            @click="router.push({ name: 'produccion-ventas-cotizacion-detalle', params: { id: q.id } })"
+          >
+            <span class="font-mono text-sm font-medium" :style="{ color: 'var(--color-primary)' }">{{ q.code }}</span>
+            <span class="text-sm" :class="quotationStatusClass(q.status)">{{ QUOTATION_STATUS_LABELS[q.status] }}</span>
+            <span class="text-sm">{{ formatDate(q.validUntil) }}</span>
+            <span class="text-sm font-medium">{{ formatSol(q.totalAmount) }}</span>
+          </li>
+        </ul>
       </div>
 
       <div
         v-show="activeTab === 'pedidos'"
-        class="p-8 rounded-xl border text-center"
+        class="p-6 rounded-xl border space-y-4"
         :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
       >
-        <AppIcon icon="lucide:package" :size="40" class="mx-auto mb-3 opacity-40" />
-        <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
-          Pedidos del cliente
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Pedidos</h3>
+          <BaseButton
+            variant="outline"
+            size="sm"
+            @click="router.push(`${PRODUCCION_BASE_PATH}/ventas/pedidos?clientId=${client.id}`)"
+          >
+            Ver todos
+          </BaseButton>
+        </div>
+        <p v-if="!clientOrders.length" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          Sin pedidos para este cliente.
         </p>
-        <p class="text-sm mt-1 mb-4" :style="{ color: 'var(--color-text-secondary)' }">
-          Aquí se listarán los pedidos en curso y entregados.
-        </p>
-        <BaseButton
-          variant="outline"
-          size="sm"
-          @click="router.push(`${PRODUCCION_BASE_PATH}/ventas/pedidos?clientId=${client.id}`)"
-        >
-          Ir a pedidos
-        </BaseButton>
+        <ul v-else class="divide-y" :style="{ borderColor: 'var(--color-border)' }">
+          <li
+            v-for="o in clientOrders"
+            :key="o.id"
+            class="py-3 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:opacity-80"
+            @click="router.push({ name: 'produccion-ventas-pedido-detalle', params: { id: o.id } })"
+          >
+            <span class="font-mono text-sm font-medium" :style="{ color: 'var(--color-primary)' }">{{ o.code }}</span>
+            <span class="text-sm" :class="orderStatusClass(o.status)">{{ ORDER_STATUS_LABELS[o.status] }}</span>
+            <span class="text-sm">{{ formatDate(o.orderedAt) }}</span>
+            <span class="text-sm font-medium">{{ formatSol(o.totalAmount) }}</span>
+          </li>
+        </ul>
       </div>
 
       <div
