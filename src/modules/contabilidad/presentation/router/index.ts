@@ -3,6 +3,7 @@ import ContabilidadLayout from '../views/ContabilidadLayout.vue'
 import { SectionLayout } from '@layouts'
 import { CONTABILIDAD_BASE_PATH } from '../../config/routes.constants'
 import { contabilidadConfiguracionRoutes } from '../../features/configuracion'
+import { contabilidadPlanCuentasRoutes } from '../../features/plan-cuentas'
 
 const placeholder = () => import('../views/ContabilidadPlaceholderView.vue')
 
@@ -27,9 +28,9 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
       // Contabilidad
       {
         path: 'plan-cuentas',
-        name: 'contabilidad-plan-cuentas',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Plan de cuentas' },
+        children: contabilidadPlanCuentasRoutes,
       },
       { path: 'plan-cuentas/nueva-cuenta', redirect: '/contabilidad/plan-cuentas' },
       {
