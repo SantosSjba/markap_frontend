@@ -26,7 +26,7 @@ export const CONTABILIDAD_FALLBACK_MENUS: MenuItem[] = [
         id: 'cont-fb-cont-asientos',
         label: 'Asientos contables',
         icon: null,
-        path: '/contabilidad/asientos/libro-diario',
+        path: '/contabilidad/asientos',
         order: 1,
       },
       {

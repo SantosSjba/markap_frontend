@@ -58,6 +58,78 @@ const toFullPath = (path: string | null, parentFullPath?: string): string => {
   return parentBase ? `${parentBase}/${segment}` : `/${segment}`
 }
 
+// Rutas de menú que redirigen a otra URL (solo navegación; no compiten por resaltado)
+const MENU_ACTIVE_ALIASES: Record<string, string> = {
+  '/contabilidad/libros-e/libro-diario': '/contabilidad/asientos/libro-diario',
+}
+
+function isLibrosElectronicosSection(parent: MenuItem): boolean {
+  const parentFull = toFullPath(parent.path)
+  return (
+    parent.label?.toLowerCase().includes('libros electr') === true ||
+    parentFull.includes('/libros-e') ||
+    parent.id.toLowerCase().includes('lib')
+  )
+}
+
+/** Enlace en Libros electrónicos que apunta al módulo de asientos (no debe resaltarse allí). */
+function isLibrosCrossLink(menuFull: string, parent: MenuItem): boolean {
+  if (!isLibrosElectronicosSection(parent)) return false
+  const resolved = MENU_ACTIVE_ALIASES[menuFull] ?? menuFull
+  return (
+    resolved.startsWith('/contabilidad/asientos') ||
+    menuFull.startsWith('/contabilidad/asientos')
+  )
+}
+
+function scoreMenuMatch(menuFull: string, routePath: string, parent: MenuItem): number {
+  if (menuFull === '#') return 0
+  if (isLibrosCrossLink(menuFull, parent)) return 0
+
+  const resolved = MENU_ACTIVE_ALIASES[menuFull] ?? menuFull
+  const isAlias = menuFull !== resolved
+
+  if (routePath === resolved || routePath === resolved + '/') {
+    return 1000 + resolved.length - (isAlias ? 100 : 0)
+  }
+  if (routePath.startsWith(resolved + '/')) {
+    return 500 + resolved.length
+  }
+  return 0
+}
+
+function menuPathMatchesRoute(menuFull: string, routePath: string, parent?: MenuItem): boolean {
+  if (menuFull === '#') return false
+  if (parent && isLibrosCrossLink(menuFull, parent)) return false
+  const resolved = MENU_ACTIVE_ALIASES[menuFull] ?? menuFull
+  return (
+    routePath === resolved ||
+    routePath === resolved + '/' ||
+    routePath.startsWith(resolved + '/')
+  )
+}
+
+/** Un solo ítem hijo activo en todo el sidebar (el de mayor especificidad). */
+const activeMenuEntry = computed(() => {
+  let best: { parentId: string; childId: string; score: number } | null = null
+
+  for (const parent of props.menus) {
+    if (!parent.children?.length) continue
+    const parentFull = toFullPath(parent.path)
+
+    for (const child of parent.children) {
+      if (!child.path) continue
+      const menuFull = toFullPath(child.path, parentFull)
+      const score = scoreMenuMatch(menuFull, route.path, parent)
+      if (score <= 0) continue
+      if (!best || score > best.score) {
+        best = { parentId: parent.id, childId: child.id, score }
+      }
+    }
+  }
+  return best
+})
+
 const isActive = (path: string | null, parentFullPath?: string) => {
   if (!path) return false
   const full = toFullPath(path, parentFullPath)
@@ -67,26 +139,14 @@ const isActive = (path: string | null, parentFullPath?: string) => {
   if (full === basePath.value || path === '/' || path === '') {
     return route.path === full || route.path === full + '/'
   }
-  return route.path === full || route.path === full + '/' || route.path.startsWith(full + '/')
+  return menuPathMatchesRoute(full, route.path)
 }
 
-/** Entre varios hijos del mismo padre, devuelve el id del hijo que debe verse activo (el de ruta más específica que coincida) */
+/** Entre varios hijos del mismo padre, devuelve el id del hijo activo global (si pertenece a este padre). */
 const getActiveChildId = (item: MenuItem): string | null => {
-  if (!item.children?.length) return null
-  const parentFull = toFullPath(item.path)
-  const candidates = item.children
-    .filter((c) => c.path)
-    .map((c) => ({ id: c.id, full: toFullPath(c.path, parentFull) }))
-    .filter((x) => x.full !== '#')
-  // Ordenar por longitud de path descendente para que /alquileres/clientes/nuevo gane sobre /alquileres/clientes
-  candidates.sort((a, b) => b.full.length - a.full.length)
-  const active = candidates.find(
-    (x) =>
-      route.path === x.full ||
-      route.path === x.full + '/' ||
-      route.path.startsWith(x.full + '/')
-  )
-  return active?.id ?? null
+  const active = activeMenuEntry.value
+  if (!active || active.parentId !== item.id) return null
+  return active.childId
 }
 
 const isActiveChild = (child: MenuItem, parent: MenuItem): boolean => {

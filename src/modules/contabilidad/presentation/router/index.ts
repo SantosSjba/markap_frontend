@@ -15,8 +15,6 @@ import { contabilidadLibrosERoutes } from '../../features/libros-e'
 import { contabilidadReportesFinancierosRoutes } from '../../features/reportes-financieros'
 import { ContabilidadCierreMensualView } from '../../features/cierre'
 
-const placeholder = () => import('../views/ContabilidadPlaceholderView.vue')
-
 export const contabilidadRoutes: RouteRecordRaw[] = [
   {
     path: CONTABILIDAD_BASE_PATH,
@@ -115,31 +113,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'reportes',
         component: SectionLayout,
         meta: { title: 'Reportes financieros' },
-        children: [
-          ...contabilidadReportesFinancierosRoutes,
-          {
-            path: 'flujo-caja',
-            name: 'contabilidad-reportes-flujo-caja',
-            component: placeholder,
-            meta: { title: 'Flujo de caja' },
-          },
-          {
-            path: 'analisis-financiero',
-            name: 'contabilidad-reportes-analisis-financiero',
-            component: placeholder,
-            meta: { title: 'Análisis financiero' },
-          },
-          {
-            path: 'kpis',
-            name: 'contabilidad-reportes-kpis',
-            component: placeholder,
-            meta: { title: 'KPIs' },
-          },
-          {
-            path: 'libro-mayor',
-            redirect: '/contabilidad/libros-e/libro-mayor',
-          },
-        ],
+        children: contabilidadReportesFinancierosRoutes,
       },
       {
         path: 'configuracion',

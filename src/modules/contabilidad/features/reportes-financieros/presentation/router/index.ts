@@ -22,6 +22,28 @@ export const contabilidadReportesFinancierosRoutes: RouteRecordRaw[] = [
       import('../views/ContabilidadFlujoEfectivoView.vue'),
     meta: { title: 'Flujo de efectivo' },
   },
+  {
+    path: 'flujo-caja',
+    name: 'contabilidad-reportes-flujo-caja',
+    component: () => import('../views/ContabilidadFlujoCajaView.vue'),
+    meta: { title: 'Flujo de caja' },
+  },
+  {
+    path: 'analisis-financiero',
+    name: 'contabilidad-reportes-analisis-financiero',
+    component: () => import('../views/ContabilidadAnalisisFinancieroView.vue'),
+    meta: { title: 'Análisis financiero' },
+  },
+  {
+    path: 'kpis',
+    name: 'contabilidad-reportes-kpis',
+    component: () => import('../views/ContabilidadKpisView.vue'),
+    meta: { title: 'KPIs' },
+  },
+  {
+    path: 'libro-mayor',
+    redirect: '/contabilidad/libros-e/libro-mayor',
+  },
 ]
 
 export { contabilidadReportesFinancierosRoutes as default }

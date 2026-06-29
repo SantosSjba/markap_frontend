@@ -3,28 +3,53 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@modules/auth'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
+import { useContabilidadActivePeriod } from '../composables/useContabilidadActivePeriod'
+import { useContabilidadReportsDashboard } from '@modules/contabilidad/features/reportes-financieros/application/useContabilidadReports'
+import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import type { ContabilidadDashboardKpiDTO } from '@modules/contabilidad/features/reportes-financieros/domain/reports.types'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { activePeriod } = useContabilidadActivePeriod()
+const periodId = computed(() => activePeriod.value?.id)
+
+const { data: dashboard, isLoading } = useContabilidadReportsDashboard(periodId)
 
 const greetingHour = new Date().getHours()
 const greeting =
   greetingHour < 12 ? 'Buenos días' : greetingHour < 19 ? 'Buenas tardes' : 'Buenas noches'
 const firstName = computed(() => authStore.user?.firstName ?? 'Usuario')
 
-const kpis = [
-  { label: 'Asientos del mes', value: '156', delta: '+12', icon: 'lucide:book-open' as const },
-  { label: 'Facturas pendientes', value: '24', delta: '-3', icon: 'lucide:receipt' as const },
-  { label: 'Saldo bancos', value: 'S/ 428K', icon: 'lucide:landmark' as const },
-  { label: 'IGV por declarar', value: '2', icon: 'lucide:percent' as const },
-]
+const kpiIcons: Record<string, string> = {
+  posted_entries: 'lucide:book-open',
+  net_income: 'lucide:trending-up',
+  liquidity: 'lucide:droplets',
+  cxc: 'lucide:hand-coins',
+  cxp: 'lucide:credit-card',
+  igv_balance: 'lucide:percent',
+  cash_bank: 'lucide:landmark',
+  total_assets: 'lucide:scale',
+}
 
-const actividad = [
-  { title: 'Asiento publicado', detail: 'A-2404-089 — Cierre gastos administrativos', time: 'Hace 2 h', tone: 'success' as const },
-  { title: 'Factura de compra', detail: 'F001-9921 — Proveedor Equipos SAC', time: 'Hace 5 h', tone: 'primary' as const },
-  { title: 'Conciliación bancaria', detail: 'Cuenta corriente soles — Marzo', time: 'Hace 1 día', tone: 'muted' as const },
-  { title: 'Declaración mensual', detail: 'IGV período 03/2026', time: 'Hace 2 días', tone: 'muted' as const },
-]
+const displayKpis = computed(() => {
+  const all = dashboard.value?.kpis ?? []
+  const keys = ['posted_entries', 'net_income', 'cxc', 'igv_balance']
+  return keys.map((key) => all.find((k) => k.key === key)).filter(Boolean) as ContabilidadDashboardKpiDTO[]
+})
+
+function formatKpi(kpi: ContabilidadDashboardKpiDTO) {
+  if (kpi.format === 'money') return formatPen(kpi.value)
+  return kpi.value
+}
+
+function formatActivityTime(iso: string) {
+  const d = new Date(iso)
+  const diff = Date.now() - d.getTime()
+  const h = Math.floor(diff / 3_600_000)
+  if (h < 1) return 'Hace poco'
+  if (h < 24) return `Hace ${h} h`
+  return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })
+}
 
 const acciones = [
   { label: 'Nuevo asiento', sub: 'Contabilidad', to: '/contabilidad/asientos/libro-diario', icon: 'lucide:plus-circle' as const },
@@ -33,7 +58,7 @@ const acciones = [
   { label: 'Tesorería', sub: 'Caja y bancos', to: '/contabilidad/tesoreria/caja', icon: 'lucide:landmark' as const },
 ]
 
-const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
+const toneBorder = (tone: string) => {
   if (tone === 'success') return 'var(--color-success, #16a34a)'
   if (tone === 'primary') return 'var(--color-primary)'
   return 'var(--color-border)'
@@ -66,10 +91,18 @@ const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
       </p>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+      Seleccione un periodo activo para ver indicadores.
+    </div>
+
+    <div v-else-if="isLoading" class="flex justify-center py-12">
+      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+    </div>
+
+    <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <div
-        v-for="k in kpis"
-        :key="k.label"
+        v-for="k in displayKpis"
+        :key="k.key"
         class="rounded-xl border p-4 transition-shadow hover:shadow-md"
         :style="{
           backgroundColor: 'var(--color-surface)',
@@ -85,22 +118,13 @@ const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
             style="background-color: var(--color-primary-light); color: var(--color-primary)"
           >
-            <AppIcon :icon="k.icon" :size="18" />
+            <AppIcon :icon="kpiIcons[k.key] ?? 'lucide:activity'" :size="18" />
           </div>
         </div>
-        <p class="text-2xl font-bold tabular-nums" style="color: var(--color-text-primary)">
-          {{ k.value }}
+        <p class="text-2xl font-bold tabular-nums font-mono" style="color: var(--color-text-primary)">
+          {{ formatKpi(k) }}
         </p>
-        <p
-          v-if="k.delta"
-          class="text-xs mt-1 font-medium"
-          :style="{
-            color: k.delta.startsWith('-') ? 'var(--color-text-muted)' : 'var(--color-success, #16a34a)',
-          }"
-        >
-          {{ k.delta }}
-        </p>
-        <p v-else class="text-xs mt-1" style="color: var(--color-text-muted)">—</p>
+        <p v-if="k.hint" class="text-xs mt-1" style="color: var(--color-text-muted)">{{ k.hint }}</p>
       </div>
     </div>
 
@@ -117,12 +141,12 @@ const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
           Actividad reciente
         </h2>
         <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-          Últimos movimientos contables
+          Últimos asientos publicados del periodo
         </p>
-        <ul class="space-y-3">
+        <ul v-if="dashboard?.recentActivity?.length" class="space-y-3">
           <li
-            v-for="a in actividad"
-            :key="a.title + a.time"
+            v-for="a in dashboard.recentActivity"
+            :key="a.id"
             class="flex gap-3 rounded-lg border p-3"
             :style="{
               borderColor: 'var(--color-border)',
@@ -139,10 +163,13 @@ const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
               </p>
             </div>
             <span class="text-[11px] shrink-0 self-start" style="color: var(--color-text-muted)">
-              {{ a.time }}
+              {{ formatActivityTime(a.occurredAt) }}
             </span>
           </li>
         </ul>
+        <p v-else class="text-sm" style="color: var(--color-text-muted)">
+          Sin actividad publicada en este periodo.
+        </p>
       </div>
 
       <div
@@ -186,9 +213,5 @@ const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
         </div>
       </div>
     </div>
-
-    <p class="text-center text-xs" style="color: var(--color-text-muted)">
-      Datos de demostración; conectar módulos reales cuando estén listos.
-    </p>
   </div>
 </template>
