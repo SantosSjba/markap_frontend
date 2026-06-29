@@ -11,6 +11,7 @@ import { contabilidadTesoreriaRoutes } from '../../features/tesoreria'
 import { contabilidadComprasRoutes } from '../../features/compras'
 import { contabilidadVentasContablesRoutes } from '../../features/ventas-contables'
 import { contabilidadTributosRoutes } from '../../features/tributos'
+import { contabilidadLibrosERoutes } from '../../features/libros-e'
 
 const placeholder = () => import('../views/ContabilidadPlaceholderView.vue')
 
@@ -105,50 +106,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'libros-e',
         component: SectionLayout,
         meta: { title: 'Libros electrónicos' },
-        children: [
-          {
-            path: 'registro-compras',
-            name: 'contabilidad-libros-registro-compras',
-            component: placeholder,
-            meta: { title: 'Registro de compras' },
-          },
-          {
-            path: 'registro-ventas',
-            name: 'contabilidad-libros-registro-ventas',
-            component: placeholder,
-            meta: { title: 'Registro de ventas' },
-          },
-          {
-            path: 'libro-diario',
-            name: 'contabilidad-libros-libro-diario',
-            component: placeholder,
-            meta: { title: 'Libro diario' },
-          },
-          {
-            path: 'libro-mayor',
-            name: 'contabilidad-libros-libro-mayor',
-            component: placeholder,
-            meta: { title: 'Libro mayor' },
-          },
-          {
-            path: 'libro-caja',
-            name: 'contabilidad-libros-libro-caja',
-            component: placeholder,
-            meta: { title: 'Libro caja' },
-          },
-          {
-            path: 'libro-bancos',
-            name: 'contabilidad-libros-libro-bancos',
-            component: placeholder,
-            meta: { title: 'Libro bancos' },
-          },
-          {
-            path: 'ple',
-            name: 'contabilidad-libros-ple',
-            component: placeholder,
-            meta: { title: 'PLE' },
-          },
-        ],
+        children: contabilidadLibrosERoutes,
       },
       // Reportes financieros
       {
