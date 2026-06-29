@@ -27,10 +27,10 @@ const actividad = [
 ]
 
 const acciones = [
-  { label: 'Nueva orden', sub: 'Crear OT', to: '/produccion/ordenes-trabajo/nueva', icon: 'lucide:plus-circle' as const },
-  { label: 'Nuevo producto', sub: 'Ficha técnica', to: '/produccion/productos/nuevo', icon: 'lucide:boxes' as const },
-  { label: 'Movimientos', sub: 'Kardex', to: '/produccion/inventario/movimientos', icon: 'lucide:arrow-right-left' as const },
-  { label: 'Planificación', sub: 'Etapas', to: '/produccion/etapas/planificacion', icon: 'lucide:kanban' as const },
+  { label: 'Nueva orden', sub: 'Crear OT', to: '/produccion/ordenes-trabajo', icon: 'lucide:plus-circle' as const },
+  { label: 'Nuevo mueble', sub: 'Catálogo', to: '/produccion/catalogo/nuevo', icon: 'lucide:boxes' as const },
+  { label: 'Órdenes de compra', sub: 'Compras', to: '/produccion/compras/ordenes-compra', icon: 'lucide:truck' as const },
+  { label: 'Producción en proceso', sub: 'Seguimiento', to: '/produccion/produccion/en-proceso', icon: 'lucide:kanban' as const },
 ]
 
 const toneBorder = (tone: (typeof actividad)[number]['tone']) => {

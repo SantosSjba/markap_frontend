@@ -1,9 +1,7 @@
 import type { MenuItem } from '@shared/domain/menu.types'
 
 /**
- * Menú cuando la API no devuelve aún el árbol completo (sin seed).
- *
- * Flujo: Productos → Inventario → Proveedores → Órdenes → Producción → Reportes → Config
+ * Menú alineado al flujo operativo del negocio (fallback si la API no responde).
  */
 export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
   {
@@ -14,25 +12,85 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
     order: 0,
   },
   {
-    id: 'prod-fb-productos',
-    label: 'Productos',
-    icon: 'boxes',
+    id: 'prod-fb-clientes',
+    label: 'Clientes',
+    icon: 'users',
     path: null,
     order: 1,
     children: [
       {
-        id: 'prod-fb-prod-cat',
-        label: 'Catálogo',
+        id: 'prod-fb-cli-list',
+        label: 'Listado de clientes',
         icon: null,
-        path: '/produccion/productos',
+        path: '/produccion/clientes',
         order: 0,
       },
       {
-        id: 'prod-fb-prod-new',
-        label: 'Nuevo producto',
+        id: 'prod-fb-cli-new',
+        label: 'Nuevo cliente',
         icon: null,
-        path: '/produccion/productos/nuevo',
+        path: '/produccion/clientes/nuevo',
         order: 1,
+      },
+    ],
+  },
+  {
+    id: 'prod-fb-catalogo',
+    label: 'Catálogo de muebles',
+    icon: 'boxes',
+    path: null,
+    order: 2,
+    children: [
+      {
+        id: 'prod-fb-cat-list',
+        label: 'Catálogo',
+        icon: null,
+        path: '/produccion/catalogo',
+        order: 0,
+      },
+      {
+        id: 'prod-fb-cat-new',
+        label: 'Nuevo mueble',
+        icon: null,
+        path: '/produccion/catalogo/nuevo',
+        order: 1,
+      },
+    ],
+  },
+  {
+    id: 'prod-fb-produccion',
+    label: 'Producción',
+    icon: 'kanban',
+    path: null,
+    order: 3,
+    children: [
+      {
+        id: 'prod-fb-prod-ot',
+        label: 'Órdenes de trabajo',
+        icon: null,
+        path: '/produccion/ordenes-trabajo',
+        order: 0,
+      },
+      {
+        id: 'prod-fb-prod-proc',
+        label: 'Producción en proceso',
+        icon: null,
+        path: '/produccion/produccion/en-proceso',
+        order: 1,
+      },
+      {
+        id: 'prod-fb-prod-etapas',
+        label: 'Etapas de producción',
+        icon: null,
+        path: '/produccion/produccion/etapas',
+        order: 2,
+      },
+      {
+        id: 'prod-fb-prod-term',
+        label: 'Productos terminados',
+        icon: null,
+        path: '/produccion/produccion/terminados',
+        order: 3,
       },
     ],
   },
@@ -41,7 +99,7 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
     label: 'Inventario',
     icon: 'warehouse',
     path: null,
-    order: 2,
+    order: 4,
     children: [
       {
         id: 'prod-fb-inv-mat',
@@ -51,10 +109,10 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
         order: 0,
       },
       {
-        id: 'prod-fb-inv-ins',
-        label: 'Insumos',
+        id: 'prod-fb-inv-stock',
+        label: 'Stock',
         icon: null,
-        path: '/produccion/inventario/insumos',
+        path: '/produccion/inventario/stock',
         order: 1,
       },
       {
@@ -67,99 +125,85 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
-    id: 'prod-fb-prov',
-    label: 'Proveedores',
-    icon: 'truck',
-    path: null,
-    order: 3,
-    children: [
-      {
-        id: 'prod-fb-prov-list',
-        label: 'Listado',
-        icon: null,
-        path: '/produccion/proveedores',
-        order: 0,
-      },
-      {
-        id: 'prod-fb-prov-new',
-        label: 'Nuevo proveedor',
-        icon: null,
-        path: '/produccion/proveedores/nuevo',
-        order: 1,
-      },
-      {
-        id: 'prod-fb-prov-oc',
-        label: 'Órdenes de compra',
-        icon: null,
-        path: '/produccion/proveedores/ordenes-compra',
-        order: 2,
-      },
-    ],
-  },
-  {
-    id: 'prod-fb-ot',
-    label: 'Órdenes de trabajo',
-    icon: 'clipboard-list',
-    path: null,
-    order: 4,
-    children: [
-      {
-        id: 'prod-fb-ot-list',
-        label: 'Listado de órdenes',
-        icon: null,
-        path: '/produccion/ordenes-trabajo',
-        order: 0,
-      },
-      {
-        id: 'prod-fb-ot-new',
-        label: 'Nueva orden',
-        icon: null,
-        path: '/produccion/ordenes-trabajo/nueva',
-        order: 1,
-      },
-      {
-        id: 'prod-fb-ot-run',
-        label: 'En proceso',
-        icon: null,
-        path: '/produccion/ordenes-trabajo/en-proceso',
-        order: 2,
-      },
-    ],
-  },
-  {
-    id: 'prod-fb-etapas',
-    label: 'Producción',
-    icon: 'kanban',
+    id: 'prod-fb-compras',
+    label: 'Compras',
+    icon: 'shopping-cart',
     path: null,
     order: 5,
     children: [
       {
-        id: 'prod-fb-eta-plan',
-        label: 'Planificación',
+        id: 'prod-fb-comp-prov',
+        label: 'Proveedores',
         icon: null,
-        path: '/produccion/etapas/planificacion',
+        path: '/produccion/compras/proveedores',
         order: 0,
       },
       {
-        id: 'prod-fb-eta-corte',
-        label: 'Corte',
+        id: 'prod-fb-comp-oc',
+        label: 'Órdenes de compra',
         icon: null,
-        path: '/produccion/etapas/corte',
+        path: '/produccion/compras/ordenes-compra',
+        order: 1,
+      },
+    ],
+  },
+  {
+    id: 'prod-fb-ventas',
+    label: 'Ventas',
+    icon: 'receipt',
+    path: null,
+    order: 6,
+    children: [
+      {
+        id: 'prod-fb-vent-cot',
+        label: 'Cotizaciones',
+        icon: null,
+        path: '/produccion/ventas/cotizaciones',
+        order: 0,
+      },
+      {
+        id: 'prod-fb-vent-ped',
+        label: 'Pedidos',
+        icon: null,
+        path: '/produccion/ventas/pedidos',
         order: 1,
       },
       {
-        id: 'prod-fb-eta-ens',
-        label: 'Ensamble',
+        id: 'prod-fb-vent-ent',
+        label: 'Entregas',
         icon: null,
-        path: '/produccion/etapas/ensamble',
+        path: '/produccion/ventas/entregas',
         order: 2,
       },
+    ],
+  },
+  {
+    id: 'prod-fb-costos',
+    label: 'Costos',
+    icon: 'calculator',
+    path: null,
+    order: 7,
+    children: [
       {
-        id: 'prod-fb-eta-acab',
-        label: 'Acabados',
+        id: 'prod-fb-cost-costeo',
+        label: 'Costeo de muebles',
         icon: null,
-        path: '/produccion/etapas/acabados',
-        order: 3,
+        path: '/produccion/costos/costeo',
+        order: 0,
+      },
+      {
+        id: 'prod-fb-cost-mo',
+        label: 'Mano de obra',
+        icon: null,
+        path: '/produccion/costos/mano-obra',
+        order: 1,
+      },
+      {
+        id: 'prod-fb-cost-gastos',
+        label: 'Gastos adicionales',
+        icon: null,
+        path: '/produccion/costos/gastos',
+        order: 2,
       },
     ],
   },
@@ -168,21 +212,20 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
     label: 'Reportes',
     icon: 'bar-chart',
     path: '/produccion/reportes',
-    order: 6,
+    order: 8,
   },
   {
     id: 'prod-fb-cfg',
     label: 'Configuración',
     icon: 'settings',
     path: '/produccion/configuracion',
-    order: 7,
+    order: 9,
   },
 ]
 
 export function produccionMenusLookComplete(apiMenus: MenuItem[]): boolean {
   if (!apiMenus.length) return false
-  const ot = apiMenus.find((m) =>
-    /órdenes de trabajo|ordenes de trabajo/i.test(m.label.trim()),
-  )
-  return !!(ot?.children && ot.children.length > 0)
+  const clientes = apiMenus.find((m) => m.label.trim() === 'Clientes')
+  const compras = apiMenus.find((m) => m.label.trim() === 'Compras')
+  return !!(clientes?.children?.length && compras?.children?.length)
 }

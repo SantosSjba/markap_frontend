@@ -23,6 +23,52 @@ export const produccionRoutes: RouteRecordRaw[] = [
         component: () => import('../views/ProduccionPerfilView.vue'),
         meta: { title: 'Mi Perfil' },
       },
+      // Clientes
+      {
+        path: 'clientes',
+        component: SectionLayout,
+        meta: { title: 'Clientes' },
+        children: [
+          {
+            path: '',
+            name: 'produccion-clientes',
+            component: placeholder,
+            meta: { title: 'Listado de clientes' },
+          },
+          {
+            path: 'nuevo',
+            name: 'produccion-clientes-nuevo',
+            component: placeholder,
+            meta: { title: 'Nuevo cliente' },
+          },
+        ],
+      },
+      { path: 'ventas/clientes', redirect: '/produccion/clientes' },
+      { path: 'ventas/clientes/nuevo', redirect: '/produccion/clientes/nuevo' },
+      // Catálogo de muebles
+      {
+        path: 'catalogo',
+        component: SectionLayout,
+        meta: { title: 'Catálogo de muebles' },
+        children: [
+          {
+            path: '',
+            name: 'produccion-catalogo',
+            component: placeholder,
+            meta: { title: 'Catálogo' },
+          },
+          {
+            path: 'nuevo',
+            name: 'produccion-catalogo-nuevo',
+            component: placeholder,
+            meta: { title: 'Nuevo mueble' },
+          },
+        ],
+      },
+      // Redirecciones rutas antiguas → catálogo
+      { path: 'productos', redirect: '/produccion/catalogo' },
+      { path: 'productos/nuevo', redirect: '/produccion/catalogo/nuevo' },
+      // Órdenes de trabajo
       {
         path: 'ordenes-trabajo',
         component: SectionLayout,
@@ -32,41 +78,50 @@ export const produccionRoutes: RouteRecordRaw[] = [
             path: '',
             name: 'produccion-ordenes-trabajo',
             component: placeholder,
-            meta: { title: 'Listado de órdenes' },
+            meta: { title: 'Órdenes de trabajo' },
           },
           {
             path: 'nueva',
-            name: 'produccion-ordenes-trabajo-nueva',
-            component: placeholder,
-            meta: { title: 'Nueva orden' },
-          },
-          {
-            path: 'en-proceso',
-            name: 'produccion-ordenes-trabajo-en-proceso',
-            component: placeholder,
-            meta: { title: 'En proceso' },
+            redirect: '/produccion/ordenes-trabajo',
           },
         ],
       },
+      // Producción (seguimiento y etapas)
       {
-        path: 'productos',
+        path: 'produccion',
         component: SectionLayout,
-        meta: { title: 'Productos' },
+        meta: { title: 'Producción' },
         children: [
           {
-            path: '',
-            name: 'produccion-productos',
+            path: 'en-proceso',
+            name: 'produccion-en-proceso',
             component: placeholder,
-            meta: { title: 'Catálogo' },
+            meta: { title: 'Producción en proceso' },
           },
           {
-            path: 'nuevo',
-            name: 'produccion-productos-nuevo',
+            path: 'etapas',
+            name: 'produccion-etapas',
             component: placeholder,
-            meta: { title: 'Nuevo producto' },
+            meta: { title: 'Etapas de producción' },
+          },
+          {
+            path: 'terminados',
+            name: 'produccion-terminados',
+            component: placeholder,
+            meta: { title: 'Productos terminados' },
           },
         ],
       },
+      { path: 'ordenes-trabajo/en-proceso', redirect: '/produccion/produccion/en-proceso' },
+      {
+        path: 'etapas',
+        redirect: '/produccion/produccion/etapas',
+      },
+      {
+        path: 'etapas/:etapa',
+        redirect: (to) => `/produccion/produccion/etapas?etapa=${to.params.etapa}`,
+      },
+      // Inventario
       {
         path: 'inventario',
         component: SectionLayout,
@@ -79,10 +134,10 @@ export const produccionRoutes: RouteRecordRaw[] = [
             meta: { title: 'Materiales' },
           },
           {
-            path: 'insumos',
-            name: 'produccion-inventario-insumos',
+            path: 'stock',
+            name: 'produccion-inventario-stock',
             component: placeholder,
-            meta: { title: 'Insumos' },
+            meta: { title: 'Stock' },
           },
           {
             path: 'movimientos',
@@ -92,59 +147,79 @@ export const produccionRoutes: RouteRecordRaw[] = [
           },
         ],
       },
+      { path: 'inventario/insumos', redirect: '/produccion/inventario/stock' },
+      // Compras
       {
-        path: 'proveedores',
+        path: 'compras',
         component: SectionLayout,
-        meta: { title: 'Proveedores' },
+        meta: { title: 'Compras' },
         children: [
           {
-            path: '',
-            name: 'produccion-proveedores',
+            path: 'proveedores',
+            name: 'produccion-compras-proveedores',
             component: placeholder,
-            meta: { title: 'Listado de proveedores' },
-          },
-          {
-            path: 'nuevo',
-            name: 'produccion-proveedores-nuevo',
-            component: placeholder,
-            meta: { title: 'Nuevo proveedor' },
+            meta: { title: 'Proveedores' },
           },
           {
             path: 'ordenes-compra',
-            name: 'produccion-proveedores-ordenes-compra',
+            name: 'produccion-compras-ordenes-compra',
             component: placeholder,
             meta: { title: 'Órdenes de compra' },
           },
         ],
       },
+      { path: 'proveedores', redirect: '/produccion/compras/proveedores' },
+      { path: 'proveedores/nuevo', redirect: '/produccion/compras/proveedores' },
+      { path: 'proveedores/ordenes-compra', redirect: '/produccion/compras/ordenes-compra' },
+      // Ventas
       {
-        path: 'etapas',
+        path: 'ventas',
         component: SectionLayout,
-        meta: { title: 'Producción' },
+        meta: { title: 'Ventas' },
         children: [
           {
-            path: 'planificacion',
-            name: 'produccion-etapas-planificacion',
+            path: 'cotizaciones',
+            name: 'produccion-ventas-cotizaciones',
             component: placeholder,
-            meta: { title: 'Planificación' },
+            meta: { title: 'Cotizaciones' },
           },
           {
-            path: 'corte',
-            name: 'produccion-etapas-corte',
+            path: 'pedidos',
+            name: 'produccion-ventas-pedidos',
             component: placeholder,
-            meta: { title: 'Corte' },
+            meta: { title: 'Pedidos' },
           },
           {
-            path: 'ensamble',
-            name: 'produccion-etapas-ensamble',
+            path: 'entregas',
+            name: 'produccion-ventas-entregas',
             component: placeholder,
-            meta: { title: 'Ensamble' },
+            meta: { title: 'Entregas' },
+          },
+        ],
+      },
+      // Costos
+      {
+        path: 'costos',
+        component: SectionLayout,
+        meta: { title: 'Costos' },
+        children: [
+          {
+            path: 'costeo',
+            name: 'produccion-costos-costeo',
+            component: placeholder,
+            meta: { title: 'Costeo de muebles' },
           },
           {
-            path: 'acabados',
-            name: 'produccion-etapas-acabados',
+            path: 'mano-obra',
+            name: 'produccion-costos-mano-obra',
             component: placeholder,
-            meta: { title: 'Acabados' },
+            meta: { title: 'Mano de obra' },
+          },
+          {
+            path: 'gastos',
+            name: 'produccion-costos-gastos',
+            component: placeholder,
+            meta: { title: 'Gastos adicionales' },
           },
         ],
       },

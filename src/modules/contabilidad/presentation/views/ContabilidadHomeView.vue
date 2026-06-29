@@ -27,10 +27,10 @@ const actividad = [
 ]
 
 const acciones = [
-  { label: 'Nuevo asiento', sub: 'Libro diario', to: '/contabilidad/asientos/nuevo', icon: 'lucide:plus-circle' as const },
-  { label: 'Registrar compra', sub: 'Compras', to: '/contabilidad/compras/registrar', icon: 'lucide:shopping-cart' as const },
+  { label: 'Nuevo asiento', sub: 'Contabilidad', to: '/contabilidad/asientos/libro-diario', icon: 'lucide:plus-circle' as const },
+  { label: 'Facturas de compra', sub: 'Compras', to: '/contabilidad/compras/facturas', icon: 'lucide:shopping-cart' as const },
   { label: 'Balance general', sub: 'Reportes', to: '/contabilidad/reportes/balance-general', icon: 'lucide:pie-chart' as const },
-  { label: 'Nueva cuenta', sub: 'Plan contable', to: '/contabilidad/plan-cuentas/nueva-cuenta', icon: 'lucide:list-tree' as const },
+  { label: 'Tesorería', sub: 'Caja y bancos', to: '/contabilidad/tesoreria/caja', icon: 'lucide:landmark' as const },
 ]
 
 const toneBorder = (tone: (typeof actividad)[number]['tone']) => {
