@@ -109,7 +109,7 @@ async function del(r: ProduccionSupplierListItem) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1100px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Proveedores</h1>
@@ -126,7 +126,9 @@ async function del(r: ProduccionSupplierListItem) {
     <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin proveedores." row-key="id">
         <template #toolbar>
-          <SearchInput v-model="searchInput" placeholder="Buscar empresa o RUC…" class="max-w-xs" />
+          <div class="flex-1 min-w-0">
+            <SearchInput v-model="searchInput" placeholder="Buscar empresa o RUC…" />
+          </div>
         </template>
         <template #row="{ row }">
           <td class="py-3 px-4">

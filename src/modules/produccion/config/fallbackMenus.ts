@@ -1,7 +1,8 @@
 import type { MenuItem } from '@shared/domain/menu.types'
 
 /**
- * Menú alineado al flujo operativo del negocio (fallback si la API no responde).
+ * Menú alineado al flujo operativo (fallback si la API no responde).
+ * Cliente → Catálogo → Costos → Compras → Inventario → Producción → Ventas → Reportes
  */
 export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
   {
@@ -58,11 +59,94 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
+    id: 'prod-fb-costos',
+    label: 'Costos',
+    icon: 'calculator',
+    path: null,
+    order: 3,
+    children: [
+      {
+        id: 'prod-fb-cost-costeo',
+        label: 'Costeo de muebles',
+        icon: null,
+        path: '/produccion/costos/costeo',
+        order: 0,
+      },
+      {
+        id: 'prod-fb-cost-mo',
+        label: 'Mano de obra',
+        icon: null,
+        path: '/produccion/costos/mano-obra',
+        order: 1,
+      },
+      {
+        id: 'prod-fb-cost-gastos',
+        label: 'Gastos adicionales',
+        icon: null,
+        path: '/produccion/costos/gastos',
+        order: 2,
+      },
+    ],
+  },
+  {
+    id: 'prod-fb-compras',
+    label: 'Compras',
+    icon: 'shopping-cart',
+    path: null,
+    order: 4,
+    children: [
+      {
+        id: 'prod-fb-comp-prov',
+        label: 'Proveedores',
+        icon: null,
+        path: '/produccion/compras/proveedores',
+        order: 0,
+      },
+      {
+        id: 'prod-fb-comp-oc',
+        label: 'Órdenes de compra',
+        icon: null,
+        path: '/produccion/compras/ordenes-compra',
+        order: 1,
+      },
+    ],
+  },
+  {
+    id: 'prod-fb-inv',
+    label: 'Inventario',
+    icon: 'warehouse',
+    path: null,
+    order: 5,
+    children: [
+      {
+        id: 'prod-fb-inv-mat',
+        label: 'Materiales',
+        icon: null,
+        path: '/produccion/inventario/materiales',
+        order: 0,
+      },
+      {
+        id: 'prod-fb-inv-stock',
+        label: 'Stock',
+        icon: null,
+        path: '/produccion/inventario/stock',
+        order: 1,
+      },
+      {
+        id: 'prod-fb-inv-mov',
+        label: 'Movimientos',
+        icon: null,
+        path: '/produccion/inventario/movimientos',
+        order: 2,
+      },
+    ],
+  },
+  {
     id: 'prod-fb-produccion',
     label: 'Producción',
     icon: 'kanban',
     path: null,
-    order: 3,
+    order: 6,
     children: [
       {
         id: 'prod-fb-prod-ot',
@@ -95,64 +179,11 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
-    id: 'prod-fb-inv',
-    label: 'Inventario',
-    icon: 'warehouse',
-    path: null,
-    order: 4,
-    children: [
-      {
-        id: 'prod-fb-inv-mat',
-        label: 'Materiales',
-        icon: null,
-        path: '/produccion/inventario/materiales',
-        order: 0,
-      },
-      {
-        id: 'prod-fb-inv-stock',
-        label: 'Stock',
-        icon: null,
-        path: '/produccion/inventario/stock',
-        order: 1,
-      },
-      {
-        id: 'prod-fb-inv-mov',
-        label: 'Movimientos',
-        icon: null,
-        path: '/produccion/inventario/movimientos',
-        order: 2,
-      },
-    ],
-  },
-  {
-    id: 'prod-fb-compras',
-    label: 'Compras',
-    icon: 'shopping-cart',
-    path: null,
-    order: 5,
-    children: [
-      {
-        id: 'prod-fb-comp-prov',
-        label: 'Proveedores',
-        icon: null,
-        path: '/produccion/compras/proveedores',
-        order: 0,
-      },
-      {
-        id: 'prod-fb-comp-oc',
-        label: 'Órdenes de compra',
-        icon: null,
-        path: '/produccion/compras/ordenes-compra',
-        order: 1,
-      },
-    ],
-  },
-  {
     id: 'prod-fb-ventas',
     label: 'Ventas',
     icon: 'receipt',
     path: null,
-    order: 6,
+    order: 7,
     children: [
       {
         id: 'prod-fb-vent-cot',
@@ -173,36 +204,6 @@ export const PRODUCCION_FALLBACK_MENUS: MenuItem[] = [
         label: 'Entregas',
         icon: null,
         path: '/produccion/ventas/entregas',
-        order: 2,
-      },
-    ],
-  },
-  {
-    id: 'prod-fb-costos',
-    label: 'Costos',
-    icon: 'calculator',
-    path: null,
-    order: 7,
-    children: [
-      {
-        id: 'prod-fb-cost-costeo',
-        label: 'Costeo de muebles',
-        icon: null,
-        path: '/produccion/costos/costeo',
-        order: 0,
-      },
-      {
-        id: 'prod-fb-cost-mo',
-        label: 'Mano de obra',
-        icon: null,
-        path: '/produccion/costos/mano-obra',
-        order: 1,
-      },
-      {
-        id: 'prod-fb-cost-gastos',
-        label: 'Gastos adicionales',
-        icon: null,
-        path: '/produccion/costos/gastos',
         order: 2,
       },
     ],

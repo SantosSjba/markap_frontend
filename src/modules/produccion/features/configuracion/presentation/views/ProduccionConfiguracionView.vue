@@ -201,7 +201,7 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
 </script>
 
 <template>
-  <div class="space-y-6 max-w-5xl">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
     <div>
       <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
         Configuración — Producción

@@ -39,7 +39,7 @@ function goNew() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1100px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Órdenes de compra</h1>
@@ -56,9 +56,11 @@ function goNew() {
     <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin órdenes de compra." row-key="id">
         <template #toolbar>
-          <div class="flex flex-wrap gap-3">
-            <SearchInput v-model="searchInput" placeholder="Buscar código o proveedor…" class="max-w-xs" />
-            <FormSelect v-model="statusFilter" :options="PO_STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label }))" class="max-w-[200px]" />
+          <div class="flex-1 min-w-0">
+            <SearchInput v-model="searchInput" placeholder="Buscar código o proveedor…" />
+          </div>
+          <div class="w-full sm:w-[200px] min-w-0 shrink-0">
+            <FormSelect v-model="statusFilter" :options="PO_STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label }))" />
           </div>
         </template>
         <template #row="{ row }">

@@ -132,7 +132,7 @@ const dashboardErrorDetail = computed(() =>
 </script>
 
 <template>
-  <div class="space-y-8 animate-fade-in">
+  <div class="space-y-8 max-w-[1600px] mx-auto w-full animate-fade-in">
     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold" style="color: var(--color-text-primary)">

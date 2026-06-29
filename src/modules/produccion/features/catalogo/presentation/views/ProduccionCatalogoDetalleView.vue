@@ -148,7 +148,7 @@ const onSave = () => (activeTab.value === 'bom' ? saveBom() : save())
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[960px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start gap-3 justify-between">
       <div>
         <p class="text-xs font-medium uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">

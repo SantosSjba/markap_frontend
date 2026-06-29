@@ -99,7 +99,7 @@ function stageIcon(status: string) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[960px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-center gap-3">
       <BaseButton variant="ghost" @click="router.back()">
         <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />

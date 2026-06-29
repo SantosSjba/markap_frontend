@@ -127,7 +127,7 @@ async function del(r: ProduccionMaterial) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1100px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Materiales</h1>
@@ -144,9 +144,11 @@ async function del(r: ProduccionMaterial) {
     <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin materiales registrados." row-key="id">
         <template #toolbar>
-          <div class="flex flex-wrap gap-3">
-            <SearchInput v-model="searchInput" placeholder="Buscar código o nombre…" class="max-w-xs" />
-            <FormSelect v-model="categoryFilter" :options="[{ value: '', label: 'Todas las categorías' }, ...categoryOptions]" class="max-w-[200px]" />
+          <div class="flex-1 min-w-0">
+            <SearchInput v-model="searchInput" placeholder="Buscar código o nombre…" />
+          </div>
+          <div class="w-full sm:w-[200px] min-w-0 shrink-0">
+            <FormSelect v-model="categoryFilter" :options="[{ value: '', label: 'Todas las categorías' }, ...categoryOptions]" />
           </div>
         </template>
         <template #row="{ row }">

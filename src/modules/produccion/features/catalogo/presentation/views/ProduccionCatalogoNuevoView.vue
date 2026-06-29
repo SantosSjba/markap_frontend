@@ -75,7 +75,7 @@ const goBack = () => router.push(`${PRODUCCION_BASE_PATH}/catalogo`)
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[960px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex items-center gap-4 mb-6">
       <button
         type="button"

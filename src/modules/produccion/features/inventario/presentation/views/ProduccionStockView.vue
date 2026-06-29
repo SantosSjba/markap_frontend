@@ -46,7 +46,7 @@ function goMovements(materialId: string) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1100px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Stock</h1>
@@ -74,12 +74,13 @@ function goMovements(materialId: string) {
     <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin datos de stock." row-key="id">
         <template #toolbar>
-          <div class="flex flex-wrap gap-3">
-            <SearchInput v-model="searchInput" placeholder="Buscar…" class="max-w-xs" />
+          <div class="flex-1 min-w-0">
+            <SearchInput v-model="searchInput" placeholder="Buscar…" />
+          </div>
+          <div class="w-full sm:w-[220px] min-w-0 shrink-0">
             <FormSelect
               :model-value="String(lowStockOnly)"
               :options="filterOptions"
-              class="max-w-[220px]"
               @update:model-value="(v: string) => { lowStockOnly = v === 'true' }"
             />
           </div>

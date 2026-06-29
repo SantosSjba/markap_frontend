@@ -127,7 +127,7 @@ function movementBadgeClass(type: ProduccionStockMovementType) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1100px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Movimientos</h1>
@@ -144,10 +144,16 @@ function movementBadgeClass(type: ProduccionStockMovementType) {
     <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin movimientos registrados." row-key="id">
         <template #toolbar>
-          <div class="flex flex-wrap gap-3">
-            <SearchInput v-model="searchInput" placeholder="Buscar referencia o material…" class="max-w-xs" />
-            <FormSelect v-model="materialFilter" :options="materialOptions" class="max-w-[280px]" />
-            <FormSelect v-model="typeFilter" :options="typeFilterOptions" class="max-w-[180px]" />
+          <div class="flex-1 min-w-0">
+            <SearchInput v-model="searchInput" placeholder="Buscar referencia o material…" />
+          </div>
+          <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
+            <div class="w-full sm:w-[240px] min-w-0">
+              <FormSelect v-model="materialFilter" :options="materialOptions" />
+            </div>
+            <div class="w-full sm:w-[175px] min-w-0">
+              <FormSelect v-model="typeFilter" :options="typeFilterOptions" />
+            </div>
           </div>
         </template>
         <template #row="{ row }">

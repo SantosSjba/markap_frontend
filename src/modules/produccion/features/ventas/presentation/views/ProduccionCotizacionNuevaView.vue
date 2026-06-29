@@ -61,7 +61,7 @@ async function save() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[900px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex items-center gap-3">
       <BaseButton variant="ghost" @click="router.push({ name: 'produccion-ventas-cotizaciones' })">
         <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />

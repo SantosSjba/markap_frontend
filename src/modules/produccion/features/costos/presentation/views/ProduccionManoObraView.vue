@@ -83,7 +83,7 @@ async function del(r: ProduccionLaborRate) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[960px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Mano de obra</h1>
@@ -100,7 +100,9 @@ async function del(r: ProduccionLaborRate) {
     <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin tarifas definidas." row-key="id">
         <template #toolbar>
-          <SearchInput v-model="searchInput" placeholder="Buscar…" class="max-w-xs" />
+          <div class="flex-1 min-w-0">
+            <SearchInput v-model="searchInput" placeholder="Buscar…" />
+          </div>
         </template>
         <template #row="{ row }">
           <td class="py-3 px-4 font-medium">{{ (row as ProduccionLaborRate).name }}</td>

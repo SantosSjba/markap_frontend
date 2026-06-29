@@ -59,7 +59,7 @@ function goNew() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1100px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Cotizaciones</h1>
@@ -76,12 +76,13 @@ function goNew() {
     <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin cotizaciones." row-key="id">
         <template #toolbar>
-          <div class="flex flex-wrap gap-3">
-            <SearchInput v-model="searchInput" placeholder="Buscar código o cliente…" class="max-w-xs" />
+          <div class="flex-1 min-w-0">
+            <SearchInput v-model="searchInput" placeholder="Buscar código o cliente…" />
+          </div>
+          <div class="w-full sm:w-[200px] min-w-0 shrink-0">
             <FormSelect
               v-model="statusFilter"
               :options="QUOTATION_STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label }))"
-              class="max-w-[200px]"
             />
           </div>
         </template>

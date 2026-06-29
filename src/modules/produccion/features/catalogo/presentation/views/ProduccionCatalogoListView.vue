@@ -171,7 +171,7 @@ async function handleExport() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1200px] mx-auto space-y-6">
+  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
@@ -219,33 +219,39 @@ async function handleExport() {
       <template v-else>
         <DataTable empty-text="No hay muebles en el catálogo." :columns="columns" :data="rows" row-key="id">
           <template #toolbar>
-            <div class="flex flex-col sm:flex-row gap-3 flex-1 min-w-0 w-full">
-              <SearchInput v-model="searchInput" placeholder="Buscar por código o nombre…" class="flex-1 min-w-0" />
-              <select
-                v-model="categoryFilter"
-                class="w-full sm:w-52 px-3 py-2 rounded-lg border text-sm"
-                :style="{
-                  borderColor: 'var(--color-border)',
-                  background: 'var(--color-surface)',
-                  color: 'var(--color-text-primary)',
-                }"
-              >
-                <option value="">Todas las categorías</option>
-                <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
-              </select>
-              <select
-                v-model="activeFilter"
-                class="w-full sm:w-40 px-3 py-2 rounded-lg border text-sm"
-                :style="{
-                  borderColor: 'var(--color-border)',
-                  background: 'var(--color-surface)',
-                  color: 'var(--color-text-primary)',
-                }"
-              >
-                <option value="all">Todos</option>
-                <option value="active">Activos</option>
-                <option value="inactive">Inactivos</option>
-              </select>
+            <div class="flex-1 min-w-0">
+              <SearchInput v-model="searchInput" placeholder="Buscar por código o nombre…" />
+            </div>
+            <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
+              <div class="w-full sm:w-[200px] min-w-0">
+                <select
+                  v-model="categoryFilter"
+                  class="w-full px-3 py-2 rounded-lg border text-sm"
+                  :style="{
+                    borderColor: 'var(--color-border)',
+                    background: 'var(--color-surface)',
+                    color: 'var(--color-text-primary)',
+                  }"
+                >
+                  <option value="">Todas las categorías</option>
+                  <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
+                </select>
+              </div>
+              <div class="w-full sm:w-[160px] min-w-0">
+                <select
+                  v-model="activeFilter"
+                  class="w-full px-3 py-2 rounded-lg border text-sm"
+                  :style="{
+                    borderColor: 'var(--color-border)',
+                    background: 'var(--color-surface)',
+                    color: 'var(--color-text-primary)',
+                  }"
+                >
+                  <option value="all">Todos</option>
+                  <option value="active">Activos</option>
+                  <option value="inactive">Inactivos</option>
+                </select>
+              </div>
             </div>
           </template>
           <template #row="{ row }">
