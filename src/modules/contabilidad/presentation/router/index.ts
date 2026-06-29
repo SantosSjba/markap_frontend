@@ -6,6 +6,7 @@ import { contabilidadConfiguracionRoutes } from '../../features/configuracion'
 import { contabilidadPlanCuentasRoutes } from '../../features/plan-cuentas'
 import { contabilidadPeriodosRoutes } from '../../features/periodos'
 import { contabilidadCentrosCostoRoutes } from '../../features/centros-costo'
+import { contabilidadAsientosRoutes } from '../../features/asientos'
 
 const placeholder = () => import('../views/ContabilidadPlaceholderView.vue')
 
@@ -39,18 +40,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
         path: 'asientos',
         component: SectionLayout,
         meta: { title: 'Asientos contables' },
-        children: [
-          {
-            path: 'libro-diario',
-            name: 'contabilidad-asientos-libro-diario',
-            component: placeholder,
-            meta: { title: 'Asientos contables' },
-          },
-          {
-            path: 'nuevo',
-            redirect: '/contabilidad/asientos/libro-diario',
-          },
-        ],
+        children: contabilidadAsientosRoutes,
       },
       {
         path: 'periodos',
