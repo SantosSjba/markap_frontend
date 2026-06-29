@@ -5,6 +5,7 @@ import { PRODUCCION_BASE_PATH } from '../../config/routes.constants'
 import { produccionClientesRoutes } from '../../features/clientes'
 import { produccionCatalogoRoutes } from '../../features/catalogo'
 import { produccionCostosRoutes } from '../../features/costos'
+import { produccionInventarioRoutes } from '../../features/inventario'
 
 const placeholder = () => import('../views/ProduccionPlaceholderView.vue')
 
@@ -103,26 +104,7 @@ export const produccionRoutes: RouteRecordRaw[] = [
         path: 'inventario',
         component: SectionLayout,
         meta: { title: 'Inventario' },
-        children: [
-          {
-            path: 'materiales',
-            name: 'produccion-inventario-materiales',
-            component: placeholder,
-            meta: { title: 'Materiales' },
-          },
-          {
-            path: 'stock',
-            name: 'produccion-inventario-stock',
-            component: placeholder,
-            meta: { title: 'Stock' },
-          },
-          {
-            path: 'movimientos',
-            name: 'produccion-inventario-movimientos',
-            component: placeholder,
-            meta: { title: 'Movimientos' },
-          },
-        ],
+        children: produccionInventarioRoutes,
       },
       { path: 'inventario/insumos', redirect: '/produccion/inventario/stock' },
       // Compras
