@@ -4,6 +4,7 @@ import type {
   ProduccionAppSettingsDTO,
   ProduccionConfigBootstrap,
   ProduccionFurnitureCategoryDTO,
+  ProduccionMaterialCategoryDTO,
   ProduccionProductionStageDTO,
   ProduccionUnitDTO,
   ProduccionNumberingSeriesDTO,
@@ -35,6 +36,14 @@ export const produccionConfigApiRepository: ProduccionConfigRepository = {
     apiClient
       .put<ProduccionFurnitureCategoryDTO[]>(
         `/produccion-config/furniture-categories?${qs({ ...scope })}`,
+        { categories },
+      )
+      .then((r) => r.data),
+
+  replaceMaterialCategories: (categories) =>
+    apiClient
+      .put<ProduccionMaterialCategoryDTO[]>(
+        `/produccion-config/material-categories?${qs({ ...scope })}`,
         { categories },
       )
       .then((r) => r.data),

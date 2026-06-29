@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { BaseButton, FormInput, FormTextarea, AppIcon } from '@shared/components'
 import { PRODUCCION_BASE_PATH } from '@modules/produccion/config/routes.constants'
+import { useProduccionFurnitureCategoryOptions } from '@modules/produccion/features/configuracion'
 import { useCreateProduccionCatalogItem } from '../../application/useProduccionCatalog'
-import { FURNITURE_CATEGORIES } from '../labels'
 
 const router = useRouter()
 const createMut = useCreateProduccionCatalogItem()
+const { options: categoryOptions, defaultCategory } = useProduccionFurnitureCategoryOptions()
 
 const code = ref('')
 const name = ref('')
-const category = ref(FURNITURE_CATEGORIES[0])
+const category = ref('')
 const description = ref('')
 const widthCm = ref<number | ''>('')
 const depthCm = ref<number | ''>('')
@@ -23,6 +24,14 @@ const imageUrlsRaw = ref('')
 const isActive = ref(true)
 
 const saving = ref(false)
+
+watch(
+  defaultCategory,
+  (value) => {
+    if (!category.value && value) category.value = value
+  },
+  { immediate: true },
+)
 
 function parseUrls(raw: string): string[] {
   return raw
@@ -108,7 +117,7 @@ const goBack = () => router.push(`${PRODUCCION_BASE_PATH}/catalogo`)
               color: 'var(--color-text-primary)',
             }"
           >
-            <option v-for="c in FURNITURE_CATEGORIES" :key="c" :value="c">{{ c }}</option>
+            <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
           </select>
         </div>
         <FormInput v-model="referencePrice" type="number" label="Precio referencia (S/)" required />

@@ -7,12 +7,14 @@ import {
   useProduccionConfigBootstrap,
   useProduccionSaveSettings,
   useProduccionSaveFurnitureCategories,
+  useProduccionSaveMaterialCategories,
   useProduccionSaveProductionStages,
   useProduccionSaveUnits,
   useProduccionPatchNumbering,
 } from '../../application/useProduccionConfig'
 import type {
   ProduccionFurnitureCategoryDTO,
+  ProduccionMaterialCategoryDTO,
   ProduccionProductionStageDTO,
   ProduccionUnitDTO,
 } from '../../domain/config.types'
@@ -22,7 +24,8 @@ const activeTab = ref('parametros')
 
 const tabs = [
   { id: 'parametros', label: 'Parámetros', icon: 'lucide:sliders-horizontal' },
-  { id: 'categorias', label: 'Categorías', icon: 'lucide:tags' },
+  { id: 'categorias', label: 'Cat. muebles', icon: 'lucide:tags' },
+  { id: 'categorias-materiales', label: 'Cat. materiales', icon: 'lucide:boxes' },
   { id: 'etapas', label: 'Etapas OT', icon: 'lucide:workflow' },
   { id: 'unidades', label: 'Unidades', icon: 'lucide:ruler' },
   { id: 'numeracion', label: 'Numeración', icon: 'lucide:hash' },
@@ -33,12 +36,14 @@ const configLoadError = computed(() => (isError.value ? getApiErrorMessage(error
 
 const { mutate: saveSettings, isPending: savingSettings } = useProduccionSaveSettings()
 const { mutate: saveCategories, isPending: savingCategories } = useProduccionSaveFurnitureCategories()
+const { mutate: saveMaterialCategories, isPending: savingMaterialCategories } = useProduccionSaveMaterialCategories()
 const { mutate: saveStages, isPending: savingStages } = useProduccionSaveProductionStages()
 const { mutate: saveUnits, isPending: savingUnits } = useProduccionSaveUnits()
 const { mutate: patchNumbering, isPending: savingNumbering } = useProduccionPatchNumbering()
 
 const settingsDraft = ref({ igvPercent: 18, woodWastePercent: 10, quotationValidDays: 15 })
 const categoriesDraft = ref<ProduccionFurnitureCategoryDTO[]>([])
+const materialCategoriesDraft = ref<ProduccionMaterialCategoryDTO[]>([])
 const stagesDraft = ref<ProduccionProductionStageDTO[]>([])
 const unitsDraft = ref<ProduccionUnitDTO[]>([])
 const numberingDraft = ref<Record<string, { prefix: string; lastNumber: number; padLength: number; includeYear: boolean }>>({})
@@ -55,6 +60,14 @@ watch(
   () => boot.value?.furnitureCategories,
   (rows) => {
     if (rows?.length) categoriesDraft.value = rows.map((r) => ({ ...r }))
+  },
+  { immediate: true },
+)
+
+watch(
+  () => boot.value?.materialCategories,
+  (rows) => {
+    if (rows?.length) materialCategoriesDraft.value = rows.map((r) => ({ ...r }))
   },
   { immediate: true },
 )
@@ -119,6 +132,17 @@ function submitCategories() {
   )
 }
 
+function submitMaterialCategories() {
+  if (!materialCategoriesDraft.value.length) {
+    void markapAlert.toast.warning('Debe incluir al menos una categoría')
+    return
+  }
+  saveMaterialCategories(
+    materialCategoriesDraft.value.map((c, i) => ({ ...c, sortOrder: i })),
+    { onSuccess: () => void refetch() },
+  )
+}
+
 function submitStages() {
   saveStages(
     [...stagesDraft.value].sort((a, b) => a.sortOrder - b.sortOrder).map((s, i) => ({ ...s, sortOrder: i })),
@@ -142,6 +166,15 @@ function addCategory() {
     code: '',
     label: '',
     sortOrder: categoriesDraft.value.length,
+    isActive: true,
+  })
+}
+
+function addMaterialCategory() {
+  materialCategoriesDraft.value.push({
+    code: '',
+    label: '',
+    sortOrder: materialCategoriesDraft.value.length,
     isActive: true,
   })
 }
@@ -174,7 +207,7 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
         Configuración — Producción
       </h1>
       <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-        Parámetros del módulo: categorías de muebles, etapas de taller, unidades de medida y series documentales.
+        Parámetros del módulo: categorías de muebles y materiales, etapas de taller, unidades y series documentales.
       </p>
     </div>
 
@@ -326,6 +359,79 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
           <div class="p-3 border-t flex justify-between" :style="{ borderColor: 'var(--color-border)' }">
             <BaseButton type="button" variant="ghost" @click="addCategory">+ Categoría</BaseButton>
             <BaseButton variant="primary" :loading="savingCategories" @click="submitCategories">
+              Guardar categorías
+            </BaseButton>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="activeTab === 'categorias-materiales'" class="space-y-3">
+        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          Categorías del inventario de materiales (tableros, herrajes, etc.). La etiqueta se guarda en cada material.
+        </p>
+        <div
+          class="rounded-xl border overflow-hidden"
+          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+        >
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b text-left" :style="{ borderColor: 'var(--color-border)' }">
+                <th class="py-2 px-3">Código</th>
+                <th class="py-2 px-3">Etiqueta</th>
+                <th class="py-2 px-3 w-20">Activa</th>
+                <th class="py-2 px-3 w-28"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(row, idx) in materialCategoriesDraft"
+                :key="row.id ?? `mat-cat-${idx}`"
+                class="border-b"
+                :style="{ borderColor: 'var(--color-border)' }"
+              >
+                <td class="py-2 px-3">
+                  <input
+                    v-model="row.code"
+                    type="text"
+                    class="w-full px-2 py-1.5 rounded border text-sm font-mono"
+                    :style="{
+                      borderColor: 'var(--color-border)',
+                      backgroundColor: 'var(--color-surface-elevated)',
+                      color: 'var(--color-text-primary)',
+                    }"
+                  />
+                </td>
+                <td class="py-2 px-3">
+                  <input
+                    v-model="row.label"
+                    type="text"
+                    class="w-full px-2 py-1.5 rounded border text-sm"
+                    :style="{
+                      borderColor: 'var(--color-border)',
+                      backgroundColor: 'var(--color-surface-elevated)',
+                      color: 'var(--color-text-primary)',
+                    }"
+                  />
+                </td>
+                <td class="py-2 px-3 text-center">
+                  <input v-model="row.isActive" type="checkbox" />
+                </td>
+                <td class="py-2 px-3">
+                  <div class="flex gap-1">
+                    <BaseButton type="button" variant="ghost" size="sm" @click="reorder(materialCategoriesDraft, idx, -1)">
+                      ↑
+                    </BaseButton>
+                    <BaseButton type="button" variant="ghost" size="sm" @click="reorder(materialCategoriesDraft, idx, 1)">
+                      ↓
+                    </BaseButton>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="p-3 border-t flex justify-between" :style="{ borderColor: 'var(--color-border)' }">
+            <BaseButton type="button" variant="ghost" @click="addMaterialCategory">+ Categoría</BaseButton>
+            <BaseButton variant="primary" :loading="savingMaterialCategories" @click="submitMaterialCategories">
               Guardar categorías
             </BaseButton>
           </div>

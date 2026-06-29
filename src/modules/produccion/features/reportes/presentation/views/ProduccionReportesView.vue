@@ -16,7 +16,8 @@ import { useExcelExport } from '@shared/composables'
 import { markapAlert } from '@/shared/composables'
 import { useProduccionReportsDashboard } from '../../application/useProduccionReportes'
 import { useProduccionClientsList } from '../../../clientes/application/useClients'
-import { FURNITURE_CATEGORIES } from '../../../catalogo/presentation/labels'
+import { useProduccionFurnitureCategoryOptions } from '@modules/produccion/features/configuracion'
+import ProduccionSimpleBarChart from '../components/ProduccionSimpleBarChart.vue'
 import { WO_STATUS_LABELS } from '../../../taller/presentation/labels'
 import type { ProduccionReportsRentabilidadRow } from '../../domain/reportes.types'
 
@@ -80,9 +81,10 @@ const clientOptions = computed(() => [
   { value: '', label: 'Todos los clientes' },
   ...(clientsRes.value?.data ?? []).map((c) => ({ value: c.id, label: c.fullName })),
 ])
+const { options: furnitureCategoryOptions } = useProduccionFurnitureCategoryOptions()
 const categoryOptions = computed(() => [
   { value: '', label: 'Todas las categorías' },
-  ...FURNITURE_CATEGORIES.map((c) => ({ value: c, label: c })),
+  ...furnitureCategoryOptions.value,
 ])
 
 const activeTab = ref('produccion')
@@ -106,6 +108,32 @@ function formatPen(value: number) {
 
 const woStatusRows = computed(() => d.value?.produccion.workOrdersByStatus ?? [])
 
+const woStatusChartData = computed(() =>
+  woStatusRows.value.map((r) => ({
+    label: WO_STATUS_LABELS[r.status] ?? r.status,
+    value: r.count,
+  })),
+)
+
+const invCatRows = computed(() => d.value?.inventario.stockValueByCategory ?? [])
+
+const invCatChartData = computed(() =>
+  invCatRows.value.map((r) => ({
+    label: r.category,
+    value: r.totalValue,
+  })),
+)
+
+const ventasChartData = computed(() => {
+  const v = d.value?.ventas
+  if (!v) return []
+  return [
+    { label: 'Cot. enviadas', value: v.quotationsSent },
+    { label: 'Cot. aceptadas', value: v.quotationsAccepted },
+    { label: 'Pedidos', value: v.ordersCreated },
+    { label: 'Entregados', value: v.ordersDelivered },
+  ]
+})
 const woStatusColumns = [
   {
     key: 's',
@@ -114,8 +142,6 @@ const woStatusColumns = [
   },
   { key: 'c', label: 'Cantidad', sortAccessor: (r: unknown) => (r as { count: number }).count },
 ]
-
-const invCatRows = computed(() => d.value?.inventario.stockValueByCategory ?? [])
 
 const invCatColumns = [
   { key: 'cat', label: 'Categoría', sortAccessor: (r: unknown) => (r as { category: string }).category },
@@ -267,23 +293,41 @@ async function exportDashboardExcel() {
           <StatsCard title="En proceso (ahora)" :value="String(d.produccion.workOrdersInProgressSnapshot)" />
           <StatsCard title="Consumo materiales" :value="String(d.produccion.materialConsumptionQty)" />
         </div>
-        <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
-          <DataTable :columns="woStatusColumns" :data="woStatusRows" empty-text="Sin OT." row-key="status">
-            <template #row="{ row }">
-              <td class="py-3 px-4 text-sm">{{ WO_STATUS_LABELS[(row as { status: string }).status] ?? (row as { status: string }).status }}</td>
-              <td class="py-3 px-4 text-sm font-medium">{{ (row as { count: number }).count }}</td>
-            </template>
-          </DataTable>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ProduccionSimpleBarChart
+            title="OT por estado"
+            subtitle="Distribución actual de órdenes de trabajo"
+            :data="woStatusChartData"
+            :loading="isLoading"
+            color="var(--color-primary)"
+          />
+          <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+            <DataTable :columns="woStatusColumns" :data="woStatusRows" empty-text="Sin OT." row-key="status">
+              <template #row="{ row }">
+                <td class="py-3 px-4 text-sm">{{ WO_STATUS_LABELS[(row as { status: string }).status] ?? (row as { status: string }).status }}</td>
+                <td class="py-3 px-4 text-sm font-medium">{{ (row as { count: number }).count }}</td>
+              </template>
+            </DataTable>
+          </div>
         </div>
       </div>
 
-      <div v-show="activeTab === 'ventas'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <StatsCard title="Cotizaciones enviadas" :value="String(d.ventas.quotationsSent)" />
-        <StatsCard title="Cotizaciones aceptadas" :value="String(d.ventas.quotationsAccepted)" />
-        <StatsCard title="Pedidos creados" :value="String(d.ventas.ordersCreated)" />
-        <StatsCard title="Pedidos entregados" :value="String(d.ventas.ordersDelivered)" />
-        <StatsCard title="Ingresos entregados" :value="formatPen(d.ventas.salesRevenuePeriod)" />
-        <StatsCard title="Pipeline abierto" :value="formatPen(d.ventas.pipelineValue)" />
+      <div v-show="activeTab === 'ventas'" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <StatsCard title="Cotizaciones enviadas" :value="String(d.ventas.quotationsSent)" />
+          <StatsCard title="Cotizaciones aceptadas" :value="String(d.ventas.quotationsAccepted)" />
+          <StatsCard title="Pedidos creados" :value="String(d.ventas.ordersCreated)" />
+          <StatsCard title="Pedidos entregados" :value="String(d.ventas.ordersDelivered)" />
+          <StatsCard title="Ingresos entregados" :value="formatPen(d.ventas.salesRevenuePeriod)" />
+          <StatsCard title="Pipeline abierto" :value="formatPen(d.ventas.pipelineValue)" />
+        </div>
+        <ProduccionSimpleBarChart
+          title="Actividad comercial del período"
+          subtitle="Cotizaciones, pedidos y entregas"
+          :data="ventasChartData"
+          :loading="isLoading"
+          color="var(--color-success)"
+        />
       </div>
 
       <div v-show="activeTab === 'inventario'" class="space-y-4">
@@ -293,14 +337,24 @@ async function exportDashboardExcel() {
           <StatsCard title="Bajo mínimo" :value="String(d.inventario.lowStockCount)" />
           <StatsCard title="Ingresos kardex período" :value="formatPen(d.inventario.stockInValuePeriod)" />
         </div>
-        <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
-          <DataTable :columns="invCatColumns" :data="invCatRows" empty-text="Sin datos." row-key="category">
-            <template #row="{ row }">
-              <td class="py-3 px-4 text-sm">{{ (row as { category: string }).category }}</td>
-              <td class="py-3 px-4 text-sm">{{ (row as { itemCount: number }).itemCount }}</td>
-              <td class="py-3 px-4 text-sm font-medium">{{ formatPen((row as { totalValue: number }).totalValue) }}</td>
-            </template>
-          </DataTable>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ProduccionSimpleBarChart
+            title="Valor de stock por categoría"
+            subtitle="Inventario valorizado"
+            :data="invCatChartData"
+            :loading="isLoading"
+            color="var(--color-warning)"
+            :value-formatter="formatPen"
+          />
+          <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+            <DataTable :columns="invCatColumns" :data="invCatRows" empty-text="Sin datos." row-key="category">
+              <template #row="{ row }">
+                <td class="py-3 px-4 text-sm">{{ (row as { category: string }).category }}</td>
+                <td class="py-3 px-4 text-sm">{{ (row as { itemCount: number }).itemCount }}</td>
+                <td class="py-3 px-4 text-sm font-medium">{{ formatPen((row as { totalValue: number }).totalValue) }}</td>
+              </template>
+            </DataTable>
+          </div>
         </div>
       </div>
 

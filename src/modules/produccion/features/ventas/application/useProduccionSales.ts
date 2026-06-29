@@ -192,3 +192,16 @@ export function useDeliveryMutations() {
 
   return { create, update, complete, cancel, remove }
 }
+
+export async function openProduccionQuotationPdf(id: string): Promise<void> {
+  try {
+    const html = await produccionSalesApi.fetchQuotationPdfHtml(id)
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener,noreferrer')
+    window.setTimeout(() => URL.revokeObjectURL(url), 120_000)
+    void markapAlert.toast.info('Use Imprimir → Guardar como PDF en el navegador.')
+  } catch (err) {
+    void markapAlert.toast.error('No se pudo abrir la cotización', getApiErrorMessage(err))
+  }
+}

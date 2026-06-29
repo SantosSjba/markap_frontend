@@ -16,6 +16,14 @@ export interface ProduccionFurnitureCategoryDTO {
   isActive: boolean
 }
 
+export interface ProduccionMaterialCategoryDTO {
+  id?: string
+  code: string
+  label: string
+  sortOrder: number
+  isActive: boolean
+}
+
 export interface ProduccionProductionStageDTO {
   id?: string
   stageKey: string
@@ -44,6 +52,7 @@ export interface ProduccionNumberingSeriesDTO {
 export interface ProduccionConfigBootstrap {
   settings: ProduccionAppSettingsDTO
   furnitureCategories: ProduccionFurnitureCategoryDTO[]
+  materialCategories: ProduccionMaterialCategoryDTO[]
   productionStages: ProduccionProductionStageDTO[]
   units: ProduccionUnitDTO[]
   numbering: ProduccionNumberingSeriesDTO[]

@@ -11,8 +11,9 @@ import {
   BaseModal,
 } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
+import { useProduccionUnitOptions, useProduccionMaterialCategoryOptions } from '@modules/produccion/features/configuracion'
 import { useProduccionMaterialsList, useMaterialMutations } from '../../application/useProduccionInventory'
-import { formatSol, formatQty, MATERIAL_CATEGORIES } from '../labels'
+import { formatSol, formatQty } from '../labels'
 import type { ProduccionMaterial } from '../../domain/inventory.types'
 
 const listParams = ref({ page: 1, limit: 50 })
@@ -27,6 +28,8 @@ const { data: result, isLoading } = useProduccionMaterialsList(
   })),
 )
 const { create, update, remove } = useMaterialMutations()
+const { options: unitOptions, defaultUnit } = useProduccionUnitOptions()
+const { options: categoryOptions, defaultCategory } = useProduccionMaterialCategoryOptions()
 
 const rows = computed(() => result.value?.data ?? [])
 
@@ -42,8 +45,6 @@ const notes = ref('')
 const isActive = ref(true)
 const saving = ref(false)
 
-const categoryOptions = MATERIAL_CATEGORIES.map((c) => ({ value: c, label: c }))
-
 const columns = [
   { key: 'code', label: 'Código', align: 'left' as const },
   { key: 'name', label: 'Material', align: 'left' as const },
@@ -57,8 +58,8 @@ function openNew() {
   editing.value = null
   code.value = ''
   name.value = ''
-  category.value = 'Tableros'
-  unit.value = 'und'
+  category.value = defaultCategory.value
+  unit.value = defaultUnit.value || 'und'
   unitCost.value = 0
   minStockQty.value = 0
   notes.value = ''
@@ -169,7 +170,7 @@ async function del(r: ProduccionMaterial) {
         <FormInput v-model="name" label="Nombre" placeholder="Melamina blanca 18mm" />
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormSelect v-model="category" label="Categoría" :options="categoryOptions" />
-          <FormInput v-model="unit" label="Unidad" placeholder="und, plancha, kg…" />
+          <FormSelect v-model="unit" label="Unidad" :options="unitOptions" />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormInput v-model.number="unitCost" label="Costo unitario (S/)" type="number" min="0" step="0.01" />

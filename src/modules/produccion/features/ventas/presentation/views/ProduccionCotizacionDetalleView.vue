@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, DataTable, AppIcon } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
-import { useProduccionQuotationDetail, useQuotationMutations } from '../../application/useProduccionSales'
+import { useProduccionQuotationDetail, useQuotationMutations, openProduccionQuotationPdf } from '../../application/useProduccionSales'
 import {
   formatSol,
   formatDate,
@@ -62,6 +62,10 @@ async function doConvert() {
   void router.push({ name: 'produccion-ventas-pedido-detalle', params: { id: order.id } })
 }
 
+async function doExportPdf() {
+  await openProduccionQuotationPdf(id.value)
+}
+
 async function doDelete() {
   const ok = await markapAlert.confirmDanger({ title: '¿Eliminar borrador?', confirmText: 'Eliminar' })
   if (!ok) return
@@ -86,6 +90,10 @@ async function doDelete() {
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
+        <BaseButton variant="outline" @click="doExportPdf">
+          <AppIcon icon="lucide:file-down" :size="16" class="mr-1" />
+          Exportar PDF
+        </BaseButton>
         <BaseButton v-if="canSend" variant="primary" @click="doSend">Enviar</BaseButton>
         <BaseButton v-if="canAccept" variant="primary" @click="doAccept">Aceptar</BaseButton>
         <BaseButton v-if="canReject" variant="secondary" @click="doReject">Rechazar</BaseButton>

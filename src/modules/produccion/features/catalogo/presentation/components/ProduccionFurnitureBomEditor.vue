@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { BaseButton, FormInput, AppIcon } from '@shared/components'
+import { BaseButton, FormInput, FormSelect, AppIcon } from '@shared/components'
+import { useProduccionUnitOptions } from '@modules/produccion/features/configuracion'
 
 export type BomLineDraft = {
   key: string
@@ -11,6 +12,7 @@ export type BomLineDraft = {
 }
 
 const lines = defineModel<BomLineDraft[]>({ required: true })
+const { options: unitOptions, defaultUnit } = useProduccionUnitOptions()
 
 function addLine() {
   lines.value = [
@@ -18,7 +20,7 @@ function addLine() {
     {
       key: `new-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       materialName: '',
-      unit: 'und',
+      unit: defaultUnit.value,
       quantity: 1,
       unitCost: '',
       notes: '',
@@ -72,7 +74,7 @@ function removeLine(key: string) {
           <FormInput v-model="line.quantity" type="number" label="Cantidad" required />
         </div>
         <div class="sm:col-span-2">
-          <FormInput v-model="line.unit" label="Unidad" required placeholder="und, m²…" />
+          <FormSelect v-model="line.unit" label="Unidad" :options="unitOptions" />
         </div>
         <div class="sm:col-span-2">
           <FormInput v-model="line.unitCost" type="number" label="Costo unit." placeholder="S/" />

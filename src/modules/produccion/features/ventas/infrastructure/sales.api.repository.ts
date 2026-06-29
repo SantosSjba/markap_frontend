@@ -75,6 +75,14 @@ export const produccionSalesApi = {
   deleteQuotation: (id: string) =>
     apiClient.delete(`${QUOTATIONS_BASE}/${id}`, { params: slugParams() }).then(() => undefined),
 
+  fetchQuotationPdfHtml: (id: string) =>
+    apiClient
+      .get(`${QUOTATIONS_BASE}/${id}/pdf`, {
+        params: slugParams(),
+        responseType: 'text',
+      })
+      .then((r) => String(r.data)),
+
   listOrders: (params: ListOrdersParams = {}) => {
     const sp = new URLSearchParams()
     sp.set('applicationSlug', PRODUCCION_APP_SLUG)

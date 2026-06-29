@@ -7,7 +7,6 @@ import {
   BaseModal,
   DataTable,
   SearchInput,
-  FormInput,
   AppIcon,
   ActionsDropdown,
   ExcelIcon,
@@ -20,6 +19,7 @@ import {
   useDeleteProduccionCatalogItem,
 } from '../../application/useProduccionCatalog'
 import { produccionCatalogRepository } from '@modules/produccion/features/catalogo'
+import { useProduccionFurnitureCategoryOptions } from '@modules/produccion/features/configuracion'
 import { formatSol } from '../labels'
 import { PRODUCCION_BASE_PATH } from '@modules/produccion/config/routes.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
@@ -57,6 +57,7 @@ const {
 } = useProduccionCatalogList(listParams)
 
 const { data: stats } = useProduccionCatalogStats()
+const { options: categoryOptions } = useProduccionFurnitureCategoryOptions()
 
 const rows = computed(() => result.value?.data ?? [])
 const total = computed(() => result.value?.total ?? 0)
@@ -220,7 +221,18 @@ async function handleExport() {
           <template #toolbar>
             <div class="flex flex-col sm:flex-row gap-3 flex-1 min-w-0 w-full">
               <SearchInput v-model="searchInput" placeholder="Buscar por código o nombre…" class="flex-1 min-w-0" />
-              <FormInput v-model="categoryFilter" placeholder="Filtrar por categoría…" class="w-full sm:w-52" />
+              <select
+                v-model="categoryFilter"
+                class="w-full sm:w-52 px-3 py-2 rounded-lg border text-sm"
+                :style="{
+                  borderColor: 'var(--color-border)',
+                  background: 'var(--color-surface)',
+                  color: 'var(--color-text-primary)',
+                }"
+              >
+                <option value="">Todas las categorías</option>
+                <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
+              </select>
               <select
                 v-model="activeFilter"
                 class="w-full sm:w-40 px-3 py-2 rounded-lg border text-sm"

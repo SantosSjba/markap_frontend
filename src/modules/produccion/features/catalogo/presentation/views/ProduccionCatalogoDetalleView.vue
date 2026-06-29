@@ -9,7 +9,8 @@ import {
   useUpdateProduccionCatalogItem,
   useDeleteProduccionCatalogItem,
 } from '../../application/useProduccionCatalog'
-import { formatSol, formatDimensions, FURNITURE_CATEGORIES } from '../labels'
+import { formatSol, formatDimensions } from '../labels'
+import { useProduccionFurnitureCategoryOptions } from '@modules/produccion/features/configuracion'
 import ProduccionFurnitureBomEditor, {
   type BomLineDraft,
 } from '../components/ProduccionFurnitureBomEditor.vue'
@@ -24,6 +25,7 @@ const activeTab = ref<'ficha' | 'bom' | 'costeo' | 'cotizaciones'>('ficha')
 const { data: detail, isLoading } = useProduccionCatalogDetail(id)
 const updateMut = useUpdateProduccionCatalogItem(id)
 const deleteMut = useDeleteProduccionCatalogItem()
+const { options: categoryOptions } = useProduccionFurnitureCategoryOptions()
 
 const name = ref('')
 const category = ref('')
@@ -241,7 +243,7 @@ const onSave = () => (activeTab.value === 'bom' ? saveBom() : save())
                 color: 'var(--color-text-primary)',
               }"
             >
-              <option v-for="c in FURNITURE_CATEGORIES" :key="c" :value="c">{{ c }}</option>
+              <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
             </select>
           </div>
           <FormInput v-model="referencePrice" type="number" label="Precio referencia (S/)" required />

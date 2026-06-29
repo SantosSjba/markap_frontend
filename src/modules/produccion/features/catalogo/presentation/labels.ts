@@ -15,11 +15,6 @@ export function formatDimensions(
   return `${w} × ${d} × ${h} cm`
 }
 
-export const FURNITURE_CATEGORIES = [
-  'Comedor',
-  'Dormitorio',
-  'Oficina',
-  'Cocina',
-  'Sala',
-  'Otro',
-] as const
+import { FALLBACK_FURNITURE_CATEGORY_OPTIONS } from '@modules/produccion/features/configuracion/domain/config.defaults'
+
+export const FURNITURE_CATEGORIES = FALLBACK_FURNITURE_CATEGORY_OPTIONS.map((c) => c.label)

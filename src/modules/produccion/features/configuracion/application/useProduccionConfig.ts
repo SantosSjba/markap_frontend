@@ -5,6 +5,7 @@ import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import type {
   ProduccionAppSettingsDTO,
   ProduccionFurnitureCategoryDTO,
+  ProduccionMaterialCategoryDTO,
   ProduccionProductionStageDTO,
   ProduccionUnitDTO,
 } from '../domain/config.types'
@@ -48,6 +49,19 @@ export function useProduccionSaveFurnitureCategories() {
     onSuccess: () => {
       void invalidateProduccionConfigCache(qc)
       void markapAlert.toast.success('Categorías actualizadas')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
+  })
+}
+
+export function useProduccionSaveMaterialCategories() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (categories: ProduccionMaterialCategoryDTO[]) =>
+      produccionConfigRepository.replaceMaterialCategories(categories),
+    onSuccess: () => {
+      void invalidateProduccionConfigCache(qc)
+      void markapAlert.toast.success('Categorías de materiales actualizadas')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
   })

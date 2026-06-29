@@ -57,6 +57,17 @@ export type ProduccionReportsKpis = {
   pendingPurchaseOrders: number
 }
 
+export type ProduccionReportsActivityType = 'WORK_ORDER' | 'DELIVERY' | 'STOCK_MOVEMENT'
+
+export type ProduccionReportsActivityItem = {
+  type: ProduccionReportsActivityType
+  entityId: string
+  title: string
+  detail: string
+  occurredAt: string
+  materialId?: string
+}
+
 export type ProduccionReportsDashboard = {
   applicationSlug: string
   range: { startDate: string; endDate: string }
@@ -66,4 +77,5 @@ export type ProduccionReportsDashboard = {
   inventario: ProduccionReportsInventario
   rentabilidad: ProduccionReportsRentabilidad
   kpis: ProduccionReportsKpis
+  recentActivity: ProduccionReportsActivityItem[]
 }
