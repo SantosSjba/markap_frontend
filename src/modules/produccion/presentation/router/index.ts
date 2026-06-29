@@ -3,6 +3,7 @@ import ProduccionLayout from '../views/ProduccionLayout.vue'
 import { SectionLayout } from '@layouts'
 import { PRODUCCION_BASE_PATH } from '../../config/routes.constants'
 import { produccionClientesRoutes } from '../../features/clientes'
+import { produccionCatalogoRoutes } from '../../features/catalogo'
 
 const placeholder = () => import('../views/ProduccionPlaceholderView.vue')
 
@@ -38,20 +39,7 @@ export const produccionRoutes: RouteRecordRaw[] = [
         path: 'catalogo',
         component: SectionLayout,
         meta: { title: 'Catálogo de muebles' },
-        children: [
-          {
-            path: '',
-            name: 'produccion-catalogo',
-            component: placeholder,
-            meta: { title: 'Catálogo' },
-          },
-          {
-            path: 'nuevo',
-            name: 'produccion-catalogo-nuevo',
-            component: placeholder,
-            meta: { title: 'Nuevo mueble' },
-          },
-        ],
+        children: produccionCatalogoRoutes,
       },
       // Redirecciones rutas antiguas → catálogo
       { path: 'productos', redirect: '/produccion/catalogo' },
