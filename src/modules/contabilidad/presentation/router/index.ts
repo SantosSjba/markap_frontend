@@ -16,6 +16,7 @@ import { contabilidadReportesFinancierosRoutes } from '../../features/reportes-f
 import { contabilidadPlantillasAsientoRoutes } from '../../features/plantillas-asiento'
 import { contabilidadTiposCambioRoutes } from '../../features/tipos-cambio'
 import { contabilidadCpeLogRoutes } from '../../features/cpe-log'
+import { contabilidadInventarioContableRoutes } from '../../features/inventario-contable'
 import { ContabilidadCierreMensualView } from '../../features/cierre'
 
 export const contabilidadRoutes: RouteRecordRaw[] = [
@@ -104,6 +105,13 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
       { path: 'impuestos/igv', redirect: '/contabilidad/tributos/igv' },
       { path: 'impuestos/renta', redirect: '/contabilidad/tributos/renta' },
       { path: 'impuestos/declaraciones', redirect: '/contabilidad/tributos/igv' },
+      // Inventario permanente
+      {
+        path: 'inventario-permanente',
+        component: SectionLayout,
+        meta: { title: 'Inventario permanente' },
+        children: contabilidadInventarioContableRoutes,
+      },
       // Libros electrónicos
       {
         path: 'libros-e',

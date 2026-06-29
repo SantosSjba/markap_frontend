@@ -243,11 +243,48 @@ export const CONTABILIDAD_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
+    id: 'cont-fb-inventario',
+    label: 'Inventario permanente',
+    icon: 'package',
+    path: null,
+    order: 6,
+    children: [
+      {
+        id: 'cont-fb-inv-items',
+        label: 'Ítems de inventario',
+        icon: null,
+        path: '/contabilidad/inventario-permanente/items',
+        order: 0,
+      },
+      {
+        id: 'cont-fb-inv-mov',
+        label: 'Movimientos',
+        icon: null,
+        path: '/contabilidad/inventario-permanente/movimientos',
+        order: 1,
+      },
+      {
+        id: 'cont-fb-inv-kardex',
+        label: 'Kardex',
+        icon: null,
+        path: '/contabilidad/inventario-permanente/kardex',
+        order: 2,
+      },
+      {
+        id: 'cont-fb-inv-valor',
+        label: 'Saldo valorizado',
+        icon: null,
+        path: '/contabilidad/inventario-permanente/valorizado',
+        order: 3,
+      },
+    ],
+  },
+  {
     id: 'cont-fb-libros',
     label: 'Libros electrónicos',
     icon: 'library',
     path: null,
-    order: 6,
+    order: 7,
     children: [
       {
         id: 'cont-fb-lib-rc',
@@ -305,7 +342,7 @@ export const CONTABILIDAD_FALLBACK_MENUS: MenuItem[] = [
     label: 'Reportes financieros',
     icon: 'pie-chart',
     path: null,
-    order: 7,
+    order: 8,
     children: [
       {
         id: 'cont-fb-rep-bg',
@@ -356,7 +393,7 @@ export const CONTABILIDAD_FALLBACK_MENUS: MenuItem[] = [
     label: 'Configuración',
     icon: 'settings',
     path: null,
-    order: 8,
+    order: 9,
     children: [
       {
         id: 'cont-fb-cfg-main',
