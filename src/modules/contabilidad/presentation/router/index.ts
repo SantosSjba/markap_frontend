@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import ContabilidadLayout from '../views/ContabilidadLayout.vue'
 import { SectionLayout } from '@layouts'
 import { CONTABILIDAD_BASE_PATH } from '../../config/routes.constants'
+import { contabilidadConfiguracionRoutes } from '../../features/configuracion'
 
 const placeholder = () => import('../views/ContabilidadPlaceholderView.vue')
 
@@ -322,9 +323,9 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'configuracion',
-        name: 'contabilidad-configuracion',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Configuración' },
+        children: contabilidadConfiguracionRoutes,
       },
     ],
   },
