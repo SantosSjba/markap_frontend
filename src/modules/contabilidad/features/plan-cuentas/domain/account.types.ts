@@ -49,3 +49,17 @@ export interface UpdateContabilidadAccountBody {
   sortOrder?: number
   isActive?: boolean
 }
+
+export interface ContabilidadPcgeClassMeta {
+  class: number
+  label: string
+  accountCount: number
+}
+
+export interface ImportPcgeResult {
+  classes: number[]
+  created: number
+  skipped: number
+  pendingParent: number
+  totalInCatalog: number
+}

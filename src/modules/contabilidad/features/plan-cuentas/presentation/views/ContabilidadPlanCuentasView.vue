@@ -4,6 +4,7 @@ import {
   BaseButton,
   AppIcon,
   BaseModal,
+  Badge,
   FormInput,
   FormCheckbox,
   FormSelect,
@@ -18,6 +19,8 @@ import {
   useContabilidadCreateAccount,
   useContabilidadUpdateAccount,
   useContabilidadDeactivateAccount,
+  useContabilidadPcgeClasses,
+  useContabilidadImportPcge,
 } from '../../application/useContabilidadAccounts'
 import {
   CONTABILIDAD_ACCOUNT_TYPE_OPTIONS,
@@ -54,6 +57,38 @@ const visibleRows = computed(() => {
 })
 
 const typeLabels = computed(() => data.value?.accountTypeLabels ?? {})
+
+const accountStats = computed(() => {
+  const flat = data.value?.flat ?? []
+  const system = flat.filter((a) => a.isSystem).length
+  return { total: flat.length, system, custom: flat.length - system }
+})
+
+const importModalOpen = ref(false)
+const selectedClasses = ref<number[]>([1, 2, 3, 4, 5, 6, 7])
+const { data: pcgeClassesData } = useContabilidadPcgeClasses()
+const pcgeClassOptions = computed(() => pcgeClassesData.value?.classes ?? [])
+const { mutate: importPcge, isPending: importing } = useContabilidadImportPcge()
+
+function toggleClass(cls: number) {
+  const set = new Set(selectedClasses.value)
+  if (set.has(cls)) set.delete(cls)
+  else set.add(cls)
+  selectedClasses.value = [...set].sort((a, b) => a - b)
+}
+
+function submitImportPcge() {
+  if (!selectedClasses.value.length) {
+    void markapAlert.toast.warning('Seleccione al menos una clase')
+    return
+  }
+  importPcge(selectedClasses.value.join(','), {
+    onSuccess: () => {
+      importModalOpen.value = false
+      void refetch()
+    },
+  })
+}
 
 function toggleExpand(id: string) {
   const next = new Set(expandedIds.value)
@@ -227,6 +262,7 @@ const codeReadonly = computed(
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
+        <BaseButton variant="secondary" size="sm" @click="importModalOpen = true">Importar PCGE</BaseButton>
         <BaseButton variant="secondary" size="sm" @click="expandAll">Expandir todo</BaseButton>
         <BaseButton variant="secondary" size="sm" @click="collapseAll">Colapsar</BaseButton>
         <BaseButton variant="secondary" size="sm" :loading="isExporting" @click="exportPlan">
@@ -238,7 +274,7 @@ const codeReadonly = computed(
     <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
       <SearchInput v-model="searchInput" placeholder="Buscar por código o nombre…" class="flex-1 max-w-md" />
       <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
-        {{ visibleRows.length }} cuenta(s) visibles
+        {{ visibleRows.length }} visible(s) · {{ accountStats.system }} sistema · {{ accountStats.custom }} personalizadas
       </p>
     </div>
 
@@ -271,6 +307,7 @@ const codeReadonly = computed(
             <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">
               Naturaleza
             </th>
+            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Origen</th>
             <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Estado</th>
             <th class="py-3 px-4" />
           </tr>
@@ -317,6 +354,11 @@ const codeReadonly = computed(
               >
                 {{ row.isMovement ? 'Movimiento' : 'Título' }}
               </span>
+            </td>
+            <td class="py-2.5 px-4">
+              <Badge :variant="row.isSystem ? 'neutral' : 'info'">
+                {{ row.isSystem ? 'Sistema' : 'Personalizada' }}
+              </Badge>
             </td>
             <td class="py-2.5 px-4">
               <span
@@ -387,6 +429,37 @@ const codeReadonly = computed(
           </BaseButton>
         </div>
       </form>
+    </BaseModal>
+
+    <BaseModal v-model="importModalOpen" title="Importar catálogo PCGE" size="md">
+      <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+        Agrega cuentas oficiales por clase sin duplicar códigos existentes. Las cuentas importadas se marcan como
+        <strong>sistema</strong>.
+      </p>
+      <div class="space-y-2 max-h-72 overflow-y-auto">
+        <label
+          v-for="opt in pcgeClassOptions"
+          :key="opt.class"
+          class="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-black/5"
+        >
+          <input
+            type="checkbox"
+            class="mt-1"
+            :checked="selectedClasses.includes(opt.class)"
+            @change="toggleClass(opt.class)"
+          />
+          <span>
+            <span class="font-medium text-sm">Clase {{ opt.class }}</span>
+            <span class="block text-xs" :style="{ color: 'var(--color-text-muted)' }">
+              {{ opt.label }} · {{ opt.accountCount }} cuentas en catálogo
+            </span>
+          </span>
+        </label>
+      </div>
+      <template #footer>
+        <BaseButton variant="secondary" @click="importModalOpen = false">Cancelar</BaseButton>
+        <BaseButton :loading="importing" @click="submitImportPcge">Importar seleccionadas</BaseButton>
+      </template>
     </BaseModal>
   </div>
 </template>

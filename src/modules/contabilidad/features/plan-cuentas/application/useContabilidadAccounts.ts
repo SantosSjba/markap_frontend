@@ -12,6 +12,7 @@ import { contabilidadAccountsApiRepository as accountsRepository } from '../infr
 export const contabilidadAccountsKeys = {
   root: ['contabilidad-accounts'] as const,
   tree: (search?: string) => [...contabilidadAccountsKeys.root, 'tree', search ?? ''] as const,
+  pcgeClasses: () => [...contabilidadAccountsKeys.root, 'pcge-classes'] as const,
 }
 
 export function invalidateContabilidadAccountsCache(qc: QueryClient) {
@@ -60,5 +61,27 @@ export function useContabilidadDeactivateAccount() {
       void markapAlert.toast.success('Cuenta desactivada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo desactivar', getApiErrorMessage(e)),
+  })
+}
+
+export function useContabilidadPcgeClasses() {
+  return useQuery({
+    queryKey: contabilidadAccountsKeys.pcgeClasses(),
+    queryFn: () => accountsRepository.getPcgeClasses(),
+    staleTime: 60_000,
+  })
+}
+
+export function useContabilidadImportPcge() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (classes: string) => accountsRepository.importPcge(classes),
+    onSuccess: (result) => {
+      void invalidateContabilidadAccountsCache(qc)
+      void markapAlert.toast.success(
+        `Importación PCGE: ${result.created} creadas, ${result.skipped} omitidas`,
+      )
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo importar', getApiErrorMessage(e)),
   })
 }
