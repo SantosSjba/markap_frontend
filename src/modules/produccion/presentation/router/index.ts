@@ -4,6 +4,7 @@ import { SectionLayout } from '@layouts'
 import { PRODUCCION_BASE_PATH } from '../../config/routes.constants'
 import { produccionClientesRoutes } from '../../features/clientes'
 import { produccionCatalogoRoutes } from '../../features/catalogo'
+import { produccionCostosRoutes } from '../../features/costos'
 
 const placeholder = () => import('../views/ProduccionPlaceholderView.vue')
 
@@ -178,26 +179,7 @@ export const produccionRoutes: RouteRecordRaw[] = [
         path: 'costos',
         component: SectionLayout,
         meta: { title: 'Costos' },
-        children: [
-          {
-            path: 'costeo',
-            name: 'produccion-costos-costeo',
-            component: placeholder,
-            meta: { title: 'Costeo de muebles' },
-          },
-          {
-            path: 'mano-obra',
-            name: 'produccion-costos-mano-obra',
-            component: placeholder,
-            meta: { title: 'Mano de obra' },
-          },
-          {
-            path: 'gastos',
-            name: 'produccion-costos-gastos',
-            component: placeholder,
-            meta: { title: 'Gastos adicionales' },
-          },
-        ],
+        children: produccionCostosRoutes,
       },
       {
         path: 'reportes',

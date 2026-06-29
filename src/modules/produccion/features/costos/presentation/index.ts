@@ -1,0 +1,1 @@
+export { produccionCostosRoutes } from './router'

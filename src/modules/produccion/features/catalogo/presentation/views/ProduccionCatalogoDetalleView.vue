@@ -63,6 +63,7 @@ watch(
         materialName: bl.materialName,
         unit: bl.unit,
         quantity: bl.quantity,
+        unitCost: bl.unitCost ?? '',
         notes: bl.notes ?? '',
       }))
   },
@@ -88,6 +89,10 @@ function bomPayload(): ProduccionFurnitureBomLineInput[] {
       materialName: l.materialName.trim(),
       unit: l.unit.trim(),
       quantity: Number(l.quantity),
+      unitCost:
+        l.unitCost === '' || l.unitCost == null || Number.isNaN(Number(l.unitCost))
+          ? null
+          : Number(l.unitCost),
       notes: l.notes?.trim() || null,
     }))
 }
@@ -261,14 +266,25 @@ const onSave = () => (activeTab.value === 'bom' ? saveBom() : save())
 
     <div
       v-else-if="detail && activeTab === 'costeo'"
-      class="p-6 rounded-xl border text-center"
+      class="p-6 rounded-xl border"
       :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
     >
-      <AppIcon icon="lucide:calculator" :size="32" class="mx-auto mb-3" color="var(--color-text-secondary)" />
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Costeo de muebles</p>
-      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-        Disponible en la fase de Costos. Usará el BOM definido para calcular materiales, mano de obra y margen.
-      </p>
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Costeo de muebles</p>
+          <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+            Calcule materiales, mano de obra y gastos para este mueble.
+          </p>
+        </div>
+        <BaseButton
+          variant="primary"
+          type="button"
+          @click="router.push(`${PRODUCCION_BASE_PATH}/costos/costeo?mueble=${id}`)"
+        >
+          <AppIcon icon="lucide:calculator" :size="18" class="mr-1.5" />
+          Ver costeo
+        </BaseButton>
+      </div>
     </div>
 
     <div

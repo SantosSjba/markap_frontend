@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { BaseButton, FormInput, AppIcon } from '@shared/components'
-import type { ProduccionFurnitureBomLineInput } from '../../domain/catalog.types'
 
-export type BomLineDraft = ProduccionFurnitureBomLineInput & { key: string }
+export type BomLineDraft = {
+  key: string
+  materialName: string
+  unit: string
+  quantity: number
+  unitCost?: number | ''
+  notes?: string
+}
 
 const lines = defineModel<BomLineDraft[]>({ required: true })
 
@@ -14,6 +20,7 @@ function addLine() {
       materialName: '',
       unit: 'und',
       quantity: 1,
+      unitCost: '',
       notes: '',
     },
   ]
@@ -66,6 +73,9 @@ function removeLine(key: string) {
         </div>
         <div class="sm:col-span-2">
           <FormInput v-model="line.unit" label="Unidad" required placeholder="und, m²…" />
+        </div>
+        <div class="sm:col-span-2">
+          <FormInput v-model="line.unitCost" type="number" label="Costo unit." placeholder="S/" />
         </div>
         <div class="sm:col-span-2">
           <FormInput v-model="line.notes" label="Notas" placeholder="Opcional" />
