@@ -28,13 +28,40 @@ function writeStored(period: ContabilidadActivePeriod | null, entityId?: string)
   localStorage.setItem(key, JSON.stringify(period))
 }
 
-const activePeriod = ref<ContabilidadActivePeriod | null>(null)
-const listYear = ref(new Date().getFullYear())
+const activePeriod = ref<ContabilidadActivePeriod | null>(readStored())
+const listYear = ref(activePeriod.value?.year ?? new Date().getFullYear())
 const periods = ref<ContabilidadPeriodDTO[]>([])
 const loading = ref(false)
 
-async function loadPeriods(year?: number) {
-  if (!activeLegalEntityIdRef.value) return
+function pickDefaultPeriod(periodList: ContabilidadPeriodDTO[], entityId: string) {
+  const stored = readStored(entityId)
+  if (stored) {
+    const match = periodList.find((p) => p.id === stored.id)
+    if (match) return match
+  }
+  const now = new Date()
+  return (
+    periodList.find((p) => p.year === now.getFullYear() && p.month === now.getMonth() + 1) ??
+    periodList.find((p) => p.status === 'OPEN') ??
+    periodList[0] ??
+    null
+  )
+}
+
+export function applyPeriodBootstrap(
+  year: number,
+  periodList: ContabilidadPeriodDTO[],
+  selected?: ContabilidadPeriodDTO | null,
+) {
+  listYear.value = year
+  periods.value = periodList
+  if (selected) {
+    activePeriod.value = selected
+    writeStored(selected, activeLegalEntityIdRef.value)
+  }
+}
+
+export async function loadPeriodsForEntity(entityId: string, year?: number) {
   loading.value = true
   try {
     const y = year ?? listYear.value
@@ -42,26 +69,9 @@ async function loadPeriods(year?: number) {
     listYear.value = res.year
     periods.value = res.periods
 
-    const stored = readStored(activeLegalEntityIdRef.value)
-    const match = stored ? res.periods.find((p: ContabilidadPeriodDTO) => p.id === stored.id) : null
-    if (match) {
-      activePeriod.value = match
-      writeStored(match, activeLegalEntityIdRef.value)
-      return
-    }
-
-    const now = new Date()
-    const current =
-      res.periods.find((p: ContabilidadPeriodDTO) => p.year === now.getFullYear() && p.month === now.getMonth() + 1) ??
-      res.periods.find((p: ContabilidadPeriodDTO) => p.status === 'OPEN') ??
-      res.periods[0]
-
-    if (current) {
-      activePeriod.value = current
-      writeStored(current, activeLegalEntityIdRef.value)
-    } else {
-      activePeriod.value = null
-    }
+    const current = pickDefaultPeriod(res.periods, entityId)
+    activePeriod.value = current
+    writeStored(current, entityId)
   } finally {
     loading.value = false
   }
@@ -72,10 +82,9 @@ function setActivePeriod(period: ContabilidadPeriodDTO) {
   writeStored(period, activeLegalEntityIdRef.value)
 }
 
-watch(activeLegalEntityIdRef, (entityId) => {
-  if (!entityId) return
+watch(activeLegalEntityIdRef, (entityId, prev) => {
+  if (!entityId || entityId === prev) return
   activePeriod.value = readStored(entityId)
-  void loadPeriods()
 })
 
 watch(
@@ -86,26 +95,34 @@ watch(
   { deep: true },
 )
 
-function setListYear(year: number) {
-  listYear.value = year
-  void loadPeriods(year)
-}
-
 const openPeriods = computed(() => periods.value.filter((p) => p.status === 'OPEN'))
 
-export function useContabilidadActivePeriod() {
-  if (!periods.value.length && !loading.value && activeLegalEntityIdRef.value) {
-    void loadPeriods()
-  }
-
+export function useContabilidadActivePeriodState() {
   return {
     activePeriod,
     periods,
     openPeriods,
     listYear,
     loading,
-    loadPeriods,
     setActivePeriod,
-    setListYear,
+  }
+}
+
+/** @deprecated Prefer useContabilidadContext() for layout init; kept for views that only need period state. */
+export function useContabilidadActivePeriod() {
+  const state = useContabilidadActivePeriodState()
+
+  return {
+    ...state,
+    loadPeriods: () =>
+      activeLegalEntityIdRef.value
+        ? loadPeriodsForEntity(activeLegalEntityIdRef.value)
+        : Promise.resolve(),
+    setListYear: (year: number) => {
+      listYear.value = year
+      return activeLegalEntityIdRef.value
+        ? loadPeriodsForEntity(activeLegalEntityIdRef.value, year)
+        : Promise.resolve()
+    },
   }
 }

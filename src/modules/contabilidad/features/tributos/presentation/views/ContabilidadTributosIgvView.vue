@@ -59,7 +59,7 @@ async function exportPdt621() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
+  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
     <PageHeader
       icon="lucide:percent"
       title="IGV del periodo"
@@ -79,7 +79,7 @@ async function exportPdt621() {
     </PageHeader>
 
     <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
-      Seleccione un periodo activo en la barra superior.
+      Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
     <div v-else-if="isLoading" class="flex justify-center py-16">

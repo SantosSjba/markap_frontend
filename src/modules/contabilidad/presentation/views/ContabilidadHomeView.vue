@@ -92,7 +92,7 @@ const toneBorder = (tone: string) => {
     </div>
 
     <div v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
-      Seleccione un periodo activo para ver indicadores.
+      Configure el periodo activo en Configuración → Contexto contable para ver indicadores.
     </div>
 
     <div v-else-if="isLoading" class="flex justify-center py-12">

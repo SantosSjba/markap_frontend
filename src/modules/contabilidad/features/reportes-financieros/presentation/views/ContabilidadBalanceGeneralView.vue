@@ -26,7 +26,7 @@ function exportPdf() {
 </script>
 
 <template>
-  <div class="financial-report-print px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
+  <div class="financial-report-print w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
     <PageHeader
       icon="lucide:scale"
       title="Balance general"
@@ -57,7 +57,7 @@ function exportPdf() {
     </PageHeader>
 
     <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
-      Seleccione un periodo activo en la barra superior.
+      Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
     <div v-if="isLoading" class="flex justify-center py-16">

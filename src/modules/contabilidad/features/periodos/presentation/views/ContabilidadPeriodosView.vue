@@ -39,7 +39,7 @@ async function togglePeriod(period: ContabilidadPeriodDTO) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
+  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">

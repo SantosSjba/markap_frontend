@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { AppLayoutSidebar, AppHeader } from '@layouts/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import { useContabilidadAppLayout } from '../composables'
-import ContabilidadPeriodBar from '../components/ContabilidadPeriodBar.vue'
-import ContabilidadLegalEntityBar from '../components/ContabilidadLegalEntityBar.vue'
+import ContabilidadContextInfoBar from '../components/ContabilidadContextInfoBar.vue'
+import { ensureContabilidadContext } from '../composables/useContabilidadContext'
 
 const { application, menus, menusLoading } = useContabilidadAppLayout()
 
@@ -38,6 +38,10 @@ const applicationInfo = computed(() =>
         color: '#8B5CF6',
       },
 )
+
+onMounted(() => {
+  void ensureContabilidadContext()
+})
 </script>
 
 <template>
@@ -66,13 +70,12 @@ const applicationInfo = computed(() =>
         @toggle-mobile-sidebar="toggleMobileSidebar"
       />
 
-      <main class="p-4 lg:p-6 mt-16">
+      <main class="p-4 lg:p-6 mt-16 w-full max-w-none">
         <div v-if="menusLoading" class="flex justify-center py-12">
           <AppIcon icon="line-md:loading-loop" :size="32" color="var(--color-primary)" />
         </div>
         <template v-else>
-          <ContabilidadLegalEntityBar />
-          <ContabilidadPeriodBar />
+          <ContabilidadContextInfoBar />
           <router-view />
         </template>
       </main>

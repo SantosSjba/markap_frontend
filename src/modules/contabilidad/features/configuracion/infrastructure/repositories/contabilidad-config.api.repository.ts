@@ -1,4 +1,5 @@
 import { apiClient } from '@core/api/apiClient'
+import { getContabilidadApiScope } from '@modules/contabilidad/config/api-scope'
 import { CONTABILIDAD_CONFIG_APP_SLUG } from '../../domain/config.types'
 import type {
   ContabilidadAppSettingsDTO,
@@ -12,16 +13,21 @@ const scope = { applicationSlug: CONTABILIDAD_CONFIG_APP_SLUG } as const
 
 function qs(params: Record<string, string | undefined>) {
   const u = new URLSearchParams()
-  Object.entries(params).forEach(([k, v]) => {
+  Object.entries({ ...getContabilidadApiScope(), ...scope, ...params }).forEach(([k, v]) => {
     if (v !== undefined && v !== '') u.set(k, String(v))
   })
   return u.toString()
 }
 
 export const contabilidadConfigApiRepository: ContabilidadConfigRepository = {
-  bootstrap: () =>
+  bootstrap: (params) =>
     apiClient
-      .get<ContabilidadConfigBootstrap>(`/contabilidad-config/bootstrap?${qs({ ...scope })}`)
+      .get<ContabilidadConfigBootstrap>(
+        `/contabilidad-config/bootstrap?${qs({
+          legalEntityId: params?.legalEntityId,
+          year: params?.year !== undefined ? String(params.year) : undefined,
+        })}`,
+      )
       .then((r) => r.data),
 
   updateCompany: (body) =>

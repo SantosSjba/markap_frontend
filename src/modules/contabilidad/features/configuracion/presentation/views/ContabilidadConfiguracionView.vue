@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { BaseButton, AppIcon, BaseTabs, FormInput, FormCheckbox, FormSelect } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import ContabilidadContextSettingsPanel from '@modules/contabilidad/presentation/components/ContabilidadContextSettingsPanel.vue'
+import { CONTABILIDAD_PAGE_CLASS } from '@modules/contabilidad/config/layout.constants'
 import {
   useContabilidadConfigBootstrap,
   useContabilidadSaveCompany,
@@ -17,14 +20,26 @@ import {
 import { isValidPeruvianRuc, normalizeRuc } from '../../domain/ruc-validator'
 import type { ContabilidadDocumentSeriesDTO } from '../../domain/config.types'
 
-const activeTab = ref('empresa')
+const route = useRoute()
+const activeTab = ref('contexto')
 
 const tabs = [
+  { id: 'contexto', label: 'Contexto contable', icon: 'lucide:target' },
   { id: 'empresa', label: 'Empresa', icon: 'lucide:building-2' },
   { id: 'tributario', label: 'Tributario', icon: 'lucide:landmark' },
   { id: 'series', label: 'Series documentales', icon: 'lucide:file-text' },
   { id: 'numeracion', label: 'Numeración', icon: 'lucide:hash' },
 ]
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (typeof tab === 'string' && tabs.some((t) => t.id === tab)) {
+      activeTab.value = tab
+    }
+  },
+  { immediate: true },
+)
 
 const { data: boot, isLoading, isError, error, refetch } = useContabilidadConfigBootstrap()
 const configLoadError = computed(() => (isError.value ? getApiErrorMessage(error.value) : ''))
@@ -173,7 +188,7 @@ const fiscalYearStartMonthModel = computed({
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
+  <div :class="CONTABILIDAD_PAGE_CLASS">
     <div>
       <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
         Configuración — Contabilidad
@@ -204,8 +219,10 @@ const fiscalYearStartMonthModel = computed({
     </div>
 
   <template v-else>
+    <ContabilidadContextSettingsPanel v-if="activeTab === 'contexto'" />
+
     <!-- Empresa -->
-    <section v-if="activeTab === 'empresa'" class="space-y-4 max-w-2xl">
+    <section v-else-if="activeTab === 'empresa'" class="space-y-4 max-w-3xl">
       <form class="space-y-4" @submit.prevent="submitCompany">
         <FormInput
           v-model="companyDraft.ruc"
@@ -238,7 +255,7 @@ const fiscalYearStartMonthModel = computed({
     </section>
 
     <!-- Tributario -->
-    <section v-else-if="activeTab === 'tributario'" class="space-y-4 max-w-2xl">
+    <section v-else-if="activeTab === 'tributario'" class="space-y-4 max-w-3xl">
       <form class="space-y-4" @submit.prevent="submitSettings">
         <FormSelect
           v-model="settingsDraft.taxRegime"

@@ -91,7 +91,7 @@ async function confirmReverse() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1200px] mx-auto print:max-w-none">
+  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6 print:max-w-none">
     <div class="print:hidden">
       <PageHeader
         icon="lucide:file-text"

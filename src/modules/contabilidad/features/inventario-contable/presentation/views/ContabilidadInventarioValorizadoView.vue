@@ -10,7 +10,7 @@ const totalValue = computed(() => data.value?.totalValue ?? '0.00')
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
+  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
     <PageHeader
       icon="lucide:scale"
       title="Saldo valorizado"

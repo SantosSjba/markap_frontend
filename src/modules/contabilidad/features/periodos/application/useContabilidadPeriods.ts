@@ -3,12 +3,14 @@ import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { activeLegalEntityIdRef } from '@modules/contabilidad/config/api-scope'
 import type { ContabilidadPeriodStatus } from '../domain/period.types'
 import { contabilidadPeriodsApiRepository as periodsRepository } from '../infrastructure/repositories/contabilidad-periods.api.repository'
 
 export const contabilidadPeriodsKeys = {
   root: ['contabilidad-periods'] as const,
-  list: (year: number) => [...contabilidadPeriodsKeys.root, 'list', year] as const,
+  list: (year: number, legalEntityId?: string) =>
+    [...contabilidadPeriodsKeys.root, 'list', year, legalEntityId] as const,
 }
 
 export function invalidateContabilidadPeriodsCache(qc: QueryClient) {
@@ -17,8 +19,9 @@ export function invalidateContabilidadPeriodsCache(qc: QueryClient) {
 
 export function useContabilidadPeriodsList(year: Ref<number>) {
   return useQuery({
-    queryKey: computed(() => contabilidadPeriodsKeys.list(year.value)),
+    queryKey: computed(() => contabilidadPeriodsKeys.list(year.value, activeLegalEntityIdRef.value)),
     queryFn: () => periodsRepository.list(year.value),
+    enabled: computed(() => Boolean(activeLegalEntityIdRef.value)),
     staleTime: 15_000,
   })
 }

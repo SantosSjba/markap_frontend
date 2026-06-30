@@ -1,4 +1,6 @@
 import { CONTABILIDAD_APP_SLUG } from '@modules/contabilidad/config/app.constants'
+import type { ContabilidadPeriodDTO } from '@modules/contabilidad/features/periodos/domain/period.types'
+import type { ContabilidadLegalEntityDTO } from '@modules/contabilidad/presentation/composables/contabilidad-context.types'
 
 export const CONTABILIDAD_CONFIG_APP_SLUG = CONTABILIDAD_APP_SLUG
 
@@ -37,6 +39,11 @@ export interface ContabilidadConfigBootstrap {
   company: ContabilidadCompanyProfileDTO
   settings: ContabilidadAppSettingsDTO
   documentSeries: ContabilidadDocumentSeriesDTO[]
+  legalEntities: ContabilidadLegalEntityDTO[]
+  defaultLegalEntityId: string
+  year: number
+  periods: ContabilidadPeriodDTO[]
+  monthLabels: Record<number, string>
 }
 
 export const CONTABILIDAD_TAX_REGIME_OPTIONS = [
