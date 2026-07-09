@@ -48,7 +48,7 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
       {
         path: 'cronograma',
         name: 'arquitectura-cronograma',
-        component: placeholder,
+        component: () => import('../../features/cronograma/presentation/views/ArquitecturaCronogramaView.vue'),
         meta: { title: 'Cronograma' },
       },
       {
