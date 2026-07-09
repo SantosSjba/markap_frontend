@@ -13,7 +13,7 @@ import type {
 
 const BASE = '/arquitectura-material-suppliers'
 
-export const interiorMaterialSuppliersApiRepository: ArquitecturaMaterialSuppliersRepository = {
+export const arquitecturaMaterialSuppliersApiRepository: ArquitecturaMaterialSuppliersRepository = {
   getList: (params: ListArquitecturaMaterialSuppliersParams = {}) => {
     const searchParams = new URLSearchParams()
     searchParams.set('applicationSlug', params.applicationSlug ?? ARQUITECTURA_APP_SLUG)

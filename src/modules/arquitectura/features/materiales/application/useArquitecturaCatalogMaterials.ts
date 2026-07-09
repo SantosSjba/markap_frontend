@@ -9,25 +9,25 @@ import type {
   ListArquitecturaCatalogMaterialsParams,
   UpdateArquitecturaCatalogMaterialPayload,
 } from '../domain/catalog.types'
-import { interiorCatalogMaterialsApiRepository as repo } from '../infrastructure/catalogMaterials.api.repository'
+import { arquitecturaCatalogMaterialsApiRepository as repo } from '../infrastructure/catalogMaterials.api.repository'
 
-export const interiorCatalogMaterialsKeys = {
+export const arquitecturaCatalogMaterialsKeys = {
   all: ['arquitectura-catalog-materials', ARQUITECTURA_APP_SLUG] as const,
   list: (p: ListArquitecturaCatalogMaterialsParams) =>
-    [...interiorCatalogMaterialsKeys.all, 'list', p] as const,
-  detail: (id: string) => [...interiorCatalogMaterialsKeys.all, 'detail', id] as const,
+    [...arquitecturaCatalogMaterialsKeys.all, 'list', p] as const,
+  detail: (id: string) => [...arquitecturaCatalogMaterialsKeys.all, 'detail', id] as const,
 }
 
 export function useArquitecturaCatalogMaterialsList(params: Ref<ListArquitecturaCatalogMaterialsParams>) {
   return useQuery({
-    queryKey: computed(() => interiorCatalogMaterialsKeys.list(params.value)),
+    queryKey: computed(() => arquitecturaCatalogMaterialsKeys.list(params.value)),
     queryFn: () => repo.getList(params.value),
   })
 }
 
 export function useArquitecturaCatalogMaterialDetail(id: Ref<string> | string) {
   return useQuery({
-    queryKey: computed(() => interiorCatalogMaterialsKeys.detail(unref(id))),
+    queryKey: computed(() => arquitecturaCatalogMaterialsKeys.detail(unref(id))),
     queryFn: () => repo.getById(unref(id)),
     enabled: computed(() => !!unref(id)),
   })
@@ -38,7 +38,7 @@ export function useCreateArquitecturaCatalogMaterial() {
   return useMutation({
     mutationFn: (payload: CreateArquitecturaCatalogMaterialPayload) => repo.create(payload),
     onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorCatalogMaterialsKeys.all)
+      invalidateQuerySubtree(qc, arquitecturaCatalogMaterialsKeys.all)
       void markapAlert.toast.success('Material creado')
     },
     onError: (err) => {
@@ -53,7 +53,7 @@ export function useUpdateArquitecturaCatalogMaterial(id: Ref<string> | string) {
     mutationFn: (payload: UpdateArquitecturaCatalogMaterialPayload) =>
       repo.update(unref(id), payload),
     onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorCatalogMaterialsKeys.all)
+      invalidateQuerySubtree(qc, arquitecturaCatalogMaterialsKeys.all)
       void markapAlert.toast.success('Material guardado')
     },
     onError: (err) => {
@@ -67,7 +67,7 @@ export function useDeleteArquitecturaCatalogMaterial() {
   return useMutation({
     mutationFn: (materialId: string) => repo.delete(materialId),
     onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorCatalogMaterialsKeys.all)
+      invalidateQuerySubtree(qc, arquitecturaCatalogMaterialsKeys.all)
       void markapAlert.toast.success('Material eliminado')
     },
     onError: (err) => {

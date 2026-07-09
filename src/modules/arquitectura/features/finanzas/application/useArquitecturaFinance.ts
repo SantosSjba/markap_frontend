@@ -6,6 +6,7 @@ import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
 import { arquitecturaProjectKeys } from '@modules/arquitectura/features/proyectos/application/useArquitecturaProjects'
 import { projectBudgetKeys } from '@modules/arquitectura/features/proyecto-presupuesto/application/useProjectBudget'
+import { arquitecturaCalendarKeys } from '@modules/arquitectura/features/cronograma/application/useArquitecturaCalendar'
 import type {
   CreateFinancePaymentPayload,
   CreateFinanceSchedulePayload,
@@ -24,6 +25,7 @@ function invalidateFinance(qc: ReturnType<typeof useQueryClient>, projectId: str
   qc.invalidateQueries({ queryKey: projectBudgetKeys.settlement(projectId) })
   invalidateQuerySubtree(qc, arquitecturaProjectKeys.detail(projectId))
   invalidateQuerySubtree(qc, arquitecturaProjectKeys.all)
+  invalidateQuerySubtree(qc, arquitecturaCalendarKeys.all)
 }
 
 export function useArquitecturaFinanceOverview(projectId: Ref<string> | string) {

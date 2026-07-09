@@ -15,7 +15,7 @@ function slug(params?: ListArquitecturaCatalogMaterialsParams) {
   return params?.applicationSlug ?? ARQUITECTURA_APP_SLUG
 }
 
-export const interiorCatalogMaterialsApiRepository: ArquitecturaCatalogMaterialsRepository = {
+export const arquitecturaCatalogMaterialsApiRepository: ArquitecturaCatalogMaterialsRepository = {
   getList: (params: ListArquitecturaCatalogMaterialsParams = {}) => {
     const searchParams = new URLSearchParams()
     searchParams.set('applicationSlug', slug(params))

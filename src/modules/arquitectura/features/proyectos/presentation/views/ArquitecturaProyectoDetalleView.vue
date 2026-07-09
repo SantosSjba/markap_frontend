@@ -11,6 +11,7 @@ import {
   useProjectBudget,
   useProjectSettlement,
 } from '@modules/arquitectura/features/proyecto-presupuesto'
+import { ArquitecturaFinanzasTableroView } from '@modules/arquitectura/features/finanzas'
 import { PROJECT_TYPE_LABELS, projectStatusLabel, formatSol } from '../labels'
 import { useArquitecturaProjectStageOptions } from '../../application/useArquitecturaProjectStageOptions'
 import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
@@ -23,6 +24,12 @@ const TAB_IDS = ['resumen', 'presupuesto', 'compras', 'liquidacion', 'documentos
 type TabId = (typeof TAB_IDS)[number]
 
 const activeTab = ref<TabId>('resumen')
+
+const financeSubTab = ref<'liquidacion' | 'panel'>('liquidacion')
+const financeSubTabs = [
+  { id: 'liquidacion', label: 'Liquidación', icon: 'lucide:pie-chart' },
+  { id: 'panel', label: 'Ingresos y flujo', icon: 'lucide:banknote' },
+]
 
 const { data: p, isLoading, isError } = useArquitecturaProjectDetail(id)
 const { data: budget, isLoading: budgetLoading, isError: budgetError } = useProjectBudget(id)
@@ -217,8 +224,18 @@ const goProjectCronograma = () => {
             <ProjectPurchasesTab v-else-if="budget" :project-id="p.id" :budget="budget" />
           </div>
 
-          <div v-show="activeTab === 'liquidacion'">
-            <ProjectSettlementTab :project-id="p.id" :payments="p.payments ?? []" />
+          <div v-show="activeTab === 'liquidacion'" class="space-y-4">
+            <BaseTabs v-model="financeSubTab" :tabs="financeSubTabs" />
+            <ProjectSettlementTab
+              v-show="financeSubTab === 'liquidacion'"
+              :project-id="p.id"
+              :payments="p.payments ?? []"
+            />
+            <ArquitecturaFinanzasTableroView
+              v-show="financeSubTab === 'panel'"
+              :project-id="p.id"
+              embedded
+            />
           </div>
 
           <div v-show="activeTab === 'documentos'">
