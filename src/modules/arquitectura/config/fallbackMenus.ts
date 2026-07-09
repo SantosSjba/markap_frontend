@@ -119,18 +119,25 @@ export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
+    id: 'arq-fb-ejecucion',
+    label: 'Ejecución',
+    icon: 'hard-hat',
+    path: '/arquitectura/ejecucion',
+    order: 6,
+  },
+  {
     id: 'arq-fb-reportes',
     label: 'Reportes',
     icon: 'bar-chart',
     path: '/arquitectura/reportes',
-    order: 6,
+    order: 7,
   },
   {
     id: 'arq-fb-config',
     label: 'Configuración',
     icon: 'settings',
     path: '/arquitectura/configuracion',
-    order: 7,
+    order: 8,
   },
 ]
 

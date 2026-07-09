@@ -1,0 +1,1 @@
+﻿export { arquitecturaEjecucionRoutes } from './router'

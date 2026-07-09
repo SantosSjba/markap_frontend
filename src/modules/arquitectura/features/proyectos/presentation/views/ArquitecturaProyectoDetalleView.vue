@@ -64,6 +64,16 @@ const goEditProject = () => {
   if (!p.value) return
   router.push(`${ARQUITECTURA_BASE_PATH}/proyectos/${p.value.id}/editar`)
 }
+
+const goExecutionBoard = () => {
+  if (!p.value) return
+  router.push(`${ARQUITECTURA_BASE_PATH}/ejecucion/${p.value.id}`)
+}
+
+const goProjectCronograma = () => {
+  if (!p.value) return
+  router.push({ path: `${ARQUITECTURA_BASE_PATH}/cronograma`, query: { projectId: p.value.id } })
+}
 </script>
 
 <template>
@@ -141,6 +151,14 @@ const goEditProject = () => {
               <StatsCard title="Margen esp." :value="p.expectedMargin != null ? `${p.expectedMargin}%` : '—'">
                 <template #icon><AppIcon icon="lucide:trending-up" :size="20" color="#d97706" /></template>
               </StatsCard>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2">
+              <BaseButton variant="outline" size="sm" type="button" @click="goProjectCronograma">
+                Ver cronograma del proyecto
+              </BaseButton>
+              <BaseButton variant="primary" size="sm" type="button" @click="goExecutionBoard">
+                Abrir tablero de ejecución
+              </BaseButton>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div

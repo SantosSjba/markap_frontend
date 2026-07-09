@@ -7,6 +7,7 @@ import { arquitecturaConfiguracionRoutes } from '../../features/configuracion'
 import { arquitecturaProyectosRoutes } from '../../features/proyectos'
 import { arquitecturaPresupuestosRoutes } from '../../features/presupuestos'
 import { arquitecturaDocumentosRoutes } from '../../features/documentos'
+import { arquitecturaEjecucionRoutes } from '../../features/ejecucion'
 
 const placeholder = () => import('../views/ArquitecturaPlaceholderView.vue')
 
@@ -63,6 +64,12 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
           },
           ...arquitecturaDocumentosRoutes,
         ],
+      },
+      {
+        path: 'ejecucion',
+        component: SectionLayout,
+        meta: { title: 'Ejecución' },
+        children: arquitecturaEjecucionRoutes,
       },
       {
         path: 'reportes',

@@ -392,7 +392,7 @@ const monthTitle = computed(() => {
     <div>
       <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Cronograma</h1>
       <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-        Reuniones, visitas, visitas de obra, fechas límite y agenda del equipo; integrado con cobros programados del proyecto.
+        Reuniones, visitas, visitas de obra, fechas límite y agenda del equipo; integrado con hitos, tareas de ejecución y cobros programados.
       </p>
     </div>
 

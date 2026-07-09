@@ -15,6 +15,7 @@ import type { ProjectBudgetDetailDto, ProjectBudgetLineItemDto } from '../../dom
 import {
   useCreateSupplierPayment,
   useDeleteSupplierPayment,
+  useSyncBudgetFromExecution,
   useUpdateBudgetLineItem,
 } from '../../application/useProjectBudget'
 import { formatSol } from '../labels'
@@ -33,6 +34,17 @@ const paymentDraft = ref({ paymentNumber: 1, amount: 0, paidAt: new Date().toISO
 const updateLine = useUpdateBudgetLineItem(projectIdRef)
 const createPayment = useCreateSupplierPayment(projectIdRef)
 const deletePayment = useDeleteSupplierPayment(projectIdRef)
+const syncFromExecution = useSyncBudgetFromExecution(projectIdRef)
+
+async function onSyncFromExecution() {
+  const ok = await markapAlert.confirm({
+    title: 'Sincronizar desde ejecución',
+    text: 'Se actualizará el costo real de las partidas cuya descripción coincida con conceptos de costos en Ejecución (material, gasto, transporte). ¿Continuar?',
+    confirmText: 'Sincronizar',
+  })
+  if (!ok) return
+  await syncFromExecution.mutateAsync()
+}
 
 function openPaymentModal(item: ProjectBudgetLineItemDto) {
   paymentLine.value = item
@@ -110,9 +122,20 @@ const totalSaldo = () =>
       </StatsCard>
     </div>
 
-    <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-      Gestión interna de compras: costo real, proveedor (texto libre) y abonos (hasta 3 por partida).
-    </p>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        Gestión interna de compras: costo real, proveedor (texto libre) y abonos (hasta 3 por partida).
+      </p>
+      <BaseButton
+        size="sm"
+        variant="outline"
+        :loading="syncFromExecution.isPending.value"
+        @click="onSyncFromExecution"
+      >
+        <AppIcon icon="lucide:refresh-cw" :size="16" class="mr-1" />
+        Sync desde ejecución
+      </BaseButton>
+    </div>
 
     <FormSectionCard
       v-for="section in budget.sections"
