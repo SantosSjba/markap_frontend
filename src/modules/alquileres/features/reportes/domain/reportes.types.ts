@@ -78,6 +78,7 @@ export interface FinancialDistributionReportItem {
   externalAgentName: string | null
   internalAgentName: string | null
   status: string
+  contractStartDate?: string
 }
 
 export interface RentalsByMonthParams {

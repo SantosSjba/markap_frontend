@@ -2,11 +2,12 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
-import { FormInput, FormSelect } from '@shared/components'
+import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useRental, useRentalFinancialBreakdown, useUpsertRentalFinancialConfig } from '../../application/useRentals'
 import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
 import { useAgentsList } from '@modules/alquileres/features/agentes'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { RENTAL_UTILITY_NET_LABEL } from '../../domain/rental-financial.labels'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,8 +50,10 @@ const form = ref({
   baseAmount: '' as number | string,
   expenseType: 'FIXED' as 'PERCENT' | 'FIXED',
   expenseValue: 0,
+  expenseDetail: '',
   taxType: 'FIXED' as 'PERCENT' | 'FIXED',
   taxValue: 0,
+  taxDetail: '',
   externalAgentId: '' as string | null,
   externalAgentType: 'FIXED' as 'PERCENT' | 'FIXED',
   externalAgentValue: 0,
@@ -68,8 +71,10 @@ watch(breakdown, (b) => {
     baseAmount: c.baseAmount ?? '',
     expenseType: c.expenseType,
     expenseValue: c.expenseValue,
+    expenseDetail: c.expenseDetail ?? '',
     taxType: c.taxType,
     taxValue: c.taxValue,
+    taxDetail: c.taxDetail ?? '',
     externalAgentId: c.externalAgentId ?? '',
     externalAgentType: c.externalAgentType,
     externalAgentValue: c.externalAgentValue,
@@ -98,8 +103,10 @@ async function submitFinancialConfig() {
             : null,
         expenseType: form.value.expenseType,
         expenseValue: form.value.expenseValue,
+        expenseDetail: form.value.expenseDetail.trim() || null,
         taxType: form.value.taxType,
         taxValue: form.value.taxValue,
+        taxDetail: form.value.taxDetail.trim() || null,
         externalAgentId: form.value.externalAgentId || null,
         externalAgentType: form.value.externalAgentType,
         externalAgentValue: form.value.externalAgentValue,
@@ -305,6 +312,12 @@ watch(upsertSuccess, (ok) => {
                   :label="form.expenseType === 'PERCENT' ? 'Porcentaje (%)' : 'Monto fijo'"
                   :placeholder="form.expenseType === 'PERCENT' ? 'Ej: 5' : '0.00'"
                 />
+                <FormTextarea
+                  v-model="form.expenseDetail"
+                  label="Detalle del gasto"
+                  placeholder="Ej: Mantenimiento, comisión bancaria, seguro..."
+                  :rows="2"
+                />
               </div>
               <!-- Impuestos -->
               <div
@@ -327,6 +340,12 @@ watch(upsertSuccess, (ok) => {
                   step="0.01"
                   :label="form.taxType === 'PERCENT' ? 'Porcentaje (%)' : 'Monto fijo'"
                   :placeholder="form.taxType === 'PERCENT' ? 'Ej: 18' : '0.00'"
+                />
+                <FormTextarea
+                  v-model="form.taxDetail"
+                  label="Detalle del impuesto"
+                  placeholder="Ej: IGV, renta de 4ta categoría..."
+                  :rows="2"
                 />
               </div>
             </div>
@@ -525,6 +544,13 @@ watch(upsertSuccess, (ok) => {
                         <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
                         Gastos
                       </span>
+                      <p
+                        v-if="breakdown.config?.expenseDetail"
+                        class="text-[11px] mt-1 pl-5 line-clamp-2"
+                        style="color: var(--color-text-muted);"
+                      >
+                        {{ breakdown.config.expenseDetail }}
+                      </p>
                     </td>
                     <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
                       − {{ formatAmount(breakdown.expense, breakdown.currency) }}
@@ -536,6 +562,13 @@ watch(upsertSuccess, (ok) => {
                         <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
                         Impuestos
                       </span>
+                      <p
+                        v-if="breakdown.config?.taxDetail"
+                        class="text-[11px] mt-1 pl-5 line-clamp-2"
+                        style="color: var(--color-text-muted);"
+                      >
+                        {{ breakdown.config.taxDetail }}
+                      </p>
                     </td>
                     <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
                       − {{ formatAmount(breakdown.tax, breakdown.currency) }}
@@ -567,7 +600,7 @@ watch(upsertSuccess, (ok) => {
                     <td class="py-3 px-3 font-bold" :style="{ color: 'var(--color-text-primary)' }">
                       <span class="flex items-center gap-1.5">
                         <AppIcon icon="lucide:circle-check" :size="14" color="var(--color-primary)" />
-                        Utilidad neta
+                        {{ RENTAL_UTILITY_NET_LABEL }}
                       </span>
                     </td>
                     <td class="py-3 px-3 text-right font-bold text-sm" :style="{ color: 'var(--color-primary)' }">

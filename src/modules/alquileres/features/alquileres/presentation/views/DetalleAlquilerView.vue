@@ -6,6 +6,7 @@ import { useRental, useRentalFinancialBreakdown } from '../../application/useRen
 import type { RentalDetail } from '../../domain/rental.types'
 import { getAttachmentUrl } from '../../infrastructure/http/rental-attachment-url'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { RENTAL_UTILITY_NET_LABEL } from '../../domain/rental-financial.labels'
 
 const route = useRoute()
 const router = useRouter()
@@ -263,6 +264,13 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                           <AppIcon icon="lucide:minus-circle" :size="15" color="var(--color-warning, #d97706)" />
                           Gastos
                         </span>
+                        <p
+                          v-if="breakdown.config?.expenseDetail"
+                          class="text-xs mt-1 pl-6"
+                          style="color: var(--color-text-muted);"
+                        >
+                          {{ breakdown.config.expenseDetail }}
+                        </p>
                       </td>
                       <td class="py-2.5 px-4 text-right" :style="{ color: 'var(--color-text-secondary)' }">
                         − {{ formatAmount(breakdown.expense, breakdown.currency) }}
@@ -274,6 +282,13 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                           <AppIcon icon="lucide:minus-circle" :size="15" color="var(--color-warning, #d97706)" />
                           Impuestos
                         </span>
+                        <p
+                          v-if="breakdown.config?.taxDetail"
+                          class="text-xs mt-1 pl-6"
+                          style="color: var(--color-text-muted);"
+                        >
+                          {{ breakdown.config.taxDetail }}
+                        </p>
                       </td>
                       <td class="py-2.5 px-4 text-right" :style="{ color: 'var(--color-text-secondary)' }">
                         − {{ formatAmount(breakdown.tax, breakdown.currency) }}
@@ -305,7 +320,7 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                       <td class="py-3 px-4 font-semibold" :style="{ color: 'var(--color-text-primary)' }">
                         <span class="flex items-center gap-2">
                           <AppIcon icon="lucide:circle-check" :size="16" color="var(--color-primary)" />
-                          Utilidad neta (propietario)
+                          {{ RENTAL_UTILITY_NET_LABEL }}
                         </span>
                       </td>
                       <td class="py-3 px-4 text-right font-bold text-base" :style="{ color: 'var(--color-primary)' }">

@@ -138,8 +138,10 @@ export interface RentalFinancialConfig {
   baseAmount: number | null
   expenseType: FinancialValueType
   expenseValue: number
+  expenseDetail: string | null
   taxType: FinancialValueType
   taxValue: number
+  taxDetail: string | null
   externalAgentId: string | null
   externalAgentType: FinancialValueType
   externalAgentValue: number
@@ -169,8 +171,10 @@ export interface UpsertRentalFinancialConfigPayload {
   baseAmount?: number | null
   expenseType?: FinancialValueType
   expenseValue?: number
+  expenseDetail?: string | null
   taxType?: FinancialValueType
   taxValue?: number
+  taxDetail?: string | null
   externalAgentId?: string | null
   externalAgentType?: FinancialValueType
   externalAgentValue?: number

@@ -112,6 +112,7 @@ export function useRentalsByMonth(
 export function useFinancialDistributionReport(
   applicationSlug: MaybeRefOrGetter<string> = ALQUILERES_REPORTS_SLUG,
   params: MaybeRefOrGetter<FinancialDistributionParams> = {},
+  enabled: MaybeRefOrGetter<boolean> = true,
 ) {
   const slugVal = computed(() => toValue(applicationSlug))
   const paramsVal = computed(() => toValue(params))
@@ -129,5 +130,7 @@ export function useFinancialDistributionReport(
         paramsVal.value.startDate,
         paramsVal.value.endDate,
       ),
+    enabled: computed(() => toValue(enabled)),
+    placeholderData: keepPreviousData,
   })
 }

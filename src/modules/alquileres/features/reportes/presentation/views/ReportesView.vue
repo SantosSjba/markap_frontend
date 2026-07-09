@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { FormInput, FormSelect } from '@shared/components'
-import type { RentalsByMonthParams } from '../../domain/reportes.types'
+import type { FinancialDistributionParams, RentalsByMonthParams } from '../../domain/reportes.types'
 import {
   StatsCard,
   BaseTabs,
@@ -20,14 +21,21 @@ import {
   useContractStatusSummary,
   useMonthlyMetrics,
   useRentalsByMonth,
+  useFinancialDistributionReport,
 } from '../../application/useReportes'
 import { reportesRepository } from '@modules/alquileres/features/reportes'
+import {
+  RENTAL_UTILITY_NET_SHORT_LABEL,
+} from '@modules/alquileres/features/alquileres/domain/rental-financial.labels'
 import type {
   ContractExpiringItem,
   PropertyWithoutContractItem,
   ActiveClientReportItem,
   RentalsByMonthItem,
+  FinancialDistributionReportItem,
 } from '../../domain/reportes.types'
+
+const router = useRouter()
 
 const APPLICATION_SLUG = 'alquileres'
 
@@ -41,6 +49,38 @@ const yearFilter = ref(new Date().getFullYear())
 const monthFilter = ref(new Date().getMonth() + 1)
 const startDateFilter = ref('')
 const endDateFilter = ref('')
+
+function getDefaultRentalsByMonthFilters() {
+  const now = new Date()
+  return {
+    filterMode: 'year' as FilterMode,
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    startDate: '',
+    endDate: '',
+  }
+}
+
+const hasActiveRentalsByMonthFilters = computed(() => {
+  const defaults = getDefaultRentalsByMonthFilters()
+  return (
+    filterMode.value !== defaults.filterMode
+    || yearFilter.value !== defaults.year
+    || monthFilter.value !== defaults.month
+    || !!startDateFilter.value
+    || !!endDateFilter.value
+  )
+})
+
+function clearRentalsByMonthFilters() {
+  const defaults = getDefaultRentalsByMonthFilters()
+  filterMode.value = defaults.filterMode
+  yearFilter.value = defaults.year
+  monthFilter.value = defaults.month
+  startDateFilter.value = defaults.startDate
+  endDateFilter.value = defaults.endDate
+  expandedMonthKey.value = null
+}
 
 const filterModeOptions = [
   { value: 'year', label: 'Por año completo' },
@@ -155,6 +195,82 @@ const periodOptions = [
 
 const rentalsByMonthRows = computed(() => rentalsByMonthQuery.data.value ?? [])
 
+const expandedMonthKey = ref<string | null>(null)
+
+watch(filterMode, () => {
+  expandedMonthKey.value = null
+})
+
+watch(yearFilter, () => {
+  if (filterMode.value === 'year') expandedMonthKey.value = null
+})
+
+function monthDateRange(year: number, month: number) {
+  const mm = String(month).padStart(2, '0')
+  const lastDay = new Date(year, month, 0).getDate()
+  const dd = String(lastDay).padStart(2, '0')
+  return {
+    startDate: `${year}-${mm}-01`,
+    endDate: `${year}-${mm}-${dd}`,
+  }
+}
+
+const detailDateRange = computed(() => {
+  if (filterMode.value === 'range') {
+    if (!startDateFilter.value || !endDateFilter.value) return null
+    return { startDate: startDateFilter.value, endDate: endDateFilter.value }
+  }
+  if (filterMode.value === 'month') {
+    return monthDateRange(yearFilter.value, monthFilter.value)
+  }
+  return {
+    startDate: `${yearFilter.value}-01-01`,
+    endDate: `${yearFilter.value}-12-31`,
+  }
+})
+
+const financialDistributionParams = computed<FinancialDistributionParams>(
+  () => detailDateRange.value ?? {},
+)
+
+const shouldLoadDetail = computed(
+  () => activeTab.value === 'alquiler-por-mes' && detailDateRange.value != null,
+)
+
+function canExpandMonth(row: RentalsByMonthItem) {
+  return row.newContracts > 0 || row.companyRevenue > 0
+}
+
+function toggleMonthDetail(row: RentalsByMonthItem) {
+  if (!canExpandMonth(row)) return
+  const key = `${row.year}-${row.month}`
+  expandedMonthKey.value = expandedMonthKey.value === key ? null : key
+}
+
+function isMonthExpanded(row: RentalsByMonthItem) {
+  return expandedMonthKey.value === `${row.year}-${row.month}`
+}
+
+function goToRentalDetail(rentalId: string) {
+  router.push({ name: 'alquileres-contratos-detalle', params: { id: rentalId } })
+}
+
+const financialDistributionQuery = useFinancialDistributionReport(
+  APPLICATION_SLUG,
+  financialDistributionParams,
+  shouldLoadDetail,
+)
+
+const allRentalDetails = computed(() => financialDistributionQuery.data.value ?? [])
+
+function getRentalsForMonth(row: RentalsByMonthItem): FinancialDistributionReportItem[] {
+  return allRentalDetails.value.filter((item) => {
+    if (!item.contractStartDate) return false
+    const d = new Date(`${item.contractStartDate}T12:00:00`)
+    return d.getFullYear() === row.year && d.getMonth() + 1 === row.month
+  })
+}
+
 const yearOptions = computed(() => {
   const current = new Date().getFullYear()
   return [current - 2, current - 1, current, current + 1]
@@ -241,7 +357,7 @@ async function handleExportTab() {
         { header: 'Impuestos', key: 'totalTax', width: 16 },
         { header: 'Comisión ag. externo', key: 'totalExternalCommission', width: 22 },
         { header: 'Comisión ag. interno', key: 'totalInternalCommission', width: 22 },
-        { header: 'Utilidad neta', key: 'totalUtility', width: 18 },
+        { header: RENTAL_UTILITY_NET_SHORT_LABEL, key: 'totalUtility', width: 22 },
         { header: 'Contratos nuevos', key: 'newContracts', width: 18 },
         { header: 'Activos al cierre', key: 'activeAtEndOfMonth', width: 18 },
         { header: 'Moneda', key: 'currency', width: 10 },
@@ -610,6 +726,21 @@ async function handleExportTab() {
                 label="Fecha fin"
               />
             </template>
+
+            <div
+              v-if="hasActiveRentalsByMonthFilters"
+              class="flex items-end sm:col-span-2 lg:col-span-1"
+            >
+              <button
+                type="button"
+                class="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg hover-surface transition-colors w-full sm:w-auto justify-center"
+                :style="{ color: 'var(--color-text-muted)' }"
+                @click="clearRentalsByMonthFilters"
+              >
+                <AppIcon icon="lucide:x" :size="14" />
+                Limpiar filtros
+              </button>
+            </div>
           </div>
 
           <div
@@ -695,13 +826,20 @@ async function handleExportTab() {
             >
               <div class="flex items-center gap-1.5 mb-1">
                 <AppIcon icon="lucide:circle-check" :size="14" color="var(--color-primary)" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-primary)' }">Utilidad neta</p>
+                <p class="text-xs font-medium" :style="{ color: 'var(--color-primary)' }">{{ RENTAL_UTILITY_NET_SHORT_LABEL }}</p>
               </div>
               <p class="text-base font-bold" :style="{ color: 'var(--color-primary)' }">
                 {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalUtility, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
           </div>
+
+          <p
+            class="text-xs mb-3"
+            style="color: var(--color-text-muted);"
+          >
+            Haz clic en un mes con ingresos para desplegar el detalle de cada alquiler (mismas columnas).
+          </p>
 
           <div class="overflow-x-auto">
             <table class="w-full border-collapse text-sm">
@@ -723,8 +861,8 @@ async function handleExportTab() {
                     <span class="block text-xs font-normal">ag. interno</span>
                   </th>
                   <th class="text-right py-3 px-4 font-semibold" :style="{ color: 'var(--color-primary)' }">
-                    Utilidad neta
-                    <span class="block text-xs font-normal">(propietario)</span>
+                    {{ RENTAL_UTILITY_NET_SHORT_LABEL }}
+                    <span class="block text-xs font-normal">(inmobiliaria)</span>
                   </th>
                   <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">
                     Contratos
@@ -738,35 +876,120 @@ async function handleExportTab() {
                 :columns="8"
               />
               <tbody v-else>
-                <tr
-                  v-for="row in rentalsByMonthRows"
-                  :key="`${row.year}-${row.month}`"
-                  class="hover:opacity-90 transition-opacity"
-                  style="border-bottom: 1px solid var(--color-border);"
-                >
-                  <td class="py-3 px-4 font-medium" style="color: var(--color-text-primary);">{{ row.monthName }}</td>
-                  <td class="py-3 px-4 text-right font-semibold" :style="{ color: 'var(--color-primary)' }">
-                    {{ formatCurrency(row.companyRevenue, row.currency) }}
-                  </td>
-                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
-                    {{ row.totalExpense > 0 ? `− ${formatCurrency(row.totalExpense, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
-                  </td>
-                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
-                    {{ row.totalTax > 0 ? `− ${formatCurrency(row.totalTax, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
-                  </td>
-                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
-                    {{ row.totalExternalCommission > 0 ? `− ${formatCurrency(row.totalExternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
-                  </td>
-                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
-                    {{ row.totalInternalCommission > 0 ? `− ${formatCurrency(row.totalInternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
-                  </td>
-                  <td class="py-3 px-4 text-right font-bold" :style="{ color: row.totalUtility >= 0 ? 'var(--color-primary)' : 'var(--color-error)' }">
-                    {{ formatCurrency(row.totalUtility, row.currency) }}
-                  </td>
-                  <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
-                    {{ row.newContracts }} / {{ row.activeAtEndOfMonth }}
-                  </td>
-                </tr>
+                <template v-for="row in rentalsByMonthRows" :key="`${row.year}-${row.month}`">
+                  <tr
+                    class="transition-opacity"
+                    :class="canExpandMonth(row) ? 'cursor-pointer hover:opacity-90' : ''"
+                    :style="{
+                      borderBottom: isMonthExpanded(row) ? undefined : '1px solid var(--color-border)',
+                      backgroundColor: isMonthExpanded(row) ? 'var(--color-primary-light)' : undefined,
+                    }"
+                    @click="toggleMonthDetail(row)"
+                  >
+                    <td class="py-3 px-4 font-medium" style="color: var(--color-text-primary);">
+                      <span class="inline-flex items-center gap-2">
+                        <AppIcon
+                          v-if="canExpandMonth(row)"
+                          :icon="isMonthExpanded(row) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
+                          :size="14"
+                          color="var(--color-text-muted)"
+                        />
+                        <span v-else class="w-3.5 shrink-0" />
+                        {{ row.monthName }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 text-right font-semibold" :style="{ color: 'var(--color-primary)' }">
+                      {{ formatCurrency(row.companyRevenue, row.currency) }}
+                    </td>
+                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                      {{ row.totalExpense > 0 ? `− ${formatCurrency(row.totalExpense, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                    </td>
+                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                      {{ row.totalTax > 0 ? `− ${formatCurrency(row.totalTax, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                    </td>
+                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                      {{ row.totalExternalCommission > 0 ? `− ${formatCurrency(row.totalExternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                    </td>
+                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                      {{ row.totalInternalCommission > 0 ? `− ${formatCurrency(row.totalInternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                    </td>
+                    <td class="py-3 px-4 text-right font-bold" :style="{ color: row.totalUtility >= 0 ? 'var(--color-primary)' : 'var(--color-error)' }">
+                      {{ formatCurrency(row.totalUtility, row.currency) }}
+                    </td>
+                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                      {{ row.newContracts }} / {{ row.activeAtEndOfMonth }}
+                    </td>
+                  </tr>
+
+                  <template v-if="isMonthExpanded(row)">
+                    <tr
+                      v-if="financialDistributionQuery.isFetching.value"
+                      :style="{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+                    >
+                      <td colspan="8" class="py-4 px-4 text-center">
+                        <AppIcon icon="svg-spinners:ring-resize" :size="22" color="var(--color-primary)" />
+                      </td>
+                    </tr>
+                    <tr
+                      v-else-if="financialDistributionQuery.isError.value"
+                      :style="{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+                    >
+                      <td colspan="8" class="py-4 px-4 text-center space-y-2">
+                        <p class="text-sm" style="color: var(--color-error)">
+                          {{ getApiErrorMessage(financialDistributionQuery.error.value) }}
+                        </p>
+                        <BaseButton variant="outline" size="sm" @click.stop="() => financialDistributionQuery.refetch()">
+                          Reintentar
+                        </BaseButton>
+                      </td>
+                    </tr>
+                    <tr
+                      v-else-if="!getRentalsForMonth(row).length"
+                      :style="{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+                    >
+                      <td colspan="8" class="py-3 px-4 pl-10 text-sm" style="color: var(--color-text-muted);">
+                        No hay alquileres concretados en este mes.
+                      </td>
+                    </tr>
+                    <template v-else>
+                      <tr
+                        v-for="item in getRentalsForMonth(row)"
+                        :key="item.rentalId"
+                        class="cursor-pointer hover:opacity-90 transition-opacity"
+                        :style="{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+                        @click.stop="goToRentalDetail(item.rentalId)"
+                      >
+                        <td class="py-2.5 px-4 pl-10">
+                          <p class="font-medium text-sm" :style="{ color: 'var(--color-primary)' }">{{ item.rentalCode }}</p>
+                          <p class="text-xs mt-0.5 line-clamp-2" style="color: var(--color-text-primary);">{{ item.propertyAddress }}</p>
+                          <p class="text-xs mt-0.5" style="color: var(--color-text-muted);">
+                            {{ item.tenantName }}
+                            <span v-if="item.contractStartDate"> · {{ formatDate(item.contractStartDate) }}</span>
+                          </p>
+                        </td>
+                        <td class="py-2.5 px-4 text-right font-medium" :style="{ color: 'var(--color-primary)' }">
+                          {{ formatCurrency(item.baseAmount, item.currency) }}
+                        </td>
+                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-secondary);">
+                          − {{ formatCurrency(item.expense, item.currency) }}
+                        </td>
+                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-secondary);">
+                          − {{ formatCurrency(item.tax, item.currency) }}
+                        </td>
+                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-secondary);">
+                          − {{ formatCurrency(item.externalAgentCommission, item.currency) }}
+                        </td>
+                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-secondary);">
+                          − {{ formatCurrency(item.internalAgentCommission, item.currency) }}
+                        </td>
+                        <td class="py-2.5 px-4 text-right font-semibold text-sm" :style="{ color: 'var(--color-primary)' }">
+                          {{ formatCurrency(item.utility, item.currency) }}
+                        </td>
+                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-muted);">—</td>
+                      </tr>
+                    </template>
+                  </template>
+                </template>
               </tbody>
               <tfoot v-if="rentalsByMonthRows.length > 1">
                 <tr style="border-top: 2px solid var(--color-border);">
