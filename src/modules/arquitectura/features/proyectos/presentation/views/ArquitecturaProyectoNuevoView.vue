@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import * as yup from 'yup'
 import { BaseButton } from '@shared/components'
@@ -22,6 +22,7 @@ import { PROJECT_TYPE_LABELS, CURRENCY_OPTIONS, INTERVENTION_LEVEL_OPTIONS } fro
 import { useArquitecturaProjectStageOptions } from '../../application/useArquitecturaProjectStageOptions'
 
 const router = useRouter()
+const route = useRoute()
 
 const listClientsParams = ref<ListClientsParams>({
   applicationSlug: ARQUITECTURA_APP_SLUG,
@@ -161,7 +162,13 @@ const createMut = useCreateArquitecturaProject()
 
 const loading = computed(() => loadingClients.value || loadingAgents.value)
 
-const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
+const goBack = () => {
+  if (route.query.from === 'presupuestos') {
+    router.push(`${ARQUITECTURA_BASE_PATH}/presupuestos/nuevo`)
+    return
+  }
+  router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
+}
 
 const emptyToUndef = (s: string | undefined | null) =>
   s?.trim() ? s.trim() : undefined
@@ -195,7 +202,11 @@ const onSubmit = handleSubmit(async (v) => {
       projectedCost: v.projectedCost ?? null,
       expectedMargin: v.expectedMargin ?? null,
     })
-    router.push(`${ARQUITECTURA_BASE_PATH}/proyectos/${created.id}`)
+    const tab = route.query.openTab === 'presupuesto' ? 'presupuesto' : undefined
+    router.push({
+      path: `${ARQUITECTURA_BASE_PATH}/proyectos/${created.id}`,
+      ...(tab ? { query: { tab } } : {}),
+    })
   } catch {
     void 0
   }

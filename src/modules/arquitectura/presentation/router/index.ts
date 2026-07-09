@@ -5,6 +5,7 @@ import { ARQUITECTURA_BASE_PATH } from '../../config/routes.constants'
 import { arquitecturaClientesRoutes } from '../../features/clientes'
 import { arquitecturaConfiguracionRoutes } from '../../features/configuracion'
 import { arquitecturaProyectosRoutes } from '../../features/proyectos'
+import { arquitecturaPresupuestosRoutes } from '../../features/presupuestos'
 
 const placeholder = () => import('../views/ArquitecturaPlaceholderView.vue')
 
@@ -42,20 +43,7 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
         path: 'presupuestos',
         component: SectionLayout,
         meta: { title: 'Presupuestos' },
-        children: [
-          {
-            path: '',
-            name: 'arquitectura-presupuestos',
-            component: placeholder,
-            meta: { title: 'Listado de presupuestos' },
-          },
-          {
-            path: 'nuevo',
-            name: 'arquitectura-presupuestos-nuevo',
-            component: placeholder,
-            meta: { title: 'Nuevo presupuesto' },
-          },
-        ],
+        children: arquitecturaPresupuestosRoutes,
       },
       {
         path: 'cronograma',

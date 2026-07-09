@@ -116,5 +116,9 @@ export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
 export function arquitecturaMenusLookComplete(apiMenus: MenuItem[]): boolean {
   if (!apiMenus.length) return false
   const proyectos = apiMenus.find((m) => m.label.trim() === 'Proyectos')
-  return !!(proyectos?.children && proyectos.children.length > 0)
+  const presupuestos = apiMenus.find((m) => m.label.trim() === 'Presupuestos')
+  return !!(
+    proyectos?.children?.length &&
+    presupuestos?.children?.length
+  )
 }

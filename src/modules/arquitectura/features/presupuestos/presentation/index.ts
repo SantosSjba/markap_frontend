@@ -1,0 +1,1 @@
+export { arquitecturaPresupuestosRoutes } from './router'
