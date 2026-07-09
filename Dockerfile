@@ -1,8 +1,8 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-RUN corepack enable pnpm
+RUN corepack enable && corepack prepare pnpm@11.5.0 --activate
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
@@ -29,11 +29,11 @@ ENV VITE_ENABLE_DEV_TOOLS=$VITE_ENABLE_DEV_TOOLS
 RUN pnpm exec vite build
 
 # --- Servidor de producción ---
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-RUN corepack enable pnpm && pnpm add -g serve
+RUN npm install -g serve
 
 # Copia solo los archivos de producción
 COPY --from=builder /app/dist ./dist
