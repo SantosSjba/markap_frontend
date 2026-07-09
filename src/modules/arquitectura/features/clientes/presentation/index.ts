@@ -1,0 +1,1 @@
+﻿export { arquitecturaClientesRoutes } from './router'

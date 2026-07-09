@@ -2,6 +2,9 @@ import type { RouteRecordRaw } from 'vue-router'
 import ArquitecturaLayout from '../views/ArquitecturaLayout.vue'
 import { SectionLayout } from '@layouts'
 import { ARQUITECTURA_BASE_PATH } from '../../config/routes.constants'
+import { arquitecturaClientesRoutes } from '../../features/clientes'
+import { arquitecturaConfiguracionRoutes } from '../../features/configuracion'
+import { arquitecturaProyectosRoutes } from '../../features/proyectos'
 
 const placeholder = () => import('../views/ArquitecturaPlaceholderView.vue')
 
@@ -27,45 +30,13 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
         path: 'proyectos',
         component: SectionLayout,
         meta: { title: 'Proyectos' },
-        children: [
-          {
-            path: '',
-            name: 'arquitectura-proyectos',
-            component: placeholder,
-            meta: { title: 'Listado de proyectos' },
-          },
-          {
-            path: 'nuevo',
-            name: 'arquitectura-proyectos-nuevo',
-            component: placeholder,
-            meta: { title: 'Nuevo proyecto' },
-          },
-          {
-            path: 'en-ejecucion',
-            name: 'arquitectura-proyectos-en-ejecucion',
-            component: placeholder,
-            meta: { title: 'En ejecución' },
-          },
-        ],
+        children: arquitecturaProyectosRoutes,
       },
       {
         path: 'clientes',
         component: SectionLayout,
         meta: { title: 'Clientes' },
-        children: [
-          {
-            path: '',
-            name: 'arquitectura-clientes',
-            component: placeholder,
-            meta: { title: 'Listado de clientes' },
-          },
-          {
-            path: 'nuevo',
-            name: 'arquitectura-clientes-nuevo',
-            component: placeholder,
-            meta: { title: 'Nuevo cliente' },
-          },
-        ],
+        children: arquitecturaClientesRoutes,
       },
       {
         path: 'presupuestos',
@@ -100,9 +71,9 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'configuracion',
-        name: 'arquitectura-configuracion',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Configuración' },
+        children: arquitecturaConfiguracionRoutes,
       },
     ],
   },
