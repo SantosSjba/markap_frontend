@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, BaseTabs, Badge, StatsCard, AppIcon } from '@shared/components'
 import { useArquitecturaProjectDetail } from '../../application/useArquitecturaProjects'
+import {
+  ProjectBudgetTab,
+  ProjectPurchasesTab,
+  ProjectSettlementTab,
+  ProjectBudgetAlerts,
+  useProjectBudget,
+  useProjectSettlement,
+} from '@modules/arquitectura/features/proyecto-presupuesto'
 import { PROJECT_TYPE_LABELS, projectStatusLabel, formatSol } from '../labels'
 import { useArquitecturaProjectStageOptions } from '../../application/useArquitecturaProjectStageOptions'
 import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
@@ -11,12 +19,38 @@ const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
 
-const activeTab = ref('resumen')
+const TAB_IDS = ['resumen', 'presupuesto', 'compras', 'liquidacion'] as const
+type TabId = (typeof TAB_IDS)[number]
+
+const activeTab = ref<TabId>('resumen')
 
 const { data: p, isLoading, isError } = useArquitecturaProjectDetail(id)
+const { data: budget, isLoading: budgetLoading, isError: budgetError } = useProjectBudget(id)
+const { data: settlement } = useProjectSettlement(id)
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (typeof tab === 'string' && TAB_IDS.includes(tab as TabId)) {
+      activeTab.value = tab as TabId
+    }
+  },
+  { immediate: true },
+)
+
+watch(activeTab, (tab) => {
+  if (route.query.tab === tab) return
+  router.replace({ query: { ...route.query, tab } })
+})
+
 const { stageLabelMap } = useArquitecturaProjectStageOptions()
 
-const tabs = [{ id: 'resumen', label: 'Resumen', icon: 'lucide:layout-dashboard' }]
+const tabs = [
+  { id: 'resumen', label: 'Resumen', icon: 'lucide:layout-dashboard' },
+  { id: 'presupuesto', label: 'Presupuesto', icon: 'lucide:file-spreadsheet' },
+  { id: 'compras', label: 'Compras', icon: 'lucide:shopping-cart' },
+  { id: 'liquidacion', label: 'Liquidación', icon: 'lucide:pie-chart' },
+]
 
 const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
 
@@ -75,6 +109,12 @@ const goEditProject = () => {
     </div>
 
     <template v-else>
+      <ProjectBudgetAlerts
+        v-if="budget && settlement"
+        class="mb-2"
+        :budget="budget"
+        :settlement="settlement"
+      />
       <div
         class="rounded-xl border overflow-hidden"
         :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
@@ -131,6 +171,30 @@ const goEditProject = () => {
                 </ul>
               </div>
             </div>
+          </div>
+
+          <div v-show="activeTab === 'presupuesto'" class="space-y-4">
+            <div v-if="budgetLoading" class="flex justify-center py-16">
+              <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+            </div>
+            <div v-else-if="budgetError" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+              No se pudo cargar el presupuesto.
+            </div>
+            <ProjectBudgetTab v-else-if="budget" :project-id="p.id" :budget="budget" />
+          </div>
+
+          <div v-show="activeTab === 'compras'" class="space-y-4">
+            <div v-if="budgetLoading" class="flex justify-center py-16">
+              <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
+            </div>
+            <div v-else-if="!budget?.sections.length" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+              Crea partidas en la pestaña Presupuesto para gestionar compras.
+            </div>
+            <ProjectPurchasesTab v-else-if="budget" :project-id="p.id" :budget="budget" />
+          </div>
+
+          <div v-show="activeTab === 'liquidacion'">
+            <ProjectSettlementTab :project-id="p.id" :payments="p.payments ?? []" />
           </div>
         </div>
       </div>
