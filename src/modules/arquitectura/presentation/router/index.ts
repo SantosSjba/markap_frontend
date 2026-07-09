@@ -6,6 +6,7 @@ import { arquitecturaClientesRoutes } from '../../features/clientes'
 import { arquitecturaConfiguracionRoutes } from '../../features/configuracion'
 import { arquitecturaProyectosRoutes } from '../../features/proyectos'
 import { arquitecturaPresupuestosRoutes } from '../../features/presupuestos'
+import { arquitecturaDocumentosRoutes } from '../../features/documentos'
 
 const placeholder = () => import('../views/ArquitecturaPlaceholderView.vue')
 
@@ -50,6 +51,18 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
         name: 'arquitectura-cronograma',
         component: () => import('../../features/cronograma/presentation/views/ArquitecturaCronogramaView.vue'),
         meta: { title: 'Cronograma' },
+      },
+      {
+        path: 'documentos',
+        component: SectionLayout,
+        meta: { title: 'Documentos' },
+        children: [
+          {
+            path: '',
+            redirect: { name: 'arquitectura-documentos-contratos' },
+          },
+          ...arquitecturaDocumentosRoutes,
+        ],
       },
       {
         path: 'reportes',

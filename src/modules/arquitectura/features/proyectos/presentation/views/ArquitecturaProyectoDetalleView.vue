@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, BaseTabs, Badge, StatsCard, AppIcon } from '@shared/components'
+import { BaseButton, BaseTabs, Badge, StatsCard, AppIcon, DataTable } from '@shared/components'
 import { useArquitecturaProjectDetail } from '../../application/useArquitecturaProjects'
 import {
   ProjectBudgetTab,
@@ -19,7 +19,7 @@ const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
 
-const TAB_IDS = ['resumen', 'presupuesto', 'compras', 'liquidacion'] as const
+const TAB_IDS = ['resumen', 'presupuesto', 'compras', 'liquidacion', 'documentos'] as const
 type TabId = (typeof TAB_IDS)[number]
 
 const activeTab = ref<TabId>('resumen')
@@ -50,6 +50,12 @@ const tabs = [
   { id: 'presupuesto', label: 'Presupuesto', icon: 'lucide:file-spreadsheet' },
   { id: 'compras', label: 'Compras', icon: 'lucide:shopping-cart' },
   { id: 'liquidacion', label: 'Liquidación', icon: 'lucide:pie-chart' },
+  { id: 'documentos', label: 'Documentos', icon: 'lucide:files' },
+]
+
+const docCols = [
+  { key: 'type', label: 'Tipo', align: 'left' as const },
+  { key: 'title', label: 'Título', align: 'left' as const },
 ]
 
 const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
@@ -195,6 +201,20 @@ const goEditProject = () => {
 
           <div v-show="activeTab === 'liquidacion'">
             <ProjectSettlementTab :project-id="p.id" :payments="p.payments ?? []" />
+          </div>
+
+          <div v-show="activeTab === 'documentos'">
+            <DataTable
+              empty-text="Sin documentos."
+              :columns="docCols"
+              :data="(p.documents ?? []).map((d) => ({ ...d, type: d.docType }))"
+              row-key="id"
+            >
+              <template #row="{ row }">
+                <td class="py-2 px-3 text-sm">{{ (row as any).type }}</td>
+                <td class="py-2 px-3 text-sm">{{ (row as any).title }}</td>
+              </template>
+            </DataTable>
           </div>
         </div>
       </div>

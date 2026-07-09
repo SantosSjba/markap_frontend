@@ -4,7 +4,7 @@ import type { MenuItem } from '@shared/domain/menu.types'
  * Menú lateral HITO Arquitectura cuando la API aún no tiene el árbol completo.
  * Alineado con `prisma/seed/data/menus-arquitectura.ts` y el router.
  *
- * Flujo: Cliente → Proyecto → Presupuesto → Cronograma → Reportes → Config
+ * Flujo: Cliente → Proyecto → Presupuesto → Cronograma → Documentos → Reportes → Config
  */
 export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
   {
@@ -98,18 +98,39 @@ export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
     order: 4,
   },
   {
+    id: 'arq-fb-documentos',
+    label: 'Documentos',
+    icon: 'files',
+    path: null,
+    order: 5,
+    children: [
+      { id: 'arq-fb-doc-contratos', label: 'Contratos', icon: null, path: '/arquitectura/documentos/contratos', order: 0 },
+      { id: 'arq-fb-doc-planos', label: 'Planos', icon: null, path: '/arquitectura/documentos/planos', order: 1 },
+      { id: 'arq-fb-doc-renders', label: 'Renders', icon: null, path: '/arquitectura/documentos/renders', order: 2 },
+      {
+        id: 'arq-fb-doc-memoria',
+        label: 'Memoria descriptiva',
+        icon: null,
+        path: '/arquitectura/documentos/memoria-descriptiva',
+        order: 3,
+      },
+      { id: 'arq-fb-doc-facturas', label: 'Facturas', icon: null, path: '/arquitectura/documentos/facturas', order: 4 },
+      { id: 'arq-fb-doc-actas', label: 'Actas', icon: null, path: '/arquitectura/documentos/actas', order: 5 },
+    ],
+  },
+  {
     id: 'arq-fb-reportes',
     label: 'Reportes',
     icon: 'bar-chart',
     path: '/arquitectura/reportes',
-    order: 5,
+    order: 6,
   },
   {
     id: 'arq-fb-config',
     label: 'Configuración',
     icon: 'settings',
     path: '/arquitectura/configuracion',
-    order: 6,
+    order: 7,
   },
 ]
 

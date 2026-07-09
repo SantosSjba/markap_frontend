@@ -36,6 +36,13 @@ export interface ArquitecturaProjectListItem {
   client: ArquitecturaProjectClientRef
 }
 
+export interface ArquitecturaProjectDocumentDto {
+  id: string
+  docType: string
+  title: string
+  fileUrl: string | null
+}
+
 export interface ArquitecturaProjectPaymentDto {
   id: string
   paidAt: string
@@ -67,6 +74,7 @@ export interface ArquitecturaProjectDetail extends ArquitecturaProjectListItem {
   projectedCost: number | null
   expectedMargin: number | null
   payments: ArquitecturaProjectPaymentDto[]
+  documents: ArquitecturaProjectDocumentDto[]
 }
 
 export interface ListArquitecturaProjectsParams {
