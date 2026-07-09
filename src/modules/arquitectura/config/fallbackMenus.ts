@@ -119,25 +119,36 @@ export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
+    id: 'arq-fb-materiales',
+    label: 'Materiales',
+    icon: 'layers',
+    path: null,
+    order: 6,
+    children: [
+      { id: 'arq-fb-mat-catalogo', label: 'Catálogo', icon: null, path: '/arquitectura/materiales/catalogo', order: 0 },
+      { id: 'arq-fb-mat-proveedores', label: 'Proveedores', icon: null, path: '/arquitectura/materiales/proveedores', order: 1 },
+    ],
+  },
+  {
     id: 'arq-fb-ejecucion',
     label: 'Ejecución',
     icon: 'hard-hat',
     path: '/arquitectura/ejecucion',
-    order: 6,
+    order: 7,
   },
   {
     id: 'arq-fb-reportes',
     label: 'Reportes',
     icon: 'bar-chart',
     path: '/arquitectura/reportes',
-    order: 7,
+    order: 8,
   },
   {
     id: 'arq-fb-config',
     label: 'Configuración',
     icon: 'settings',
     path: '/arquitectura/configuracion',
-    order: 8,
+    order: 9,
   },
 ]
 

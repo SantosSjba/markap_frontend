@@ -16,6 +16,8 @@ import {
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
+import { useArquitecturaCatalogMaterialsList } from '@modules/arquitectura/features/materiales/application/useArquitecturaCatalogMaterials'
+import type { ListArquitecturaCatalogMaterialsParams } from '@modules/arquitectura/features/materiales/domain/catalog.types'
 import type { ArquitecturaExecutionTaskDto } from '../../domain/execution.types'
 import {
   useArquitecturaExecutionOverview,
@@ -339,17 +341,30 @@ async function closeIncident(id: string) {
 }
 
 /** --- Cost modal --- */
+const catalogParams = ref<ListArquitecturaCatalogMaterialsParams>({ page: 1, limit: 400 })
+const { data: catalogRes } = useArquitecturaCatalogMaterialsList(catalogParams)
+
 const costModal = ref(false)
 const costCat = ref('LABOR')
 const costConcept = ref('')
 const costAmount = ref(0)
 const costDate = ref('')
+const costMatId = ref<string | number | null>('')
+
+const catalogOptions = computed(() => [
+  { value: '', label: 'Sin vínculo a catálogo' },
+  ...(catalogRes.value?.data ?? []).map((m) => ({
+    value: m.id,
+    label: `${m.code} · ${m.name}`,
+  })),
+])
 
 function openCost() {
   costCat.value = 'LABOR'
   costConcept.value = ''
   costAmount.value = 0
   costDate.value = new Date().toISOString().slice(0, 10)
+  costMatId.value = ''
   costModal.value = true
 }
 
@@ -359,6 +374,8 @@ async function saveCost() {
     concept: costConcept.value.trim(),
     amount: Number(costAmount.value),
     occurredAt: costDate.value,
+    catalogMaterialId:
+      costMatId.value === '' || costMatId.value == null ? null : String(costMatId.value),
   })
   costModal.value = false
 }
@@ -747,6 +764,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
         <FormInput v-model="costConcept" label="Concepto" required />
         <FormInput v-model="costAmount" type="number" label="Monto (S/)" required />
         <FormInput v-model="costDate" type="date" label="Fecha" required />
+        <FormSelect v-model="costMatId" label="Material catálogo (opcional)" :options="catalogOptions" />
         <div class="flex justify-end gap-2">
           <BaseButton variant="secondary" type="button" @click="costModal = false">Cancelar</BaseButton>
           <BaseButton variant="primary" type="button" :loading="createCost.isPending.value" @click="saveCost">Guardar</BaseButton>

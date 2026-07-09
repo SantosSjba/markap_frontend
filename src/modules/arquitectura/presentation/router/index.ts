@@ -8,6 +8,10 @@ import { arquitecturaProyectosRoutes } from '../../features/proyectos'
 import { arquitecturaPresupuestosRoutes } from '../../features/presupuestos'
 import { arquitecturaDocumentosRoutes } from '../../features/documentos'
 import { arquitecturaEjecucionRoutes } from '../../features/ejecucion'
+import {
+  arquitecturaMaterialesCatalogoRoutes,
+  arquitecturaMaterialesProveedoresRoutes,
+} from '../../features/materiales'
 
 const placeholder = () => import('../views/ArquitecturaPlaceholderView.vue')
 
@@ -63,6 +67,29 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
             redirect: { name: 'arquitectura-documentos-contratos' },
           },
           ...arquitecturaDocumentosRoutes,
+        ],
+      },
+      {
+        path: 'materiales',
+        component: SectionLayout,
+        meta: { title: 'Materiales' },
+        children: [
+          {
+            path: '',
+            redirect: { name: 'arquitectura-materiales-catalogo' },
+          },
+          {
+            path: 'catalogo',
+            component: SectionLayout,
+            meta: { title: 'Catálogo' },
+            children: arquitecturaMaterialesCatalogoRoutes,
+          },
+          {
+            path: 'proveedores',
+            component: SectionLayout,
+            meta: { title: 'Proveedores' },
+            children: arquitecturaMaterialesProveedoresRoutes,
+          },
         ],
       },
       {

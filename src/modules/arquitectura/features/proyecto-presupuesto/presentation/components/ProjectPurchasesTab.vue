@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { ref, toRef } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import {
   BaseButton,
   BaseModal,
@@ -11,6 +11,7 @@ import {
   AppIcon,
 } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
+import { useArquitecturaMaterialSuppliersList } from '@modules/arquitectura/features/materiales/application/useArquitecturaMaterialSuppliers'
 import type { ProjectBudgetDetailDto, ProjectBudgetLineItemDto } from '../../domain/project-budget.types'
 import {
   useCreateSupplierPayment,
@@ -30,6 +31,17 @@ const projectIdRef = toRef(props, 'projectId')
 const showPaymentModal = ref(false)
 const paymentLine = ref<ProjectBudgetLineItemDto | null>(null)
 const paymentDraft = ref({ paymentNumber: 1, amount: 0, paidAt: new Date().toISOString().slice(0, 10) })
+
+const listParams = ref({ page: 1, limit: 200, search: '' })
+const { data: suppliersData } = useArquitecturaMaterialSuppliersList(listParams)
+
+const supplierOptions = computed(() => [
+  { value: '', label: '— Sin vincular —' },
+  ...(suppliersData.value?.data ?? []).map((s) => ({
+    value: s.id,
+    label: s.companyName,
+  })),
+])
 
 const updateLine = useUpdateBudgetLineItem(projectIdRef)
 const createPayment = useCreateSupplierPayment(projectIdRef)
@@ -70,12 +82,22 @@ async function submitPayment() {
 
 async function savePurchaseField(
   lineItemId: string,
-  field: 'actualPurchaseCost' | 'supplierName',
+  field: 'actualPurchaseCost' | 'supplierName' | 'supplierId',
   value: string | number | null,
 ) {
   await updateLine.mutateAsync({
     lineItemId,
     payload: { [field]: value },
+  })
+}
+
+async function onSupplierChange(lineItemId: string, supplierId: string | null) {
+  await updateLine.mutateAsync({
+    lineItemId,
+    payload: {
+      supplierId: supplierId || null,
+      ...(supplierId ? {} : { supplierName: null }),
+    },
   })
 }
 
@@ -124,7 +146,7 @@ const totalSaldo = () =>
 
     <div class="flex flex-wrap items-center justify-between gap-3">
       <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-        Gestión interna de compras: costo real, proveedor (texto libre) y abonos (hasta 3 por partida).
+        Gestión interna de compras: costo real, proveedor del catálogo (o texto libre) y abonos (hasta 3 por partida).
       </p>
       <BaseButton
         size="sm"
@@ -183,18 +205,44 @@ const totalSaldo = () =>
             <span v-else>—</span>
           </td>
           <td class="py-2 px-3 text-sm min-w-[160px]">
-            <input
-              class="w-full text-xs bg-transparent border-b border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none py-0.5"
-              :value="(row as any).supplierName ?? ''"
-              placeholder="Nombre del proveedor"
-              @change="
-                savePurchaseField(
-                  (row as any).id,
-                  'supplierName',
-                  ($event.target as HTMLInputElement).value || null,
-                )
-              "
-            />
+            <div class="space-y-1">
+              <select
+                class="w-full text-xs bg-transparent border rounded px-1 py-1"
+                :style="{ borderColor: 'var(--color-border)' }"
+                :value="(row as any).supplierId ?? ''"
+                @change="
+                  onSupplierChange(
+                    (row as any).id,
+                    ($event.target as HTMLSelectElement).value || null,
+                  )
+                "
+              >
+                <option v-for="opt in supplierOptions" :key="String(opt.value)" :value="opt.value">
+                  {{ opt.label }}
+                </option>
+              </select>
+              <input
+                v-if="!(row as any).supplierId"
+                class="w-full text-xs bg-transparent border-b border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none py-0.5"
+                :value="(row as any).supplierName ?? ''"
+                placeholder="Nombre libre"
+                @change="
+                  savePurchaseField(
+                    (row as any).id,
+                    'supplierName',
+                    ($event.target as HTMLInputElement).value || null,
+                  )
+                "
+              />
+              <span
+                v-else
+                class="text-xs truncate block"
+                :style="{ color: 'var(--color-text-muted)' }"
+                :title="(row as any).supplierName ?? ''"
+              >
+                {{ (row as any).supplierName }}
+              </span>
+            </div>
           </td>
           <td class="py-2 px-3 text-sm">
             <div class="space-y-0.5">
