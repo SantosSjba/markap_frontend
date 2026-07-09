@@ -12,8 +12,7 @@ import {
   arquitecturaMaterialesCatalogoRoutes,
   arquitecturaMaterialesProveedoresRoutes,
 } from '../../features/materiales'
-
-const placeholder = () => import('../views/ArquitecturaPlaceholderView.vue')
+import { arquitecturaReportesRoutes } from '../../features/reportes'
 
 export const arquitecturaRoutes: RouteRecordRaw[] = [
   {
@@ -100,9 +99,15 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'reportes',
-        name: 'arquitectura-reportes',
-        component: placeholder,
+        component: SectionLayout,
         meta: { title: 'Reportes' },
+        children: [
+          {
+            path: '',
+            redirect: { name: 'arquitectura-reportes' },
+          },
+          ...arquitecturaReportesRoutes,
+        ],
       },
       {
         path: 'configuracion',
