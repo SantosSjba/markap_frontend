@@ -28,6 +28,7 @@ import {
 } from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
 import type { PropertyType, OwnerOption } from '../../domain/property.types'
+import PropertyOwnersSection from '../components/PropertyOwnersSection.vue'
 
 type PropertyFormValues = {
   code: string
@@ -159,10 +160,18 @@ const parkingSpacesBinds = defineComponentBinds('parkingSpaces')
 const partida1Binds = defineComponentBinds('partida1')
 const partida2Binds = defineComponentBinds('partida2')
 const partida3Binds = defineComponentBinds('partida3')
-const ownerIdBinds = defineComponentBinds('ownerId')
 const monthlyRentBinds = defineComponentBinds('monthlyRent')
 const maintenanceAmountBinds = defineComponentBinds('maintenanceAmount')
 const depositMonthsBinds = defineComponentBinds('depositMonths')
+
+const ownerRows = ref<string[]>([''])
+
+watch(
+  () => ownerRows.value[0],
+  (id) => {
+    if (id && !isInitializing.value) setFieldValue('ownerId', id)
+  },
+)
 
 const selectedDepartmentId = computed(() => values.departmentId || undefined)
 const selectedProvinceId = computed(() => values.provinceId || undefined)
@@ -191,7 +200,22 @@ watch(
     if (!p) return
     isInitializing.value = true
     const selectedId = route.query.selectedClientId
+    const ownerIndexRaw = route.query.ownerIndex
     const ownerId = typeof selectedId === 'string' && selectedId ? selectedId : p.ownerId
+    const ownerIdsFromProperty =
+      p.owners && p.owners.length > 0 ? p.owners.map((o) => o.id) : ownerId ? [ownerId] : ['']
+    if (typeof selectedId === 'string' && selectedId) {
+      const index =
+        typeof ownerIndexRaw === 'string' && ownerIndexRaw !== ''
+          ? Math.max(0, Number(ownerIndexRaw) || 0)
+          : 0
+      const next = [...ownerIdsFromProperty]
+      while (next.length <= index) next.push('')
+      next[index] = selectedId
+      ownerRows.value = next
+    } else {
+      ownerRows.value = ownerIdsFromProperty.length ? ownerIdsFromProperty : ['']
+    }
     const isOther = p.districtId === UBIGEO_OTHER_DISTRICT_ID
     const legacyLoc =
       isOther && !p.locationCustom ? parseLocationFromDescription(p.description) : null
@@ -223,7 +247,7 @@ watch(
         partida1: p.partida1 ?? '',
         partida2: p.partida2 ?? '',
         partida3: p.partida3 ?? '',
-        ownerId,
+        ownerId: ownerRows.value[0] || ownerId,
         monthlyRent: p.monthlyRent ?? '',
         maintenanceAmount: p.maintenanceAmount ?? '',
         depositMonths: p.depositMonths ?? '',
@@ -259,8 +283,11 @@ const ownerOptions = computed(() =>
 )
 
 const selectedOwnerLabel = computed(() => {
-  const o = (owners.value ?? []).find((x: OwnerOption) => x.id === values.ownerId)
-  return o ? o.fullName : '—'
+  const names = ownerRows.value
+    .filter(Boolean)
+    .map((id) => (owners.value ?? []).find((x: OwnerOption) => x.id === id)?.fullName)
+    .filter(Boolean)
+  return names.length ? names.join(', ') : '—'
 })
 const selectedTypeLabel = computed(() => {
   const t = (propertyTypes.value ?? []).find((x: PropertyType) => x.id === values.propertyTypeId)
@@ -292,15 +319,6 @@ const monthlyRentPreview = computed(() => {
 })
 
 const goBack = () => router.push('/alquileres/propiedades')
-const goToNewOwner = () => {
-  router.push({
-    name: 'alquileres-clientes-nuevo',
-    query: {
-      clientType: 'OWNER',
-      returnTo: `/alquileres/propiedades/${route.params.id}/editar`,
-    },
-  })
-}
 
 const toNum = (v: string | number | null | undefined): number | null => {
   if (v === '' || v === undefined || v === null) return null
@@ -310,6 +328,11 @@ const toNum = (v: string | number | null | undefined): number | null => {
 
 const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
   try {
+    const ownerClientIds = Array.from(new Set(ownerRows.value.filter(Boolean)))
+    if (!ownerClientIds.length) {
+      setFieldValue('ownerId', '')
+      return
+    }
     const ubigeo = buildPropertyUbigeoPayload(formValues)
     await updateMutation.mutateAsync({
       id: id.value,
@@ -329,7 +352,8 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
         partida1: formValues.partida1.trim() || null,
         partida2: formValues.partida2.trim() || null,
         partida3: formValues.partida3.trim() || null,
-        ownerId: formValues.ownerId,
+        ownerId: ownerClientIds[0]!,
+        ownerClientIds,
         monthlyRent: toNum(formValues.monthlyRent),
         maintenanceAmount: toNum(formValues.maintenanceAmount),
         depositMonths: toNum(formValues.depositMonths),
@@ -583,28 +607,12 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           </div>
         </FormSectionCard>
 
-        <FormSectionCard
-          title="Propietario"
-          subtitle="Cliente propietario del inmueble"
-          icon="lucide:user-check"
-        >
-          <div class="flex flex-wrap items-end gap-3">
-            <div class="flex-1 min-w-[200px]">
-              <FormSelect
-                v-bind="ownerIdBinds"
-                label="Seleccionar Propietario (Cliente)"
-                placeholder="Buscar o seleccionar propietario"
-                :options="ownerOptions"
-                :error="errors.ownerId"
-                required
-              />
-            </div>
-            <BaseButton type="button" variant="outline" class="flex items-center gap-1.5" @click="goToNewOwner">
-              <AppIcon icon="lucide:user-plus" :size="15" />
-              Nuevo Propietario
-            </BaseButton>
-          </div>
-        </FormSectionCard>
+        <PropertyOwnersSection
+          v-model:owner-ids="ownerRows"
+          :owner-options="ownerOptions"
+          :error="errors.ownerId"
+          :return-to="`/alquileres/propiedades/${id}/editar`"
+        />
 
         <FormSectionCard
           title="Números de partida"

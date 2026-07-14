@@ -38,6 +38,13 @@ export interface OwnerOption {
   primaryEmail: string
 }
 
+export interface PropertyOwnerSummary {
+  id: string
+  fullName: string
+  documentNumber: string
+  isPrimary: boolean
+}
+
 export type PropertyMediaItem = { url: string; kind: 'photo' | 'plan' }
 
 export interface LocationCustom {
@@ -65,6 +72,8 @@ export interface CreatePropertyPayload {
   partida2?: string | null
   partida3?: string | null
   ownerId: string
+  /** Todos los propietarios (el primero = principal / ownerId). */
+  ownerClientIds?: string[]
   monthlyRent?: number | null
   maintenanceAmount?: number | null
   depositMonths?: number | null
@@ -106,6 +115,7 @@ export interface PropertyDetail {
   partida2: string | null
   partida3: string | null
   ownerId: string
+  owners?: PropertyOwnerSummary[]
   monthlyRent: number | null
   maintenanceAmount: number | null
   depositMonths: number | null
