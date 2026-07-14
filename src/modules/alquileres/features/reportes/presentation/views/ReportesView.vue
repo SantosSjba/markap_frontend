@@ -13,6 +13,7 @@ import {
 } from '@shared/components'
 import { useExcelExport } from '@shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@/shared/utils/formatters'
 import {
   useReportsSummary,
   useContractsExpiring,
@@ -171,11 +172,7 @@ const metricasMes = computed(() => monthlyMetricsQuery.data.value ?? {
 })
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('es-PE', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  })
+  return formatShortDate(dateStr)
 }
 
 function formatCurrency(value: number, currency: string) {
@@ -266,7 +263,7 @@ const allRentalDetails = computed(() => financialDistributionQuery.data.value ??
 function getRentalsForMonth(row: RentalsByMonthItem): FinancialDistributionReportItem[] {
   return allRentalDetails.value.filter((item) => {
     if (!item.contractStartDate) return false
-    const d = new Date(`${item.contractStartDate}T12:00:00`)
+    const d = parseCalendarDate(item.contractStartDate)
     return d.getFullYear() === row.year && d.getMonth() + 1 === row.month
   })
 }
@@ -279,7 +276,7 @@ const yearOptions = computed(() => {
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExportTab() {
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   if (activeTab.value === 'contratos-por-vencer') {
     const data = await reportesRepository.getContractsExpiring(APPLICATION_SLUG, days.value)
     await exportToExcel({

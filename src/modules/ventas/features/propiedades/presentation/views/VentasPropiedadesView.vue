@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toCalendarDateString } from '@/shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
@@ -365,7 +366,7 @@ async function handleExport() {
     minSalePrice: parsePriceFilter(filterMinPrice.value),
     maxSalePrice: parsePriceFilter(filterMaxPrice.value),
   })
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   await exportToExcel({
     fileName: `propiedades_ventas_${now}`,
     sheetName: 'Propiedades',

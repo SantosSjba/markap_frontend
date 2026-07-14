@@ -6,6 +6,7 @@
 import type { ContractExpiringItem } from '@modules/alquileres/features/reportes'
 import { useRouter } from 'vue-router'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
+import { formatShortDate } from '@/shared/utils/formatters'
 
 interface Props {
   items: ContractExpiringItem[]
@@ -59,14 +60,6 @@ function formatDaysLeft(days: number) {
   if (days === 0) return 'Hoy'
   if (days === 1) return '1 día'
   return `${days} días`
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('es-PE', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
 }
 
 function goToRental(id: string) {
@@ -165,7 +158,7 @@ function goToRental(id: string) {
               {{ item.propertyAddress }}
             </p>
             <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
-              Vence: {{ formatDate(item.endDate) }}
+              Vence: {{ formatShortDate(item.endDate) }}
             </p>
           </div>
 

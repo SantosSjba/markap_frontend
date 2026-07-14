@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatShortDate } from '@/shared/utils/formatters'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -330,7 +331,7 @@ function runAlerts(dryRun: boolean) {
               <td class="py-2 px-3">{{ r.sunarpStatus }}</td>
               <td class="py-2 px-3">{{ r.missing.length }}</td>
               <td class="py-2 px-3">
-                {{ r.nextActionAt ? new Date(r.nextActionAt).toLocaleDateString('es-PE') : '—' }}
+                {{ r.nextActionAt ? formatShortDate(r.nextActionAt) : '—' }}
               </td>
             </tr>
             <tr v-if="!(pendingBoard?.data ?? []).length">

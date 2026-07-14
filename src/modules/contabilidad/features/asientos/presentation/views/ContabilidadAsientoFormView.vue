@@ -38,6 +38,7 @@ import {
   FUNCTIONAL_CURRENCY,
   useContabilidadCurrencies,
 } from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
+import { toCalendarDateString } from '@/shared/utils/formatters'
 
 const route = useRoute()
 const router = useRouter()
@@ -78,7 +79,7 @@ const templateOptions = computed(() => [
 ])
 
 const form = ref({
-  entryDate: new Date().toISOString().slice(0, 10),
+  entryDate: toCalendarDateString(),
   description: '',
 })
 const lines = ref<JournalLineFormRow[]>([newJournalLineRow(), newJournalLineRow()])

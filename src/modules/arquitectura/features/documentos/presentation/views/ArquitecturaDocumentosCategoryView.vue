@@ -13,6 +13,7 @@ import {
 import FormSelect from '@shared/components/forms/FormSelect.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import { markapAlert } from '@/shared/composables'
+import { formatDateTime } from '@/shared/utils/formatters'
 import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
 import { useArquitecturaProjectsList } from '@modules/arquitectura/features/proyectos/application/useArquitecturaProjects'
 import type {
@@ -197,15 +198,7 @@ async function removeRow(row: ArquitecturaDocumentRow) {
 }
 
 function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  } catch {
-    return iso.slice(0, 10)
-  }
+  return formatDateTime(iso)
 }
 
 function goProject(id: string) {

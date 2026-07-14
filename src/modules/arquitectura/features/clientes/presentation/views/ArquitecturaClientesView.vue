@@ -27,6 +27,7 @@ import { BaseModal } from '@shared/components'
 import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
 import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { toCalendarDateString } from '@/shared/utils/formatters'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -202,7 +203,7 @@ async function handleExport() {
     clientType: filterType.value === 'ALL' ? undefined : filterType.value,
     isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
   })
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   await exportToExcel({
     fileName: `clientes_Arquitectura_${now}`,
     sheetName: 'Clientes',

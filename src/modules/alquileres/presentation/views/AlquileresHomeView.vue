@@ -15,6 +15,7 @@ import DashboardAlertasList from '../components/DashboardAlertasList.vue'
 import DashboardBarChart from '../components/DashboardBarChart.vue'
 import DashboardAccionesRapidas from '../components/DashboardAccionesRapidas.vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
+import { formatDate } from '@/shared/utils/formatters'
 
 const authStore = useAuthStore()
 const currentYear = ref(new Date().getFullYear())
@@ -75,7 +76,7 @@ function formatPercent(val: number) {
       <!-- Fecha -->
       <p class="text-sm shrink-0" :style="{ color: 'var(--color-text-muted)' }">
         {{
-          new Date().toLocaleDateString('es-PE', {
+          formatDate(new Date(), {
             weekday: 'long',
             day: 'numeric',
             month: 'long',

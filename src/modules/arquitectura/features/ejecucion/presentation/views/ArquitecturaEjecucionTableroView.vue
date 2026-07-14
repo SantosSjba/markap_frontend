@@ -15,6 +15,7 @@ import {
 } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { parseCalendarDate, toCalendarDateString, formatDateTime } from '@/shared/utils/formatters'
 import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
 import { useArquitecturaCatalogMaterialsList } from '@modules/arquitectura/features/materiales/application/useArquitecturaCatalogMaterials'
 import type { ListArquitecturaCatalogMaterialsParams } from '@modules/arquitectura/features/materiales/domain/catalog.types'
@@ -117,7 +118,7 @@ const tasksByColumn = computed(() => {
 
 function parseDay(s: string | null): number | null {
   if (!s) return null
-  const t = new Date(`${s}T12:00:00`).getTime()
+  const t = parseCalendarDate(s).getTime()
   return Number.isNaN(t) ? null : t
 }
 
@@ -363,7 +364,7 @@ function openCost() {
   costCat.value = 'LABOR'
   costConcept.value = ''
   costAmount.value = 0
-  costDate.value = new Date().toISOString().slice(0, 10)
+  costDate.value = toCalendarDateString()
   costMatId.value = ''
   costModal.value = true
 }
@@ -650,7 +651,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
               :data="
                 ov.incidents.map((i) => ({
                   ...i,
-                  reportedAtLabel: new Date(i.reportedAt).toLocaleString('es-PE'),
+                  reportedAtLabel: formatDateTime(i.reportedAt),
                   severityLabel: SEVERITY_LABELS[i.severity] ?? i.severity,
                   statusLabel: INCIDENT_STATUS_LABELS[i.status] ?? i.status,
                   _a: '',

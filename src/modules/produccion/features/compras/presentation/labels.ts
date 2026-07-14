@@ -3,9 +3,11 @@ export function formatSol(amount: number | null | undefined): string {
   return `S/ ${Number(amount).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+import { formatDate as formatCalendarDate } from '@/shared/utils/formatters'
+
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('es-PE', { dateStyle: 'medium' })
+  return formatCalendarDate(iso, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export const PO_STATUS_LABELS: Record<string, string> = {

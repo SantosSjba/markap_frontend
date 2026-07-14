@@ -24,6 +24,7 @@ import {
 } from '@modules/arquitectura/features/finanzas/application/useArquitecturaFinance'
 import { useProjectBudget, useProjectSettlement } from '../../application/useProjectBudget'
 import { formatSol, PAYMENT_TYPE_LABELS, PAYMENT_TYPE_OPTIONS } from '../labels'
+import { formatDateTime } from '@/shared/utils/formatters'
 
 const PAYMENT_FORM_ID = 'project-settlement-payment-form'
 
@@ -52,7 +53,7 @@ const paymentCols = [
 const paymentRows = computed(() =>
   props.payments.map((p) => ({
     ...p,
-    paidAt: new Date(p.paidAt).toLocaleDateString('es-PE'),
+    paidAt: formatDateTime(p.paidAt),
     type: p.paymentType ?? 'OTHER',
     amount: formatSol(p.amount),
   })),

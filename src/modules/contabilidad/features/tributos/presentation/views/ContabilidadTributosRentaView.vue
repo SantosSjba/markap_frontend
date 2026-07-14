@@ -12,6 +12,7 @@ import {
 } from '@shared/components'
 import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
 import { formatPen, parsePenInput } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import { formatDate as formatCalendarDate } from '@/shared/utils/formatters'
 import { useExcelExport } from '@/shared/composables/useExcelExport'
 import { markapAlert } from '@/shared/composables'
 import {
@@ -208,7 +209,7 @@ function formatTrendThousands(value: number) {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatCalendarDate(iso, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 </script>
 

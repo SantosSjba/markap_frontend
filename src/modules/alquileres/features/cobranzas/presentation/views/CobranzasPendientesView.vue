@@ -18,6 +18,7 @@ import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useExcelExport } from '@shared/composables'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../../application/usePayments'
+import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import type { PendingPaymentItem, PaymentMethod } from '../../domain/payment.types'
 import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
@@ -81,7 +82,7 @@ const {
 } = useForm({
   validationSchema: toTypedSchema(paymentSchema),
   initialValues: {
-    paidDate: new Date().toISOString().slice(0, 10),
+    paidDate: toCalendarDateString(),
     paidAmount: 0,
     paymentMethod: 'CASH' as PaymentMethod,
     referenceNumber: '',
@@ -117,7 +118,7 @@ function openModal(payment: PendingPaymentItem) {
   modalError.value = ''
   resetPaymentForm({
     values: {
-      paidDate: new Date().toISOString().slice(0, 10),
+      paidDate: toCalendarDateString(),
       paidAmount: payment.amount,
       paymentMethod: 'CASH',
       referenceNumber: '',
@@ -175,7 +176,7 @@ function formatCurrency(amount: number, currency = 'PEN') {
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' })
+  return formatShortDate(dateStr)
 }
 
 function getInitials(name: string) {
@@ -215,7 +216,7 @@ async function handleExport() {
     search: search.value || undefined,
     status: statusFilter.value !== 'ALL' ? (statusFilter.value as any) : undefined,
   })
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   await exportToExcel({
     fileName: `cobranzas_pendientes_${now}`,
     sheetName: 'Pagos Pendientes',

@@ -23,6 +23,7 @@ import {
   useSaveCommunicationNote,
 } from '../../application/usePayments'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
 import type { OverduePaymentItem, PaymentMethod } from '../../domain/payment.types'
 import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 
@@ -93,7 +94,7 @@ const {
 } = useForm({
   validationSchema: toTypedSchema(paymentSchema),
   initialValues: {
-    paidDate: new Date().toISOString().slice(0, 10),
+    paidDate: toCalendarDateString(),
     paidAmount: 0,
     paymentMethod: 'CASH' as PaymentMethod,
     referenceNumber: '',
@@ -141,7 +142,7 @@ function openModal(item: OverduePaymentItem) {
   modalError.value = ''
   resetPaymentForm({
     values: {
-      paidDate: new Date().toISOString().slice(0, 10),
+      paidDate: toCalendarDateString(),
       paidAmount: item.totalOwed,
       paymentMethod: 'CASH',
       referenceNumber: '',
@@ -227,7 +228,7 @@ function formatCurrency(amount: number, currency = 'PEN') {
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString('es-PE')
+  return formatShortDate(dateStr)
 }
 
 function getInitials(name: string) {
@@ -260,7 +261,7 @@ function getOverdueActions(item: OverduePaymentItem) {
 
 async function handleExport() {
   const data = await paymentsRepository.listOverdue('alquileres', search.value || undefined)
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   await exportToExcel({
     fileName: `cobranzas_atrasos_${now}`,
     sheetName: 'Con Atraso',

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toCalendarDateString } from '@/shared/utils/formatters'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
@@ -115,8 +116,8 @@ watch(
     if (!r) return
     resetForm({
       values: {
-        startDate: r.startDate?.slice(0, 10) ?? '',
-        endDate: r.endDate?.slice(0, 10) ?? '',
+        startDate: r.startDate ? toCalendarDateString(r.startDate) : '',
+        endDate: r.endDate ? toCalendarDateString(r.endDate) : '',
         currency: r.currency ?? 'PEN',
         monthlyAmount: r.monthlyAmount ?? '',
         securityDeposit: r.securityDeposit ?? '',

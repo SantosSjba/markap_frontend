@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toCalendarDateString } from '@/shared/utils/formatters'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -119,16 +120,16 @@ watch(checklistData, (v) => {
     publicDeedSigned: Boolean(v.publicDeedSigned),
     notarialPartSubmitted: Boolean(v.notarialPartSubmitted),
     sunarpStatus: String(v.sunarpStatus ?? 'PENDING'),
-    sunarpSubmittedAt: String(v.sunarpSubmittedAt ?? '').slice(0, 10),
-    sunarpObservedAt: String(v.sunarpObservedAt ?? '').slice(0, 10),
-    sunarpRegisteredAt: String(v.sunarpRegisteredAt ?? '').slice(0, 10),
+    sunarpSubmittedAt: v.sunarpSubmittedAt ? toCalendarDateString(v.sunarpSubmittedAt) : '',
+    sunarpObservedAt: v.sunarpObservedAt ? toCalendarDateString(v.sunarpObservedAt) : '',
+    sunarpRegisteredAt: v.sunarpRegisteredAt ? toCalendarDateString(v.sunarpRegisteredAt) : '',
     sunarpObservationNotes: String(v.sunarpObservationNotes ?? ''),
     alcabalaApplicable: v.alcabalaApplicable !== false,
     alcabalaAmount: Number(v.alcabalaAmount ?? 0),
-    alcabalaPaidAt: String(v.alcabalaPaidAt ?? '').slice(0, 10),
+    alcabalaPaidAt: v.alcabalaPaidAt ? toCalendarDateString(v.alcabalaPaidAt) : '',
     rent2Applicable: Boolean(v.rent2Applicable),
     rent2Amount: Number(v.rent2Amount ?? 0),
-    rent2PaidAt: String(v.rent2PaidAt ?? '').slice(0, 10),
+    rent2PaidAt: v.rent2PaidAt ? toCalendarDateString(v.rent2PaidAt) : '',
     bankedPaymentRequired: v.bankedPaymentRequired !== false,
     bankedPaymentVerified: Boolean(v.bankedPaymentVerified),
     paymentMethod: String(v.paymentMethod ?? ''),

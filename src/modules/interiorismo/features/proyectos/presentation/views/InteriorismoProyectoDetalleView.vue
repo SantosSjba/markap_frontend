@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateTime } from '@/shared/utils/formatters'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, BaseTabs, Badge, StatsCard, AppIcon, DataTable } from '@shared/components'
@@ -308,7 +309,7 @@ function milestoneDone(m: { completedAt: string | null }) {
               <div class="flex flex-wrap items-center gap-2 mb-1">
                 <Badge variant="neutral">{{ activityLabel(a.activityType) }}</Badge>
                 <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
-                  {{ new Date(a.occurredAt).toLocaleString('es-PE') }}
+                  {{ formatDateTime(a.occurredAt) }}
                 </span>
               </div>
               <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ a.title }}</p>

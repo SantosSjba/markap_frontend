@@ -14,6 +14,7 @@ import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useExcelExport } from '@shared/composables'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { toCalendarDateString } from '@/shared/utils/formatters'
 import { useArquitecturaReportsDashboard } from '../../application/useArquitecturaReportes'
 import { projectStatusLabel } from '@modules/arquitectura/features/proyectos/presentation/labels'
 import { useArquitecturaProjectStageOptions } from '@modules/arquitectura/features/proyectos/application/useArquitecturaProjectStageOptions'
@@ -32,8 +33,8 @@ function defaultRange() {
   const start = new Date()
   start.setDate(start.getDate() - 89)
   return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10),
+    startDate: toCalendarDateString(start),
+    endDate: toCalendarDateString(end),
   }
 }
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
 import { computed, ref } from 'vue'
 import * as yup from 'yup'
 import {
@@ -116,7 +117,7 @@ const {
     saleClosingId: '',
     costType: 'NOTARY',
     amount: 0,
-    expenseDate: new Date().toISOString().slice(0, 10),
+    expenseDate: toCalendarDateString(),
     description: '',
   },
 })
@@ -273,7 +274,7 @@ const {
             S/ {{ (row as DocumentationCostRow).amount.toLocaleString('es-PE') }}
           </td>
           <td class="py-3 px-4 text-sm">
-            {{ new Date((row as DocumentationCostRow).expenseDate).toLocaleDateString('es-PE') }}
+            {{ formatShortDate((row as DocumentationCostRow).expenseDate) }}
           </td>
         </template>
       </DataTable>

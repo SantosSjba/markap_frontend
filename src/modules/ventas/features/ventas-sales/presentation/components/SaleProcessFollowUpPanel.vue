@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateTime, formatShortDate } from '@/shared/utils/formatters'
 import { computed, ref } from 'vue'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { BaseButton, Badge, AppIcon, FormInput, FormSelect, FormTextarea, FormSectionCard } from '@shared/components'
@@ -203,7 +204,7 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
             >
               <p class="whitespace-pre-wrap">{{ n.body }}</p>
               <p class="text-[11px] mt-1" :style="{ color: 'var(--color-text-muted)' }">
-                {{ new Date(n.createdAt).toLocaleString() }}
+                {{ formatDateTime(n.createdAt) }}
               </p>
             </div>
             <p
@@ -290,7 +291,7 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
               <div>
                 <span :style="{ color: 'var(--color-text-primary)' }">{{ r.title }}</span>
                 <span class="block text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">{{
-                  new Date(r.dueAt).toLocaleString()
+                  formatShortDate(r.dueAt)
                 }}</span>
               </div>
               <BaseButton

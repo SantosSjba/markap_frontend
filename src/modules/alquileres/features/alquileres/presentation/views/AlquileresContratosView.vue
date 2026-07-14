@@ -22,6 +22,7 @@ import { rentalsRepository } from '@modules/alquileres/features/alquileres'
 import { BaseModal } from '@shared/components'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@/shared/utils/formatters'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -79,9 +80,9 @@ const onPageSizeChange = (size: number) => {
 function getDisplayStatus(item: RentalListItem): 'vigente' | 'proximo' | 'porVencer' | 'vencido' {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const start = new Date(item.startDate)
+  const start = parseCalendarDate(item.startDate)
   start.setHours(0, 0, 0, 0)
-  const end = new Date(item.endDate)
+  const end = parseCalendarDate(item.endDate)
   end.setHours(0, 0, 0, 0)
   if (item.status === 'EXPIRED' || item.status === 'CANCELLED' || end < today) return 'vencido'
   if (start > today) return 'proximo'
@@ -93,7 +94,7 @@ function getDisplayStatus(item: RentalListItem): 'vigente' | 'proximo' | 'porVen
 function getDaysLabel(item: RentalListItem): string {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const end = new Date(item.endDate)
+  const end = parseCalendarDate(item.endDate)
   end.setHours(0, 0, 0, 0)
   const days = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
   if (days < 0) return `Vence hace ${Math.abs(days)} días`
@@ -102,7 +103,7 @@ function getDaysLabel(item: RentalListItem): string {
 }
 
 function formatDate(d: string): string {
-  return new Date(d).toLocaleDateString('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' })
+  return formatShortDate(d)
 }
 
 function formatMoney(item: RentalListItem): string {
@@ -201,7 +202,7 @@ const tableColumns = [
     align: 'left' as const,
     sortable: true,
     sortType: 'basic' as const,
-    sortAccessor: (r: unknown) => new Date((r as RentalListItem).endDate).getTime(),
+    sortAccessor: (r: unknown) => parseCalendarDate((r as RentalListItem).endDate).getTime(),
   },
   {
     key: 'estado',
@@ -252,7 +253,7 @@ async function handleExport() {
     search: searchInput.value.trim() || undefined,
     status: filterStatus.value === 'ALL' ? undefined : filterStatus.value,
   })
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   await exportToExcel({
     fileName: `alquileres_${now}`,
     sheetName: 'Alquileres',

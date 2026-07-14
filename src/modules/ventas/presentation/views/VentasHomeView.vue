@@ -11,6 +11,7 @@ import {
 } from '@modules/ventas/features/ventas-reportes/application/useVentasReportes'
 import type { VentasReportesRangeParams } from '@modules/ventas/features/ventas-reportes/domain/reportes.types'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { parseCalendarDate, toCalendarDateString, formatDate } from '@/shared/utils/formatters'
 
 const silentReportOpts = { toastOnLoadError: false as const }
 
@@ -21,8 +22,8 @@ function currentMonthRange(): VentasReportesRangeParams {
   const end = new Date()
   const start = new Date(end.getFullYear(), end.getMonth(), 1)
   return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10),
+    startDate: toCalendarDateString(start),
+    endDate: toCalendarDateString(end),
   }
 }
 
@@ -88,10 +89,10 @@ const salesTotals = computed(() => {
 
 const periodLabel = computed(() => {
   const r = rangeParams.value
-  const a = new Date(`${r.startDate}T12:00:00`)
-  const b = new Date(`${r.endDate}T12:00:00`)
+  const a = parseCalendarDate(r.startDate)
+  const b = parseCalendarDate(r.endDate)
   const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
-  return `${a.toLocaleDateString('es-PE', opts)} – ${b.toLocaleDateString('es-PE', {
+  return `${formatDate(a, opts)} – ${formatDate(b, {
     ...opts,
     month: 'long',
     year: 'numeric',
@@ -166,7 +167,7 @@ const acciones: {
       <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
         <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
           {{
-            new Date().toLocaleDateString('es-PE', {
+            formatDate(new Date(), {
               weekday: 'long',
               day: 'numeric',
               month: 'long',

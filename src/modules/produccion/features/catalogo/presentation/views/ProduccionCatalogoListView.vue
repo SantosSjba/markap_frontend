@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateTime, toCalendarDateString } from '@/shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -142,7 +143,7 @@ async function handleExport() {
         ? undefined
         : activeFilter.value === 'active',
   })
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   await exportToExcel({
     fileName: `catalogo_muebles_${now}`,
     sheetName: 'Catálogo',
@@ -164,7 +165,7 @@ async function handleExport() {
       status: r.isActive ? 'Activo' : 'Inactivo',
       bomLineCount: r.bomLineCount,
       imageCount: r.imageCount,
-      updatedAt: new Date(r.updatedAt).toLocaleString('es-PE'),
+      updatedAt: formatDateTime(r.updatedAt),
     })),
   })
 }

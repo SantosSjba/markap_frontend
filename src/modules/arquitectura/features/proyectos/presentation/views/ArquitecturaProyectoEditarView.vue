@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toCalendarDateString } from '@/shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
@@ -147,8 +148,8 @@ watch(
         areaSqm: p.areaSqm ?? undefined,
         levelsCount: p.levelsCount ?? undefined,
         environmentsNote: p.environmentsNote ?? '',
-        startDate: p.startDate?.slice(0, 10) ?? '',
-        estimatedEndDate: p.estimatedEndDate?.slice(0, 10) ?? '',
+        startDate: p.startDate ? toCalendarDateString(p.startDate) : '',
+        estimatedEndDate: p.estimatedEndDate ? toCalendarDateString(p.estimatedEndDate) : '',
         designerAgentId: p.designerAgent?.id ?? '',
         architectJrAgentId: p.architectJrAgent?.id ?? '',
         architectSrAgentId: p.architectSrAgent?.id ?? '',

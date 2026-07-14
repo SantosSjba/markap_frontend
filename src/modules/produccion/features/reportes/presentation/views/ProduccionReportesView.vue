@@ -14,6 +14,7 @@ import {
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { useExcelExport } from '@shared/composables'
 import { markapAlert } from '@/shared/composables'
+import { toCalendarDateString } from '@/shared/utils/formatters'
 import { useProduccionReportsDashboard } from '../../application/useProduccionReportes'
 import { useProduccionClientsList } from '../../../clientes/application/useClients'
 import { useProduccionFurnitureCategoryOptions } from '@modules/produccion/features/configuracion'
@@ -26,8 +27,8 @@ function defaultRange() {
   const start = new Date()
   start.setDate(start.getDate() - 89)
   return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10),
+    startDate: toCalendarDateString(start),
+    endDate: toCalendarDateString(end),
     clientId: '',
     category: '',
   }

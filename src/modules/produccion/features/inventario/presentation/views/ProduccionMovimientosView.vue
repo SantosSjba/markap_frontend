@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateTime } from '@/shared/utils/formatters'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import {
@@ -83,7 +84,7 @@ const columns = [
 ]
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
+  return formatDateTime(iso)
 }
 
 function openNew() {

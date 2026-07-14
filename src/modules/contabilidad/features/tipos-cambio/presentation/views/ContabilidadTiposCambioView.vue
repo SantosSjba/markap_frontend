@@ -18,10 +18,11 @@ import {
   DEFAULT_CURRENCY_CODE,
   type ContabilidadExchangeRateDTO,
 } from '../../domain/exchange-rate.types'
+import { toCalendarDateString } from '@/shared/utils/formatters'
 
 const now = new Date()
 const fromDate = ref(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`)
-const toDate = ref(now.toISOString().slice(0, 10))
+const toDate = ref(toCalendarDateString())
 const currencyFilter = ref(DEFAULT_CURRENCY_CODE)
 
 const listParams = computed(() => ({

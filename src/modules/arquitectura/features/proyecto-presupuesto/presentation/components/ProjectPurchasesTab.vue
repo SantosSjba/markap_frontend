@@ -20,6 +20,7 @@ import {
   useUpdateBudgetLineItem,
 } from '../../application/useProjectBudget'
 import { formatSol } from '../labels'
+import { toCalendarDateString } from '@/shared/utils/formatters'
 
 const props = defineProps<{
   projectId: string
@@ -30,7 +31,7 @@ const projectIdRef = toRef(props, 'projectId')
 
 const showPaymentModal = ref(false)
 const paymentLine = ref<ProjectBudgetLineItemDto | null>(null)
-const paymentDraft = ref({ paymentNumber: 1, amount: 0, paidAt: new Date().toISOString().slice(0, 10) })
+const paymentDraft = ref({ paymentNumber: 1, amount: 0, paidAt: toCalendarDateString() })
 
 const listParams = ref({ page: 1, limit: 200, search: '' })
 const { data: suppliersData } = useArquitecturaMaterialSuppliersList(listParams)
@@ -64,7 +65,7 @@ function openPaymentModal(item: ProjectBudgetLineItemDto) {
   paymentDraft.value = {
     paymentNumber: Math.min(nextNum, 3),
     amount: 0,
-    paidAt: new Date().toISOString().slice(0, 10),
+    paidAt: toCalendarDateString(),
   }
   showPaymentModal.value = true
 }

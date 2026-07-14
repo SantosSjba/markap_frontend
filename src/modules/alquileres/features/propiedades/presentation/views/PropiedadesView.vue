@@ -27,6 +27,7 @@ import type { PropertyListItem, ListPropertiesParams } from '../../domain/proper
 import { propertiesRepository } from '@modules/alquileres/features/propiedades'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -284,7 +285,7 @@ function formatRent(monthlyRent: number | null): string {
 function formatDate(d: string | null | undefined): string {
   if (!d) return '—'
   try {
-    return new Date(d).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    return formatShortDate(d)
   } catch {
     return d
   }
@@ -301,7 +302,7 @@ async function handleExport() {
     listingStatus: filterListingStatus.value || undefined,
     propertyTypeId: filterPropertyTypeId.value || undefined,
   })
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   await exportToExcel({
     fileName: `propiedades_${now}`,
     sheetName: 'Propiedades',

@@ -8,6 +8,7 @@ import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { SEPARATION_STATUS_OPTIONS, separationStatusLabel } from '../../domain/pipeline.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { toCalendarDateString } from '@/shared/utils/formatters'
 
 const ITEMS = 10
 const listParams = ref({ page: 1, limit: ITEMS, status: '' as string | undefined })
@@ -56,7 +57,7 @@ const initialSeparationForm = () => ({
   buyerClientId: '',
   propertyId: '',
   amount: 0,
-  separationDate: new Date().toISOString().slice(0, 10),
+  separationDate: toCalendarDateString(),
   notes: '',
 })
 

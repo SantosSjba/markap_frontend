@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateTime } from '@/shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -203,7 +204,7 @@ const purchaseColumns = [
 const purchaseRows = computed(() =>
   (detail.value?.purchases ?? []).map((p) => ({
     id: p.id,
-    when: new Date(p.purchasedAt).toLocaleString('es-PE'),
+    when: formatDateTime(p.purchasedAt),
     mat:
       p.materialName != null
         ? `${p.materialCode ? `${p.materialCode} · ` : ''}${p.materialName}`

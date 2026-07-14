@@ -7,6 +7,7 @@ import { useContabilidadActivePeriod } from '../composables/useContabilidadActiv
 import { useContabilidadReportsDashboard } from '@modules/contabilidad/features/reportes-financieros/application/useContabilidadReports'
 import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
 import type { ContabilidadDashboardKpiDTO } from '@modules/contabilidad/features/reportes-financieros/domain/reports.types'
+import { formatDate } from '@/shared/utils/formatters'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -48,7 +49,7 @@ function formatActivityTime(iso: string) {
   const h = Math.floor(diff / 3_600_000)
   if (h < 1) return 'Hace poco'
   if (h < 24) return `Hace ${h} h`
-  return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })
+  return formatDate(iso, { day: 'numeric', month: 'short' })
 }
 
 const acciones = [
@@ -81,7 +82,7 @@ const toneBorder = (tone: string) => {
       </div>
       <p class="text-sm shrink-0" style="color: var(--color-text-muted)">
         {{
-          new Date().toLocaleDateString('es-PE', {
+          formatDate(new Date(), {
             weekday: 'long',
             day: 'numeric',
             month: 'long',

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Badge, DataTable, FormInput, FormSelect, PageHeader } from '@shared/components'
 import { useContabilidadAuditLogs } from '../../application/useContabilidadAudit'
 import type { ContabilidadAuditLogDTO } from '../../domain/audit.types'
+import { formatDateTime } from '@/shared/utils/formatters'
 
 const entityTypeFilter = ref('')
 const actionFilter = ref('')
@@ -31,7 +32,7 @@ const columns = [
 ]
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
+  return formatDateTime(iso)
 }
 </script>
 

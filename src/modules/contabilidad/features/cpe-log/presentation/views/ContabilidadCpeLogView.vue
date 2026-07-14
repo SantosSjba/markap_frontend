@@ -12,6 +12,7 @@ import {
   SearchInput,
 } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
+import { formatDateTime } from '@/shared/utils/formatters'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
 import {
@@ -141,7 +142,7 @@ function submitForm() {
             class="border-b last:border-b-0"
             :style="{ borderColor: 'var(--color-border)' }"
           >
-            <td class="py-2.5 px-4 text-xs">{{ (row as ContabilidadCpeLogDTO).createdAt.slice(0, 10) }}</td>
+            <td class="py-2.5 px-4 text-xs">{{ formatDateTime((row as ContabilidadCpeLogDTO).createdAt) }}</td>
             <td class="py-2.5 px-4">{{ (row as ContabilidadCpeLogDTO).documentKind }}</td>
             <td class="py-2.5 px-4 font-mono">{{ (row as ContabilidadCpeLogDTO).documentRef }}</td>
             <td class="py-2.5 px-4">

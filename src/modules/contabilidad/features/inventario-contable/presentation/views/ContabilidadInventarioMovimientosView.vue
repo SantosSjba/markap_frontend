@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toCalendarDateString } from '@/shared/utils/formatters'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -58,7 +59,7 @@ const form = ref<{
 }>({
   itemId: '',
   movementType: INVENTORY_MOVEMENT_TYPE.IN,
-  movementDate: new Date().toISOString().slice(0, 10),
+  movementDate: toCalendarDateString(),
   quantity: '',
   unitCost: '',
   offsetType: 'PAYABLE',
@@ -82,7 +83,7 @@ function openModal() {
   form.value = {
     itemId: '',
     movementType: INVENTORY_MOVEMENT_TYPE.IN,
-    movementDate: new Date().toISOString().slice(0, 10),
+    movementDate: toCalendarDateString(),
     quantity: '',
     unitCost: '',
     offsetType: 'PAYABLE',
@@ -129,7 +130,7 @@ const showOffset = computed(
     </PageHeader>
 
     <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
-      Configure el periodo activo en Configuración ? Contexto contable.
+      Configure el periodo activo en Configuraciï¿½n ? Contexto contable.
     </p>
 
     <div

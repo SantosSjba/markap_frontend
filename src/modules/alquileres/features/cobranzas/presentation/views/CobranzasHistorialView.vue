@@ -14,6 +14,7 @@ import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useExcelExport } from '@shared/composables'
 import { usePaymentHistory } from '../../application/usePayments'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
 import type { PaymentHistoryItem } from '../../domain/payment.types'
 import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
 
@@ -82,8 +83,7 @@ function formatCurrency(amount: number, currency = 'PEN') {
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '—'
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('es-PE')
+  return formatShortDate(dateStr)
 }
 
 function getInitials(name: string) {
@@ -130,7 +130,7 @@ async function handleExport() {
     periodMonth: filterMonth.value ? parseInt(filterMonth.value) : undefined,
     paymentMethod: filterMethod.value || undefined,
   })
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   await exportToExcel({
     fileName: `historial_pagos_${now}`,
     sheetName: 'Historial de Pagos',

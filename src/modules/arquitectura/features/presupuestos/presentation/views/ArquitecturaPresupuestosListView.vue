@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateTime } from '@/shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -205,7 +206,7 @@ const rowActions = (row: ArquitecturaBudgetSummaryListItem) => [
             <td class="py-2.5 px-3 text-sm text-xs" :style="{ color: 'var(--color-text-muted)' }">
               {{
                 (row as ArquitecturaBudgetSummaryListItem).budgetUpdatedAt
-                  ? new Date((row as ArquitecturaBudgetSummaryListItem).budgetUpdatedAt!).toLocaleDateString('es-PE')
+                  ? formatDateTime((row as ArquitecturaBudgetSummaryListItem).budgetUpdatedAt!)
                   : '—'
               }}
             </td>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateTime } from '@/shared/utils/formatters'
 import { computed, ref, toRef, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
@@ -52,7 +53,7 @@ const paymentCols = [
 const paymentRows = computed(() =>
   props.payments.map((p) => ({
     ...p,
-    paidAt: new Date(p.paidAt).toLocaleDateString('es-PE'),
+    paidAt: formatDateTime(p.paidAt),
     type: p.paymentType ?? 'OTHER',
     amount: formatSol(p.amount),
   })),

@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { BaseButton, AppIcon, Badge, FormCheckbox, PageHeader } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
+import { formatDateTime } from '@/shared/utils/formatters'
 import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
 import {
   useContabilidadDownloadPleZip,
@@ -89,7 +90,7 @@ function runGenerate() {
       onSuccess: (result) => {
         lastResult.value = result
         if (result.blocked) {
-          void markapAlert.toast.error(`PLE bloqueado: ${result.errors.length} error(es) cr√≠tico(s)`)
+          void markapAlert.toast.error(`PLE bloqueado: ${result.errors.length} error(es) crÌtico(s)`)
         } else if (result.errors.length) {
           void markapAlert.toast.warning(`PLE generado con ${result.errors.length} error(es)`)
         } else if (result.warnings.length) {
@@ -109,7 +110,7 @@ function runDownloadZip() {
     return
   }
   if (lastResult.value?.blocked) {
-    void markapAlert.toast.error('Corrija los errores cr√≠ticos antes de descargar el ZIP')
+    void markapAlert.toast.error('Corrija los errores crÌticos antes de descargar el ZIP')
     return
   }
   downloadZip({ periodId: activePeriod.value.id, bookCodes: selectedCodes.value })
@@ -117,7 +118,7 @@ function runDownloadZip() {
 
 function downloadSingle(fileName: string, content: string) {
   if (lastResult.value?.blocked) {
-    void markapAlert.toast.error('Descarga bloqueada por errores de validaci√≥n')
+    void markapAlert.toast.error('Descarga bloqueada por errores de validaciÛn')
     return
   }
   downloadTextFile(fileName, content)
@@ -128,13 +129,7 @@ function formatPeriod(year: number, month: number) {
 }
 
 function formatLogDate(iso: string) {
-  return new Date(iso).toLocaleString('es-PE', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatDateTime(iso)
 }
 
 function statusVariant(status: string): 'success' | 'warning' | 'error' | 'neutral' | 'info' {
@@ -153,8 +148,8 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
   <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
     <PageHeader
       icon="lucide:file-archive"
-      title="Generaci√≥n PLE"
-      subtitle="Libros electr√≥nicos formato pipe (SUNAT). Validaci√≥n local ampliada antes de exportar."
+      title="GeneraciÛn PLE"
+      subtitle="Libros electrÛnicos formato pipe (SUNAT). ValidaciÛn local ampliada antes de exportar."
     >
       <template #actions>
         <BaseButton
@@ -179,7 +174,7 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
     </PageHeader>
 
     <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
-      Configure el periodo activo en ConfiguraciÛn ? Contexto contable.
+      Configure el periodo activo en Configuraciùn ? Contexto contable.
     </p>
 
     <div
@@ -190,10 +185,10 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div>
           <h3 class="font-semibold text-sm" :style="{ color: 'var(--color-text-primary)' }">
-            Checklist r√©gimen tributario
+            Checklist rÈgimen tributario
           </h3>
           <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
-            {{ mandatoryProfile.taxRegimeLabel }} ‚Äî libros obligatorios marcados con etiqueta ¬´Obligatorio¬ª.
+            {{ mandatoryProfile.taxRegimeLabel }} ó libros obligatorios marcados con etiqueta ´Obligatorioª.
           </p>
         </div>
         <BaseButton variant="secondary" size="sm" @click="selectMandatory">
@@ -242,7 +237,7 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
             <Badge v-if="isMandatory(book.code)" variant="info">Obligatorio</Badge>
           </div>
           <div class="text-xs font-mono mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
-            {{ book.code }} ¬∑ Estructura {{ book.sunatStructure }}
+            {{ book.code }} ∑ Estructura {{ book.sunatStructure }}
           </div>
           <div class="text-xs mt-1" :style="{ color: 'var(--color-text-secondary)' }">{{ book.description }}</div>
         </div>
@@ -256,10 +251,10 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
         :style="{ borderColor: 'var(--color-danger)', backgroundColor: 'var(--color-surface)' }"
       >
         <h3 class="font-semibold text-sm mb-1" :style="{ color: 'var(--color-danger)' }">
-          Exportaci√≥n bloqueada
+          ExportaciÛn bloqueada
         </h3>
         <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-          Corrija los errores cr√≠ticos antes de descargar archivos o el ZIP del periodo.
+          Corrija los errores crÌticos antes de descargar archivos o el ZIP del periodo.
         </p>
       </div>
 
@@ -270,13 +265,13 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
       >
         <div class="px-4 py-3 border-b" :style="{ borderColor: 'var(--color-border)' }">
           <h3 class="font-semibold text-sm" :style="{ color: 'var(--color-danger)' }">
-            Vista previa de l√≠neas con error
+            Vista previa de lÌneas con error
           </h3>
         </div>
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="text-left py-2 px-4 font-medium w-16">L√≠nea</th>
+              <th class="text-left py-2 px-4 font-medium w-16">LÌnea</th>
               <th class="text-left py-2 px-4 font-medium w-24">Libro</th>
               <th class="text-left py-2 px-4 font-medium">Mensaje</th>
               <th class="text-left py-2 px-4 font-medium hidden lg:table-cell">Contenido</th>
@@ -289,11 +284,11 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
               class="border-b last:border-0"
               :style="{ borderColor: 'var(--color-border)' }"
             >
-              <td class="py-2 px-4 font-mono text-xs">{{ err.lineNumber ?? '‚Äî' }}</td>
+              <td class="py-2 px-4 font-mono text-xs">{{ err.lineNumber ?? 'ó' }}</td>
               <td class="py-2 px-4 font-mono text-xs">{{ err.bookCode }}</td>
               <td class="py-2 px-4">{{ err.message }}</td>
               <td class="py-2 px-4 font-mono text-xs truncate max-w-md hidden lg:table-cell" :title="err.linePreview">
-                {{ err.linePreview ?? '‚Äî' }}
+                {{ err.linePreview ?? 'ó' }}
               </td>
             </tr>
           </tbody>
@@ -305,7 +300,7 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
         class="rounded-xl border p-4"
         :style="{ borderColor: 'var(--color-danger)', backgroundColor: 'var(--color-surface)' }"
       >
-        <h3 class="font-semibold text-sm mb-2" :style="{ color: 'var(--color-danger)' }">Errores de validaci√≥n</h3>
+        <h3 class="font-semibold text-sm mb-2" :style="{ color: 'var(--color-danger)' }">Errores de validaciÛn</h3>
         <ul class="text-sm space-y-1">
           <li v-for="(err, i) in lastResult.errors" :key="issueKey(err, i)">
             <Badge variant="error" class="mr-2">{{ err.bookCode }}</Badge>
@@ -337,7 +332,7 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
             <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
               <th class="text-left py-3 px-4">Libro</th>
               <th class="text-left py-3 px-4">Archivo</th>
-              <th class="text-right py-3 px-4">L√≠neas</th>
+              <th class="text-right py-3 px-4">LÌneas</th>
               <th class="py-3 px-4 w-28" />
             </tr>
           </thead>

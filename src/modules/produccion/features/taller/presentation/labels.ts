@@ -25,9 +25,11 @@ export const PRODUCCION_STAGES = [
   { key: 'acabados', label: 'Acabados' },
 ] as const
 
+import { formatDate as formatCalendarDate } from '@/shared/utils/formatters'
+
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('es-PE', { dateStyle: 'medium' })
+  return formatCalendarDate(iso, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export function woStatusClass(status: string): string {

@@ -5,6 +5,7 @@ import { useAuthStore } from '@modules/auth'
 import { useNotificationsStore, type NotificationItem } from '@shared/notifications'
 import { ThemeToggle } from '@shared/components'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
+import { formatShortDate, PERU_LOCALE, PERU_TIME_ZONE } from '@/shared/utils/formatters'
 
 /**
  * AppHeader Component
@@ -95,8 +96,14 @@ function formatNotificationDate(iso: string) {
   const diff = now.getTime() - d.getTime()
   if (diff < 60000) return 'Ahora'
   if (diff < 3600000) return `Hace ${Math.floor(diff / 60000)} min`
-  if (diff < 86400000) return d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
-  return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' })
+  if (diff < 86400000) {
+    return d.toLocaleTimeString(PERU_LOCALE, {
+      timeZone: PERU_TIME_ZONE,
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+  return formatShortDate(d)
 }
 
 function openNotification(n: { id: string; data?: Record<string, unknown> | null }) {

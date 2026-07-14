@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toCalendarDateString } from '@/shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
@@ -202,7 +203,7 @@ async function handleExport() {
     clientType: filterType.value === 'ALL' ? undefined : filterType.value,
     isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
   })
-  const now = new Date().toLocaleDateString('es-PE')
+  const now = toCalendarDateString()
   await exportToExcel({
     fileName: `clientes_interiorismo_${now}`,
     sheetName: 'Clientes',

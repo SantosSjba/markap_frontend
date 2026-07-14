@@ -6,6 +6,7 @@ import { useRental, useRentalFinancialBreakdown } from '../../application/useRen
 import type { RentalDetail } from '../../domain/rental.types'
 import { getAttachmentUrl } from '../../infrastructure/http/rental-attachment-url'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { formatShortDate } from '@/shared/utils/formatters'
 import { RENTAL_UTILITY_NET_LABEL } from '../../domain/rental-financial.labels'
 
 const route = useRoute()
@@ -29,7 +30,7 @@ const {
 } = useRentalFinancialBreakdown(id)
 
 function formatDate(d: string): string {
-  return new Date(d).toLocaleDateString('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' })
+  return formatShortDate(d)
 }
 
 function formatMoney(r: RentalDetail): string {

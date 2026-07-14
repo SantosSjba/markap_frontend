@@ -9,6 +9,7 @@ import {
 } from '@modules/produccion/features/reportes'
 import type { ProduccionReportsActivityItem } from '@modules/produccion/features/reportes/domain/reportes.types'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { parseCalendarDate, toCalendarDateString, formatDate } from '@/shared/utils/formatters'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -17,8 +18,8 @@ function currentMonthRange(): ProduccionReportesRangeParams {
   const end = new Date()
   const start = new Date(end.getFullYear(), end.getMonth(), 1)
   return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10),
+    startDate: toCalendarDateString(start),
+    endDate: toCalendarDateString(end),
   }
 }
 
@@ -33,11 +34,11 @@ const firstName = computed(() => authStore.user?.firstName ?? 'Usuario')
 
 const periodLabel = computed(() => {
   const r = rangeParams.value
-  const a = new Date(`${r.startDate}T12:00:00`)
-  const b = new Date(`${r.endDate}T12:00:00`)
+  const a = parseCalendarDate(r.startDate)
+  const b = parseCalendarDate(r.endDate)
   const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
-  const start = a.toLocaleDateString('es-PE', opts)
-  const end = b.toLocaleDateString('es-PE', { ...opts, month: 'long', year: 'numeric' })
+  const start = formatDate(a, opts)
+  const end = formatDate(b, { ...opts, month: 'long', year: 'numeric' })
   return `${start} – ${end}`
 })
 
@@ -91,7 +92,7 @@ function formatRelativeTime(iso: string) {
   const days = Math.floor(hours / 24)
   if (days === 1) return 'Hace 1 día'
   if (days < 7) return `Hace ${days} días`
-  return new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })
+  return formatDate(iso, { day: 'numeric', month: 'short' })
 }
 
 function activityTone(item: ProduccionReportsActivityItem): 'primary' | 'success' | 'muted' {
@@ -148,7 +149,7 @@ const dashboardErrorDetail = computed(() =>
       <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
         <p class="text-sm" style="color: var(--color-text-muted)">
           {{
-            new Date().toLocaleDateString('es-PE', {
+            formatDate(new Date(), {
               weekday: 'long',
               day: 'numeric',
               month: 'long',

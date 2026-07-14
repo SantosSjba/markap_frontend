@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateTime } from '@/shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, FormInput, AppIcon, StatsCard } from '@shared/components'
@@ -343,7 +344,7 @@ async function saveSnapshot() {
             class="flex justify-between text-sm py-2 border-b"
             :style="{ borderColor: 'var(--color-border)' }"
           >
-            <span>{{ sn.label || new Date(sn.createdAt).toLocaleString('es-PE') }}</span>
+            <span>{{ sn.label || formatDateTime(sn.createdAt) }}</span>
             <span class="font-medium">{{ formatSol(sn.totalCost) }} · margen {{ formatPercent(sn.marginPercent) }}</span>
           </div>
         </div>

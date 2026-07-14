@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDateTime } from '@/shared/utils/formatters'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, AppIcon, Badge, PageHeader } from '@shared/components'
@@ -146,7 +147,7 @@ async function confirmReverse() {
             Fecha: <strong :style="{ color: 'var(--color-text-primary)' }">{{ entry.entryDate }}</strong>
           </span>
           <span v-if="entry.postedAt" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
-            Publicado: {{ new Date(entry.postedAt).toLocaleString('es-PE') }}
+            Publicado: {{ formatDateTime(entry.postedAt) }}
           </span>
           <span v-if="entry.reversalOfId" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
             Reversa de otro asiento

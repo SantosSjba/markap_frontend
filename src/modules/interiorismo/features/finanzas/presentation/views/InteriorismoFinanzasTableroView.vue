@@ -17,6 +17,7 @@ import {
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { toCalendarDateString, formatDateTime } from '@/shared/utils/formatters'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
 import type { InteriorFinanceScheduleDto } from '../../domain/finance.types'
 import {
@@ -150,7 +151,7 @@ function openCreateSchedule() {
   schForm.resetForm({
     values: {
       kind: 'INSTALLMENT',
-      dueDate: new Date().toISOString().slice(0, 10),
+      dueDate: toCalendarDateString(),
       amount: 0,
       concept: '',
       sortOrder: (ov.value?.schedules.length ?? 0) + 1,
@@ -475,7 +476,7 @@ function cuotaLabel(scheduleId: string | null): string {
               :data="
                 ov.payments.map((p) => ({
                   ...p,
-                  paidAtLabel: new Date(p.paidAt).toLocaleString('es-PE'),
+                  paidAtLabel: formatDateTime(p.paidAt),
                   amount: formatSol(p.amount),
                   statusLabel: PAYMENT_STATUS_LABELS[p.status] ?? p.status,
                   cuota: cuotaLabel(p.scheduleItemId),
@@ -599,7 +600,7 @@ function cuotaLabel(scheduleId: string | null): string {
                 ov.recentMovements.map((m, i) => ({
                   ...m,
                   _rk: `${i}-${m.occurredAt}-${m.direction}-${m.amount}`,
-                  occurredLabel: new Date(m.occurredAt).toLocaleString('es-PE'),
+                  occurredLabel: formatDateTime(m.occurredAt),
                   directionLabel: m.direction === 'IN' ? 'Ingreso' : 'Egreso',
                   amount: formatSol(m.amount),
                 }))

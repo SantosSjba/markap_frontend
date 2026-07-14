@@ -19,6 +19,12 @@ import { useForm, toTypedSchema } from '@shared/components/forms'
 import { apiClient } from '@core/api/apiClient'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import {
+  formatDate,
+  formatDateTime,
+  formatShortDate,
+  toCalendarDateString,
+} from '@/shared/utils/formatters'
 import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
 import { useInteriorProjectsList } from '@modules/interiorismo/features/proyectos/application/useInteriorProjects'
 import type { ListInteriorProjectsParams } from '@modules/interiorismo/features/proyectos/domain/project.types'
@@ -35,11 +41,11 @@ const route = useRoute()
 const router = useRouter()
 
 function monthBounds(y: number, m: number): { from: string; to: string } {
-  const from = new Date(Date.UTC(y, m - 1, 1))
-  const to = new Date(Date.UTC(y, m, 0))
+  const from = new Date(y, m - 1, 1)
+  const to = new Date(y, m, 0)
   return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
+    from: toCalendarDateString(from),
+    to: toCalendarDateString(to),
   }
 }
 
@@ -141,7 +147,7 @@ const filteredFeed = computed(() => {
 const countsByDay = computed(() => {
   const m: Record<string, number> = {}
   for (const r of filteredFeed.value) {
-    const d = r.startsAt.slice(0, 10)
+    const d = toCalendarDateString(r.startsAt)
     m[d] = (m[d] ?? 0) + 1
   }
   return m
@@ -264,8 +270,8 @@ function openEdit(row: CalendarFeedItemDto) {
   let startsLocal: string
   let endsLocal = ''
   if (row.allDay) {
-    startsLocal = row.startsAt.slice(0, 10)
-    endsLocal = row.endsAt?.slice(0, 10) ?? ''
+    startsLocal = toCalendarDateString(row.startsAt)
+    endsLocal = row.endsAt ? toCalendarDateString(row.endsAt) : ''
   } else {
     const sd = new Date(row.startsAt)
     startsLocal = new Date(sd.getTime() - sd.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
@@ -296,10 +302,11 @@ const onSubmitEvent = evForm.handleSubmit(async (values) => {
   let startsIso: string
   let endsIso: string | null = null
   if (values.allDay) {
-    const d = values.startsAt.trim()
+    const d = toCalendarDateString(values.startsAt.trim())
+    // Noon UTC: date-only transport convention (matches backend parseDateOnly)
     startsIso = `${d}T12:00:00.000Z`
     const er = values.endsAt?.trim()
-    endsIso = er ? `${er}T12:00:00.000Z` : null
+    endsIso = er ? `${toCalendarDateString(er)}T12:00:00.000Z` : null
   } else {
     startsIso = new Date(values.startsAt).toISOString()
     const endsRaw = values.endsAt?.trim()
@@ -353,12 +360,10 @@ function getEventActions(row: CalendarFeedItemDto): { label: string; icon: strin
 }
 
 function fmtWhen(row: CalendarFeedItemDto): string {
-  const a = new Date(row.startsAt)
-  if (row.allDay) return a.toLocaleDateString('es-PE')
-  const s = a.toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
+  if (row.allDay) return formatShortDate(row.startsAt)
+  const s = formatDateTime(row.startsAt)
   if (!row.endsAt) return s
-  const b = new Date(row.endsAt)
-  return `${s} → ${b.toLocaleTimeString('es-PE', { timeStyle: 'short' })}`
+  return `${s} → ${formatDateTime(row.endsAt)}`
 }
 
 function prevMonth() {
@@ -379,12 +384,12 @@ function nextMonth() {
   }
 }
 
-const monthTitle = computed(() => {
-  return new Date(Date.UTC(rangeYear.value, rangeMonth.value - 1, 1)).toLocaleDateString('es-PE', {
+const monthTitle = computed(() =>
+  formatDate(new Date(rangeYear.value, rangeMonth.value - 1, 1), {
     month: 'long',
     year: 'numeric',
-  })
-})
+  }),
+)
 </script>
 
 <template>

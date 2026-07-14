@@ -27,6 +27,7 @@ import {
   useDeleteInteriorDocument,
 } from '../../application/useInteriorDocuments'
 import { DOCUMENT_TYPE_FORM_OPTIONS, INTERIOR_DOCUMENT_NAV } from '../documentNav'
+import { formatDateTime } from '@/shared/utils/formatters'
 
 const route = useRoute()
 const router = useRouter()
@@ -197,15 +198,7 @@ async function removeRow(row: InteriorDocumentRow) {
 }
 
 function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  } catch {
-    return iso.slice(0, 10)
-  }
+  return formatDateTime(iso)
 }
 
 function goProject(id: string) {

@@ -12,6 +12,7 @@ import {
   AppIcon,
 } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
+import { formatDateTime } from '@/shared/utils/formatters'
 import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
 import type { ArquitecturaSupplierCatalogLinkDto } from '../../domain/suppliers.types'
 import type { ListArquitecturaCatalogMaterialsParams } from '../../domain/catalog.types'
@@ -203,7 +204,7 @@ const purchaseColumns = [
 const purchaseRows = computed(() =>
   (detail.value?.purchases ?? []).map((p) => ({
     id: p.id,
-    when: new Date(p.purchasedAt).toLocaleString('es-PE'),
+    when: formatDateTime(p.purchasedAt),
     mat:
       p.materialName != null
         ? `${p.materialCode ? `${p.materialCode} · ` : ''}${p.materialName}`

@@ -23,6 +23,7 @@ import {
 } from '../../application/useVentasFinanzas'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { formatShortDate } from '@/shared/utils/formatters'
 
 const ITEMS = 15
 const listParams = ref({
@@ -294,7 +295,7 @@ function onMarkPaid(row: BuyerPaymentRow) {
             S/ {{ (row as BuyerPaymentRow).amount.toLocaleString('es-PE') }}
           </td>
           <td class="py-3 px-4 text-sm">
-            {{ new Date((row as BuyerPaymentRow).dueDate).toLocaleDateString('es-PE') }}
+            {{ formatShortDate((row as BuyerPaymentRow).dueDate) }}
           </td>
           <td class="py-3 px-4">
             <Badge :variant="statusBadgeVariant((row as BuyerPaymentRow).displayStatus)">
