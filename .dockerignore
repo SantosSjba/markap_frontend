@@ -1,0 +1,16 @@
+.git
+.github
+.pnpm-store
+node_modules
+dist
+.env
+.env.*
+!.env.example
+*.md
+.vscode
+.idea
+coverage
+tmp
+**/.DS_Store
+Dockerfile
+.dockerignore
