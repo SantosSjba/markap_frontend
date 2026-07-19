@@ -193,3 +193,26 @@ export function useVentasDeleteProperty() {
     },
   })
 }
+
+export function useVentasUploadPropertyMedia() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      file,
+      kind,
+    }: {
+      id: string
+      file: File
+      kind: 'photo' | 'plan'
+    }) => ventasPropertiesRepository.uploadMedia(id, file, kind),
+    onSuccess: (_data, vars) => {
+      invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
+      invalidateQuerySubtree(queryClient, ventasPropertyKeys.detail(vars.id))
+      void markapAlert.toast.success('Archivo multimedia subido')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo subir el archivo', getApiErrorMessage(err))
+    },
+  })
+}

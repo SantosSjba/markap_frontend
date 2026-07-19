@@ -12,6 +12,7 @@ import type {
   ArquitecturaExecutionTaskDto,
   UpdateExecutionIncidentPayload,
   UpdateExecutionTaskPayload,
+  UploadExecutionEvidencePayload,
 } from '../domain/execution.types'
 
 const BASE = '/arquitectura-execution'
@@ -47,6 +48,21 @@ export const arquitecturaExecutionApiRepository: ArquitecturaExecutionRepository
       .post<ArquitecturaExecutionEvidenceDto>(`${BASE}/projects/${projectId}/evidences`, payload, q())
       .then((r) => r.data),
 
+  uploadEvidence: (projectId: string, payload: UploadExecutionEvidencePayload) => {
+    const fd = new FormData()
+    fd.append('file', payload.file)
+    fd.append('kind', payload.kind)
+    fd.append('title', payload.title)
+    fd.append('capturedAt', payload.capturedAt)
+    if (payload.taskId) fd.append('taskId', payload.taskId)
+    return apiClient
+      .post<ArquitecturaExecutionEvidenceDto>(`${BASE}/projects/${projectId}/evidences/upload`, fd, {
+        ...q(),
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
+
   deleteEvidence: (projectId: string, evidenceId: string) =>
     apiClient
       .delete(`${BASE}/projects/${projectId}/evidences/${evidenceId}`, q())
@@ -75,4 +91,9 @@ export const arquitecturaExecutionApiRepository: ArquitecturaExecutionRepository
     apiClient
       .delete(`${BASE}/projects/${projectId}/actual-costs/${costId}`, q())
       .then(() => undefined),
+
+  getDownloadUrl: (archivoId: string) =>
+    apiClient
+      .get<{ url: string }>(`/gen-archivos/${archivoId}/url`, q())
+      .then((r) => r.data.url),
 }

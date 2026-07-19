@@ -6,6 +6,7 @@ import type {
   ListArquitecturaDocumentsParams,
   ListArquitecturaDocumentsResponse,
   UpdateArquitecturaDocumentPayload,
+  UploadArquitecturaDocumentPayload,
 } from '../domain/document.types'
 import type { ArquitecturaDocumentsRepository } from '../domain/repositories/documents.repository'
 
@@ -33,6 +34,20 @@ export const arquitecturaDocumentsApiRepository: ArquitecturaDocumentsRepository
       })
       .then((r) => r.data),
 
+  upload: (payload: UploadArquitecturaDocumentPayload) => {
+    const fd = new FormData()
+    fd.append('file', payload.file)
+    fd.append('projectId', payload.projectId)
+    fd.append('docType', payload.docType)
+    fd.append('title', payload.title)
+    return apiClient
+      .post<ArquitecturaDocumentRow>(`${BASE}/upload`, fd, {
+        params: { applicationSlug: ARQUITECTURA_APP_SLUG },
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
+
   update: (id: string, payload: UpdateArquitecturaDocumentPayload) =>
     apiClient
       .patch<ArquitecturaDocumentRow>(`${BASE}/${id}`, payload, {
@@ -44,4 +59,11 @@ export const arquitecturaDocumentsApiRepository: ArquitecturaDocumentsRepository
     apiClient.delete(`${BASE}/${id}`, {
       params: { applicationSlug: ARQUITECTURA_APP_SLUG },
     }),
+
+  getDownloadUrl: (archivoId: string) =>
+    apiClient
+      .get<{ url: string }>(`/gen-archivos/${archivoId}/url`, {
+        params: { applicationSlug: ARQUITECTURA_APP_SLUG },
+      })
+      .then((r) => r.data.url),
 }

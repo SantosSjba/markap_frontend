@@ -80,7 +80,9 @@ export interface VentasSalesRepository {
     separationDate: string
     expiresAt?: string | null
     notes?: string | null
-  }) => Promise<unknown>
+  }) => Promise<{ id: string }>
+
+  uploadSeparationReceipt: (id: string, file: File) => Promise<unknown>
 
   patchSeparation: (
     id: string,
@@ -105,7 +107,9 @@ export interface VentasSalesRepository {
     commissionAmount?: number
     commissionPercent?: number | null
     commissionAutoFromProfile?: boolean
-  }) => Promise<unknown>
+  }) => Promise<{ closingId: string; commissionId?: string | null }>
+
+  uploadClosingContract: (id: string, file: File) => Promise<unknown>
 
   getClosingReadiness: (params: {
     propertyId: string
@@ -134,6 +138,16 @@ export interface VentasSalesRepository {
     verifiedBy?: string | null
     notes?: string | null
   }) => Promise<unknown>
+
+  uploadPaymentEvidence: (body: {
+    propertyId: string
+    buyerClientId: string
+    file: File
+  }) => Promise<{
+    paymentEvidencePath?: string | null
+    paymentEvidenceArchivoId?: string | null
+    paymentEvidenceDownloadUrl?: string | null
+  }>
 
   getTaxPreview: (params: {
     salePrice: number

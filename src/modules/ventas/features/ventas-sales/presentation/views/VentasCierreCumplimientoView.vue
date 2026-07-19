@@ -17,11 +17,14 @@ import {
   useVentasComplianceDocuments,
   useVentasUpsertComplianceChecklist,
   useVentasUploadComplianceDocument,
+  useVentasUploadPaymentEvidence,
   useVentasTaxPreview,
 } from '../../application/useVentasSales'
 import type { SaleComplianceChecklist } from '../../domain/sales.types'
 import { resolveFileDownloadUrl } from '@shared/utils/archivo-url'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { apiClient } from '@core/api/apiClient'
+import { markapAlert } from '@/shared/composables'
 
 const route = useRoute()
 const router = useRouter()
@@ -141,10 +144,25 @@ watch(checklistData, (v) => {
     kycRiskLevel: String(v.kycRiskLevel ?? 'PENDING'),
     complianceNotes: String(v.complianceNotes ?? ''),
   }
+  paymentEvidenceMeta.value = {
+    path: v.paymentEvidencePath ?? null,
+    archivoId: v.paymentEvidenceArchivoId ?? null,
+    downloadUrl: v.paymentEvidenceDownloadUrl ?? null,
+  }
 })
 
 const { mutate: saveChecklist, isPending: savingChecklist } = useVentasUpsertComplianceChecklist()
 const { mutate: uploadDoc, isPending: uploadingDoc } = useVentasUploadComplianceDocument()
+const { mutate: uploadPaymentEvidence, isPending: uploadingPaymentEvidence } =
+  useVentasUploadPaymentEvidence()
+
+const paymentEvidenceFile = ref<File | null>(null)
+const paymentEvidenceError = ref('')
+const paymentEvidenceMeta = ref<{
+  path: string | null
+  archivoId: string | null
+  downloadUrl: string | null
+}>({ path: null, archivoId: null, downloadUrl: null })
 
 const docType = ref('CRI')
 const docFile = ref<File | null>(null)
@@ -209,6 +227,70 @@ function onUploadDoc() {
     },
   )
 }
+
+function onUploadPaymentEvidence() {
+  if (!hasRequiredQuery.value || !paymentEvidenceFile.value) {
+    paymentEvidenceError.value = 'Seleccione un archivo'
+    return
+  }
+  paymentEvidenceError.value = ''
+  uploadPaymentEvidence(
+    {
+      propertyId: propertyId.value,
+      buyerClientId: buyerClientId.value,
+      file: paymentEvidenceFile.value,
+    },
+    {
+      onSuccess: (res) => {
+        paymentEvidenceFile.value = null
+        paymentEvidenceMeta.value = {
+          path: res.paymentEvidencePath ?? null,
+          archivoId: res.paymentEvidenceArchivoId ?? null,
+          downloadUrl: res.paymentEvidenceDownloadUrl ?? null,
+        }
+        void refetchChecklist()
+      },
+    },
+  )
+}
+
+async function openPaymentEvidence() {
+  try {
+    if (paymentEvidenceMeta.value.downloadUrl) {
+      window.open(paymentEvidenceMeta.value.downloadUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+    if (paymentEvidenceMeta.value.archivoId) {
+      const { data } = await apiClient.get<{ url: string }>(
+        `/gen-archivos/${encodeURIComponent(paymentEvidenceMeta.value.archivoId)}/url`,
+        { params: { applicationSlug: 'ventas' } },
+      )
+      if (data?.url) {
+        window.open(data.url, '_blank', 'noopener,noreferrer')
+        return
+      }
+    }
+    const legacy = resolveFileDownloadUrl({
+      filePath: paymentEvidenceMeta.value.path ?? undefined,
+    })
+    if (legacy !== '#') {
+      window.open(legacy, '_blank', 'noopener,noreferrer')
+      return
+    }
+    void markapAlert.toast.error('No hay evidencia de pago disponible')
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo abrir el archivo', getApiErrorMessage(e))
+  }
+}
+
+const hasPaymentEvidence = computed(
+  () =>
+    !!(
+      paymentEvidenceMeta.value.archivoId ||
+      paymentEvidenceMeta.value.path ||
+      paymentEvidenceMeta.value.downloadUrl
+    ),
+)
 </script>
 
 <template>
@@ -384,6 +466,36 @@ function onUploadDoc() {
             <div>
               <label class="text-sm font-medium">Notas compliance</label>
               <textarea v-model="complianceForm.complianceNotes" rows="2" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
+            </div>
+          </div>
+          <div class="mt-4 space-y-2">
+            <p class="text-sm font-medium">Evidencia de pago</p>
+            <FileDropzone
+              v-model="paymentEvidenceFile"
+              label="Comprobante / voucher"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              :max-size="25 * 1024 * 1024"
+              :multiple="false"
+              :error="paymentEvidenceError"
+              @error="(m: string) => (paymentEvidenceError = m)"
+            />
+            <div class="flex flex-wrap items-center gap-2">
+              <BaseButton
+                variant="secondary"
+                icon="lucide:upload"
+                :loading="uploadingPaymentEvidence"
+                @click="onUploadPaymentEvidence"
+              >
+                Subir evidencia
+              </BaseButton>
+              <BaseButton
+                v-if="hasPaymentEvidence"
+                variant="outline"
+                icon="lucide:external-link"
+                @click="openPaymentEvidence"
+              >
+                Ver
+              </BaseButton>
             </div>
           </div>
         </FormSectionCard>

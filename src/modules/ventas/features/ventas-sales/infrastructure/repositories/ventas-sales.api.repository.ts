@@ -134,7 +134,19 @@ const api: VentasSalesRepository = {
     expiresAt?: string | null
     notes?: string | null
   }) =>
-    apiClient.post(`/ventas-sales/separations?${qs({ ...scope })}`, body).then((r) => r.data),
+    apiClient
+      .post<{ id: string }>(`/ventas-sales/separations?${qs({ ...scope })}`, body)
+      .then((r) => r.data),
+
+  uploadSeparationReceipt: (id: string, file: File) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return apiClient
+      .post(`/ventas-sales/separations/${encodeURIComponent(id)}/receipt?${qs({ ...scope })}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
 
   patchSeparation: (
     id: string,
@@ -165,7 +177,22 @@ const api: VentasSalesRepository = {
     commissionPercent?: number | null
     commissionAutoFromProfile?: boolean
   }) =>
-    apiClient.post(`/ventas-sales/closings?${qs({ ...scope })}`, body).then((r) => r.data),
+    apiClient
+      .post<{ closingId: string; commissionId?: string | null }>(
+        `/ventas-sales/closings?${qs({ ...scope })}`,
+        body,
+      )
+      .then((r) => r.data),
+
+  uploadClosingContract: (id: string, file: File) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return apiClient
+      .post(`/ventas-sales/closings/${encodeURIComponent(id)}/contract?${qs({ ...scope })}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
 
   getClosingReadiness: (params: { propertyId: string; buyerClientId: string }) =>
     apiClient
@@ -214,6 +241,22 @@ const api: VentasSalesRepository = {
     if (body.notes) fd.append('notes', body.notes)
     return apiClient
       .post(`/ventas-compliance/documents/upload?${qs({ ...scope })}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
+
+  uploadPaymentEvidence: (body: {
+    propertyId: string
+    buyerClientId: string
+    file: File
+  }) => {
+    const fd = new FormData()
+    fd.append('file', body.file)
+    fd.append('propertyId', body.propertyId)
+    fd.append('buyerClientId', body.buyerClientId)
+    return apiClient
+      .post(`/ventas-compliance/checklist/payment-evidence?${qs({ ...scope })}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       .then((r) => r.data)

@@ -75,3 +75,20 @@ export function useDeleteArquitecturaCatalogMaterial() {
     },
   })
 }
+
+export function useUploadArquitecturaCatalogAsset() {
+  return useMutation({
+    mutationFn: ({
+      file,
+      kind,
+      materialId,
+    }: {
+      file: File
+      kind: 'technical-sheet' | 'image'
+      materialId?: string
+    }) => repo.uploadAsset(file, kind, materialId),
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo subir el archivo', getApiErrorMessage(err))
+    },
+  })
+}

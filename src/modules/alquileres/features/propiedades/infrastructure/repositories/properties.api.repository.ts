@@ -39,7 +39,7 @@ export const propertiesApiRepository: PropertiesRepository = {
 
   create: (data: CreatePropertyPayload) =>
     apiClient
-      .post('/properties', {
+      .post<PropertyDetail>('/properties', {
         ...data,
         applicationSlug: data.applicationSlug ?? 'alquileres',
       })
@@ -85,4 +85,16 @@ export const propertiesApiRepository: PropertiesRepository = {
 
   delete: (id: string): Promise<{ message: string }> =>
     apiClient.delete(`/properties/${encodeURIComponent(id)}`).then((r) => r.data),
+
+  uploadMedia: (id: string, file: File, kind: 'photo' | 'plan') => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('kind', kind)
+    return apiClient
+      .post(`/properties/${encodeURIComponent(id)}/media`, fd, {
+        params: { applicationSlug: 'alquileres' },
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
 }

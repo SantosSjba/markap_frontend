@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { DataTable, BaseButton, FormSelect, AppIcon, BasePagination, PageHeader } from '@shared/components'
+import { DataTable, BaseButton, FormSelect, AppIcon, BasePagination, PageHeader, FileDropzone } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
-import { useVentasSeparationsList, useVentasCreateSeparation } from '../../application/useVentasSales'
+import {
+  useVentasSeparationsList,
+  useVentasCreateSeparation,
+  useVentasUploadSeparationReceipt,
+} from '../../application/useVentasSales'
 import type { SaleSeparationRow } from '../../domain/sales.types'
 import { ventasClientsRepository } from '@modules/ventas/features/clientes'
 import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
 import { SEPARATION_STATUS_OPTIONS, separationStatusLabel } from '../../domain/pipeline.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { toCalendarDateString } from '@/shared/utils/formatters'
+import { resolveFileDownloadUrl } from '@/shared/utils/archivo-url'
+import { apiClient } from '@core/api/apiClient'
+import { markapAlert } from '@/shared/composables'
 
 const ITEMS = 10
 const listParams = ref({ page: 1, limit: ITEMS, status: '' as string | undefined })
@@ -46,6 +53,7 @@ const columns = [
   { key: 'buyer', label: 'Cliente', sortAccessor: (r: unknown) => (r as SaleSeparationRow).buyer.fullName },
   { key: 'amount', label: 'Monto', sortAccessor: (r: unknown) => (r as SaleSeparationRow).amount },
   { key: 'status', label: 'Estado', sortAccessor: (r: unknown) => (r as SaleSeparationRow).status },
+  { key: 'receipt', label: 'Comprobante' },
 ]
 
 const showNew = ref(false)
@@ -53,6 +61,8 @@ const loadingNewModalData = ref(false)
 const newModalLoadError = ref('')
 const buyerOptions = ref<{ value: string; label: string }[]>([])
 const propertyOptions = ref<{ value: string; label: string }[]>([])
+const receiptFile = ref<File | null>(null)
+const receiptError = ref('')
 const initialSeparationForm = () => ({
   buyerClientId: '',
   propertyId: '',
@@ -65,9 +75,18 @@ const form = ref(initialSeparationForm())
 
 function resetSeparationForm() {
   form.value = initialSeparationForm()
+  receiptFile.value = null
+  receiptError.value = ''
 }
 
-const { mutate: createSep, isPending } = useVentasCreateSeparation()
+const { mutateAsync: createSep, isPending } = useVentasCreateSeparation()
+const { mutateAsync: uploadReceipt, isPending: uploadingReceipt } = useVentasUploadSeparationReceipt()
+const saving = computed(() => isPending.value || uploadingReceipt.value)
+
+const showReceiptModal = ref(false)
+const receiptTargetId = ref<string | null>(null)
+const rowReceiptFile = ref<File | null>(null)
+const rowReceiptError = ref('')
 
 async function openModal() {
   newModalLoadError.value = ''
@@ -94,23 +113,79 @@ async function openModal() {
   }
 }
 
-function submit() {
+async function submit() {
   if (!form.value.buyerClientId || !form.value.propertyId || form.value.amount <= 0) return
-  createSep(
-    {
+  if (!receiptFile.value) {
+    receiptError.value = 'Adjunta el comprobante de separación'
+    return
+  }
+  try {
+    const created = await createSep({
       buyerClientId: form.value.buyerClientId,
       propertyId: form.value.propertyId,
       amount: form.value.amount,
       separationDate: form.value.separationDate,
       notes: form.value.notes || null,
-    },
-    {
-      onSuccess: () => {
-        showNew.value = false
-        resetSeparationForm()
-      },
-    },
-  )
+    })
+    if (receiptFile.value && created?.id) {
+      await uploadReceipt({ id: created.id, file: receiptFile.value })
+    }
+    showNew.value = false
+    resetSeparationForm()
+  } catch {
+    /* toasts handled in mutations */
+  }
+}
+
+function openUploadReceipt(row: SaleSeparationRow) {
+  receiptTargetId.value = row.id
+  rowReceiptFile.value = null
+  rowReceiptError.value = ''
+  showReceiptModal.value = true
+}
+
+async function submitRowReceipt() {
+  if (!receiptTargetId.value || !rowReceiptFile.value) {
+    rowReceiptError.value = 'Selecciona un archivo'
+    return
+  }
+  try {
+    await uploadReceipt({ id: receiptTargetId.value, file: rowReceiptFile.value })
+    showReceiptModal.value = false
+  } catch {
+    /* toast in mutation */
+  }
+}
+
+function hasReceipt(row: SaleSeparationRow) {
+  return !!(row.receiptArchivoId || row.receiptFilePath || row.downloadUrl)
+}
+
+async function openReceipt(row: SaleSeparationRow) {
+  try {
+    if (row.downloadUrl) {
+      window.open(row.downloadUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+    if (row.receiptArchivoId) {
+      const { data } = await apiClient.get<{ url: string }>(
+        `/gen-archivos/${encodeURIComponent(row.receiptArchivoId)}/url`,
+        { params: { applicationSlug: 'ventas' } },
+      )
+      if (data?.url) {
+        window.open(data.url, '_blank', 'noopener,noreferrer')
+        return
+      }
+    }
+    const legacy = resolveFileDownloadUrl({ filePath: row.receiptFilePath ?? undefined })
+    if (legacy !== '#') {
+      window.open(legacy, '_blank', 'noopener,noreferrer')
+      return
+    }
+    void markapAlert.toast.error('No hay archivo disponible')
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo abrir el archivo', getApiErrorMessage(e))
+  }
 }
 </script>
 
@@ -171,6 +246,26 @@ function submit() {
             {{ (row as SaleSeparationRow).amount.toLocaleString('es-PE') }}
           </td>
           <td class="py-3 px-4">{{ separationStatusLabel((row as SaleSeparationRow).status) }}</td>
+          <td class="py-3 px-4">
+            <BaseButton
+              v-if="hasReceipt(row as SaleSeparationRow)"
+              variant="ghost"
+              size="sm"
+              icon="lucide:external-link"
+              @click="openReceipt(row as SaleSeparationRow)"
+            >
+              Ver
+            </BaseButton>
+            <BaseButton
+              v-else
+              variant="ghost"
+              size="sm"
+              icon="lucide:upload"
+              @click="openUploadReceipt(row as SaleSeparationRow)"
+            >
+              Subir
+            </BaseButton>
+          </td>
         </template>
       </DataTable>
       <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
@@ -216,9 +311,38 @@ function submit() {
             :style="{ borderColor: 'var(--color-border)' }"
           />
         </div>
+        <FileDropzone
+          v-model="receiptFile"
+          label="Comprobante de separación"
+          :multiple="false"
+          required
+          :error="receiptError"
+          accept=".pdf,.jpg,.jpeg,.png,.webp"
+          hint="PDF o imagen del voucher / transferencia"
+          @error="(m: string) => (receiptError = m)"
+        />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton variant="outline" icon="lucide:x" @click="showNew = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" icon="lucide:save" :loading="isPending" @click="submit">Guardar</BaseButton>
+          <BaseButton variant="primary" icon="lucide:save" :loading="saving" @click="submit">Guardar</BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
+    <BaseModal v-model="showReceiptModal" title="Subir comprobante" size="md">
+      <div class="p-4 space-y-3">
+        <FileDropzone
+          v-model="rowReceiptFile"
+          label="Archivo"
+          :multiple="false"
+          :error="rowReceiptError"
+          accept=".pdf,.jpg,.jpeg,.png,.webp"
+          @error="(m: string) => (rowReceiptError = m)"
+        />
+        <div class="flex justify-end gap-2">
+          <BaseButton variant="outline" icon="lucide:x" @click="showReceiptModal = false">Cancelar</BaseButton>
+          <BaseButton variant="primary" icon="lucide:upload" :loading="uploadingReceipt" @click="submitRowReceipt">
+            Subir
+          </BaseButton>
         </div>
       </div>
     </BaseModal>

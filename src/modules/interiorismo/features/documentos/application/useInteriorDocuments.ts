@@ -8,6 +8,7 @@ import type {
   CreateInteriorDocumentPayload,
   ListInteriorDocumentsParams,
   UpdateInteriorDocumentPayload,
+  UploadInteriorDocumentPayload,
 } from '../domain/document.types'
 import { interiorDocumentsApiRepository as repo } from '../infrastructure/documents.api.repository'
 
@@ -33,6 +34,20 @@ export function useCreateInteriorDocument() {
     },
     onError: (err) => {
       void markapAlert.toast.error('No se pudo registrar el documento', getApiErrorMessage(err))
+    },
+  })
+}
+
+export function useUploadInteriorDocument() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: UploadInteriorDocumentPayload) => repo.upload(payload),
+    onSuccess: () => {
+      invalidateQuerySubtree(qc, interiorDocumentKeys.all)
+      void markapAlert.toast.success('Documento subido')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo subir el documento', getApiErrorMessage(err))
     },
   })
 }
@@ -64,4 +79,26 @@ export function useDeleteInteriorDocument() {
       void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err))
     },
   })
+}
+
+export async function openInteriorDocumentFile(row: {
+  archivoId: string | null
+  downloadUrl?: string | null
+  fileUrl: string | null
+}) {
+  try {
+    if (row.archivoId) {
+      const url = await repo.getDownloadUrl(row.archivoId)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    const url = row.downloadUrl || row.fileUrl
+    if (url && /^https?:\/\//i.test(url)) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    void markapAlert.toast.error('No hay archivo disponible')
+  } catch {
+    void markapAlert.toast.error('No se pudo abrir el archivo')
+  }
 }

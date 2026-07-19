@@ -11,11 +11,13 @@ import {
   BasePagination,
   Badge,
   PageHeader,
+  FileDropzone,
 } from '@shared/components'
 import BaseModal from '@shared/components/ui/BaseModal.vue'
 import {
   useVentasClosingsList,
   useVentasCreateClosing,
+  useVentasUploadClosingContract,
   useVentasCompliancePendingBoard,
   useVentasDispatchComplianceAlerts,
 } from '../../application/useVentasSales'
@@ -25,6 +27,9 @@ import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades
 import { useVentasAgentsList } from '@modules/ventas/features/agentes'
 import { PAYMENT_TYPE_OPTIONS } from '../../domain/pipeline.constants'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { resolveFileDownloadUrl } from '@/shared/utils/archivo-url'
+import { apiClient } from '@core/api/apiClient'
+import { markapAlert } from '@/shared/composables'
 
 const router = useRouter()
 const ITEMS = 10
@@ -60,6 +65,7 @@ const columns = [
   { key: 'price', label: 'Precio final', sortAccessor: (r: unknown) => (r as SaleClosingRow).finalPrice },
   { key: 'pay', label: 'Pago', sortAccessor: (r: unknown) => (r as SaleClosingRow).paymentType },
   { key: 'comm', label: 'Comisión', sortAccessor: (r: unknown) => (r as SaleClosingRow).commission?.amount ?? 0 },
+  { key: 'contract', label: 'Contrato' },
   { key: 'act', label: '' },
 ]
 
@@ -91,12 +97,23 @@ const initialClosingForm = () => ({
 })
 
 const form = ref(initialClosingForm())
+const contractFile = ref<File | null>(null)
+const contractError = ref('')
 
 function resetClosingForm() {
   form.value = initialClosingForm()
+  contractFile.value = null
+  contractError.value = ''
 }
 
-const { mutate: createClosing, isPending } = useVentasCreateClosing()
+const { mutateAsync: createClosing, isPending } = useVentasCreateClosing()
+const { mutateAsync: uploadContract, isPending: uploadingContract } = useVentasUploadClosingContract()
+const saving = computed(() => isPending.value || uploadingContract.value)
+
+const showContractModal = ref(false)
+const contractTargetId = ref<string | null>(null)
+const rowContractFile = ref<File | null>(null)
+const rowContractError = ref('')
 const boardFilters = ref({
   limit: 20,
   offset: 0,
@@ -141,13 +158,17 @@ async function openModal() {
   }
 }
 
-function submit() {
+async function submit() {
   if (!form.value.buyerClientId || !form.value.propertyId || form.value.finalPrice <= 0) return
   if (form.value.commissionAmount < 0) return
   const commissionAgentId = form.value.agentId
   if (!commissionAgentId) return
-  createClosing(
-    {
+  if (!contractFile.value) {
+    contractError.value = 'Adjunta el contrato de compraventa'
+    return
+  }
+  try {
+    const created = await createClosing({
       buyerClientId: form.value.buyerClientId,
       propertyId: form.value.propertyId,
       agentId: form.value.agentId || null,
@@ -157,14 +178,66 @@ function submit() {
       commissionAgentId,
       commissionAmount: form.value.commissionAmount,
       commissionPercent: form.value.commissionPercent,
-    },
-    {
-      onSuccess: () => {
-        showNew.value = false
-        resetClosingForm()
-      },
-    },
-  )
+    })
+    if (contractFile.value && created?.closingId) {
+      await uploadContract({ id: created.closingId, file: contractFile.value })
+    }
+    showNew.value = false
+    resetClosingForm()
+  } catch {
+    /* toasts in mutations */
+  }
+}
+
+function openUploadContract(row: SaleClosingRow) {
+  contractTargetId.value = row.id
+  rowContractFile.value = null
+  rowContractError.value = ''
+  showContractModal.value = true
+}
+
+async function submitRowContract() {
+  if (!contractTargetId.value || !rowContractFile.value) {
+    rowContractError.value = 'Selecciona un archivo'
+    return
+  }
+  try {
+    await uploadContract({ id: contractTargetId.value, file: rowContractFile.value })
+    showContractModal.value = false
+  } catch {
+    /* toast in mutation */
+  }
+}
+
+function hasContract(row: SaleClosingRow) {
+  return !!(row.contractArchivoId || row.contractFilePath || row.downloadUrl)
+}
+
+async function openContract(row: SaleClosingRow) {
+  try {
+    if (row.downloadUrl) {
+      window.open(row.downloadUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+    if (row.contractArchivoId) {
+      const { data } = await apiClient.get<{ url: string }>(
+        `/gen-archivos/${encodeURIComponent(row.contractArchivoId)}/url`,
+        { params: { applicationSlug: 'ventas' } },
+      )
+      if (data?.url) {
+        window.open(data.url, '_blank', 'noopener,noreferrer')
+        return
+      }
+    }
+    const legacy = resolveFileDownloadUrl({ filePath: row.contractFilePath ?? undefined })
+    if (legacy !== '#') {
+      window.open(legacy, '_blank', 'noopener,noreferrer')
+      return
+    }
+    void markapAlert.toast.error('No hay archivo disponible')
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo abrir el archivo', getApiErrorMessage(e))
+  }
 }
 
 function goCompliance(row: SaleClosingRow) {
@@ -373,6 +446,26 @@ function runAlerts(dryRun: boolean) {
             </template>
             <span v-else>—</span>
           </td>
+          <td class="py-3 px-4">
+            <BaseButton
+              v-if="hasContract(row as SaleClosingRow)"
+              variant="ghost"
+              size="sm"
+              icon="lucide:external-link"
+              @click="openContract(row as SaleClosingRow)"
+            >
+              Ver
+            </BaseButton>
+            <BaseButton
+              v-else
+              variant="ghost"
+              size="sm"
+              icon="lucide:upload"
+              @click="openUploadContract(row as SaleClosingRow)"
+            >
+              Subir
+            </BaseButton>
+          </td>
           <td class="py-3 px-4 text-right">
             <BaseButton variant="ghost" size="sm" icon="lucide:clipboard-check" @click="goCompliance(row as SaleClosingRow)">
               Cumplimiento
@@ -443,9 +536,38 @@ function runAlerts(dryRun: boolean) {
             :style="{ borderColor: 'var(--color-border)' }"
           />
         </div>
+        <FileDropzone
+          v-model="contractFile"
+          label="Contrato de compraventa"
+          :multiple="false"
+          required
+          :error="contractError"
+          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+          hint="PDF o documento firmado"
+          @error="(m: string) => (contractError = m)"
+        />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton variant="outline" icon="lucide:x" @click="showNew = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" icon="lucide:check-circle" :loading="isPending" @click="submit">Registrar cierre</BaseButton>
+          <BaseButton variant="primary" icon="lucide:check-circle" :loading="saving" @click="submit">Registrar cierre</BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
+    <BaseModal v-model="showContractModal" title="Adjuntar contrato" size="md">
+      <div class="p-4 space-y-3">
+        <FileDropzone
+          v-model="rowContractFile"
+          label="Archivo"
+          :multiple="false"
+          :error="rowContractError"
+          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+          @error="(m: string) => (rowContractError = m)"
+        />
+        <div class="flex justify-end gap-2">
+          <BaseButton variant="outline" icon="lucide:x" @click="showContractModal = false">Cancelar</BaseButton>
+          <BaseButton variant="primary" icon="lucide:upload" :loading="uploadingContract" @click="submitRowContract">
+            Subir
+          </BaseButton>
         </div>
       </div>
     </BaseModal>

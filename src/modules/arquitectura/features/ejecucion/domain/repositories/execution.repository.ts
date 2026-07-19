@@ -9,6 +9,7 @@
   ArquitecturaExecutionTaskDto,
   UpdateExecutionIncidentPayload,
   UpdateExecutionTaskPayload,
+  UploadExecutionEvidencePayload,
 } from '../execution.types'
 
 export interface ArquitecturaExecutionRepository {
@@ -22,6 +23,7 @@ export interface ArquitecturaExecutionRepository {
   ): Promise<ArquitecturaExecutionTaskDto>
   deleteTask(projectId: string, taskId: string): Promise<void>
   createEvidence(projectId: string, payload: CreateExecutionEvidencePayload): Promise<ArquitecturaExecutionEvidenceDto>
+  uploadEvidence(projectId: string, payload: UploadExecutionEvidencePayload): Promise<ArquitecturaExecutionEvidenceDto>
   deleteEvidence(projectId: string, evidenceId: string): Promise<void>
   createIncident(projectId: string, payload: CreateExecutionIncidentPayload): Promise<ArquitecturaExecutionIncidentDto>
   updateIncident(
@@ -31,4 +33,5 @@ export interface ArquitecturaExecutionRepository {
   ): Promise<ArquitecturaExecutionIncidentDto>
   createActualCost(projectId: string, payload: CreateExecutionActualCostPayload): Promise<unknown>
   deleteActualCost(projectId: string, costId: string): Promise<void>
+  getDownloadUrl(archivoId: string): Promise<string>
 }

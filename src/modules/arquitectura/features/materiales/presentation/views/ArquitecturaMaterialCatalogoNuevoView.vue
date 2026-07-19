@@ -1,12 +1,20 @@
 ﻿<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, FormTextarea, AppIcon } from '@shared/components'
+import { BaseButton, FormInput, FileDropzone, AppIcon } from '@shared/components'
 import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-import { useCreateArquitecturaCatalogMaterial } from '../../application/useArquitecturaCatalogMaterials'
+import {
+  useCreateArquitecturaCatalogMaterial,
+  useUploadArquitecturaCatalogAsset,
+} from '../../application/useArquitecturaCatalogMaterials'
+import { apiClient } from '@core/api/apiClient'
+import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
 
 const router = useRouter()
 const createMut = useCreateArquitecturaCatalogMaterial()
+const uploadMut = useUploadArquitecturaCatalogAsset()
 
 const code = ref('')
 const name = ref('')
@@ -16,15 +24,77 @@ const unit = ref('und')
 const price = ref<number>(0)
 const stock = ref<number>(0)
 const technicalSheetUrl = ref('')
-const imageUrlsRaw = ref('')
+const technicalSheetArchivoId = ref<string | null>(null)
+const imageUrls = ref<string[]>([])
+const sheetFile = ref<File | null>(null)
+const imageFile = ref<File | null>(null)
+const sheetError = ref('')
+const imageError = ref('')
 
 const saving = ref(false)
 
-function parseUrls(raw: string): string[] {
-  return raw
-    .split(/\r?\n/)
-    .map((s) => s.trim())
-    .filter(Boolean)
+async function uploadSheet() {
+  if (!sheetFile.value) {
+    sheetError.value = 'Seleccione un archivo'
+    return
+  }
+  sheetError.value = ''
+  const res = await uploadMut.mutateAsync({
+    file: sheetFile.value,
+    kind: 'technical-sheet',
+  })
+  technicalSheetUrl.value = res.objectKey
+  technicalSheetArchivoId.value = res.archivoId
+  sheetFile.value = null
+  void markapAlert.toast.success('Ficha técnica lista')
+}
+
+async function uploadImage() {
+  if (!imageFile.value) {
+    imageError.value = 'Seleccione un archivo'
+    return
+  }
+  imageError.value = ''
+  const res = await uploadMut.mutateAsync({
+    file: imageFile.value,
+    kind: 'image',
+  })
+  imageUrls.value = [...imageUrls.value, res.objectKey]
+  imageFile.value = null
+  void markapAlert.toast.success('Imagen agregada')
+}
+
+function removeImage(idx: number) {
+  imageUrls.value.splice(idx, 1)
+}
+
+async function openStored(path: string, archivoId?: string | null) {
+  try {
+    if (archivoId) {
+      const { data } = await apiClient.get<{ url: string }>(
+        `/gen-archivos/${encodeURIComponent(archivoId)}/url`,
+        { params: { applicationSlug: ARQUITECTURA_APP_SLUG } },
+      )
+      if (data?.url) {
+        window.open(data.url, '_blank', 'noopener,noreferrer')
+        return
+      }
+    }
+    if (/^https?:\/\//i.test(path)) {
+      window.open(path, '_blank', 'noopener,noreferrer')
+      return
+    }
+    const { data } = await apiClient.get<{ url: string }>('/gen-archivos/resolve-url', {
+      params: { objectKey: path, applicationSlug: ARQUITECTURA_APP_SLUG },
+    })
+    if (data?.url) {
+      window.open(data.url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    void markapAlert.toast.error('No se pudo abrir el archivo')
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo abrir', getApiErrorMessage(e))
+  }
 }
 
 async function submit() {
@@ -42,7 +112,7 @@ async function submit() {
       price: Number(price.value),
       stock: Number(stock.value),
       technicalSheetUrl: technicalSheetUrl.value.trim() || null,
-      imageUrls: parseUrls(imageUrlsRaw.value),
+      imageUrls: imageUrls.value,
     })
     await router.replace(`${ARQUITECTURA_BASE_PATH}/materiales/catalogo/${created.id}`)
   } finally {
@@ -69,7 +139,7 @@ const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/materiales/catalogo`
           Nuevo material
         </h1>
         <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Defina datos base e imágenes (URLs). La ficha técnica puede ser un PDF o enlace externo.
+          Defina datos base; suba ficha técnica e imágenes a MinIO.
         </p>
       </div>
     </div>
@@ -91,13 +161,69 @@ const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/materiales/catalogo`
         <FormInput v-model="price" type="number" label="Precio ref." required />
         <FormInput v-model="stock" type="number" label="Stock" />
       </div>
-      <FormInput v-model="technicalSheetUrl" type="url" label="Ficha técnica (URL)" placeholder="https://…" />
-      <FormTextarea
-        v-model="imageUrlsRaw"
-        label="Imágenes (una URL por línea)"
-        :rows="4"
-        placeholder="https://…"
-      />
+
+      <div class="space-y-2">
+        <p class="text-sm font-medium">Ficha técnica</p>
+        <FileDropzone
+          v-model="sheetFile"
+          accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+          :max-size="25 * 1024 * 1024"
+          :multiple="false"
+          :error="sheetError"
+          @error="(m: string) => (sheetError = m)"
+        />
+        <div class="flex flex-wrap gap-2">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :loading="uploadMut.isPending.value"
+            @click="uploadSheet"
+          >
+            Subir ficha
+          </BaseButton>
+          <BaseButton
+            v-if="technicalSheetUrl"
+            variant="outline"
+            type="button"
+            @click="openStored(technicalSheetUrl, technicalSheetArchivoId)"
+          >
+            Ver ficha
+          </BaseButton>
+        </div>
+        <p v-if="technicalSheetUrl" class="text-xs opacity-70 truncate">{{ technicalSheetUrl }}</p>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-sm font-medium">Imágenes</p>
+        <FileDropzone
+          v-model="imageFile"
+          accept=".png,.jpg,.jpeg,.webp"
+          :max-size="25 * 1024 * 1024"
+          :multiple="false"
+          :error="imageError"
+          @error="(m: string) => (imageError = m)"
+        />
+        <BaseButton
+          variant="secondary"
+          type="button"
+          :loading="uploadMut.isPending.value"
+          @click="uploadImage"
+        >
+          Agregar imagen
+        </BaseButton>
+        <ul v-if="imageUrls.length" class="space-y-1 text-sm">
+          <li
+            v-for="(u, idx) in imageUrls"
+            :key="`${u}-${idx}`"
+            class="flex items-center justify-between gap-2"
+          >
+            <span class="truncate">{{ u.split('/').pop() }}</span>
+            <BaseButton type="button" variant="ghost" size="sm" @click="removeImage(idx)">
+              Quitar
+            </BaseButton>
+          </li>
+        </ul>
+      </div>
 
       <div class="flex justify-end gap-2 pt-2">
         <BaseButton variant="secondary" type="button" @click="goBack">Cancelar</BaseButton>

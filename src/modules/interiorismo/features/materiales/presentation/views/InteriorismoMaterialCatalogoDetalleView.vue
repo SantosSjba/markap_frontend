@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, FormInput, FormTextarea, AppIcon } from '@shared/components'
+import { BaseButton, FormInput, FileDropzone, AppIcon } from '@shared/components'
 import { markapAlert } from '@/shared/composables'
 import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
+import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
 import {
   useInteriorCatalogMaterialDetail,
   useUpdateInteriorCatalogMaterial,
   useDeleteInteriorCatalogMaterial,
+  useUploadInteriorCatalogAsset,
 } from '../../application/useInteriorCatalogMaterials'
 import { formatSol, formatQty } from '../labels'
+import { apiClient } from '@core/api/apiClient'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,6 +22,7 @@ const id = computed(() => String(route.params.id ?? ''))
 const { data: detail, isLoading } = useInteriorCatalogMaterialDetail(id)
 const updateMut = useUpdateInteriorCatalogMaterial(id)
 const deleteMut = useDeleteInteriorCatalogMaterial()
+const uploadMut = useUploadInteriorCatalogAsset()
 
 const name = ref('')
 const category = ref('')
@@ -26,7 +31,11 @@ const unit = ref('')
 const price = ref(0)
 const stock = ref(0)
 const technicalSheetUrl = ref('')
-const imageUrlsRaw = ref('')
+const imageUrls = ref<string[]>([])
+const sheetFile = ref<File | null>(null)
+const imageFile = ref<File | null>(null)
+const sheetError = ref('')
+const imageError = ref('')
 
 watch(
   detail,
@@ -39,19 +48,69 @@ watch(
     price.value = d.price
     stock.value = d.stock
     technicalSheetUrl.value = d.technicalSheetUrl ?? ''
-    imageUrlsRaw.value = [...d.images]
+    imageUrls.value = [...d.images]
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((i) => i.url)
-      .join('\n')
   },
   { immediate: true },
 )
 
-function parseUrls(raw: string): string[] {
-  return raw
-    .split(/\r?\n/)
-    .map((s) => s.trim())
-    .filter(Boolean)
+async function openPath(path: string) {
+  try {
+    if (/^https?:\/\//i.test(path)) {
+      window.open(path, '_blank', 'noopener,noreferrer')
+      return
+    }
+    const { data } = await apiClient.get<{ url: string }>('/gen-archivos/resolve-url', {
+      params: { objectKey: path, applicationSlug: INTERIORISMO_APP_SLUG },
+    })
+    if (data?.url) {
+      window.open(data.url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    void markapAlert.toast.error('No se pudo resolver la URL del archivo')
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo abrir', getApiErrorMessage(e))
+  }
+}
+
+async function uploadSheet() {
+  if (!sheetFile.value) {
+    sheetError.value = 'Seleccione un archivo'
+    return
+  }
+  sheetError.value = ''
+  const res = await uploadMut.mutateAsync({
+    file: sheetFile.value,
+    kind: 'technical-sheet',
+    materialId: id.value,
+  })
+  technicalSheetUrl.value = res.objectKey
+  sheetFile.value = null
+  if (res.downloadUrl) {
+    // keep for immediate Ver
+  }
+  void markapAlert.toast.success('Ficha técnica lista (guarde para persistir)')
+}
+
+async function uploadImage() {
+  if (!imageFile.value) {
+    imageError.value = 'Seleccione un archivo'
+    return
+  }
+  imageError.value = ''
+  const res = await uploadMut.mutateAsync({
+    file: imageFile.value,
+    kind: 'image',
+    materialId: id.value,
+  })
+  imageUrls.value = [...imageUrls.value, res.objectKey]
+  imageFile.value = null
+  void markapAlert.toast.success('Imagen agregada (guarde para persistir)')
+}
+
+function removeImage(idx: number) {
+  imageUrls.value.splice(idx, 1)
 }
 
 async function save() {
@@ -63,14 +122,14 @@ async function save() {
     price: Number(price.value),
     stock: Number(stock.value),
     technicalSheetUrl: technicalSheetUrl.value.trim() || null,
-    imageUrls: parseUrls(imageUrlsRaw.value),
+    imageUrls: imageUrls.value,
   })
 }
 
 async function remove() {
   const ok = await markapAlert.confirmDanger({
-    title: 'Â¿Eliminar material?',
-    text: 'Se quitarÃ¡ del catÃ¡logo y de vÃ­nculos con proveedores.',
+    title: '¿Eliminar material?',
+    text: 'Se quitará del catálogo y de vínculos con proveedores.',
     confirmText: 'Eliminar',
   })
   if (!ok) return
@@ -90,13 +149,13 @@ const sortedImages = computed(() =>
     <div class="flex flex-wrap items-start gap-3 justify-between">
       <div>
         <p class="text-xs font-medium uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">
-          CatÃ¡logo
+          Catálogo
         </p>
         <h1 class="text-xl font-bold mt-0.5" :style="{ color: 'var(--color-text-primary)' }">
-          {{ detail?.code ?? 'â€¦' }} Â· {{ detail?.name ?? 'Cargandoâ€¦' }}
+          {{ detail?.code ?? '…' }} · {{ detail?.name ?? 'Cargando…' }}
         </h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Precio ref. {{ formatSol(detail?.price) }} Â· Stock {{ formatQty(detail?.stock) }}
+          Precio ref. {{ formatSol(detail?.price) }} · Stock {{ formatQty(detail?.stock) }}
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -113,7 +172,7 @@ const sortedImages = computed(() =>
       </div>
     </div>
 
-    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargandoâ€¦</div>
+    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando…</div>
 
     <template v-else-if="detail">
       <div
@@ -121,30 +180,42 @@ const sortedImages = computed(() =>
         class="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl border p-4"
         :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
       >
-        <a
+        <button
           v-for="img in sortedImages"
           :key="img.id"
-          :href="img.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="aspect-square rounded-lg overflow-hidden border"
+          type="button"
+          class="aspect-square rounded-lg overflow-hidden border text-left"
           :style="{ borderColor: 'var(--color-border)' }"
+          @click="openPath(img.url)"
         >
-          <img :src="img.url" alt="" class="w-full h-full object-cover" loading="lazy" />
-        </a>
+          <img
+            v-if="/^https?:\/\//i.test(img.url)"
+            :src="img.url"
+            alt=""
+            class="w-full h-full object-cover"
+            loading="lazy"
+          />
+          <div
+            v-else
+            class="w-full h-full flex items-center justify-center text-xs px-2 text-center"
+            :style="{ color: 'var(--color-text-secondary)' }"
+          >
+            Ver imagen
+          </div>
+        </button>
       </div>
 
       <div
         class="space-y-4 p-4 sm:p-6 rounded-xl border"
         :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
       >
-        <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">EdiciÃ³n</p>
+        <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Edición</p>
         <div class="grid sm:grid-cols-2 gap-4">
-          <FormInput :model-value="detail.code" label="CÃ³digo" disabled />
+          <FormInput :model-value="detail.code" label="Código" disabled />
           <FormInput v-model="name" label="Nombre" required />
         </div>
         <div class="grid sm:grid-cols-2 gap-4">
-          <FormInput v-model="category" label="CategorÃ­a" required />
+          <FormInput v-model="category" label="Categoría" required />
           <FormInput v-model="brand" label="Marca" required />
         </div>
         <div class="grid sm:grid-cols-3 gap-4">
@@ -152,23 +223,70 @@ const sortedImages = computed(() =>
           <FormInput v-model="price" type="number" label="Precio ref." required />
           <FormInput v-model="stock" type="number" label="Stock" />
         </div>
-        <FormInput v-model="technicalSheetUrl" type="url" label="Ficha tÃ©cnica (URL)" />
-        <div v-if="technicalSheetUrl.trim()" class="text-sm">
-          <a
-            :href="technicalSheetUrl.trim()"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="underline"
-            :style="{ color: 'var(--color-primary)' }"
-          >
-            Abrir ficha tÃ©cnica
-          </a>
+
+        <div class="space-y-2">
+          <p class="text-sm font-medium">Ficha técnica</p>
+          <FileDropzone
+            v-model="sheetFile"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+            :max-size="25 * 1024 * 1024"
+            :multiple="false"
+            :error="sheetError"
+            @error="(m: string) => (sheetError = m)"
+          />
+          <div class="flex flex-wrap gap-2">
+            <BaseButton
+              variant="secondary"
+              type="button"
+              :loading="uploadMut.isPending.value"
+              @click="uploadSheet"
+            >
+              Subir ficha
+            </BaseButton>
+            <BaseButton
+              v-if="technicalSheetUrl.trim()"
+              variant="outline"
+              type="button"
+              @click="openPath(technicalSheetUrl.trim())"
+            >
+              Ver ficha
+            </BaseButton>
+          </div>
         </div>
-        <FormTextarea
-          v-model="imageUrlsRaw"
-          label="ImÃ¡genes (una URL por lÃ­nea â€” reemplaza el orden actual)"
-          :rows="5"
-        />
+
+        <div class="space-y-2">
+          <p class="text-sm font-medium">Imágenes</p>
+          <FileDropzone
+            v-model="imageFile"
+            accept=".png,.jpg,.jpeg,.webp"
+            :max-size="25 * 1024 * 1024"
+            :multiple="false"
+            :error="imageError"
+            @error="(m: string) => (imageError = m)"
+          />
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :loading="uploadMut.isPending.value"
+            @click="uploadImage"
+          >
+            Agregar imagen
+          </BaseButton>
+          <ul v-if="imageUrls.length" class="space-y-1 text-sm">
+            <li
+              v-for="(u, idx) in imageUrls"
+              :key="`${u}-${idx}`"
+              class="flex items-center justify-between gap-2"
+            >
+              <button type="button" class="truncate underline text-left" @click="openPath(u)">
+                {{ u.split('/').pop() }}
+              </button>
+              <BaseButton type="button" variant="ghost" size="sm" @click="removeImage(idx)">
+                Quitar
+              </BaseButton>
+            </li>
+          </ul>
+        </div>
       </div>
     </template>
   </div>

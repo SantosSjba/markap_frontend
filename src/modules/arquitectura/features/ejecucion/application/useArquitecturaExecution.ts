@@ -12,6 +12,7 @@ import type {
   CreateExecutionTaskPayload,
   UpdateExecutionIncidentPayload,
   UpdateExecutionTaskPayload,
+  UploadExecutionEvidencePayload,
 } from '../domain/execution.types'
 import { arquitecturaExecutionApiRepository as repo } from '../infrastructure/execution.api.repository'
 
@@ -92,6 +93,58 @@ export function useCreateExecutionEvidence(projectId: Ref<string> | string) {
     },
     onError: (err) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(err)),
   })
+}
+
+export function useUploadExecutionEvidence(projectId: Ref<string> | string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: UploadExecutionEvidencePayload) =>
+      repo.uploadEvidence(unref(projectId), payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: arquitecturaExecutionKeys.overview(unref(projectId)) })
+      void markapAlert.toast.success('Evidencia subida')
+    },
+    onError: (err) => void markapAlert.toast.error('No se pudo subir la evidencia', getApiErrorMessage(err)),
+  })
+}
+
+export async function openExecutionEvidenceFile(row: {
+  archivoId: string | null
+  downloadUrl?: string | null
+  fileUrl: string
+}) {
+  try {
+    if (row.archivoId) {
+      const url = await repo.getDownloadUrl(row.archivoId)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    const url = row.downloadUrl || row.fileUrl
+    if (url && /^https?:\/\//i.test(url)) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    void markapAlert.toast.error('No hay archivo disponible')
+  } catch {
+    void markapAlert.toast.error('No se pudo abrir el archivo')
+  }
+}
+
+export async function resolveExecutionEvidenceUrl(row: {
+  archivoId: string | null
+  downloadUrl?: string | null
+  fileUrl: string
+}): Promise<string | null> {
+  if (row.downloadUrl && /^https?:\/\//i.test(row.downloadUrl)) return row.downloadUrl
+  if (row.archivoId) {
+    try {
+      return await repo.getDownloadUrl(row.archivoId)
+    } catch {
+      return null
+    }
+  }
+  if (row.fileUrl && /^https?:\/\//i.test(row.fileUrl)) return row.fileUrl
+  return null
 }
 
 export function useDeleteExecutionEvidence(projectId: Ref<string> | string) {

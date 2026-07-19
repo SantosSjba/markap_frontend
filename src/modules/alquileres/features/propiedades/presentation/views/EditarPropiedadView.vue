@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
+import { BaseButton, AppIcon, FormSectionCard, FileDropzone } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
@@ -13,6 +13,7 @@ import {
   usePropertyDistricts,
   usePropertyOwners,
   useUpdateProperty,
+  useUploadPropertyMedia,
 } from '../../application/useProperties'
 import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
 import { formatFormArea, formatFormStat } from '@shared/utils/format-form-stat'
@@ -27,7 +28,11 @@ import {
   stripLocationFromDescription,
 } from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
-import type { PropertyType, OwnerOption } from '../../domain/property.types'
+import type { PropertyType, OwnerOption, PropertyMediaItem } from '../../domain/property.types'
+import { apiClient } from '@core/api/apiClient'
+import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { resolveFileDownloadUrl } from '@shared/utils/archivo-url'
 import PropertyOwnersSection from '../components/PropertyOwnersSection.vue'
 
 type PropertyFormValues = {
@@ -183,12 +188,18 @@ const { data: provinces, isLoading: loadingProvinces } = usePropertyProvinces(se
 const { data: districts, isLoading: loadingDistricts } = usePropertyDistricts(selectedProvinceId)
 const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = usePropertyOwners('alquileres')
 const updateMutation = useUpdateProperty()
+const { mutateAsync: uploadMedia, isPending: uploadingMedia } = useUploadPropertyMedia()
 
 const { isOtherLocation } = useClientAddressUbigeo({
   values,
   setFieldValue,
   isInitializing,
 })
+
+const mediaItems = ref<PropertyMediaItem[]>([])
+const newMediaFile = ref<File | null>(null)
+const newMediaKind = ref<'photo' | 'plan'>('photo')
+const newMediaError = ref('')
 
 const loading = computed(
   () => loadingProperty.value || loadingTypes.value || loadingDepartments.value || loadingOwners.value
@@ -220,6 +231,7 @@ watch(
     const legacyLoc =
       isOther && !p.locationCustom ? parseLocationFromDescription(p.description) : null
     const loc = p.locationCustom ?? legacyLoc
+    mediaItems.value = p.mediaItems?.length ? p.mediaItems.map((x) => ({ ...x })) : []
     resetForm({
       values: {
         code: p.code,
@@ -320,6 +332,59 @@ const monthlyRentPreview = computed(() => {
 
 const goBack = () => router.push('/alquileres/propiedades')
 
+function removeMediaItem(i: number) {
+  mediaItems.value.splice(i, 1)
+}
+
+async function onUploadMedia() {
+  if (!newMediaFile.value) {
+    newMediaError.value = 'Seleccione un archivo'
+    return
+  }
+  newMediaError.value = ''
+  const res = await uploadMedia({
+    id: id.value,
+    file: newMediaFile.value,
+    kind: newMediaKind.value,
+  })
+  mediaItems.value = res.mediaItems ?? [...mediaItems.value, res.mediaItem]
+  newMediaFile.value = null
+}
+
+async function openMediaItem(item: PropertyMediaItem) {
+  try {
+    if (item.archivoId) {
+      const { data } = await apiClient.get<{ url: string }>(
+        `/gen-archivos/${encodeURIComponent(item.archivoId)}/url`,
+        { params: { applicationSlug: 'alquileres' } },
+      )
+      if (data?.url) {
+        window.open(data.url, '_blank', 'noopener,noreferrer')
+        return
+      }
+    }
+    if (/^https?:\/\//i.test(item.url)) {
+      window.open(item.url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    const { data } = await apiClient.get<{ url: string }>('/gen-archivos/resolve-url', {
+      params: { objectKey: item.url, applicationSlug: 'alquileres' },
+    })
+    if (data?.url) {
+      window.open(data.url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    const legacy = resolveFileDownloadUrl({ filePath: item.url })
+    if (legacy !== '#') {
+      window.open(legacy, '_blank', 'noopener,noreferrer')
+      return
+    }
+    void markapAlert.toast.error('No hay archivo disponible')
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo abrir el archivo', getApiErrorMessage(e))
+  }
+}
+
 const toNum = (v: string | number | null | undefined): number | null => {
   if (v === '' || v === undefined || v === null) return null
   const n = Number(v)
@@ -357,6 +422,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
         monthlyRent: toNum(formValues.monthlyRent),
         maintenanceAmount: toNum(formValues.maintenanceAmount),
         depositMonths: toNum(formValues.depositMonths),
+        mediaItems: mediaItems.value.length ? mediaItems.value : null,
       },
     })
     await navigateAfterAlquileresSave(router, {
@@ -605,6 +671,63 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               />
             </div>
           </div>
+        </FormSectionCard>
+
+        <FormSectionCard
+          title="Multimedia"
+          subtitle="Fotos y planos del inmueble (MinIO)"
+          icon="lucide:images"
+        >
+          <ul v-if="mediaItems.length" class="space-y-2 mb-4 text-sm">
+            <li
+              v-for="(item, idx) in mediaItems"
+              :key="`${item.url}-${idx}`"
+              class="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
+              :style="{ borderColor: 'var(--color-border)' }"
+            >
+              <span>{{ item.kind === 'plan' ? 'Plano' : 'Foto' }} · {{ item.url.split('/').pop() }}</span>
+              <div class="flex gap-2">
+                <BaseButton type="button" variant="outline" size="sm" @click="openMediaItem(item)">
+                  Ver
+                </BaseButton>
+                <BaseButton type="button" variant="ghost" size="sm" @click="removeMediaItem(idx)">
+                  <AppIcon icon="lucide:trash-2" :size="16" />
+                </BaseButton>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="text-sm mb-3 opacity-70">Sin archivos multimedia.</p>
+          <div class="w-36 mb-2">
+            <label class="text-xs mb-1 block" :style="{ color: 'var(--color-text-muted)' }">Tipo</label>
+            <select
+              v-model="newMediaKind"
+              class="w-full rounded-lg border px-3 py-2 text-sm"
+              :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
+            >
+              <option value="photo">Foto</option>
+              <option value="plan">Plano</option>
+            </select>
+          </div>
+          <FileDropzone
+            v-model="newMediaFile"
+            label="Nuevo archivo"
+            accept=".pdf,.png,.jpg,.jpeg,.webp"
+            :max-size="25 * 1024 * 1024"
+            :multiple="false"
+            :error="newMediaError"
+            @error="(m: string) => (newMediaError = m)"
+          />
+          <BaseButton
+            type="button"
+            variant="secondary"
+            size="sm"
+            class="mt-3 gap-1"
+            :loading="uploadingMedia"
+            @click="onUploadMedia"
+          >
+            <AppIcon icon="lucide:upload" :size="16" />
+            Subir ahora
+          </BaseButton>
         </FormSectionCard>
 
         <PropertyOwnersSection

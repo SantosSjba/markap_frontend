@@ -9,9 +9,10 @@ import {
   SearchInput,
   AppIcon,
   ActionsDropdown,
+  FileDropzone,
+  FormInput,
+  FormSelect,
 } from '@shared/components'
-import FormSelect from '@shared/components/forms/FormSelect.vue'
-import FormInput from '@shared/components/forms/FormInput.vue'
 import { markapAlert } from '@/shared/composables'
 import { formatDateTime } from '@/shared/utils/formatters'
 import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
@@ -23,9 +24,10 @@ import type {
 } from '../../domain/document.types'
 import {
   useArquitecturaDocumentsList,
-  useCreateArquitecturaDocument,
+  useUploadArquitecturaDocument,
   useUpdateArquitecturaDocument,
   useDeleteArquitecturaDocument,
+  openArquitecturaDocumentFile,
 } from '../../application/useArquitecturaDocuments'
 import { DOCUMENT_TYPE_FORM_OPTIONS, ARQUITECTURA_DOCUMENT_NAV } from '../documentNav'
 
@@ -119,22 +121,21 @@ const columns = [
 const showCreate = ref(false)
 const createProjectId = ref<string | null>(null)
 const createTitle = ref('')
-const createFileUrl = ref('')
+const createFile = ref<File | null>(null)
 
 const showEdit = ref(false)
 const editingId = ref<string | null>(null)
 const editTitle = ref('')
-const editFileUrl = ref('')
 const editDocType = ref<ArquitecturaDocumentType>('CONTRATO')
 
-const createMut = useCreateArquitecturaDocument()
+const uploadMut = useUploadArquitecturaDocument()
 const updateMut = useUpdateArquitecturaDocument()
 const deleteMut = useDeleteArquitecturaDocument()
 
 function resetCreate() {
   createProjectId.value = null
   createTitle.value = ''
-  createFileUrl.value = ''
+  createFile.value = null
 }
 
 function openCreate() {
@@ -148,14 +149,18 @@ async function submitCreate() {
     return
   }
   if (!createTitle.value.trim()) {
-    void markapAlert.toast.error('Indica un tÃ­tulo')
+    void markapAlert.toast.error('Indica un título')
     return
   }
-  await createMut.mutateAsync({
+  if (!createFile.value) {
+    void markapAlert.toast.error('Selecciona un archivo')
+    return
+  }
+  await uploadMut.mutateAsync({
     projectId: createProjectId.value,
     docType: docType.value,
     title: createTitle.value.trim(),
-    fileUrl: createFileUrl.value.trim() || null,
+    file: createFile.value,
   })
   showCreate.value = false
   resetCreate()
@@ -164,7 +169,6 @@ async function submitCreate() {
 function openEdit(row: ArquitecturaDocumentRow) {
   editingId.value = row.id
   editTitle.value = row.title
-  editFileUrl.value = row.fileUrl ?? ''
   editDocType.value = row.docType as ArquitecturaDocumentType
   showEdit.value = true
 }
@@ -172,19 +176,22 @@ function openEdit(row: ArquitecturaDocumentRow) {
 async function submitEdit() {
   if (!editingId.value) return
   if (!editTitle.value.trim()) {
-    void markapAlert.toast.error('Indica un tÃ­tulo')
+    void markapAlert.toast.error('Indica un título')
     return
   }
   await updateMut.mutateAsync({
     id: editingId.value,
     payload: {
       title: editTitle.value.trim(),
-      fileUrl: editFileUrl.value.trim() || null,
       docType: editDocType.value,
     },
   })
   showEdit.value = false
   editingId.value = null
+}
+
+function hasFile(row: ArquitecturaDocumentRow) {
+  return !!(row.archivoId || row.downloadUrl || (row.fileUrl && /^https?:\/\//i.test(row.fileUrl)))
 }
 
 async function removeRow(row: ArquitecturaDocumentRow) {
@@ -227,7 +234,7 @@ const navIdleClass =
         </p>
         <h1 class="text-xl font-bold mt-0.5" :style="{ color: 'var(--color-text-primary)' }">{{ sectionTitle }}</h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Registro por proyecto: enlaces o URLs de archivo (contratos, planos, renders, memoria descriptiva, facturas y actas).
+          Registro por proyecto: sube archivos (contratos, planos, renders, memoria descriptiva, facturas y actas).
         </p>
       </div>
       <BaseButton type="button" @click="openCreate">
@@ -311,18 +318,17 @@ const navIdleClass =
               {{ (row as ArquitecturaDocumentRow).title }}
             </td>
             <td class="py-3 px-4 text-sm">
-              <a
-                v-if="(row as ArquitecturaDocumentRow).fileUrl"
-                :href="(row as ArquitecturaDocumentRow).fileUrl ?? '#'"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                v-if="hasFile(row as ArquitecturaDocumentRow)"
+                type="button"
                 class="inline-flex items-center gap-1 hover:underline"
                 :style="{ color: 'var(--color-primary)' }"
+                @click="openArquitecturaDocumentFile(row as ArquitecturaDocumentRow)"
               >
                 <AppIcon icon="lucide:external-link" :size="16" />
                 Abrir
-              </a>
-              <span v-else class="text-muted" :style="{ color: 'var(--color-text-secondary)' }">â€”</span>
+              </button>
+              <span v-else class="text-muted" :style="{ color: 'var(--color-text-secondary)' }">—</span>
             </td>
             <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
               {{ formatDate((row as ArquitecturaDocumentRow).createdAt) }}
@@ -353,29 +359,34 @@ const navIdleClass =
           :options="projectOptions"
           :loading="projectsLoading"
         />
-        <FormInput v-model="createTitle" label="TÃ­tulo" placeholder="Ej. Contrato de obra â€” revisiÃ³n 2" required />
-        <FormInput
-          v-model="createFileUrl"
-          label="URL del archivo"
-          placeholder="https://â€¦"
-        />
+        <FormInput v-model="createTitle" label="Título" placeholder="Ej. Contrato de obra — revisión 2" required />
+        <div>
+          <p class="text-sm font-medium mb-1.5" :style="{ color: 'var(--color-text-primary)' }">Archivo</p>
+          <FileDropzone
+            v-model="createFile"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xlsx,.xls,.dwg"
+            :max-size="25 * 1024 * 1024"
+          />
+        </div>
         <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-          CategorÃ­a actual: <strong>{{ sectionTitle }}</strong>
+          Categoría actual: <strong>{{ sectionTitle }}</strong>
         </p>
       </div>
       <template #footer>
         <div class="flex justify-end gap-2">
           <BaseButton variant="outline" type="button" @click="showCreate = false">Cancelar</BaseButton>
-          <BaseButton type="button" :disabled="createMut.isPending.value" @click="submitCreate">Guardar</BaseButton>
+          <BaseButton type="button" :loading="uploadMut.isPending.value" @click="submitCreate">Guardar</BaseButton>
         </div>
       </template>
     </BaseModal>
 
     <BaseModal v-model="showEdit" title="Editar documento" size="lg">
       <div class="space-y-4">
-        <FormSelect v-model="editDocType" label="CategorÃ­a" required :options="DOCUMENT_TYPE_FORM_OPTIONS" />
-        <FormInput v-model="editTitle" label="TÃ­tulo" required />
-        <FormInput v-model="editFileUrl" label="URL del archivo" placeholder="https://â€¦" />
+        <FormSelect v-model="editDocType" label="Categoría" required :options="DOCUMENT_TYPE_FORM_OPTIONS" />
+        <FormInput v-model="editTitle" label="Título" required />
+        <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+          El archivo no se puede reemplazar desde aquí; elimina y crea uno nuevo si necesitas otro archivo.
+        </p>
       </div>
       <template #footer>
         <div class="flex justify-end gap-2">

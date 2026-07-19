@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
+import { BaseButton, AppIcon, FormSectionCard, FileDropzone } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
@@ -14,6 +14,7 @@ import {
   useVentasPropertyDistricts,
   useVentasPropertyOwners,
   useVentasUpdateProperty,
+  useVentasUploadPropertyMedia,
 } from '../../application/useVentasProperties'
 import type {
   VentasPropertyType,
@@ -22,6 +23,10 @@ import type {
   VentasPropertyDetail,
   VentasPropertyMediaItem,
 } from '../../domain/property.types'
+import { apiClient } from '@core/api/apiClient'
+import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { resolveFileDownloadUrl } from '@shared/utils/archivo-url'
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
   UBIGEO_OTHER_PROVINCE_ID,
@@ -188,6 +193,7 @@ const { data: provinces, isLoading: loadingProvinces } = useVentasPropertyProvin
 const { data: districts, isLoading: loadingDistricts } = useVentasPropertyDistricts(selectedProvinceId)
 const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = useVentasPropertyOwners()
 const updateMutation = useVentasUpdateProperty()
+const { mutateAsync: uploadMedia, isPending: uploadingMedia } = useVentasUploadPropertyMedia()
 
 const { isOtherLocation } = useClientAddressUbigeo({
   values,
@@ -195,7 +201,10 @@ const { isOtherLocation } = useClientAddressUbigeo({
   isInitializing,
 })
 
-const mediaRows = ref<{ url: string; kind: 'photo' | 'plan' }[]>([{ url: '', kind: 'photo' }])
+const mediaItems = ref<VentasPropertyMediaItem[]>([])
+const newMediaFile = ref<File | null>(null)
+const newMediaKind = ref<'photo' | 'plan'>('photo')
+const newMediaError = ref('')
 const ownerRows = ref<string[]>([''])
 
 function addOwnerRow() {
@@ -257,10 +266,7 @@ watch(
       isOther && !p.locationCustom ? parseLocationFromDescription(p.description) : null
     const loc = p.locationCustom ?? legacyLoc
     const m = p.mediaItems
-    mediaRows.value =
-      m && m.length > 0
-        ? m.map((x) => ({ url: x.url, kind: x.kind === 'plan' ? 'plan' : 'photo' }))
-        : [{ url: '', kind: 'photo' }]
+    mediaItems.value = m && m.length > 0 ? m.map((x) => ({ ...x })) : []
     resetForm({
       values: {
         code: p.code,
@@ -350,12 +356,57 @@ const goToNewOwner = () => {
   })
 }
 
-function addMediaRow() {
-  mediaRows.value.push({ url: '', kind: 'photo' })
+function removeMediaItem(i: number) {
+  mediaItems.value.splice(i, 1)
 }
-function removeMediaRow(i: number) {
-  mediaRows.value.splice(i, 1)
-  if (mediaRows.value.length === 0) mediaRows.value.push({ url: '', kind: 'photo' })
+
+async function onUploadMedia() {
+  if (!newMediaFile.value) {
+    newMediaError.value = 'Seleccione un archivo'
+    return
+  }
+  newMediaError.value = ''
+  const res = await uploadMedia({
+    id: id.value,
+    file: newMediaFile.value,
+    kind: newMediaKind.value,
+  })
+  mediaItems.value = res.mediaItems ?? [...mediaItems.value, res.mediaItem]
+  newMediaFile.value = null
+}
+
+async function openMediaItem(item: VentasPropertyMediaItem) {
+  try {
+    if (item.archivoId) {
+      const { data } = await apiClient.get<{ url: string }>(
+        `/gen-archivos/${encodeURIComponent(item.archivoId)}/url`,
+        { params: { applicationSlug: 'ventas' } },
+      )
+      if (data?.url) {
+        window.open(data.url, '_blank', 'noopener,noreferrer')
+        return
+      }
+    }
+    if (/^https?:\/\//i.test(item.url)) {
+      window.open(item.url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    const { data } = await apiClient.get<{ url: string }>('/gen-archivos/resolve-url', {
+      params: { objectKey: item.url, applicationSlug: 'ventas' },
+    })
+    if (data?.url) {
+      window.open(data.url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    const legacy = resolveFileDownloadUrl({ filePath: item.url })
+    if (legacy !== '#') {
+      window.open(legacy, '_blank', 'noopener,noreferrer')
+      return
+    }
+    void markapAlert.toast.error('No hay archivo disponible')
+  } catch (e) {
+    void markapAlert.toast.error('No se pudo abrir el archivo', getApiErrorMessage(e))
+  }
 }
 
 const toNum = (v: string | number | null | undefined): number | null => {
@@ -365,13 +416,7 @@ const toNum = (v: string | number | null | undefined): number | null => {
 }
 
 function buildMediaItems(): VentasPropertyMediaItem[] | null {
-  const items = mediaRows.value
-    .map((r) => ({
-      url: r.url.trim(),
-      kind: r.kind === 'plan' ? ('plan' as const) : ('photo' as const),
-    }))
-    .filter((r) => r.url.length > 0)
-  return items.length ? items : null
+  return mediaItems.value.length ? mediaItems.value : null
 }
 
 const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
@@ -573,17 +618,33 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
 
         <FormSectionCard
           title="Multimedia"
-          subtitle="Fotos y planos del inmueble"
+          subtitle="Fotos y planos del inmueble (MinIO)"
           icon="lucide:images"
         >
-          <div v-for="(row, idx) in mediaRows" :key="idx" class="flex flex-wrap gap-2 mb-3 items-end">
-            <div class="flex-1 min-w-[200px]">
-              <FormInput v-model="row.url" label="URL" />
-            </div>
+          <ul v-if="mediaItems.length" class="space-y-2 mb-4 text-sm">
+            <li
+              v-for="(item, idx) in mediaItems"
+              :key="`${item.url}-${idx}`"
+              class="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
+              :style="{ borderColor: 'var(--color-border)' }"
+            >
+              <span>{{ item.kind === 'plan' ? 'Plano' : 'Foto' }} · {{ item.url.split('/').pop() }}</span>
+              <div class="flex gap-2">
+                <BaseButton type="button" variant="outline" size="sm" @click="openMediaItem(item)">
+                  Ver
+                </BaseButton>
+                <BaseButton type="button" variant="ghost" size="sm" @click="removeMediaItem(idx)">
+                  <AppIcon icon="lucide:trash-2" :size="16" />
+                </BaseButton>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="text-sm mb-3 opacity-70">Sin archivos multimedia.</p>
+          <div class="flex flex-wrap gap-2 items-end mb-2">
             <div class="w-36">
               <label class="text-xs mb-1 block" :style="{ color: 'var(--color-text-muted)' }">Tipo</label>
               <select
-                v-model="row.kind"
+                v-model="newMediaKind"
                 class="w-full rounded-lg border px-3 py-2 text-sm"
                 :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
               >
@@ -591,13 +652,26 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
                 <option value="plan">Plano</option>
               </select>
             </div>
-            <BaseButton type="button" variant="ghost" @click="removeMediaRow(idx)">
-              <AppIcon icon="lucide:trash-2" :size="16" />
-            </BaseButton>
           </div>
-          <BaseButton type="button" variant="outline" size="sm" class="gap-1" @click="addMediaRow">
-            <AppIcon icon="lucide:plus" :size="16" />
-            Añadir
+          <FileDropzone
+            v-model="newMediaFile"
+            label="Nuevo archivo"
+            accept=".pdf,.png,.jpg,.jpeg,.webp"
+            :max-size="25 * 1024 * 1024"
+            :multiple="false"
+            :error="newMediaError"
+            @error="(m: string) => (newMediaError = m)"
+          />
+          <BaseButton
+            type="button"
+            variant="secondary"
+            size="sm"
+            class="mt-3 gap-1"
+            :loading="uploadingMedia"
+            @click="onUploadMedia"
+          >
+            <AppIcon icon="lucide:upload" :size="16" />
+            Subir ahora
           </BaseButton>
         </FormSectionCard>
 
