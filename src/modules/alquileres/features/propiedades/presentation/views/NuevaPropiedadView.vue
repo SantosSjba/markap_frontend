@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
+import { BaseButton, AppIcon, FormSectionCard, FileDropzone } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
@@ -23,6 +23,7 @@ import {
 } from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
 import type { PropertyType, OwnerOption } from '../../domain/property.types'
+import { propertiesApiRepository } from '../../infrastructure/repositories/properties.api.repository'
 import PropertyOwnersSection from '../components/PropertyOwnersSection.vue'
 
 type PropertyFormValues = {
@@ -178,6 +179,18 @@ const createMutation = useCreateProperty()
 
 const { isOtherLocation } = useClientAddressUbigeo({ values, setFieldValue })
 
+const mediaRows = ref<{ file: File | null; kind: 'photo' | 'plan'; error: string }[]>([
+  { file: null, kind: 'photo', error: '' },
+])
+
+function addMediaRow() {
+  mediaRows.value.push({ file: null, kind: 'photo', error: '' })
+}
+function removeMediaRow(i: number) {
+  mediaRows.value.splice(i, 1)
+  if (!mediaRows.value.length) mediaRows.value.push({ file: null, kind: 'photo', error: '' })
+}
+
 const loading = computed(
   () => loadingTypes.value || loadingDepartments.value || loadingOwners.value
 )
@@ -268,7 +281,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
       return
     }
     const ubigeo = buildPropertyUbigeoPayload(formValues)
-    await createMutation.mutateAsync({
+    const created = await createMutation.mutateAsync({
       applicationSlug: 'alquileres',
       code: formValues.code.trim(),
       propertyTypeId: formValues.propertyTypeId,
@@ -290,7 +303,12 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
       monthlyRent: toNum(formValues.monthlyRent),
       maintenanceAmount: toNum(formValues.maintenanceAmount),
       depositMonths: toNum(formValues.depositMonths),
+      mediaItems: null,
     })
+    for (const row of mediaRows.value) {
+      if (!row.file) continue
+      await propertiesApiRepository.uploadMedia(created.id, row.file, row.kind)
+    }
     await navigateAfterAlquileresSave(router, {
       listPath: '/alquileres/propiedades',
       invalidate: () => createMutation.invalidateList(),
@@ -525,6 +543,44 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               />
             </div>
           </div>
+        </FormSectionCard>
+
+        <FormSectionCard
+          title="Multimedia (fotos y planos)"
+          subtitle="Se subirán a MinIO al guardar la propiedad"
+          icon="lucide:images"
+        >
+          <div v-for="(row, idx) in mediaRows" :key="idx" class="mb-4 space-y-2">
+            <div class="flex flex-wrap gap-2 items-end">
+              <div class="w-36">
+                <label class="text-xs mb-1 block" :style="{ color: 'var(--color-text-muted)' }">Tipo</label>
+                <select
+                  v-model="row.kind"
+                  class="w-full rounded-lg border px-3 py-2 text-sm"
+                  :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
+                >
+                  <option value="photo">Foto</option>
+                  <option value="plan">Plano</option>
+                </select>
+              </div>
+              <BaseButton type="button" variant="ghost" @click="removeMediaRow(idx)">
+                <AppIcon icon="lucide:trash-2" :size="16" />
+              </BaseButton>
+            </div>
+            <FileDropzone
+              v-model="row.file"
+              :label="row.kind === 'plan' ? 'Plano' : 'Foto'"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              :max-size="25 * 1024 * 1024"
+              :multiple="false"
+              :error="row.error"
+              @error="(m: string) => (row.error = m)"
+            />
+          </div>
+          <BaseButton type="button" variant="outline" size="sm" class="gap-1" @click="addMediaRow">
+            <AppIcon icon="lucide:plus" :size="16" />
+            Añadir archivo
+          </BaseButton>
         </FormSectionCard>
 
         <PropertyOwnersSection

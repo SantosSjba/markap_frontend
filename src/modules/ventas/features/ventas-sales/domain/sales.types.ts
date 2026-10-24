@@ -125,6 +125,8 @@ export interface SaleSeparationRow {
   separationDate: string
   status: string
   receiptFilePath: string | null
+  receiptArchivoId?: string | null
+  downloadUrl?: string | null
   buyer: { id: string; fullName: string }
   property: { id: string; code: string; addressLine: string }
   saleProcess: { id: string; code: string } | null
@@ -136,6 +138,8 @@ export interface SaleClosingRow {
   paymentType: string
   closedAt: string
   contractFilePath: string | null
+  contractArchivoId?: string | null
+  downloadUrl?: string | null
   buyer: { id: string; fullName: string }
   property: { id: string; code: string; addressLine: string }
   agent: { id: string; fullName: string } | null
@@ -211,6 +215,8 @@ export interface SaleComplianceChecklist {
   bankName?: string | null
   bankAccountHolder?: string | null
   paymentEvidencePath?: string | null
+  paymentEvidenceArchivoId?: string | null
+  paymentEvidenceDownloadUrl?: string | null
   fundsSourceDeclared?: boolean
   beneficialOwnerDeclared?: boolean
   kycRiskLevel?: 'PENDING' | 'LOW' | 'MEDIUM' | 'HIGH'

@@ -53,4 +53,23 @@ export const interiorCatalogMaterialsApiRepository: InteriorCatalogMaterialsRepo
     apiClient.delete(`${BASE}/${id}`, {
       params: { applicationSlug: INTERIORISMO_APP_SLUG },
     }).then(() => undefined),
+
+  uploadAsset: (file: File, kind: 'technical-sheet' | 'image', materialId?: string) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('kind', kind)
+    if (materialId) fd.append('materialId', materialId)
+    return apiClient
+      .post<{
+        objectKey: string
+        url: string
+        archivoId: string
+        downloadUrl: string | null
+        kind: string
+      }>(`${BASE}/upload`, fd, {
+        params: { applicationSlug: INTERIORISMO_APP_SLUG },
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
 }

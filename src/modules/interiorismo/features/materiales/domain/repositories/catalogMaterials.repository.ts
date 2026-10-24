@@ -12,4 +12,15 @@ export interface InteriorCatalogMaterialsRepository {
   create(payload: CreateInteriorCatalogMaterialPayload): Promise<InteriorCatalogMaterialDetail>
   update(id: string, payload: UpdateInteriorCatalogMaterialPayload): Promise<InteriorCatalogMaterialDetail>
   delete(id: string): Promise<void>
+  uploadAsset(
+    file: File,
+    kind: 'technical-sheet' | 'image',
+    materialId?: string,
+  ): Promise<{
+    objectKey: string
+    url: string
+    archivoId: string
+    downloadUrl: string | null
+    kind: string
+  }>
 }

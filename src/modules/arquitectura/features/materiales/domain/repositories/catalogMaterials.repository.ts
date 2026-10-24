@@ -12,4 +12,15 @@ export interface ArquitecturaCatalogMaterialsRepository {
   create(payload: CreateArquitecturaCatalogMaterialPayload): Promise<ArquitecturaCatalogMaterialDetail>
   update(id: string, payload: UpdateArquitecturaCatalogMaterialPayload): Promise<ArquitecturaCatalogMaterialDetail>
   delete(id: string): Promise<void>
+  uploadAsset(
+    file: File,
+    kind: 'technical-sheet' | 'image',
+    materialId?: string,
+  ): Promise<{
+    objectKey: string
+    url: string
+    archivoId: string
+    downloadUrl: string | null
+    kind: string
+  }>
 }

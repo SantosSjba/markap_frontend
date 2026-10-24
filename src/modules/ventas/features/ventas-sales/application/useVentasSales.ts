@@ -225,6 +225,19 @@ export function useVentasCreateSeparation() {
   })
 }
 
+export function useVentasUploadSeparationReceipt() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      ventasSalesRepository.uploadSeparationReceipt(id, file),
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
+      void markapAlert.toast.success('Comprobante subido')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo subir el comprobante', getApiErrorMessage(e)),
+  })
+}
+
 export function useVentasClosingsList(params: Ref<{ page: number; limit: number }>) {
   return useQuery({
     queryKey: computed(() => ventasSalesKeys.closings(params.value)),
@@ -244,6 +257,19 @@ export function useVentasCreateClosing() {
       void markapAlert.toast.success('Cierre registrado — propiedad vendida y comisión pendiente')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar el cierre', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasUploadClosingContract() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      ventasSalesRepository.uploadClosingContract(id, file),
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
+      void markapAlert.toast.success('Contrato adjunto')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo subir el contrato', getApiErrorMessage(e)),
   })
 }
 
@@ -304,6 +330,19 @@ export function useVentasUploadComplianceDocument() {
       void markapAlert.toast.success('Documento de cumplimiento registrado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo subir documento', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasUploadPaymentEvidence() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ventasSalesRepository.uploadPaymentEvidence,
+    onSuccess: () => {
+      invalidateVentasSalesCache(qc)
+      void markapAlert.toast.success('Evidencia de pago registrada')
+    },
+    onError: (e) =>
+      void markapAlert.toast.error('No se pudo subir evidencia de pago', getApiErrorMessage(e)),
   })
 }
 

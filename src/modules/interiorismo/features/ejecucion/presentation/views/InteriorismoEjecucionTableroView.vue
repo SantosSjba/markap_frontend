@@ -9,6 +9,7 @@ import {
   FormInput,
   FormSelect,
   FormTextarea,
+  FileDropzone,
   StatsCard,
   Badge,
   AppIcon,
@@ -26,8 +27,9 @@ import {
   useCreateExecutionTask,
   useUpdateExecutionTask,
   useDeleteExecutionTask,
-  useCreateExecutionEvidence,
+  useUploadExecutionEvidence,
   useDeleteExecutionEvidence,
+  openExecutionEvidenceFile,
   useCreateExecutionIncident,
   useUpdateExecutionIncident,
   useCreateExecutionActualCost,
@@ -64,7 +66,7 @@ const patchProgress = usePatchExecutionProgress(projectId)
 const createTask = useCreateExecutionTask(projectId)
 const updateTask = useUpdateExecutionTask(projectId)
 const deleteTask = useDeleteExecutionTask(projectId)
-const createEvidence = useCreateExecutionEvidence(projectId)
+const uploadEvidence = useUploadExecutionEvidence(projectId)
 const deleteEvidence = useDeleteExecutionEvidence(projectId)
 const createIncident = useCreateExecutionIncident(projectId)
 const updateIncident = useUpdateExecutionIncident(projectId)
@@ -276,25 +278,33 @@ async function removeTask(task: InteriorExecutionTaskDto) {
 const evModal = ref(false)
 const evKind = ref('PHOTO')
 const evTitle = ref('')
-const evUrl = ref('')
+const evFile = ref<File | null>(null)
 const evCap = ref('')
 const evTaskId = ref<string | number | null>('')
 
 function openEvidence() {
   evKind.value = 'PHOTO'
   evTitle.value = ''
-  evUrl.value = ''
+  evFile.value = null
   evCap.value = new Date().toISOString().slice(0, 16)
   evTaskId.value = ''
   evModal.value = true
 }
 
 async function saveEvidence() {
-  await createEvidence.mutateAsync({
+  if (!evTitle.value.trim()) {
+    void markapAlert.toast.error('Indica un título')
+    return
+  }
+  if (!evFile.value) {
+    void markapAlert.toast.error('Selecciona un archivo')
+    return
+  }
+  await uploadEvidence.mutateAsync({
     taskId: evTaskId.value === '' || evTaskId.value == null ? null : String(evTaskId.value),
     kind: evKind.value,
     title: evTitle.value.trim(),
-    fileUrl: evUrl.value.trim(),
+    file: evFile.value,
     capturedAt: new Date(evCap.value).toISOString(),
   })
   evModal.value = false
@@ -627,10 +637,20 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                 class="rounded-xl border overflow-hidden flex flex-col"
                 :style="{ borderColor: 'var(--color-border)' }"
               >
-                <a :href="e.fileUrl" target="_blank" rel="noopener noreferrer" class="aspect-video bg-black/5 flex items-center justify-center overflow-hidden">
-                  <img v-if="e.kind === 'PHOTO'" :src="e.fileUrl" alt="" class="w-full h-full object-cover" loading="lazy" />
+                <button
+                  type="button"
+                  class="aspect-video bg-black/5 flex items-center justify-center overflow-hidden w-full"
+                  @click="openExecutionEvidenceFile(e)"
+                >
+                  <img
+                    v-if="e.kind === 'PHOTO' && e.downloadUrl"
+                    :src="e.downloadUrl"
+                    alt=""
+                    class="w-full h-full object-cover"
+                    loading="lazy"
+                  />
                   <AppIcon v-else icon="lucide:file-text" :size="36" :style="{ color: 'var(--color-text-muted)' }" />
-                </a>
+                </button>
                 <div class="p-2 text-xs flex-1 flex flex-col gap-1">
                   <span class="font-medium line-clamp-2">{{ e.title }}</span>
                   <span :style="{ color: 'var(--color-text-muted)' }">{{ EVIDENCE_LABELS[e.kind] ?? e.kind }}</span>
@@ -736,12 +756,19 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
       <div class="space-y-3">
         <FormSelect v-model="evKind" label="Tipo" :options="Object.entries(EVIDENCE_LABELS).map(([value, label]) => ({ value, label }))" />
         <FormInput v-model="evTitle" label="Título" required />
-        <FormInput v-model="evUrl" label="URL archivo / imagen" required />
+        <div>
+          <p class="text-sm font-medium mb-1.5" :style="{ color: 'var(--color-text-primary)' }">Archivo</p>
+          <FileDropzone
+            v-model="evFile"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+            :max-size="25 * 1024 * 1024"
+          />
+        </div>
         <FormInput v-model="evCap" type="datetime-local" label="Capturado el" />
         <FormSelect v-model="evTaskId" label="Tarea (opcional)" :options="taskOptionsForEvidence" />
         <div class="flex justify-end gap-2">
           <BaseButton variant="secondary" type="button" @click="evModal = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="button" :loading="createEvidence.isPending.value" @click="saveEvidence">Guardar</BaseButton>
+          <BaseButton variant="primary" type="button" :loading="uploadEvidence.isPending.value" @click="saveEvidence">Guardar</BaseButton>
         </div>
       </div>
     </BaseModal>

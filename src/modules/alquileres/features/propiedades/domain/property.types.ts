@@ -45,7 +45,11 @@ export interface PropertyOwnerSummary {
   isPrimary: boolean
 }
 
-export type PropertyMediaItem = { url: string; kind: 'photo' | 'plan' }
+export type PropertyMediaItem = {
+  url: string
+  kind: 'photo' | 'plan'
+  archivoId?: string
+}
 
 export interface LocationCustom {
   country: string

@@ -14,6 +14,8 @@ export interface ArquitecturaDocumentRow {
   docType: string
   title: string
   fileUrl: string | null
+  archivoId: string | null
+  downloadUrl?: string | null
   createdAt: string
 }
 
@@ -37,6 +39,13 @@ export interface CreateArquitecturaDocumentPayload {
   docType: ArquitecturaDocumentType
   title: string
   fileUrl?: string | null
+}
+
+export interface UploadArquitecturaDocumentPayload {
+  projectId: string
+  docType: ArquitecturaDocumentType
+  title: string
+  file: File
 }
 
 export interface UpdateArquitecturaDocumentPayload {

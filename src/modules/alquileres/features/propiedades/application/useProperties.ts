@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tansta
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
 import {
   invalidateAlquileresQueries,
   refetchAlquileresQueries,
@@ -166,6 +167,29 @@ export function useDeleteProperty() {
     },
     onError: (err) => {
       void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err))
+    },
+  })
+}
+
+export function useUploadPropertyMedia() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      file,
+      kind,
+    }: {
+      id: string
+      file: File
+      kind: 'photo' | 'plan'
+    }) => propertiesRepository.uploadMedia(id, file, kind),
+    onSuccess: (_data, vars) => {
+      void invalidateAlquileresQueries(queryClient, 'properties')
+      invalidateQuerySubtree(queryClient, propertyKeys.detail(vars.id))
+      void markapAlert.toast.success('Archivo multimedia subido')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo subir el archivo', getApiErrorMessage(err))
     },
   })
 }

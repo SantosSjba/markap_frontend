@@ -14,6 +14,8 @@ export interface InteriorDocumentRow {
   docType: string
   title: string
   fileUrl: string | null
+  archivoId: string | null
+  downloadUrl?: string | null
   createdAt: string
 }
 
@@ -37,6 +39,13 @@ export interface CreateInteriorDocumentPayload {
   docType: InteriorDocumentType
   title: string
   fileUrl?: string | null
+}
+
+export interface UploadInteriorDocumentPayload {
+  projectId: string
+  docType: InteriorDocumentType
+  title: string
+  file: File
 }
 
 export interface UpdateInteriorDocumentPayload {

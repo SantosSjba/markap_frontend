@@ -6,6 +6,7 @@ import type {
   VentasListPropertiesResponse,
   VentasOwnerOption,
   VentasPropertyDetail,
+  VentasPropertyMediaItem,
   VentasPropertyStats,
   VentasPropertyType,
   VentasCurrency,
@@ -30,4 +31,13 @@ export interface VentasPropertiesRepository {
     listingStatus: 'AVAILABLE' | 'RESERVED' | 'SOLD',
   ) => Promise<VentasPropertyDetail>
   delete: (id: string) => Promise<{ message: string }>
+  uploadMedia: (
+    id: string,
+    file: File,
+    kind: 'photo' | 'plan',
+  ) => Promise<{
+    mediaItem: VentasPropertyMediaItem
+    downloadUrl: string | null
+    mediaItems: VentasPropertyMediaItem[] | null
+  }>
 }

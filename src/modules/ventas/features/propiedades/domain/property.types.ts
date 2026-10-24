@@ -55,7 +55,11 @@ export interface VentasPropertyOwnerSummary {
   isPrimary: boolean
 }
 
-export type VentasPropertyMediaItem = { url: string; kind: 'photo' | 'plan' }
+export type VentasPropertyMediaItem = {
+  url: string
+  kind: 'photo' | 'plan'
+  archivoId?: string
+}
 
 export interface VentasLocationCustom {
   country: string

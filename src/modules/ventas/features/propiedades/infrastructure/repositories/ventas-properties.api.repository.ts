@@ -107,4 +107,16 @@ export const ventasPropertiesApiRepository: VentasPropertiesRepository = {
     apiClient
       .delete(`/properties/${encodeURIComponent(id)}`, { params: ventasScope })
       .then((r) => r.data),
+
+  uploadMedia: (id: string, file: File, kind: 'photo' | 'plan') => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('kind', kind)
+    return apiClient
+      .post(`/properties/${encodeURIComponent(id)}/media`, fd, {
+        params: ventasScope,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
 }

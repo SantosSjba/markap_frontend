@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
+import { BaseButton, AppIcon, FormSectionCard, FileDropzone } from '@shared/components'
 import { FormInput, FormSelect, FormTextarea } from '@shared/components'
 import { useForm, toTypedSchema } from '@shared/components/forms'
 import {
@@ -18,8 +18,8 @@ import type {
   VentasPropertyType,
   VentasCurrency,
   VentasOwnerOption,
-  VentasPropertyMediaItem,
 } from '../../domain/property.types'
+import { ventasPropertiesApiRepository } from '../../infrastructure/repositories/ventas-properties.api.repository'
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
   mergeDepartmentOptions,
@@ -185,7 +185,9 @@ const createMutation = useVentasCreateProperty()
 
 const { isOtherLocation } = useClientAddressUbigeo({ values, setFieldValue })
 
-const mediaRows = ref<{ url: string; kind: 'photo' | 'plan' }[]>([{ url: '', kind: 'photo' }])
+const mediaRows = ref<{ file: File | null; kind: 'photo' | 'plan'; error: string }[]>([
+  { file: null, kind: 'photo', error: '' },
+])
 const ownerRows = ref<string[]>([''])
 
 function addOwnerRow() {
@@ -263,11 +265,11 @@ const goToNewOwner = () => {
 }
 
 function addMediaRow() {
-  mediaRows.value.push({ url: '', kind: 'photo' })
+  mediaRows.value.push({ file: null, kind: 'photo', error: '' })
 }
 function removeMediaRow(i: number) {
   mediaRows.value.splice(i, 1)
-  if (mediaRows.value.length === 0) mediaRows.value.push({ url: '', kind: 'photo' })
+  if (mediaRows.value.length === 0) mediaRows.value.push({ file: null, kind: 'photo', error: '' })
 }
 
 onMounted(async () => {
@@ -285,22 +287,12 @@ const toNum = (v: string | number | null | undefined): number | null => {
   return isNaN(n) ? null : n
 }
 
-function buildMediaItems(): VentasPropertyMediaItem[] | null {
-  const items = mediaRows.value
-    .map((r) => ({
-      url: r.url.trim(),
-      kind: r.kind === 'plan' ? 'plan' as const : 'photo' as const,
-    }))
-    .filter((r) => r.url.length > 0)
-  return items.length ? items : null
-}
-
 const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
   try {
     const ownerClientIds = Array.from(new Set(ownerRows.value.filter(Boolean)))
     if (!ownerClientIds.length) return
     const ubigeo = buildPropertyUbigeoPayload(formValues)
-    await createMutation.mutateAsync({
+    const created = await createMutation.mutateAsync({
       code: formValues.code.trim(),
       propertyTypeId: formValues.propertyTypeId,
       addressLine: formValues.addressLine.trim(),
@@ -322,11 +314,15 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
       salePrice: toNum(formValues.salePrice),
       saleCurrency: formValues.saleCurrency,
       listingStatus: formValues.listingStatus,
-      mediaItems: buildMediaItems(),
+      mediaItems: null,
     })
+    for (const row of mediaRows.value) {
+      if (!row.file) continue
+      await ventasPropertiesApiRepository.uploadMedia(created.id, row.file, row.kind)
+    }
     resetForm()
     ownerRows.value = ['']
-    mediaRows.value = [{ url: '', kind: 'photo' }]
+    mediaRows.value = [{ file: null, kind: 'photo', error: '' }]
     await navigateAfterVentasSave(router, {
       listPath: '/ventas/propiedades',
       invalidate: () => createMutation.invalidateList(),
@@ -502,27 +498,35 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
 
         <FormSectionCard
           title="Multimedia (fotos y planos)"
-          subtitle="Añade URLs públicas (almacenamiento o CDN). Puedes dejar filas vacías."
+          subtitle="Seleccione archivos; se subirán a MinIO al guardar la propiedad."
           icon="lucide:images"
         >
-          <div v-for="(row, idx) in mediaRows" :key="idx" class="flex flex-wrap gap-2 mb-3 items-end">
-            <div class="flex-1 min-w-[200px]">
-              <FormInput v-model="row.url" label="URL" placeholder="https://..." />
+          <div v-for="(row, idx) in mediaRows" :key="idx" class="mb-4 space-y-2">
+            <div class="flex flex-wrap gap-2 items-end">
+              <div class="w-36">
+                <label class="text-xs mb-1 block" :style="{ color: 'var(--color-text-muted)' }">Tipo</label>
+                <select
+                  v-model="row.kind"
+                  class="w-full rounded-lg border px-3 py-2 text-sm"
+                  :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
+                >
+                  <option value="photo">Foto</option>
+                  <option value="plan">Plano</option>
+                </select>
+              </div>
+              <BaseButton type="button" variant="ghost" @click="removeMediaRow(idx)">
+                <AppIcon icon="lucide:trash-2" :size="16" />
+              </BaseButton>
             </div>
-            <div class="w-36">
-              <label class="text-xs mb-1 block" :style="{ color: 'var(--color-text-muted)' }">Tipo</label>
-              <select
-                v-model="row.kind"
-                class="w-full rounded-lg border px-3 py-2 text-sm"
-                :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-              >
-                <option value="photo">Foto</option>
-                <option value="plan">Plano</option>
-              </select>
-            </div>
-            <BaseButton type="button" variant="ghost" @click="removeMediaRow(idx)">
-              <AppIcon icon="lucide:trash-2" :size="16" />
-            </BaseButton>
+            <FileDropzone
+              v-model="row.file"
+              :label="row.kind === 'plan' ? 'Plano' : 'Foto'"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              :max-size="25 * 1024 * 1024"
+              :multiple="false"
+              :error="row.error"
+              @error="(m: string) => (row.error = m)"
+            />
           </div>
           <BaseButton type="button" variant="outline" size="sm" class="gap-1" @click="addMediaRow">
             <AppIcon icon="lucide:plus" :size="16" />
