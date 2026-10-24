@@ -326,7 +326,7 @@ async function handleExport() {
                   <div
                     class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
                     :style="{
-                      backgroundColor: (row as VentasAgentListItem).isActive ? 'var(--color-primary)1a' : 'var(--color-surface-elevated)',
+                      backgroundColor: (row as VentasAgentListItem).isActive ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)' : 'var(--color-surface-elevated)',
                     }"
                   >
                     <AppIcon
@@ -425,7 +425,7 @@ async function handleExport() {
             :style="{
               backgroundColor:
                 confirmModal.type === 'delete'
-                  ? 'var(--color-error)15'
+                  ? 'color-mix(in srgb, var(--color-error) 8%, transparent)'
                   : confirmModal.type === 'activate'
                     ? 'var(--color-success-light)'
                     : '#f59e0b15',

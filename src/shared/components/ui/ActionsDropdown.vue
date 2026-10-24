@@ -1,3 +1,9 @@
+<script lang="ts">
+import { shallowRef as sharedRef } from 'vue'
+/** Cierre del menú abierto actualmente (compartido entre instancias). */
+const openDropdownClose = sharedRef<(() => void) | null>(null)
+</script>
+
 <script setup lang="ts">
 /**
  * ActionsDropdown - Menú de acciones (ellipsis) reutilizable.
@@ -19,22 +25,32 @@ interface Props {
   items: ActionItem[]
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const isOpen = ref(false)
 const triggerRef = ref<HTMLElement | null>(null)
+const panelRef = ref<HTMLElement | null>(null)
 const panelStyle = ref<{ top: string; left: string }>({ top: '0', left: '0' })
 
 const updatePanelPosition = () => {
   if (!triggerRef.value) return
   const rect = triggerRef.value.getBoundingClientRect()
+  const panelHeight = panelRef.value?.offsetHeight ?? props.items.length * 40 + 8
+  // Si no cabe debajo (filas al final de la pantalla), se abre hacia arriba.
+  const top =
+    rect.bottom + 4 + panelHeight > window.innerHeight && rect.top - 4 - panelHeight > 0
+      ? rect.top - 4 - panelHeight
+      : rect.bottom + 4
   panelStyle.value = {
-    top: `${rect.bottom + 4}px`,
+    top: `${top}px`,
     left: `${Math.max(8, rect.right - 160)}px`,
   }
 }
 
 const toggle = () => {
+  // Solo un menú abierto a la vez: el clic en otro disparador no llega al documento.
+  if (!isOpen.value && openDropdownClose.value && openDropdownClose.value !== close)
+    openDropdownClose.value()
   isOpen.value = !isOpen.value
   if (isOpen.value) {
     nextTick(updatePanelPosition)
@@ -51,18 +67,30 @@ const handleClickOutside = (e: MouseEvent) => {
   close()
 }
 
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && isOpen.value) close()
+}
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleKeydown)
   window.addEventListener('scroll', updatePanelPosition, true)
   window.addEventListener('resize', updatePanelPosition)
 })
 onUnmounted(() => {
+  if (openDropdownClose.value === close) openDropdownClose.value = null
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleKeydown)
   window.removeEventListener('scroll', updatePanelPosition, true)
   window.removeEventListener('resize', updatePanelPosition)
 })
 watch(isOpen, (open) => {
-  if (open) nextTick(updatePanelPosition)
+  if (open) {
+    openDropdownClose.value = close
+    nextTick(updatePanelPosition)
+  } else if (openDropdownClose.value === close) {
+    openDropdownClose.value = null
+  }
 })
 </script>
 
@@ -88,6 +116,8 @@ watch(isOpen, (open) => {
     <Teleport to="body">
       <div
         v-show="isOpen"
+        ref="panelRef"
+        role="menu"
         class="actions-dropdown-panel fixed z-[9999] py-1 min-w-[160px] rounded-xl shadow-xl border"
         :style="{
           top: panelStyle.top,
@@ -101,6 +131,7 @@ watch(isOpen, (open) => {
           v-for="(item, idx) in items"
           :key="idx"
           type="button"
+          role="menuitem"
           class="w-full text-left px-3 py-2.5 text-sm flex items-center gap-2.5 transition-colors first:rounded-t-xl last:rounded-b-xl"
           :class="item.danger ? 'hover:bg-red-50 dark:hover:bg-red-950' : 'hover:bg-[var(--color-hover)]'"
           :style="{ color: item.danger ? 'var(--color-error, #dc2626)' : 'var(--color-text-primary)' }"

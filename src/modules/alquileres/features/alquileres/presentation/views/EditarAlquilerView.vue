@@ -373,8 +373,8 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
             <div
               class="flex items-center gap-3 p-3 rounded-lg text-sm"
               :style="{
-                backgroundColor: rental.hasContract ? 'var(--color-success, #16a34a)0f' : 'var(--color-surface-elevated)',
-                border: `1px solid ${rental.hasContract ? 'var(--color-success, #16a34a)33' : 'var(--color-border)'}`,
+                backgroundColor: rental.hasContract ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'var(--color-surface-elevated)',
+                border: `1px solid ${rental.hasContract ? 'color-mix(in srgb, var(--color-success) 20%, transparent)' : 'var(--color-border)'}`,
               }"
             >
               <AppIcon
@@ -397,7 +397,7 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
                 target="_blank"
                 download
                 class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md shrink-0"
-                :style="{ color: 'var(--color-primary)', background: 'var(--color-primary)1a' }"
+                :style="{ color: 'var(--color-primary)', background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
               >
                 <AppIcon icon="lucide:download" :size="12" />
                 Descargar
@@ -408,8 +408,8 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
             <div
               class="flex items-center gap-3 p-3 rounded-lg text-sm"
               :style="{
-                backgroundColor: rental.hasDeliveryAct ? 'var(--color-success, #16a34a)0f' : 'var(--color-surface-elevated)',
-                border: `1px solid ${rental.hasDeliveryAct ? 'var(--color-success, #16a34a)33' : 'var(--color-border)'}`,
+                backgroundColor: rental.hasDeliveryAct ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'var(--color-surface-elevated)',
+                border: `1px solid ${rental.hasDeliveryAct ? 'color-mix(in srgb, var(--color-success) 20%, transparent)' : 'var(--color-border)'}`,
               }"
             >
               <AppIcon
@@ -432,7 +432,7 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
                 target="_blank"
                 download
                 class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md shrink-0"
-                :style="{ color: 'var(--color-primary)', background: 'var(--color-primary)1a' }"
+                :style="{ color: 'var(--color-primary)', background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
               >
                 <AppIcon icon="lucide:download" :size="12" />
                 Descargar

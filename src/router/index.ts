@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { markapAlert } from '@/shared/composables/useMarkapAlert'
+import { getApiErrorMessage, SUPPORT_HINT } from '@/shared/utils/apiErrorMessage'
 import { authGuard } from '@core/guards'
 
 import { authRoutes } from '@modules/auth'
@@ -56,7 +58,31 @@ const router = createRouter({
 
 router.beforeEach(authGuard)
 
+/**
+ * Tras un despliegue, una pestaña abierta puede pedir módulos que ya no existen.
+ * Se recarga una vez hacia la ruta destino; si vuelve a fallar se avisa al usuario.
+ */
+const RELOAD_FLAG = 'markap_chunk_reload'
+router.onError((error, to) => {
+  const message = error instanceof Error ? error.message : String(error)
+  const isChunkError =
+    /dynamically imported module|Importing a module script failed|Loading chunk|Failed to fetch/i.test(message)
+  if (isChunkError && !sessionStorage.getItem(RELOAD_FLAG)) {
+    sessionStorage.setItem(RELOAD_FLAG, '1')
+    window.location.assign(to.fullPath)
+    return
+  }
+  console.error('[router]', error)
+  void markapAlert.toast.error(
+    'No se pudo abrir la pantalla',
+    isChunkError
+      ? `Hay una versión nueva del sistema. Recarga la página para continuar. ${SUPPORT_HINT}`
+      : getApiErrorMessage(error, 'No se pudo abrir la pantalla'),
+  )
+})
+
 router.afterEach((to) => {
+  sessionStorage.removeItem(RELOAD_FLAG)
   const title = to.meta.title as string | undefined
   document.title = title ? `${title} | Markap` : 'Markap'
 })

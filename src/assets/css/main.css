@@ -74,6 +74,26 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
 
+  /* ----------------------------------------
+     ALIAS usados por componentes y vistas (antes sin definir:
+     fondos transparentes o colores por defecto del navegador)
+     ---------------------------------------- */
+  --color-surface-elevated: #F8FAFB;
+  --color-surface-muted: #F1F4F5;
+  --color-bg: var(--color-background);
+  --color-danger: var(--color-error);
+  --color-danger-soft: var(--color-error-light);
+  --color-error-subtle: var(--color-error-light);
+  --color-error-bg: var(--color-error-light);
+  --color-warning-subtle: var(--color-warning-light);
+  --color-warning-bg: var(--color-warning-light);
+  --color-success-subtle: var(--color-success-light);
+  --color-success-bg: var(--color-success-light);
+  --color-info-bg: var(--color-info-light);
+  --color-primary-soft: var(--color-primary-light);
+  --color-primary-subtle: var(--color-primary-light);
+  --color-primary-muted: var(--color-primary-light);
+
   /* Hover (light mode) */
   --color-hover: rgba(0, 0, 0, 0.04);
   --color-hover-strong: rgba(0, 0, 0, 0.08);
@@ -100,6 +120,9 @@
   --color-error-light: #450A0A;
   --color-info-light: #1E3A8A;
   --color-accent-gold-light: #422006;
+
+  --color-surface-elevated: #273244;
+  --color-surface-muted: #18212F;
 
   /* Hover (dark mode) */
   --color-hover: rgba(255, 255, 255, 0.06);

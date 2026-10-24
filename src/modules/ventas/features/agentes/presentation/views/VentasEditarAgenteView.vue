@@ -221,7 +221,7 @@ const handleDelete = async () => {
     <div
       v-else-if="agentError || !agent"
       class="flex items-center gap-3 px-4 py-4 rounded-xl"
-      :style="{ backgroundColor: 'var(--color-error)15', border: '1px solid var(--color-error)40', color: 'var(--color-error)' }"
+      :style="{ backgroundColor: 'color-mix(in srgb, var(--color-error) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-error) 25%, transparent)', color: 'var(--color-error)' }"
     >
       <AppIcon icon="lucide:alert-circle" :size="18" />
       <span class="text-sm font-medium">No se encontró el agente o ocurrió un error.</span>
@@ -240,7 +240,7 @@ const handleDelete = async () => {
               class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
               :style="{
                 borderColor: values.type === 'EXTERNAL' ? 'var(--color-primary)' : 'var(--color-border)',
-                backgroundColor: values.type === 'EXTERNAL' ? 'var(--color-primary)0d' : 'var(--color-surface-elevated)',
+                backgroundColor: values.type === 'EXTERNAL' ? 'color-mix(in srgb, var(--color-primary) 5%, transparent)' : 'var(--color-surface-elevated)',
               }"
               @click="setFieldValue('type', 'EXTERNAL')"
             >
@@ -259,7 +259,7 @@ const handleDelete = async () => {
               class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
               :style="{
                 borderColor: values.type === 'INTERNAL' ? 'var(--color-primary)' : 'var(--color-border)',
-                backgroundColor: values.type === 'INTERNAL' ? 'var(--color-primary)0d' : 'var(--color-surface-elevated)',
+                backgroundColor: values.type === 'INTERNAL' ? 'color-mix(in srgb, var(--color-primary) 5%, transparent)' : 'var(--color-surface-elevated)',
               }"
               @click="setFieldValue('type', 'INTERNAL')"
             >
@@ -286,7 +286,7 @@ const handleDelete = async () => {
             <div
               v-if="selectedUser"
               class="flex items-center gap-3 px-4 py-3 rounded-lg"
-              :style="{ backgroundColor: 'var(--color-primary)0d', border: '1px solid var(--color-primary)33' }"
+              :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--color-primary) 20%, transparent)' }"
             >
               <AppIcon icon="lucide:circle-check" :size="16" color="var(--color-primary)" />
               <div class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
@@ -384,7 +384,7 @@ const handleDelete = async () => {
             <div
               v-else
               class="flex items-start gap-3 p-4 rounded-xl"
-              :style="{ backgroundColor: 'var(--color-success-light)', border: '1px solid var(--color-success)40' }"
+              :style="{ backgroundColor: 'var(--color-success-light)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)' }"
             >
               <AppIcon icon="lucide:user-check" :size="20" color="var(--color-success)" class="shrink-0 mt-0.5" />
               <div class="flex-1 min-w-0">
@@ -396,7 +396,7 @@ const handleDelete = async () => {
                   v-if="!showActivateConfirm"
                   type="button"
                   class="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
-                  :style="{ color: 'var(--color-success)', border: '1px solid var(--color-success)40', backgroundColor: 'var(--color-surface)' }"
+                  :style="{ color: 'var(--color-success)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', backgroundColor: 'var(--color-surface)' }"
                   @click="showActivateConfirm = true"
                 >
                   Reactivar
@@ -437,7 +437,7 @@ const handleDelete = async () => {
                   v-if="!showDeleteConfirm"
                   type="button"
                   class="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
-                  :style="{ color: 'var(--color-error)', border: '1px solid var(--color-error)40', backgroundColor: 'var(--color-error)10' }"
+                  :style="{ color: 'var(--color-error)', border: '1px solid color-mix(in srgb, var(--color-error) 25%, transparent)', backgroundColor: 'color-mix(in srgb, var(--color-error) 6%, transparent)' }"
                   @click="showDeleteConfirm = true"
                 >
                   Eliminar agente
@@ -495,7 +495,7 @@ const handleDelete = async () => {
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-              :style="{ backgroundColor: values.isActive ? 'var(--color-primary)1a' : 'var(--color-surface-elevated)' }"
+              :style="{ backgroundColor: values.isActive ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)' : 'var(--color-surface-elevated)' }"
             >
               <AppIcon
                 :icon="values.type === 'INTERNAL' ? 'lucide:user-check' : 'lucide:user-round-cog'"

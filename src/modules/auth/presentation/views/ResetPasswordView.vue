@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import * as yup from 'yup'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -79,13 +80,16 @@ const onSubmit = handleSubmit((formValues) => {
         const res = isAxiosError(err) ? err.response : undefined
         if (res?.status === 400) {
           void markapAlert.error(
-            (res.data as { message?: string })?.message || 'El código es inválido o ha expirado',
+            getApiErrorMessage(err, 'El código es inválido o ha expirado'),
             'Error',
           )
         } else if (res?.status === 404) {
           void markapAlert.error('No existe un usuario con ese correo electrónico', 'Error')
         } else {
-          void markapAlert.error('Error al restablecer la contraseña. Intente nuevamente.', 'Error')
+          void markapAlert.error(
+            getApiErrorMessage(err, 'No se pudo restablecer la contraseña'),
+            'Error',
+          )
         }
       },
     },

@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import ExcelJS from 'exceljs'
 import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 export type ExcelColumn = {
   header: string
@@ -123,7 +124,7 @@ export function useExcelExport() {
     try {
       await generateExcel(options)
     } catch (err) {
-      const msg = (err as Error)?.message ?? 'Error al exportar'
+      const msg = getApiErrorMessage(err, 'No se pudo generar el archivo de Excel')
       exportError.value = msg
       void markapAlert.toast.error('Exportación fallida', msg)
       console.error('[useExcelExport]', err)

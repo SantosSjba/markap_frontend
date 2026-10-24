@@ -234,10 +234,7 @@ const saveListingStatus = () => {
     {
       onSuccess: () => closeStatusModal(),
       onError: (err: unknown) => {
-        statusModalError.value =
-          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          (err as Error)?.message ||
-          'No se pudo cambiar el estado'
+        statusModalError.value = getApiErrorMessage(err, 'No se pudo cambiar el estado')
       },
     },
   )

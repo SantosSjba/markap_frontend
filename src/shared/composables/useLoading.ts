@@ -1,4 +1,5 @@
 import { ref, type Ref } from 'vue'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 /**
  * useLoading Composable
@@ -24,7 +25,7 @@ export function useLoading(): UseLoadingReturn {
       const result = await fn()
       return result
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'An error occurred'
+      error.value = getApiErrorMessage(err)
       return null
     } finally {
       isLoading.value = false

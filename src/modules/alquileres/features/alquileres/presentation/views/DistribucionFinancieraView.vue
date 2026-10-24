@@ -455,7 +455,7 @@ watch(upsertSuccess, (ok) => {
           <div
             v-if="upsertFinancial.isSuccess.value"
             class="flex items-center gap-3 px-4 py-3 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-success, #16a34a)15', border: '1px solid var(--color-success, #16a34a)40', color: 'var(--color-success, #16a34a)' }"
+            :style="{ backgroundColor: 'color-mix(in srgb, var(--color-success) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', color: 'var(--color-success, #16a34a)' }"
           >
             <AppIcon icon="lucide:circle-check" :size="18" />
             <span class="text-sm font-medium">Configuración guardada correctamente.</span>
@@ -596,7 +596,7 @@ watch(upsertSuccess, (ok) => {
                       − {{ formatAmount(breakdown.internalAgentCommission, breakdown.currency) }}
                     </td>
                   </tr>
-                  <tr :style="{ backgroundColor: 'var(--color-primary)0d' }">
+                  <tr :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 5%, transparent)' }">
                     <td class="py-3 px-3 font-bold" :style="{ color: 'var(--color-text-primary)' }">
                       <span class="flex items-center gap-1.5">
                         <AppIcon icon="lucide:circle-check" :size="14" color="var(--color-primary)" />

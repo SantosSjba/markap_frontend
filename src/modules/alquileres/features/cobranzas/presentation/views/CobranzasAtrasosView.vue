@@ -577,7 +577,7 @@ async function handleExport() {
               :key="pending.paymentId"
               class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
               :style="selectedPaymentId === pending.paymentId
-                ? { backgroundColor: 'var(--color-primary)15', border: '1px solid var(--color-primary)' }
+                ? { backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, transparent)', border: '1px solid var(--color-primary)' }
                 : { border: '1px solid transparent' }"
             >
               <input
@@ -658,7 +658,7 @@ async function handleExport() {
   <BaseModal v-model="showNoteModal" :closable="true" size="sm" @close="closeNoteModal">
     <template #title>
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background: var(--color-primary)1a;">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background: color-mix(in srgb, var(--color-primary) 10%, transparent);">
           <AppIcon icon="lucide:pencil-line" :size="16" style="color: var(--color-primary);" />
         </div>
         <div>

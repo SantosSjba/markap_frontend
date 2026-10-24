@@ -44,9 +44,13 @@ const emit = defineEmits<{
   'update:pageSize': [size: number]
 }>()
 
-const startItem = computed(
-  () => (props.currentPage - 1) * props.pageSize + 1
+const startItem = computed(() =>
+  Math.min((props.currentPage - 1) * props.pageSize + 1, props.totalItems),
 )
+// Las flechas se deshabilitan también en la primera y la última página,
+// aunque la vista no envíe hasPrevPage / hasNextPage.
+const canPrev = computed(() => props.hasPrevPage && props.currentPage > 1)
+const canNext = computed(() => props.hasNextPage && props.currentPage < props.totalPages)
 const endItem = computed(() =>
   Math.min(props.currentPage * props.pageSize, props.totalItems)
 )
@@ -123,7 +127,7 @@ const onPageSizeChange = (value: string | number | null | undefined) => {
             :model-value="pageSize"
             :options="pageSizeOptionsForSelect"
             placeholder=""
-            id="page-size"
+            aria-label="Resultados por página"
             @update:model-value="onPageSizeChange"
           />
         </div>
@@ -138,7 +142,7 @@ const onPageSizeChange = (value: string | number | null | undefined) => {
         <button
           type="button"
           class="p-2 rounded-lg hover-surface disabled:opacity-40 disabled:cursor-not-allowed"
-          :disabled="!hasPrevPage"
+          :disabled="!canPrev"
           aria-label="Página anterior"
           @click="goToPage(currentPage - 1)"
         >
@@ -164,6 +168,8 @@ const onPageSizeChange = (value: string | number | null | undefined) => {
                 : { color: 'var(--color-text-primary)' }
             "
             :disabled="pageNum === 'ellipsis'"
+            :aria-current="pageNum === currentPage ? 'page' : undefined"
+            :aria-label="pageNum === 'ellipsis' ? undefined : `Página ${pageNum}`"
             @click="pageNum !== 'ellipsis' && goToPage(pageNum as number)"
           >
             {{ pageNum === 'ellipsis' ? '...' : pageNum }}
@@ -173,7 +179,7 @@ const onPageSizeChange = (value: string | number | null | undefined) => {
         <button
           type="button"
           class="p-2 rounded-lg hover-surface disabled:opacity-40 disabled:cursor-not-allowed"
-          :disabled="!hasNextPage"
+          :disabled="!canNext"
           aria-label="Página siguiente"
           @click="goToPage(currentPage + 1)"
         >

@@ -158,7 +158,7 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                 class="flex items-center gap-3 p-3 rounded-lg"
                 :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
               >
-                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-info, #3b82f6)20' }">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" :style="{ backgroundColor: 'color-mix(in srgb, var(--color-info) 13%, transparent)' }">
                   <AppIcon icon="lucide:user" :size="17" color="var(--color-info, #3b82f6)" />
                 </div>
                 <div class="min-w-0">
@@ -179,7 +179,7 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                 class="flex items-center gap-3 p-3 rounded-lg"
                 :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
               >
-                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" :style="{ backgroundColor: 'var(--color-success, #16a34a)20' }">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" :style="{ backgroundColor: 'color-mix(in srgb, var(--color-success) 13%, transparent)' }">
                   <AppIcon icon="lucide:briefcase" :size="17" color="var(--color-success, #16a34a)" />
                 </div>
                 <div class="min-w-0">
@@ -317,7 +317,7 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                         − {{ formatAmount(breakdown.internalAgentCommission, breakdown.currency) }}
                       </td>
                     </tr>
-                    <tr :style="{ backgroundColor: 'var(--color-primary)0d' }">
+                    <tr :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 5%, transparent)' }">
                       <td class="py-3 px-4 font-semibold" :style="{ color: 'var(--color-text-primary)' }">
                         <span class="flex items-center gap-2">
                           <AppIcon icon="lucide:circle-check" :size="16" color="var(--color-primary)" />
@@ -406,8 +406,8 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
               <li
                 class="flex items-center gap-3 p-3 rounded-lg"
                 :style="{
-                  backgroundColor: rental.hasContract ? 'var(--color-success, #16a34a)0f' : 'var(--color-surface-elevated)',
-                  border: `1px solid ${rental.hasContract ? 'var(--color-success, #16a34a)33' : 'var(--color-border)'}`,
+                  backgroundColor: rental.hasContract ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'var(--color-surface-elevated)',
+                  border: `1px solid ${rental.hasContract ? 'color-mix(in srgb, var(--color-success) 20%, transparent)' : 'var(--color-border)'}`,
                 }"
               >
                 <AppIcon
@@ -429,7 +429,7 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                   target="_blank"
                   download
                   class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md transition-colors"
-                  :style="{ color: 'var(--color-primary)', background: 'var(--color-primary)1a' }"
+                  :style="{ color: 'var(--color-primary)', background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
                 >
                   <AppIcon icon="lucide:download" :size="14" />
                   Descargar
@@ -445,8 +445,8 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
               <li
                 class="flex items-center gap-3 p-3 rounded-lg"
                 :style="{
-                  backgroundColor: rental.hasDeliveryAct ? 'var(--color-success, #16a34a)0f' : 'var(--color-surface-elevated)',
-                  border: `1px solid ${rental.hasDeliveryAct ? 'var(--color-success, #16a34a)33' : 'var(--color-border)'}`,
+                  backgroundColor: rental.hasDeliveryAct ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'var(--color-surface-elevated)',
+                  border: `1px solid ${rental.hasDeliveryAct ? 'color-mix(in srgb, var(--color-success) 20%, transparent)' : 'var(--color-border)'}`,
                 }"
               >
                 <AppIcon
@@ -468,7 +468,7 @@ const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}
                   target="_blank"
                   download
                   class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md transition-colors"
-                  :style="{ color: 'var(--color-primary)', background: 'var(--color-primary)1a' }"
+                  :style="{ color: 'var(--color-primary)', background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
                 >
                   <AppIcon icon="lucide:download" :size="14" />
                   Descargar

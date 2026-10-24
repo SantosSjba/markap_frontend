@@ -12,7 +12,7 @@ import {
   useRevokeRole 
 } from '../../application/useUsers'
 import { usePagination } from '@shared/composables'
-import { BasePagination } from '@shared/components'
+import { BaseButton, BaseModal, BasePagination } from '@shared/components'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import { getApiErrorMessage } from '@/shared/utils'
 import { useForm, toTypedSchema } from '@shared/components/forms'
@@ -457,201 +457,137 @@ const paginationProps = computed(() => ({
     </div>
 
     <!-- Create Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition-opacity duration-200"
-        leave-active-class="transition-opacity duration-150"
-        enter-from-class="opacity-0"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="isCreateModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="absolute inset-0 bg-black/50" @click="closeCreateModal" />
-          <div class="relative card p-6 w-full max-w-md">
-            <h3 class="text-lg font-semibold mb-4" style="color: var(--color-text-primary);">Nuevo Usuario</h3>
-            
-            <form @submit.prevent="handleCreate" class="space-y-4">
-              <div class="grid grid-cols-2 gap-4">
-                <FormInput
-                  v-bind="createFirstNameBinds"
-                  label="Nombre"
-                  :error="createErrors.firstName"
-                  required
-                />
-                <FormInput
-                  v-bind="createLastNameBinds"
-                  label="Apellido"
-                  :error="createErrors.lastName"
-                  required
-                />
-              </div>
-              <FormInput
-                v-bind="createEmailBinds"
-                type="email"
-                label="Email"
-                :error="createErrors.email"
-                required
-              />
-              <FormInput
-                v-bind="createPasswordBinds"
-                type="password"
-                label="Contraseña"
-                :error="createErrors.password"
-                required
-              />
-
-              <div class="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  @click="closeCreateModal"
-                  class="px-4 py-2 rounded-lg hover-surface"
-                  style="color: var(--color-text-secondary);"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  :disabled="isCreating"
-                  class="btn-primary px-4 py-2 rounded-lg disabled:opacity-50 inline-flex items-center justify-center gap-2"
-                >
-                  <Icon
-                    v-if="isCreating"
-                    icon="svg-spinners:ring-resize"
-                    class="w-4 h-4 shrink-0"
-                  />
-                  {{ isCreating ? 'Guardando...' : 'Crear Usuario' }}
-                </button>
-              </div>
-            </form>
-          </div>
+    <BaseModal
+      :model-value="isCreateModalOpen"
+      title="Nuevo Usuario"
+      @update:model-value="(open) => !open && closeCreateModal()"
+    >
+      <form id="users-create-form" class="space-y-4" @submit.prevent="handleCreate">
+        <div class="grid grid-cols-2 gap-4">
+          <FormInput
+            v-bind="createFirstNameBinds"
+            label="Nombre"
+            :error="createErrors.firstName"
+            required
+          />
+          <FormInput
+            v-bind="createLastNameBinds"
+            label="Apellido"
+            :error="createErrors.lastName"
+            required
+          />
         </div>
-      </Transition>
-    </Teleport>
+        <FormInput
+          v-bind="createEmailBinds"
+          type="email"
+          label="Email"
+          :error="createErrors.email"
+          required
+        />
+        <FormInput
+          v-bind="createPasswordBinds"
+          type="password"
+          label="Contraseña"
+          :error="createErrors.password"
+          required
+        />
+      </form>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <BaseButton variant="ghost" @click="closeCreateModal">Cancelar</BaseButton>
+          <BaseButton type="submit" form="users-create-form" :loading="isCreating">
+            Crear Usuario
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
 
     <!-- Edit Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition-opacity duration-200"
-        leave-active-class="transition-opacity duration-150"
-        enter-from-class="opacity-0"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="isEditModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="absolute inset-0 bg-black/50" @click="closeEditModal" />
-          <div class="relative card p-6 w-full max-w-md">
-            <h3 class="text-lg font-semibold mb-4" style="color: var(--color-text-primary);">Editar Usuario</h3>
-            
-            <form @submit.prevent="handleEdit" class="space-y-4">
-              <div class="grid grid-cols-2 gap-4">
-                <FormInput
-                  v-bind="editFirstNameBinds"
-                  label="Nombre"
-                  :error="editErrors.firstName"
-                  required
-                />
-                <FormInput
-                  v-bind="editLastNameBinds"
-                  label="Apellido"
-                  :error="editErrors.lastName"
-                  required
-                />
-              </div>
-              <FormInput
-                v-bind="editEmailBinds"
-                type="email"
-                label="Email"
-                :error="editErrors.email"
-                required
-              />
-
-              <div class="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  @click="closeEditModal"
-                  class="px-4 py-2 rounded-lg hover-surface"
-                  style="color: var(--color-text-secondary);"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  :disabled="isUpdating"
-                  class="btn-primary px-4 py-2 rounded-lg disabled:opacity-50 inline-flex items-center justify-center gap-2"
-                >
-                  <Icon
-                    v-if="isUpdating"
-                    icon="svg-spinners:ring-resize"
-                    class="w-4 h-4 shrink-0"
-                  />
-                  {{ isUpdating ? 'Guardando...' : 'Guardar Cambios' }}
-                </button>
-              </div>
-            </form>
-          </div>
+    <BaseModal
+      :model-value="isEditModalOpen"
+      title="Editar Usuario"
+      @update:model-value="(open) => !open && closeEditModal()"
+    >
+      <form id="users-edit-form" class="space-y-4" @submit.prevent="handleEdit">
+        <div class="grid grid-cols-2 gap-4">
+          <FormInput
+            v-bind="editFirstNameBinds"
+            label="Nombre"
+            :error="editErrors.firstName"
+            required
+          />
+          <FormInput
+            v-bind="editLastNameBinds"
+            label="Apellido"
+            :error="editErrors.lastName"
+            required
+          />
         </div>
-      </Transition>
-    </Teleport>
+        <FormInput
+          v-bind="editEmailBinds"
+          type="email"
+          label="Email"
+          :error="editErrors.email"
+          required
+        />
+      </form>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <BaseButton variant="ghost" @click="closeEditModal">Cancelar</BaseButton>
+          <BaseButton type="submit" form="users-edit-form" :loading="isUpdating">
+            Guardar Cambios
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
 
     <!-- Roles Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition-opacity duration-200"
-        leave-active-class="transition-opacity duration-150"
-        enter-from-class="opacity-0"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="isRolesModalOpen && selectedUser" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="absolute inset-0 bg-black/50" @click="closeRolesModal" />
-          <div class="relative card p-6 w-full max-w-md">
-            <h3 class="text-lg font-semibold mb-2" style="color: var(--color-text-primary);">Gestionar Roles</h3>
-            <p class="text-sm mb-4" style="color: var(--color-text-secondary);">{{ selectedUser.fullName }}</p>
-            
-            <div class="space-y-2">
-              <button
-                v-for="role in (roles ?? [])"
-                :key="role.id"
-                type="button"
-                :disabled="isRoleRowSaving(role.id)"
-                :class="[
-                  'w-full flex items-center justify-between p-3 rounded-lg border transition-colors disabled:opacity-60',
-                  hasRole(role.id) ? 'border-2' : 'hover-surface',
-                ]"
-                :style="{
-                  borderColor: hasRole(role.id) ? 'var(--color-primary)' : 'var(--color-border)',
-                  backgroundColor: hasRole(role.id) ? 'var(--color-primary-light)' : '',
-                }"
-                @click="toggleRole(role.id)"
-              >
-                <div>
-                  <p class="font-medium text-left" style="color: var(--color-text-primary);">{{ role.name }}</p>
-                  <p class="text-sm text-left" style="color: var(--color-text-muted);">{{ role.code }}</p>
-                </div>
-                <Icon
-                  v-if="isRoleRowSaving(role.id)"
-                  icon="svg-spinners:ring-resize"
-                  class="w-5 h-5 shrink-0"
-                  :style="{ color: 'var(--color-primary)' }"
-                />
-                <Icon
-                  v-else-if="hasRole(role.id)"
-                  icon="lucide:circle-check"
-                  class="w-5 h-5 shrink-0"
-                  :style="{ color: 'var(--color-primary)' }"
-                />
-              </button>
-            </div>
-
-            <div class="flex justify-end pt-4">
-              <button
-                type="button"
-                class="btn-primary px-4 py-2 rounded-lg"
-                @click="closeRolesModal"
-              >
-                Listo
-              </button>
-            </div>
+    <BaseModal
+      :model-value="isRolesModalOpen && !!selectedUser"
+      title="Gestionar Roles"
+      @update:model-value="(open) => !open && closeRolesModal()"
+    >
+      <p class="text-sm mb-4" style="color: var(--color-text-secondary);">{{ selectedUser?.fullName }}</p>
+      <div class="space-y-2">
+        <button
+          v-for="role in (roles ?? [])"
+          :key="role.id"
+          type="button"
+          :disabled="isRoleRowSaving(role.id)"
+          :aria-pressed="hasRole(role.id)"
+          :class="[
+            'w-full flex items-center justify-between p-3 rounded-lg border transition-colors disabled:opacity-60',
+            hasRole(role.id) ? 'border-2' : 'hover-surface',
+          ]"
+          :style="{
+            borderColor: hasRole(role.id) ? 'var(--color-primary)' : 'var(--color-border)',
+            backgroundColor: hasRole(role.id) ? 'var(--color-primary-light)' : '',
+          }"
+          @click="toggleRole(role.id)"
+        >
+          <div>
+            <p class="font-medium text-left" style="color: var(--color-text-primary);">{{ role.name }}</p>
+            <p class="text-sm text-left" style="color: var(--color-text-muted);">{{ role.code }}</p>
           </div>
+          <Icon
+            v-if="isRoleRowSaving(role.id)"
+            icon="svg-spinners:ring-resize"
+            class="w-5 h-5 shrink-0"
+            :style="{ color: 'var(--color-primary)' }"
+          />
+          <Icon
+            v-else-if="hasRole(role.id)"
+            icon="lucide:circle-check"
+            class="w-5 h-5 shrink-0"
+            :style="{ color: 'var(--color-primary)' }"
+          />
+        </button>
+      </div>
+      <template #footer>
+        <div class="flex justify-end">
+          <BaseButton @click="closeRolesModal">Listo</BaseButton>
         </div>
-      </Transition>
-    </Teleport>
+      </template>
+    </BaseModal>
   </div>
 </template>

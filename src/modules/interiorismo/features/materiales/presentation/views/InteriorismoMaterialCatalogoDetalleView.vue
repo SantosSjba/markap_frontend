@@ -90,7 +90,7 @@ async function uploadSheet() {
   if (res.downloadUrl) {
     // keep for immediate Ver
   }
-  void markapAlert.toast.success('Ficha técnica lista (guarde para persistir)')
+  void markapAlert.toast.success('Ficha tÃ©cnica lista (guarde para persistir)')
 }
 
 async function uploadImage() {
@@ -128,8 +128,8 @@ async function save() {
 
 async function remove() {
   const ok = await markapAlert.confirmDanger({
-    title: '¿Eliminar material?',
-    text: 'Se quitará del catálogo y de vínculos con proveedores.',
+    title: 'Â¿Eliminar material?',
+    text: 'Se quitarÃ¡ del catÃ¡logo y de vÃ­nculos con proveedores.',
     confirmText: 'Eliminar',
   })
   if (!ok) return
@@ -149,13 +149,13 @@ const sortedImages = computed(() =>
     <div class="flex flex-wrap items-start gap-3 justify-between">
       <div>
         <p class="text-xs font-medium uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">
-          Catálogo
+          CatÃ¡logo
         </p>
         <h1 class="text-xl font-bold mt-0.5" :style="{ color: 'var(--color-text-primary)' }">
-          {{ detail?.code ?? '…' }} · {{ detail?.name ?? 'Cargando…' }}
+          {{ detail?.code ?? 'Â…' }} Â· {{ detail?.name ?? 'CargandoÂ…' }}
         </h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Precio ref. {{ formatSol(detail?.price) }} · Stock {{ formatQty(detail?.stock) }}
+          Precio ref. {{ formatSol(detail?.price) }} Â· Stock {{ formatQty(detail?.stock) }}
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -172,7 +172,7 @@ const sortedImages = computed(() =>
       </div>
     </div>
 
-    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando…</div>
+    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">CargandoÂ…</div>
 
     <template v-else-if="detail">
       <div
@@ -209,13 +209,13 @@ const sortedImages = computed(() =>
         class="space-y-4 p-4 sm:p-6 rounded-xl border"
         :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
       >
-        <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Edición</p>
+        <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">EdiciÃ³n</p>
         <div class="grid sm:grid-cols-2 gap-4">
-          <FormInput :model-value="detail.code" label="Código" disabled />
+          <FormInput :model-value="detail.code" label="CÃ³digo" disabled />
           <FormInput v-model="name" label="Nombre" required />
         </div>
         <div class="grid sm:grid-cols-2 gap-4">
-          <FormInput v-model="category" label="Categoría" required />
+          <FormInput v-model="category" label="CategorÃ­a" required />
           <FormInput v-model="brand" label="Marca" required />
         </div>
         <div class="grid sm:grid-cols-3 gap-4">
@@ -225,7 +225,7 @@ const sortedImages = computed(() =>
         </div>
 
         <div class="space-y-2">
-          <p class="text-sm font-medium">Ficha técnica</p>
+          <p class="text-sm font-medium">Ficha tÃ©cnica</p>
           <FileDropzone
             v-model="sheetFile"
             accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
@@ -255,7 +255,7 @@ const sortedImages = computed(() =>
         </div>
 
         <div class="space-y-2">
-          <p class="text-sm font-medium">Imágenes</p>
+          <p class="text-sm font-medium">ImÃ¡genes</p>
           <FileDropzone
             v-model="imageFile"
             accept=".png,.jpg,.jpeg,.webp"

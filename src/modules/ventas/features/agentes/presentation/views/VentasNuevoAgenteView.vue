@@ -169,7 +169,7 @@ const onSubmit = handleSubmit(
           <div
             v-if="presetAgentType"
             class="mb-4 flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-            :style="{ backgroundColor: 'var(--color-primary)0d', border: '1px solid var(--color-primary)33' }"
+            :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--color-primary) 20%, transparent)' }"
           >
             <AppIcon icon="lucide:info" :size="15" color="var(--color-primary)" />
             <span :style="{ color: 'var(--color-text-secondary)' }">
@@ -184,7 +184,7 @@ const onSubmit = handleSubmit(
               class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
               :style="{
                 borderColor: values.type === 'EXTERNAL' ? 'var(--color-primary)' : 'var(--color-border)',
-                backgroundColor: values.type === 'EXTERNAL' ? 'var(--color-primary)0d' : 'var(--color-surface-elevated)',
+                backgroundColor: values.type === 'EXTERNAL' ? 'color-mix(in srgb, var(--color-primary) 5%, transparent)' : 'var(--color-surface-elevated)',
               }"
               @click="setFieldValue('type', 'EXTERNAL')"
             >
@@ -203,7 +203,7 @@ const onSubmit = handleSubmit(
               class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
               :style="{
                 borderColor: values.type === 'INTERNAL' ? 'var(--color-primary)' : 'var(--color-border)',
-                backgroundColor: values.type === 'INTERNAL' ? 'var(--color-primary)0d' : 'var(--color-surface-elevated)',
+                backgroundColor: values.type === 'INTERNAL' ? 'color-mix(in srgb, var(--color-primary) 5%, transparent)' : 'var(--color-surface-elevated)',
               }"
               @click="setFieldValue('type', 'INTERNAL')"
             >
@@ -230,7 +230,7 @@ const onSubmit = handleSubmit(
             <div
               v-if="selectedUser"
               class="flex items-center gap-3 px-4 py-3 rounded-lg"
-              :style="{ backgroundColor: 'var(--color-primary)0d', border: '1px solid var(--color-primary)33' }"
+              :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--color-primary) 20%, transparent)' }"
             >
               <AppIcon icon="lucide:circle-check" :size="16" color="var(--color-primary)" />
               <div class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
@@ -305,7 +305,7 @@ const onSubmit = handleSubmit(
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-              :style="{ backgroundColor: 'var(--color-primary)1a' }"
+              :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
             >
               <AppIcon
                 :icon="values.type === 'INTERNAL' ? 'lucide:user-check' : 'lucide:user-round-cog'"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, useAttrs, useId } from 'vue'
 /**
  * FormTextarea - Componente de textarea reutilizable con props
  */
@@ -16,6 +17,9 @@ interface Props {
   id?: string
 }
 
+// Atributos nativos (maxlength, readonly…) al <textarea>; class y style al contenedor.
+defineOptions({ inheritAttrs: false })
+
 const props = withDefaults(defineProps<Props>(), {
   placeholder: '',
   disabled: false,
@@ -25,7 +29,17 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['update:modelValue', 'blur', 'focus'])
 
-const textareaId = props.id ?? `textarea-${Math.random().toString(36).slice(2, 11)}`
+const textareaId = props.id ?? `textarea-${useId()}`
+const messageId = `${textareaId}-message`
+const attrs = useAttrs()
+const wrapperAttrs = computed(() => ({ class: attrs.class, style: attrs.style }))
+const controlAttrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs
+  void _class
+  void _style
+  return rest
+})
+
 
 const displayValue = () => {
   const v = props.modelValue
@@ -40,7 +54,7 @@ const handleInput = (event: Event) => {
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="w-full" v-bind="wrapperAttrs">
     <label
       v-if="label"
       :for="textareaId"
@@ -51,13 +65,16 @@ const handleInput = (event: Event) => {
       <span v-if="required" :style="{ color: 'var(--color-error)' }">*</span>
     </label>
     <textarea
+      v-bind="controlAttrs"
       :id="textareaId"
       :value="displayValue()"
       :placeholder="placeholder"
       :disabled="disabled"
       :required="required"
       :rows="rows"
-      class="w-full px-4 py-2.5 rounded-lg border resize-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-60 disabled:cursor-not-allowed"
+      :aria-invalid="error ? 'true' : undefined"
+      :aria-describedby="error || hint ? messageId : undefined"
+      class="w-full px-4 py-2.5 rounded-lg border resize-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
       :style="{
         borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
         backgroundColor: 'var(--color-surface)',
@@ -68,10 +85,10 @@ const handleInput = (event: Event) => {
       @blur="emit('blur', $event)"
       @focus="emit('focus', $event)"
     />
-    <p v-if="error" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">
+    <p v-if="error" :id="messageId" role="alert" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">
       {{ error }}
     </p>
-    <p v-else-if="hint" class="mt-1 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+    <p v-else-if="hint" :id="messageId" class="mt-1 text-sm" :style="{ color: 'var(--color-text-muted)' }">
       {{ hint }}
     </p>
   </div>

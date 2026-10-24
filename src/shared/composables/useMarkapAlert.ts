@@ -592,8 +592,9 @@ export const markapAlert = {
         text,
         theme: getSwalTheme(),
       }),
+    // Los errores permanecen más tiempo: suelen traer indicaciones para el usuario.
     error: (title: string, text?: string, defaults?: MarkapToastDefaults) =>
-      toastMixin(defaults).fire({
+      toastMixin({ timer: 7000, ...defaults }).fire({
         icon: 'error',
         title,
         text,

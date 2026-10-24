@@ -3,7 +3,7 @@
  * FileDropzone - Input de archivo con zona de arrastrar y soltar, ancho completo
  */
 
-import { ref, computed } from 'vue'
+import { ref, computed, useId } from 'vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 interface Props {
@@ -36,9 +36,56 @@ const emit = defineEmits<{
   (e: 'error', message: string): void
 }>()
 
-const inputId = props.id ?? `filedrop-${Math.random().toString(36).slice(2, 11)}`
+const inputId = props.id ?? `filedrop-${useId()}`
 const inputRef = ref<HTMLInputElement | null>(null)
 const isDragging = ref(false)
+/** Rechazo local (tamaño, tipo, cantidad); se muestra aunque la vista no escuche `error`. */
+const localError = ref('')
+const shownError = computed(() => props.error || localError.value)
+
+function reject(message: string) {
+  localError.value = message
+  emit('error', message)
+}
+
+/** Formatos aceptados en lenguaje del usuario (PDF, JPG, imágenes…) en lugar de tipos MIME. */
+const acceptLabel = computed(() => {
+  const labels = props.accept
+    .split(',')
+    .map((r) => r.trim().toLowerCase())
+    .filter(Boolean)
+    .map((r) =>
+      r.startsWith('.')
+        ? r.slice(1).toUpperCase()
+        : r === 'image/*'
+          ? 'imágenes'
+          : r === 'video/*'
+            ? 'videos'
+            : r === 'application/pdf'
+              ? 'PDF'
+              : '',
+    )
+    .filter(Boolean)
+  return [...new Set(labels)].join(', ') || props.accept
+})
+
+/** Comprueba `accept` (extensiones y tipos MIME); al arrastrar el navegador no lo aplica. */
+function matchesAccept(file: File) {
+  const rules = props.accept
+    .split(',')
+    .map((r) => r.trim().toLowerCase())
+    .filter(Boolean)
+  if (rules.length === 0) return true
+  const name = file.name.toLowerCase()
+  const type = (file.type || '').toLowerCase()
+  return rules.some((rule) =>
+    rule.startsWith('.')
+      ? name.endsWith(rule)
+      : rule.endsWith('/*')
+        ? type.startsWith(rule.slice(0, -1))
+        : type === rule,
+  )
+}
 
 const files = computed(() => {
   const v = props.modelValue
@@ -79,10 +126,16 @@ function onInputChange(e: Event) {
 }
 
 function validateAndEmit(selected: File[]) {
+  localError.value = ''
+  const wrongType = selected.filter((f) => !matchesAccept(f))
+  if (wrongType.length > 0) {
+    reject(`Tipo de archivo no permitido: ${wrongType.map((f) => f.name).join(', ')}. Formatos aceptados: ${acceptLabel.value}.`)
+    return
+  }
   if (props.maxSize != null) {
     const oversized = selected.filter((f) => f.size > props.maxSize!)
     if (oversized.length > 0) {
-      emit('error', `Algunos archivos superan el tamaño máximo (${fileSize(props.maxSize)})`)
+      reject(`El archivo supera el tamaño máximo permitido (${fileSize(props.maxSize)}).`)
       return
     }
   }
@@ -102,7 +155,7 @@ function onDrop(e: DragEvent) {
   if (!items?.length) return
   const list = Array.from(items)
   if (!props.multiple && list.length > 1) {
-    emit('error', 'Solo se permite un archivo')
+    reject('Solo se permite un archivo. Arrastra un único archivo.')
     return
   }
   validateAndEmit(list)
@@ -131,6 +184,7 @@ function removeFile(index: number) {
 
 function clearAll() {
   if (props.disabled) return
+  localError.value = ''
   emit('update:modelValue', null)
 }
 </script>
@@ -161,14 +215,16 @@ function clearAll() {
 
     <div
       role="button"
-      tabindex="0"
+      :tabindex="disabled ? -1 : 0"
+      :aria-label="label || placeholder"
+      :aria-disabled="disabled || undefined"
       class="w-full rounded-xl border-2 border-dashed transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 flex flex-col items-center justify-center gap-2 px-4 cursor-pointer"
       :class="[
         hasFiles ? 'min-h-[88px] py-4' : 'min-h-[140px] py-6',
         { 'opacity-60 cursor-not-allowed': disabled },
       ]"
       :style="{
-        borderColor: error
+        borderColor: shownError
           ? 'var(--color-error)'
           : isDragging
             ? 'var(--color-primary)'
@@ -178,7 +234,7 @@ function clearAll() {
         backgroundColor: isDragging
           ? 'var(--color-primary-muted, rgba(11, 176, 190, 0.08))'
           : hasFiles
-            ? 'var(--color-success, #16a34a)0a'
+            ? 'color-mix(in srgb, var(--color-success) 6%, var(--color-surface))'
             : 'var(--color-surface)',
         '--ring-color': 'var(--color-primary)',
       }"
@@ -212,7 +268,7 @@ function clearAll() {
         class="text-xs text-center"
         :style="{ color: 'var(--color-text-muted)' }"
       >
-        Aceptados: {{ accept }}
+        Formatos aceptados: {{ acceptLabel }}
       </p>
     </div>
 
@@ -233,7 +289,7 @@ function clearAll() {
       >
         <div
           class="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
-          :style="{ backgroundColor: 'var(--color-primary)14' }"
+          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
         >
           <AppIcon icon="lucide:file-text" :size="16" color="var(--color-primary)" />
         </div>
@@ -264,11 +320,12 @@ function clearAll() {
     </ul>
 
     <p
-      v-if="error"
+      v-if="shownError"
+      role="alert"
       class="mt-1.5 text-sm"
       :style="{ color: 'var(--color-error)' }"
     >
-      {{ error }}
+      {{ shownError }}
     </p>
     <p
       v-else-if="hint"

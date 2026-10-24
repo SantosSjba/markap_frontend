@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, useSlots, computed } from 'vue'
+import { ref, useSlots, useAttrs, computed, useId } from 'vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**
@@ -26,6 +26,10 @@ interface Props {
   showPasswordToggle?: boolean
 }
 
+// Atributos nativos (min, step, max, autocomplete, readonly, name…) van al <input>;
+// class y style se quedan en el contenedor.
+defineOptions({ inheritAttrs: false })
+
 const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   placeholder: '',
@@ -36,6 +40,14 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const slots = useSlots()
+const attrs = useAttrs()
+const wrapperAttrs = computed(() => ({ class: attrs.class, style: attrs.style }))
+const inputAttrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs
+  void _class
+  void _style
+  return rest
+})
 const passwordVisible = ref(false)
 
 const hasPasswordToggle = computed(
@@ -57,9 +69,17 @@ function togglePasswordVisible() {
 
 const emit = defineEmits(['update:modelValue', 'blur', 'focus'])
 
-const inputId = props.id ?? `input-${Math.random().toString(36).slice(2, 11)}`
+const inputId = props.id ?? `input-${useId()}`
+const messageId = `${inputId}-message`
+
+/**
+ * Texto que el usuario está escribiendo en un campo numérico: permite dejarlo
+ * vacío mientras edita sin que salte a 0 (el modelo sigue recibiendo un número).
+ */
+const editingText = ref<string | null>(null)
 
 const displayValue = () => {
+  if (props.type === 'number' && editingText.value !== null) return editingText.value
   const v = props.modelValue
   if (v === null || v === undefined) return ''
   return String(v)
@@ -68,12 +88,22 @@ const displayValue = () => {
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   const val = target.value
-  emit('update:modelValue', props.type === 'number' ? Number(val) || 0 : val as string | number)
+  if (props.type === 'number') {
+    editingText.value = val
+    emit('update:modelValue', Number(val) || 0)
+    return
+  }
+  emit('update:modelValue', val)
+}
+
+const handleBlur = (event: FocusEvent) => {
+  editingText.value = null
+  emit('blur', event)
 }
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="w-full" v-bind="wrapperAttrs">
     <label
       v-if="label"
       :for="inputId"
@@ -85,6 +115,7 @@ const handleInput = (event: Event) => {
     </label>
     <div class="relative w-full">
       <input
+        v-bind="inputAttrs"
         :id="inputId"
         :type="inputType"
         :value="displayValue()"
@@ -93,6 +124,8 @@ const handleInput = (event: Event) => {
         :required="required"
         :maxlength="maxlength"
         :inputmode="inputmode"
+        :aria-invalid="error ? 'true' : undefined"
+        :aria-describedby="error || hint ? messageId : undefined"
         class="w-full px-4 py-2.5 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
         :class="[hasRightAdornment ? 'pr-12' : '', props.inputClass]"
         :style="{
@@ -102,7 +135,7 @@ const handleInput = (event: Event) => {
           colorScheme: 'inherit',
         }"
         @input="handleInput"
-        @blur="emit('blur', $event)"
+        @blur="handleBlur"
         @focus="emit('focus', $event)"
       />
       <div
@@ -128,10 +161,10 @@ const handleInput = (event: Event) => {
         <slot v-if="hasSuffixSlot" name="suffix" />
       </div>
     </div>
-    <p v-if="error" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">
+    <p v-if="error" :id="messageId" role="alert" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">
       {{ error }}
     </p>
-    <p v-else-if="hint" class="mt-1 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+    <p v-else-if="hint" :id="messageId" class="mt-1 text-sm" :style="{ color: 'var(--color-text-muted)' }">
       {{ hint }}
     </p>
   </div>

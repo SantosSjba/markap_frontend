@@ -16,13 +16,14 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const initials = computed(() => {
-  const parts = props.name.trim().split(/\s+/).filter(Boolean)
+  const name = props.name ?? ''
+  const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length >= 2) {
     const first = parts[0]?.charAt(0) ?? ''
     const last = parts[parts.length - 1]?.charAt(0) ?? ''
     return (first + last).toUpperCase()
   }
-  return props.name.slice(0, 2).toUpperCase() || '?'
+  return name.slice(0, 2).toUpperCase() || '?'
 })
 
 const sizeClasses = {

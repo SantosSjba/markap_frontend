@@ -7,7 +7,7 @@
  *              SearchInput + FormSelect de filtros server-side desde la vista padre.
  *              El chip de "N seleccionados" se añade automáticamente a la derecha.
  *  #row      — Cuerpo de cada fila: recibe { row, columns }.
- *  #empty    — Reemplaza el estado vacío por defecto.
+ *  #empty    — Contenido adicional bajo el mensaje de estado vacío (p. ej. botón Reintentar).
  *
  * Si no hay #toolbar pero showGlobalFilter=true, muestra el filtro client-side propio.
  */

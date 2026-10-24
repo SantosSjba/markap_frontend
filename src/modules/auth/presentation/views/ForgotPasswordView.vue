@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import * as yup from 'yup'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 import FormInput from '@shared/components/forms/FormInput.vue'
 import { markapAlert } from '@/shared/composables'
@@ -50,7 +51,7 @@ const onSubmit = handleSubmit((formValues) => {
           'Error',
         )
       } else {
-        void markapAlert.error('Error al enviar el código. Intente nuevamente.', 'Error')
+        void markapAlert.error(getApiErrorMessage(err, 'No se pudo enviar el código'), 'Error')
       }
     },
   })

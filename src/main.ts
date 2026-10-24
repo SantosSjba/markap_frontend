@@ -4,7 +4,8 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { setupVueQuery } from '@core/plugins'
-import { initTheme } from '@shared/composables'
+import { initTheme, markapAlert } from '@shared/composables'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 
 // Styles
 import './assets/css/main.css'
@@ -27,6 +28,18 @@ setupVueQuery(app)
 import { useAuthStore } from '@modules/auth'
 const authStore = useAuthStore()
 authStore.initializeAuth()
+
+// Errores inesperados de la interfaz: detalle en consola, mensaje comprensible al usuario.
+let lastUiErrorAt = 0
+app.config.errorHandler = (error, _instance, info) => {
+  console.error('[app]', info, error)
+  if (Date.now() - lastUiErrorAt < 3000) return
+  lastUiErrorAt = Date.now()
+  void markapAlert.toast.error(
+    'Ocurrió un problema en la pantalla',
+    getApiErrorMessage(error, 'No se pudo completar la acción. Recarga la página e inténtalo nuevamente'),
+  )
+}
 
 // Mount app
 app.mount('#app')

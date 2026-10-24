@@ -46,7 +46,7 @@ async function uploadSheet() {
   technicalSheetUrl.value = res.objectKey
   technicalSheetArchivoId.value = res.archivoId
   sheetFile.value = null
-  void markapAlert.toast.success('Ficha tÈcnica lista')
+  void markapAlert.toast.success('Ficha t√©cnica lista')
 }
 
 async function uploadImage() {
@@ -139,7 +139,7 @@ const goBack = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo`
           Nuevo material
         </h1>
         <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Defina datos base; suba ficha tÈcnica e im·genes a MinIO.
+          Defina datos base; suba ficha t√©cnica e im√°genes a MinIO.
         </p>
       </div>
     </div>
@@ -149,21 +149,21 @@ const goBack = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo`
       :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
     >
       <div class="grid sm:grid-cols-2 gap-4">
-        <FormInput v-model="code" label="CÛdigo" required placeholder="MAT-..." />
-        <FormInput v-model="name" label="Nombre" required placeholder="DescripciÛn corta" />
+        <FormInput v-model="code" label="C√≥digo" required placeholder="MAT-..." />
+        <FormInput v-model="name" label="Nombre" required placeholder="Descripci√≥n corta" />
       </div>
       <div class="grid sm:grid-cols-2 gap-4">
-        <FormInput v-model="category" label="CategorÌa" required />
+        <FormInput v-model="category" label="Categor√≠a" required />
         <FormInput v-model="brand" label="Marca" required />
       </div>
       <div class="grid sm:grid-cols-3 gap-4">
-        <FormInput v-model="unit" label="Unidad" required placeholder="m≤, gal, undÖ" />
+        <FormInput v-model="unit" label="Unidad" required placeholder="m¬≤, gal, und¬Ö" />
         <FormInput v-model="price" type="number" label="Precio ref." required />
         <FormInput v-model="stock" type="number" label="Stock" />
       </div>
 
       <div class="space-y-2">
-        <p class="text-sm font-medium">Ficha tÈcnica</p>
+        <p class="text-sm font-medium">Ficha t√©cnica</p>
         <FileDropzone
           v-model="sheetFile"
           accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
@@ -194,7 +194,7 @@ const goBack = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo`
       </div>
 
       <div class="space-y-2">
-        <p class="text-sm font-medium">Im·genes</p>
+        <p class="text-sm font-medium">Im√°genes</p>
         <FileDropzone
           v-model="imageFile"
           accept=".png,.jpg,.jpeg,.webp"

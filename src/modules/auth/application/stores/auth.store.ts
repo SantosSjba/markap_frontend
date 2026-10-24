@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { queryClient } from '@core/plugins/vue-query'
 import { ref, computed } from 'vue'
+import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
 import { authApiRepository } from '../../infrastructure/repositories/auth.api.repository'
 import type { User, LoginCredentials } from '../../domain/auth.types'
 
@@ -63,16 +64,11 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error: unknown) {
       console.error('Login failed:', error)
 
-      let errorMessage = 'Error al iniciar sesión'
-
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: { message?: string }; status?: number } }
-        if (axiosError.response?.status === 401) {
-          errorMessage = 'Credenciales inválidas'
-        } else if (axiosError.response?.data?.message) {
-          errorMessage = axiosError.response.data.message
-        }
-      }
+      const status = (error as { response?: { status?: number } })?.response?.status
+      const errorMessage =
+        status === 401
+          ? 'Credenciales inválidas'
+          : getApiErrorMessage(error, 'No se pudo iniciar sesión')
 
       return { success: false, error: errorMessage }
     } finally {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, useAttrs } from 'vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**
@@ -11,6 +12,9 @@ interface Props {
   disabled?: boolean
 }
 
+// Atributos nativos al <input>; class y style al contenedor.
+defineOptions({ inheritAttrs: false })
+
 withDefaults(defineProps<Props>(), {
   placeholder: 'Buscar...',
   disabled: false,
@@ -20,6 +24,15 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+const attrs = useAttrs()
+const wrapperAttrs = computed(() => ({ class: attrs.class, style: attrs.style }))
+const inputAttrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs
+  void _class
+  void _style
+  return rest
+})
+
 const handleInput = (e: Event) => {
   const target = e.target as HTMLInputElement
   emit('update:modelValue', target.value)
@@ -27,7 +40,7 @@ const handleInput = (e: Event) => {
 </script>
 
 <template>
-  <div class="relative w-full">
+  <div class="relative w-full" v-bind="wrapperAttrs">
     <AppIcon
       icon="lucide:search"
       :size="20"
@@ -36,9 +49,11 @@ const handleInput = (e: Event) => {
       aria-hidden="true"
     />
     <input
+      v-bind="inputAttrs"
       :value="modelValue"
       type="search"
       :placeholder="placeholder"
+      :aria-label="placeholder"
       :disabled="disabled"
       class="w-full rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
       :style="{

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, useAttrs, useId } from 'vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**
@@ -23,6 +24,9 @@ interface Props {
   id?: string
 }
 
+// Atributos nativos al <select>; class y style al contenedor.
+defineOptions({ inheritAttrs: false })
+
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Seleccionar...',
   disabled: false,
@@ -32,7 +36,17 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['update:modelValue', 'change'])
 
-const selectId = props.id ?? `select-${Math.random().toString(36).slice(2, 11)}`
+const selectId = props.id ?? `select-${useId()}`
+const messageId = `${selectId}-message`
+const attrs = useAttrs()
+const wrapperAttrs = computed(() => ({ class: attrs.class, style: attrs.style }))
+const controlAttrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs
+  void _class
+  void _style
+  return rest
+})
+
 
 const selectValue = () => {
   const v = props.modelValue
@@ -42,14 +56,16 @@ const selectValue = () => {
 
 const handleChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
-  const value = target.value || null
+  // Devuelve el valor original de la opción (número si la opción es numérica).
+  const option = props.options.find((o) => String(o.value) === target.value)
+  const value = target.value === '' ? null : (option?.value ?? target.value)
   emit('update:modelValue', value)
   emit('change', value)
 }
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="w-full" v-bind="wrapperAttrs">
     <label
       v-if="label"
       :for="selectId"
@@ -61,11 +77,14 @@ const handleChange = (event: Event) => {
     </label>
     <div class="relative">
       <select
+        v-bind="controlAttrs"
         :id="selectId"
         :value="selectValue()"
         :disabled="disabled || loading"
         :required="required"
-        class="w-full px-4 py-2.5 rounded-lg border appearance-none pr-10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-60 disabled:cursor-not-allowed"
+        :aria-invalid="error ? 'true' : undefined"
+        :aria-describedby="error ? messageId : undefined"
+        class="w-full px-4 py-2.5 rounded-lg border appearance-none pr-10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
         :style="{
           borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
@@ -99,7 +118,7 @@ const handleChange = (event: Event) => {
         />
       </div>
     </div>
-    <p v-if="error" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">
+    <p v-if="error" :id="messageId" role="alert" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">
       {{ error }}
     </p>
   </div>

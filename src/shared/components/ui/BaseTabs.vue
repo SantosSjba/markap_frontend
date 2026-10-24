@@ -29,11 +29,12 @@ function selectTab(id: string) {
 
 <template>
   <div class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-    <nav class="flex gap-1 overflow-x-auto scrollbar-none" aria-label="Tabs">
+    <nav class="flex gap-1 overflow-x-auto scrollbar-none" role="tablist" aria-label="Pestañas">
       <button
         v-for="tab in tabs"
         :key="tab.id"
         type="button"
+        role="tab"
         :aria-selected="activeId === tab.id"
         :class="[
           'flex items-center gap-1.5 px-4 py-3 text-sm font-medium rounded-t-lg transition-colors border-b-2 -mb-px whitespace-nowrap shrink-0',

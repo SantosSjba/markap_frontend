@@ -1,5 +1,9 @@
+<script lang="ts">
+const openModals: symbol[] = []
+</script>
+
 <script setup lang="ts">
-import { watch } from 'vue'
+import { onBeforeUnmount, useId, watch } from 'vue'
 import AppIcon from '@shared/components/ui/AppIcon.vue'
 
 /**
@@ -48,29 +52,45 @@ const handleBackdropClick = () => {
   }
 }
 
-// Handle escape key
+const titleId = `modal-title-${useId()}`
+
+/**
+ * Pila de modales abiertos: Escape cierra solo el de arriba y el scroll del
+ * body se restaura cuando se cierra el último (también si la vista se desmonta
+ * con el modal abierto).
+ */
+const token = Symbol('modal')
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Escape' || openModals[openModals.length - 1] !== token || props.persistent) return
+  e.stopPropagation()
+  close()
+}
+
+function release() {
+  const index = openModals.indexOf(token)
+  if (index === -1) return
+  openModals.splice(index, 1)
+  document.removeEventListener('keydown', onKeydown)
+  if (openModals.length === 0) document.body.style.overflow = ''
+}
+
 watch(
   () => props.modelValue,
   (isOpen) => {
     if (isOpen) {
+      if (openModals.includes(token)) return
+      openModals.push(token)
       document.body.style.overflow = 'hidden'
-      
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && !props.persistent) {
-          close()
-        }
-      }
-      
-      document.addEventListener('keydown', handleEscape)
-      
-      return () => {
-        document.removeEventListener('keydown', handleEscape)
-      }
+      document.addEventListener('keydown', onKeydown)
     } else {
-      document.body.style.overflow = ''
+      release()
     }
-  }
+  },
+  { immediate: true },
 )
+
+onBeforeUnmount(release)
 </script>
 
 <template>
@@ -100,6 +120,9 @@ watch(
         >
           <div
             v-if="modelValue"
+            role="dialog"
+            aria-modal="true"
+            :aria-labelledby="title ? titleId : undefined"
             :class="[
               'relative w-full rounded-xl shadow-xl flex flex-col max-h-[min(90dvh,calc(100vh-2rem))] overflow-hidden',
               sizeClasses[size],
@@ -113,7 +136,7 @@ watch(
               style="border-color: var(--color-border);"
             >
               <slot name="title">
-                <h3 v-if="title" class="text-lg font-semibold" style="color: var(--color-text-primary);">
+                <h3 v-if="title" :id="titleId" class="text-lg font-semibold" style="color: var(--color-text-primary);">
                   {{ title }}
                 </h3>
               </slot>
@@ -121,6 +144,7 @@ watch(
                 v-if="closable"
                 type="button"
                 class="p-1 rounded hover-surface transition-colors ml-auto"
+                aria-label="Cerrar"
                 style="color: var(--color-text-muted);"
                 @click="close"
               >
