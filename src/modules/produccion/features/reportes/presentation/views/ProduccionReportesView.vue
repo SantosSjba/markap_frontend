@@ -250,8 +250,15 @@ async function exportDashboardExcel() {
           Producción, ventas, inventario valorizado y rentabilidad por mueble.
         </p>
       </div>
-      <BaseButton variant="secondary" :loading="isExporting" :disabled="!d" @click="exportDashboardExcel">
-        <ExcelIcon class="mr-1.5" />
+      <BaseButton
+        variant="secondary"
+        size="sm"
+        class="w-full sm:w-auto self-start shrink-0 whitespace-nowrap"
+        :loading="isExporting"
+        :disabled="!d"
+        @click="exportDashboardExcel"
+      >
+        <ExcelIcon class="w-4 h-4 shrink-0" aria-hidden="true" />
         Exportar Excel
       </BaseButton>
     </div>
