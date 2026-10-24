@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   CreateContabilidadJournalBody,
   ListContabilidadJournalParams,
@@ -18,7 +18,7 @@ export const contabilidadJournalKeys = {
 }
 
 export function invalidateContabilidadJournalCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadJournalKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadJournalList(params: Ref<ListContabilidadJournalParams>) {
@@ -42,8 +42,8 @@ export function useContabilidadCreateJournal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateContabilidadJournalBody) => journalRepository.create(body),
-    onSuccess: () => {
-      void invalidateContabilidadJournalCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadJournalCache(qc)
       void markapAlert.toast.success('Asiento guardado en borrador')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo crear', getApiErrorMessage(e)),
@@ -55,10 +55,10 @@ export function useContabilidadUpdateJournal() {
   return useMutation({
     mutationFn: (args: { id: string; body: UpdateContabilidadJournalBody }) =>
       journalRepository.update(args.id, args.body),
-    onSuccess: (_, vars) => {
-      void invalidateContabilidadJournalCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadJournalCache(qc)
       void markapAlert.toast.success('Asiento actualizado')
-      void qc.invalidateQueries({ queryKey: contabilidadJournalKeys.detail(vars.id) })
+      await invalidateModuleQueries(qc, 'contabilidad')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
   })
@@ -68,8 +68,8 @@ export function useContabilidadDeleteJournal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => journalRepository.deleteDraft(id),
-    onSuccess: () => {
-      void invalidateContabilidadJournalCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadJournalCache(qc)
       void markapAlert.toast.success('Borrador eliminado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(e)),
@@ -80,10 +80,10 @@ export function useContabilidadPostJournal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => journalRepository.post(id),
-    onSuccess: (_, id) => {
-      void invalidateContabilidadJournalCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadJournalCache(qc)
       void markapAlert.toast.success('Asiento publicado')
-      void qc.invalidateQueries({ queryKey: contabilidadJournalKeys.detail(id) })
+      await invalidateModuleQueries(qc, 'contabilidad')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo publicar', getApiErrorMessage(e)),
   })
@@ -93,8 +93,8 @@ export function useContabilidadReverseJournal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => journalRepository.reverse(id),
-    onSuccess: () => {
-      void invalidateContabilidadJournalCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadJournalCache(qc)
       void markapAlert.toast.success('Asiento reversado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo reversar', getApiErrorMessage(e)),

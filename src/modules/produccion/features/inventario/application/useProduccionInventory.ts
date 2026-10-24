@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
 import type {
   CreateMaterialPayload,
@@ -43,22 +43,22 @@ export function useProduccionMovementsList(params: Ref<ListMovementsParams>) {
 
 export function useMaterialMutations() {
   const qc = useQueryClient()
-  const invalidate = () => invalidateQuerySubtree(qc, produccionInventoryKeys.all)
+  const invalidate = () => invalidateModuleQueries(qc, 'produccion')
 
   const create = useMutation({
     mutationFn: (payload: CreateMaterialPayload) => produccionInventoryApi.createMaterial(payload),
-    onSuccess: () => { invalidate(); void markapAlert.toast.success('Material creado') },
+    onSuccess: async () => { await invalidate(); void markapAlert.toast.success('Material creado') },
     onError: (err) => { void markapAlert.toast.error('Error', getApiErrorMessage(err)) },
   })
   const update = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateMaterialPayload }) =>
       produccionInventoryApi.updateMaterial(id, payload),
-    onSuccess: () => { invalidate(); void markapAlert.toast.success('Material actualizado') },
+    onSuccess: async () => { await invalidate(); void markapAlert.toast.success('Material actualizado') },
     onError: (err) => { void markapAlert.toast.error('Error', getApiErrorMessage(err)) },
   })
   const remove = useMutation({
     mutationFn: (id: string) => produccionInventoryApi.deleteMaterial(id),
-    onSuccess: () => { invalidate(); void markapAlert.toast.success('Material eliminado') },
+    onSuccess: async () => { await invalidate(); void markapAlert.toast.success('Material eliminado') },
     onError: (err) => { void markapAlert.toast.error('Error', getApiErrorMessage(err)) },
   })
 
@@ -67,12 +67,12 @@ export function useMaterialMutations() {
 
 export function useMovementMutations() {
   const qc = useQueryClient()
-  const invalidate = () => invalidateQuerySubtree(qc, produccionInventoryKeys.all)
+  const invalidate = () => invalidateModuleQueries(qc, 'produccion')
 
   return useMutation({
     mutationFn: (payload: CreateMovementPayload) => produccionInventoryApi.createMovement(payload),
-    onSuccess: () => {
-      invalidate()
+    onSuccess: async () => {
+      await invalidate()
       void markapAlert.toast.success('Movimiento registrado')
     },
     onError: (err) => {

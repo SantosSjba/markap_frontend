@@ -29,7 +29,7 @@ async function submitUpload() {
 async function onDelete(id: string) {
   const ok = await markapAlert.confirmDanger({
     title: 'Eliminar adjunto',
-    text: 'Â¿Eliminar este archivo del presupuesto?',
+    text: '¿Eliminar este archivo del presupuesto?',
   })
   if (!ok) return
   await deleteAtt.mutateAsync(id)
@@ -45,7 +45,7 @@ async function openAttachment(id: string) {
 }
 
 function formatSize(bytes: number | null) {
-  if (bytes == null) return 'â€”'
+  if (bytes == null) return '—'
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -53,7 +53,7 @@ function formatSize(bytes: number | null) {
 </script>
 
 <template>
-  <FormSectionCard title="Adjuntos del presupuesto" subtitle="Cotizaciones, fichas tÃ©cnicas, comprobantes" icon="lucide:paperclip" dense>
+  <FormSectionCard title="Adjuntos del presupuesto" subtitle="Cotizaciones, fichas técnicas, comprobantes" icon="lucide:paperclip" dense>
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row gap-3 items-start">
         <div class="flex-1 w-full">
@@ -75,7 +75,7 @@ function formatSize(bytes: number | null) {
         </BaseButton>
       </div>
 
-      <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando adjuntosâ€¦</div>
+      <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando adjuntos…</div>
       <ul v-else-if="attachments?.length" class="divide-y" :style="{ borderColor: 'var(--color-border)' }">
         <li
           v-for="att in attachments"

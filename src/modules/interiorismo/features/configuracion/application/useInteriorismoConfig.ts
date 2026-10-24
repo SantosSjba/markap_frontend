@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type { InteriorismoProjectStageDTO } from '../domain/config.types'
 import { interiorismoConfigApiRepository as interiorismoConfigRepository } from '../infrastructure/repositories/interiorismo-config.api.repository'
 
@@ -11,7 +11,7 @@ export const interiorismoConfigKeys = {
 }
 
 export function invalidateInteriorismoConfigCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, interiorismoConfigKeys.root)
+  return invalidateModuleQueries(qc, 'interiorismo')
 }
 
 export function useInteriorismoConfigBootstrap() {
@@ -27,8 +27,8 @@ export function useInteriorismoSaveProjectStages() {
   return useMutation({
     mutationFn: (stages: InteriorismoProjectStageDTO[]) =>
       interiorismoConfigRepository.replaceProjectStages(stages),
-    onSuccess: () => {
-      void invalidateInteriorismoConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateInteriorismoConfigCache(qc)
       void markapAlert.toast.success('Etapas actualizadas')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -40,8 +40,8 @@ export function useInteriorismoSaveInteriorProjectNumbering() {
   return useMutation({
     mutationFn: (body: { prefix?: string; lastNumber?: number }) =>
       interiorismoConfigRepository.patchInteriorProjectNumbering(body),
-    onSuccess: () => {
-      void invalidateInteriorismoConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateInteriorismoConfigCache(qc)
       void markapAlert.toast.success('Numeración actualizada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),

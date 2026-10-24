@@ -267,7 +267,7 @@ async function downloadCdr(logId: string) {
     </PageHeader>
 
     <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
-      Configure el periodo activo en Configuración ? Contexto contable.
+      Configure el periodo activo en ConfiguraciÃ³n ? Contexto contable.
     </p>
 
     <div

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   ProduccionAppSettingsDTO,
   ProduccionFurnitureCategoryDTO,
@@ -17,7 +17,7 @@ export const produccionConfigKeys = {
 }
 
 export function invalidateProduccionConfigCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, produccionConfigKeys.root)
+  return invalidateModuleQueries(qc, 'produccion')
 }
 
 export function useProduccionConfigBootstrap() {
@@ -33,8 +33,8 @@ export function useProduccionSaveSettings() {
   return useMutation({
     mutationFn: (body: Partial<ProduccionAppSettingsDTO>) =>
       produccionConfigRepository.updateSettings(body),
-    onSuccess: () => {
-      void invalidateProduccionConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateProduccionConfigCache(qc)
       void markapAlert.toast.success('Parámetros actualizados')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -46,8 +46,8 @@ export function useProduccionSaveFurnitureCategories() {
   return useMutation({
     mutationFn: (categories: ProduccionFurnitureCategoryDTO[]) =>
       produccionConfigRepository.replaceFurnitureCategories(categories),
-    onSuccess: () => {
-      void invalidateProduccionConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateProduccionConfigCache(qc)
       void markapAlert.toast.success('Categorías actualizadas')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -59,8 +59,8 @@ export function useProduccionSaveMaterialCategories() {
   return useMutation({
     mutationFn: (categories: ProduccionMaterialCategoryDTO[]) =>
       produccionConfigRepository.replaceMaterialCategories(categories),
-    onSuccess: () => {
-      void invalidateProduccionConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateProduccionConfigCache(qc)
       void markapAlert.toast.success('Categorías de materiales actualizadas')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -72,8 +72,8 @@ export function useProduccionSaveProductionStages() {
   return useMutation({
     mutationFn: (stages: ProduccionProductionStageDTO[]) =>
       produccionConfigRepository.replaceProductionStages(stages),
-    onSuccess: () => {
-      void invalidateProduccionConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateProduccionConfigCache(qc)
       void markapAlert.toast.success('Etapas actualizadas')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -84,8 +84,8 @@ export function useProduccionSaveUnits() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (units: ProduccionUnitDTO[]) => produccionConfigRepository.replaceUnits(units),
-    onSuccess: () => {
-      void invalidateProduccionConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateProduccionConfigCache(qc)
       void markapAlert.toast.success('Unidades actualizadas')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -99,8 +99,8 @@ export function useProduccionPatchNumbering() {
       seriesKey: string
       body: { prefix?: string; lastNumber?: number; padLength?: number; includeYear?: boolean }
     }) => produccionConfigRepository.patchNumbering(args.seriesKey, args.body),
-    onSuccess: () => {
-      void invalidateProduccionConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateProduccionConfigCache(qc)
       void markapAlert.toast.success('Numeración actualizada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),

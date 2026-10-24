@@ -17,10 +17,11 @@ const isUserMenuOpen = ref(false)
 // Labels descriptivos por slug de aplicación
 const statsLabels: Record<string, { active: string; pending: string }> = {
   alquileres: { active: 'contratos activos', pending: 'pagos pendientes' },
-  interiorismo: { active: 'proyectos activos', pending: 'presupuestos pendientes' },
-  arquitectura: { active: 'proyectos activos', pending: 'entregables pendientes' },
+  ventas: { active: 'procesos activos', pending: 'pagos pendientes' },
+  interiorismo: { active: 'proyectos activos', pending: 'proyectos en cotización' },
+  arquitectura: { active: 'proyectos activos', pending: 'proyectos en cotización' },
   produccion: { active: 'órdenes en planta', pending: 'OC pendientes' },
-  contabilidad: { active: 'asientos del mes', pending: 'facturas por revisar' },
+  contabilidad: { active: 'asientos del mes', pending: 'comprobantes sin emitir' },
 }
 const DEFAULT_LABELS = { active: 'activos', pending: 'pendientes' }
 

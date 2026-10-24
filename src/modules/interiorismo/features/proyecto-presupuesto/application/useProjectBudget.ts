@@ -2,9 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
-import { interiorProjectKeys } from '@modules/interiorismo/features/proyectos/application/useInteriorProjects'
 import type {
   CreateLineItemSupplierPaymentPayload,
   CreateProjectBudgetLineItemPayload,
@@ -20,10 +19,8 @@ export const projectBudgetKeys = {
   settlement: (projectId: string) => [...projectBudgetKeys.all, 'settlement', projectId] as const,
 }
 
-function invalidateBudget(qc: ReturnType<typeof useQueryClient>, projectId: string) {
-  qc.invalidateQueries({ queryKey: projectBudgetKeys.budget(projectId) })
-  qc.invalidateQueries({ queryKey: projectBudgetKeys.settlement(projectId) })
-  invalidateQuerySubtree(qc, interiorProjectKeys.detail(projectId))
+function invalidateBudget(qc: ReturnType<typeof useQueryClient>, _projectId: string) {
+  return invalidateModuleQueries(qc, 'interiorismo')
 }
 
 export function useProjectBudget(projectId: Ref<string> | string) {
@@ -48,8 +45,8 @@ export function useCreateBudgetSection(projectId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateProjectBudgetSectionPayload) => repo.createSection(unref(projectId), payload),
-    onSuccess: () => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async () => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success('Sección creada')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo crear la sección', getApiErrorMessage(err)),
@@ -61,8 +58,8 @@ export function useUpdateBudgetSection(projectId: Ref<string> | string) {
   return useMutation({
     mutationFn: ({ sectionId, payload }: { sectionId: string; payload: UpdateProjectBudgetSectionPayload }) =>
       repo.updateSection(unref(projectId), sectionId, payload),
-    onSuccess: () => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async () => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success('Sección actualizada')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(err)),
@@ -73,8 +70,8 @@ export function useDeleteBudgetSection(projectId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (sectionId: string) => repo.deleteSection(unref(projectId), sectionId),
-    onSuccess: () => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async () => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success('Sección eliminada')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),
@@ -85,8 +82,8 @@ export function useCreateBudgetLineItem(projectId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateProjectBudgetLineItemPayload) => repo.createLineItem(unref(projectId), payload),
-    onSuccess: () => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async () => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success('Partida agregada')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo agregar la partida', getApiErrorMessage(err)),
@@ -98,8 +95,8 @@ export function useUpdateBudgetLineItem(projectId: Ref<string> | string) {
   return useMutation({
     mutationFn: ({ lineItemId, payload }: { lineItemId: string; payload: UpdateProjectBudgetLineItemPayload }) =>
       repo.updateLineItem(unref(projectId), lineItemId, payload),
-    onSuccess: () => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async () => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success('Partida actualizada')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(err)),
@@ -110,8 +107,8 @@ export function useDeleteBudgetLineItem(projectId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (lineItemId: string) => repo.deleteLineItem(unref(projectId), lineItemId),
-    onSuccess: () => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async () => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success('Partida eliminada')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),
@@ -123,8 +120,8 @@ export function useCreateSupplierPayment(projectId: Ref<string> | string) {
   return useMutation({
     mutationFn: (payload: CreateLineItemSupplierPaymentPayload) =>
       repo.createSupplierPayment(unref(projectId), payload),
-    onSuccess: () => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async () => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success('Abono registrado')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo registrar el abono', getApiErrorMessage(err)),
@@ -135,8 +132,8 @@ export function useDeleteSupplierPayment(projectId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (paymentId: string) => repo.deleteSupplierPayment(unref(projectId), paymentId),
-    onSuccess: () => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async () => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success('Abono eliminado')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),
@@ -160,8 +157,8 @@ export function useDuplicateBudgetSnapshot(projectId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () => repo.duplicateSnapshot(unref(projectId)),
-    onSuccess: (result) => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async (result) => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success(
         `Snapshot creado: ${result.sectionsCreated} secciones, ${result.lineItemsCreated} partidas`,
       )
@@ -175,8 +172,8 @@ export function useSyncBudgetFromExecution(projectId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () => repo.syncFromExecution(unref(projectId)),
-    onSuccess: (result) => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async (result) => {
+      await invalidateBudget(qc, unref(projectId))
       const extra =
         result.unmatchedConcepts.length > 0
           ? ` · ${result.unmatchedConcepts.length} concepto(s) sin partida coincidente`
@@ -193,8 +190,8 @@ export function useImportBudgetExcel(projectId: Ref<string> | string) {
   return useMutation({
     mutationFn: ({ file, replace }: { file: File; replace?: boolean }) =>
       repo.importExcel(unref(projectId), file, replace),
-    onSuccess: (result) => {
-      invalidateBudget(qc, unref(projectId))
+    onSuccess: async (result) => {
+      await invalidateBudget(qc, unref(projectId))
       void markapAlert.toast.success(
         `Importado: ${result.sectionsCreated} secciones, ${result.lineItemsCreated} partidas`,
       )
@@ -219,8 +216,8 @@ export function useUploadBudgetAttachment(projectId: Ref<string> | string) {
   return useMutation({
     mutationFn: ({ file, lineItemId }: { file: File; lineItemId?: string | null }) =>
       repo.uploadAttachment(unref(projectId), file, { lineItemId }),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, projectBudgetKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Adjunto subido')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo subir el adjunto', getApiErrorMessage(err)),
@@ -231,8 +228,8 @@ export function useDeleteBudgetAttachment(projectId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (attachmentId: string) => repo.deleteAttachment(unref(projectId), attachmentId),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, projectBudgetKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Adjunto eliminado')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),

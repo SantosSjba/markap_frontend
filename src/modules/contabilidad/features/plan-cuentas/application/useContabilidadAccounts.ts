@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   CreateContabilidadAccountBody,
   UpdateContabilidadAccountBody,
@@ -16,7 +16,7 @@ export const contabilidadAccountsKeys = {
 }
 
 export function invalidateContabilidadAccountsCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadAccountsKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadAccountsTree(search: Ref<string>) {
@@ -31,8 +31,8 @@ export function useContabilidadCreateAccount() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateContabilidadAccountBody) => accountsRepository.create(body),
-    onSuccess: () => {
-      void invalidateContabilidadAccountsCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadAccountsCache(qc)
       void markapAlert.toast.success('Cuenta creada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo crear', getApiErrorMessage(e)),
@@ -44,8 +44,8 @@ export function useContabilidadUpdateAccount() {
   return useMutation({
     mutationFn: (args: { id: string; body: UpdateContabilidadAccountBody }) =>
       accountsRepository.update(args.id, args.body),
-    onSuccess: () => {
-      void invalidateContabilidadAccountsCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadAccountsCache(qc)
       void markapAlert.toast.success('Cuenta actualizada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
@@ -56,8 +56,8 @@ export function useContabilidadDeactivateAccount() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => accountsRepository.deactivate(id),
-    onSuccess: () => {
-      void invalidateContabilidadAccountsCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadAccountsCache(qc)
       void markapAlert.toast.success('Cuenta desactivada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo desactivar', getApiErrorMessage(e)),
@@ -76,8 +76,8 @@ export function useContabilidadImportPcge() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (classes: string) => accountsRepository.importPcge(classes),
-    onSuccess: (result) => {
-      void invalidateContabilidadAccountsCache(qc)
+    onSuccess: async (result) => {
+      await invalidateContabilidadAccountsCache(qc)
       void markapAlert.toast.success(
         `Importación PCGE: ${result.created} creadas, ${result.skipped} omitidas`,
       )

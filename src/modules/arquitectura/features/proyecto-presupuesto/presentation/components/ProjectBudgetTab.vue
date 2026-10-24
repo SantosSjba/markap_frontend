@@ -94,8 +94,8 @@ async function submitLine() {
 
 async function onDeleteSection(sectionId: string, name: string) {
   const ok = await markapAlert.confirmDanger({
-    title: 'Eliminar secciÃ³n',
-    text: `Â¿Eliminar "${name}" y todas sus partidas?`,
+    title: 'Eliminar sección',
+    text: `¿Eliminar "${name}" y todas sus partidas?`,
   })
   if (!ok) return
   await deleteSection.mutateAsync(sectionId)
@@ -104,7 +104,7 @@ async function onDeleteSection(sectionId: string, name: string) {
 async function onDeleteLine(lineItemId: string) {
   const ok = await markapAlert.confirmDanger({
     title: 'Eliminar partida',
-    text: 'Esta acciÃ³n no se puede deshacer.',
+    text: 'Esta acción no se puede deshacer.',
   })
   if (!ok) return
   await deleteLine.mutateAsync(lineItemId)
@@ -113,7 +113,7 @@ async function onDeleteLine(lineItemId: string) {
 async function onDuplicateSnapshot() {
   const ok = await markapAlert.confirm({
     title: 'Duplicar presupuesto',
-    text: 'Se crearÃ¡ una copia de todas las secciones y partidas (solo datos cliente, sin compras ni abonos). Â¿Continuar?',
+    text: 'Se creará una copia de todas las secciones y partidas (solo datos cliente, sin compras ni abonos). ¿Continuar?',
     confirmText: 'Duplicar',
   })
   if (!ok) return
@@ -140,7 +140,7 @@ async function saveLineField(
 }
 
 const lineCols = [
-  { key: 'description', label: 'DescripciÃ³n', align: 'left' as const },
+  { key: 'description', label: 'Descripción', align: 'left' as const },
   { key: 'budgetedCost', label: 'Costo', align: 'left' as const },
   { key: 'utility', label: 'Utilidad', align: 'left' as const },
   { key: 'price', label: 'Precio', align: 'left' as const },
@@ -168,28 +168,28 @@ const lineCols = [
 
     <FormSectionCard
       title="Cabecera del presupuesto"
-      subtitle="Datos del proyecto segÃºn modelo Excel"
+      subtitle="Datos del proyecto según modelo Excel"
       icon="lucide:file-spreadsheet"
     >
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
         <div>
           <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Ciudad</p>
-          <p :style="{ color: 'var(--color-text-primary)' }">{{ budget.city ?? 'â€”' }}</p>
+          <p :style="{ color: 'var(--color-text-primary)' }">{{ budget.city ?? '—' }}</p>
         </div>
         <div>
-          <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Nivel intervenciÃ³n</p>
+          <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Nivel intervención</p>
           <p :style="{ color: 'var(--color-text-primary)' }">
-            {{ budget.interventionLevel ? (INTERVENTION_LEVEL_LABELS[budget.interventionLevel] ?? budget.interventionLevel) : 'â€”' }}
+            {{ budget.interventionLevel ? (INTERVENTION_LEVEL_LABELS[budget.interventionLevel] ?? budget.interventionLevel) : '—' }}
           </p>
         </div>
         <div>
-          <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Tiempo ejecuciÃ³n</p>
-          <p :style="{ color: 'var(--color-text-primary)' }">{{ budget.executionTimeNote ?? 'â€”' }}</p>
+          <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Tiempo ejecución</p>
+          <p :style="{ color: 'var(--color-text-primary)' }">{{ budget.executionTimeNote ?? '—' }}</p>
         </div>
         <div>
           <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Utilidad / IGV</p>
           <p :style="{ color: 'var(--color-text-primary)' }">
-            {{ budget.defaultUtilityPct }}% Â· IGV {{ budget.defaultIgvPct }}%
+            {{ budget.defaultUtilityPct }}% · IGV {{ budget.defaultIgvPct }}%
           </p>
         </div>
       </div>
@@ -197,7 +197,7 @@ const lineCols = [
 
     <div class="flex flex-wrap items-center justify-between gap-3">
       <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-        {{ budget.sections.length }} secciones Â· Vista cliente (precio final por partida)
+        {{ budget.sections.length }} secciones · Vista cliente (precio final por partida)
       </p>
       <div class="flex flex-wrap items-center gap-2">
         <BaseButton size="sm" variant="outline" @click="showImportModal = true">
@@ -220,7 +220,7 @@ const lineCols = [
         </BaseButton>
         <BaseButton size="sm" variant="primary" @click="openAddSection">
           <AppIcon icon="lucide:plus" :size="16" class="mr-1" />
-          Nueva secciÃ³n
+          Nueva sección
         </BaseButton>
       </div>
     </div>
@@ -233,7 +233,7 @@ const lineCols = [
       v-for="section in budget.sections"
       :key="section.id"
       :title="section.name"
-      :subtitle="`${section.lineItems.length} partidas Â· ${formatSol(section.sectionTotal)}`"
+      :subtitle="`${section.lineItems.length} partidas · ${formatSol(section.sectionTotal)}`"
       icon="lucide:layers"
       dense
     >
@@ -257,7 +257,7 @@ const lineCols = [
                 icon: 'lucide:pencil',
                 onClick: async () => {
                   const name = await markapAlert.promptText({
-                    title: 'Renombrar secciÃ³n',
+                    title: 'Renombrar sección',
                     placeholder: section.name,
                     confirmText: 'Guardar',
                   })
@@ -265,7 +265,7 @@ const lineCols = [
                 },
               },
               {
-                label: 'Eliminar secciÃ³n',
+                label: 'Eliminar sección',
                 icon: 'lucide:trash-2',
                 danger: true,
                 onClick: () => onDeleteSection(section.id, section.name),
@@ -277,7 +277,7 @@ const lineCols = [
 
       <div v-show="isExpanded(section.id)" class="space-y-3">
         <DataTable
-          empty-text="Sin partidas en esta secciÃ³n."
+          empty-text="Sin partidas en esta sección."
           :columns="lineCols"
           :data="section.lineItems"
           row-key="id"
@@ -340,8 +340,8 @@ const lineCols = [
 
     <ProjectBudgetAttachments :project-id="projectId" />
 
-    <BaseModal v-model="showSectionModal" title="Nueva secciÃ³n">
-      <FormInput v-model="newSectionName" label="Nombre de la secciÃ³n" placeholder="Ej. PRIMER NIVEL" />
+    <BaseModal v-model="showSectionModal" title="Nueva sección">
+      <FormInput v-model="newSectionName" label="Nombre de la sección" placeholder="Ej. PRIMER NIVEL" />
       <template #footer>
         <div class="flex justify-end gap-2">
           <BaseButton variant="outline" type="button" @click="showSectionModal = false">Cancelar</BaseButton>
@@ -354,7 +354,7 @@ const lineCols = [
 
     <BaseModal v-model="showLineModal" title="Nueva partida">
       <div class="space-y-4">
-        <FormInput v-model="lineDraft.description" label="DescripciÃ³n" />
+        <FormInput v-model="lineDraft.description" label="Descripción" />
         <FormInput v-model.number="lineDraft.budgetedCost" label="Costo presupuestado (S/)" type="number" />
         <FormCheckbox v-model="lineDraft.hasIgv" label="Aplica IGV" />
       </div>
@@ -371,7 +371,7 @@ const lineCols = [
     <BaseModal v-model="showImportModal" title="Importar presupuesto desde Excel">
       <div class="space-y-4">
         <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-          Formato esperado: columnas DescripciÃ³n y Costo. Las filas sin costo se interpretan como secciones.
+          Formato esperado: columnas Descripción y Costo. Las filas sin costo se interpretan como secciones.
         </p>
         <FileDropzone v-model="importFile" accept=".xlsx,.xls" />
         <FormCheckbox v-model="importReplace" label="Reemplazar secciones existentes" />

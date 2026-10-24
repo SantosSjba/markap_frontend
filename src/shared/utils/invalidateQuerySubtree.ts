@@ -10,7 +10,12 @@ export function invalidateQuerySubtree(
   queryClient: QueryClient,
   queryKey: QueryKey,
 ): Promise<void> {
-  return queryClient.invalidateQueries({ queryKey, refetchType: 'all' })
+  const invalidations = [queryClient.invalidateQueries({ queryKey, refetchType: 'all' })]
+  const root = queryKey[0]
+  if (root === 'alquileres' || (typeof root === 'string' && root.startsWith('ventas-'))) {
+    invalidations.push(queryClient.invalidateQueries({ queryKey: ['applications', 'me'] }))
+  }
+  return Promise.all(invalidations).then(() => undefined)
 }
 
 /**

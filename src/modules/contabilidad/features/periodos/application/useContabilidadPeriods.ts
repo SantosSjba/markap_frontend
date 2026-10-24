@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { activeLegalEntityIdRef } from '@modules/contabilidad/config/api-scope'
 import type { ContabilidadPeriodStatus } from '../domain/period.types'
 import { contabilidadPeriodsApiRepository as periodsRepository } from '../infrastructure/repositories/contabilidad-periods.api.repository'
@@ -14,7 +14,7 @@ export const contabilidadPeriodsKeys = {
 }
 
 export function invalidateContabilidadPeriodsCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadPeriodsKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadPeriodsList(year: Ref<number>) {
@@ -31,8 +31,8 @@ export function useContabilidadSetPeriodStatus() {
   return useMutation({
     mutationFn: (args: { id: string; status: ContabilidadPeriodStatus }) =>
       periodsRepository.setStatus(args.id, args.status),
-    onSuccess: (_data, vars) => {
-      void invalidateContabilidadPeriodsCache(qc)
+    onSuccess: async (_data, vars) => {
+      await invalidateContabilidadPeriodsCache(qc)
       void markapAlert.toast.success(
         vars.status === 'OPEN' ? 'Periodo abierto' : 'Periodo cerrado',
       )

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
 import type {
   CreateProduccionFurniturePayload,
@@ -44,8 +44,8 @@ export function useCreateProduccionCatalogItem() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateProduccionFurniturePayload) => repo.create(payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, produccionCatalogKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'produccion')
       void markapAlert.toast.success('Mueble creado')
     },
     onError: (err) => {
@@ -58,8 +58,8 @@ export function useUpdateProduccionCatalogItem(id: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: UpdateProduccionFurniturePayload) => repo.update(unref(id), payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, produccionCatalogKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'produccion')
       void markapAlert.toast.success('Mueble guardado')
     },
     onError: (err) => {
@@ -72,8 +72,8 @@ export function useDeleteProduccionCatalogItem() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (itemId: string) => repo.delete(itemId),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, produccionCatalogKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'produccion')
       void markapAlert.toast.success('Mueble eliminado')
     },
     onError: (err) => {

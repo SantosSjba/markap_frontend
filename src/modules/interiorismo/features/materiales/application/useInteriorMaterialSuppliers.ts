@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
 import type {
   CreateInteriorMaterialSupplierPayload,
@@ -39,8 +39,8 @@ export function useCreateInteriorMaterialSupplier() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateInteriorMaterialSupplierPayload) => repo.create(payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Proveedor creado')
     },
     onError: (err) => {
@@ -54,8 +54,8 @@ export function useUpdateInteriorMaterialSupplier(id: Ref<string> | string) {
   return useMutation({
     mutationFn: (payload: UpdateInteriorMaterialSupplierPayload) =>
       repo.update(unref(id), payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Proveedor guardado')
     },
     onError: (err) => {
@@ -68,8 +68,8 @@ export function useDeleteInteriorMaterialSupplier() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (supplierId: string) => repo.delete(supplierId),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Proveedor eliminado')
     },
     onError: (err) => {
@@ -83,8 +83,8 @@ export function useLinkInteriorSupplierCatalog(supplierId: Ref<string> | string)
   return useMutation({
     mutationFn: (payload: LinkSupplierCatalogPayload) =>
       repo.linkCatalogMaterial(unref(supplierId), payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Material vinculado')
     },
     onError: (err) => {
@@ -97,8 +97,8 @@ export function useUnlinkInteriorSupplierCatalog() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (linkId: string) => repo.unlinkCatalogLink(linkId),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Vínculo eliminado')
     },
     onError: (err) => {
@@ -112,8 +112,8 @@ export function useRecordInteriorMaterialPurchase(supplierId: Ref<string> | stri
   return useMutation({
     mutationFn: (payload: RecordInteriorMaterialPurchasePayload) =>
       repo.recordPurchase(unref(supplierId), payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Compra registrada')
     },
     onError: (err) => {

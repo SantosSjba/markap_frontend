@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
 import type {
   CreateDeliveryPayload,
@@ -70,7 +70,7 @@ export function useProduccionDeliveryDetail(id: Ref<string> | string) {
 
 export function useQuotationMutations() {
   const qc = useQueryClient()
-  const invalidate = () => invalidateQuerySubtree(qc, produccionSalesKeys.all)
+  const invalidate = () => invalidateModuleQueries(qc, 'produccion')
 
   const create = useMutation({
     mutationFn: (payload: CreateQuotationPayload) => produccionSalesApi.createQuotation(payload),
@@ -120,7 +120,7 @@ export function useQuotationMutations() {
 
 export function useOrderMutations() {
   const qc = useQueryClient()
-  const invalidate = () => invalidateQuerySubtree(qc, produccionSalesKeys.all)
+  const invalidate = () => invalidateModuleQueries(qc, 'produccion')
 
   const confirm = useMutation({
     mutationFn: (id: string) => produccionSalesApi.confirmOrder(id),
@@ -157,7 +157,7 @@ export function useOrderMutations() {
 
 export function useDeliveryMutations() {
   const qc = useQueryClient()
-  const invalidate = () => invalidateQuerySubtree(qc, produccionSalesKeys.all)
+  const invalidate = () => invalidateModuleQueries(qc, 'produccion')
 
   const create = useMutation({
     mutationFn: (payload: CreateDeliveryPayload) => produccionSalesApi.createDelivery(payload),

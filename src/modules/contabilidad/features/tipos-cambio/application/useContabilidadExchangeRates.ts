@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type { ListExchangeRatesParams, UpsertExchangeRateBody } from '../domain/exchange-rate.types'
 import { contabilidadExchangeRatesApiRepository as exchangeRatesRepository } from '../infrastructure/repositories/contabilidad-exchange-rates.api.repository'
 
@@ -13,7 +13,7 @@ export const contabilidadExchangeRatesKeys = {
 }
 
 export function invalidateContabilidadExchangeRatesCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadExchangeRatesKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadExchangeRates(params: Ref<ListExchangeRatesParams>) {
@@ -28,8 +28,8 @@ export function useContabilidadUpsertExchangeRate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: UpsertExchangeRateBody) => exchangeRatesRepository.upsertRate(body),
-    onSuccess: () => {
-      void invalidateContabilidadExchangeRatesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadExchangeRatesCache(qc)
       void markapAlert.toast.success('Tipo de cambio guardado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),

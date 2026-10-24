@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
 import type {
   CreateInteriorDocumentPayload,
@@ -27,8 +27,8 @@ export function useCreateInteriorDocument() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateInteriorDocumentPayload) => repo.create(payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorDocumentKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Documento registrado')
     },
     onError: (err) => {
@@ -42,8 +42,8 @@ export function useUpdateInteriorDocument() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateInteriorDocumentPayload }) =>
       repo.update(id, payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorDocumentKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Documento actualizado')
     },
     onError: (err) => {
@@ -56,8 +56,8 @@ export function useDeleteInteriorDocument() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => repo.delete(id),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorDocumentKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Documento eliminado')
     },
     onError: (err) => {

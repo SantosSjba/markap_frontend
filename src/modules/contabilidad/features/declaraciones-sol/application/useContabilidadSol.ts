@@ -1,3 +1,4 @@
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { computed, type Ref } from 'vue'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { markapAlert } from '@/shared/composables'
@@ -25,8 +26,8 @@ export function useContabilidadSaveSolCredentials() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: UpsertSolCredentialsBody) => solRepository.saveCredentials(body),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: contabilidadSolKeys.root })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'contabilidad')
       void markapAlert.toast.success('Credenciales SOL guardadas')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -47,7 +48,7 @@ export function useContabilidadPreparePdt621() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (periodId: string) => solRepository.preparePdt621(periodId),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: contabilidadSolKeys.root }),
+    onSuccess: async () => await invalidateModuleQueries(qc, 'contabilidad'),
     onError: (e) => void markapAlert.toast.error('No se pudo preparar PDT 621', getApiErrorMessage(e)),
   })
 }
@@ -57,8 +58,8 @@ export function useContabilidadSubmitPdt621() {
   return useMutation({
     mutationFn: ({ logId, periodId }: { logId: string; periodId: string }) =>
       solRepository.submitPdt621(logId, periodId),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: contabilidadSolKeys.root })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'contabilidad')
       void markapAlert.toast.success('Declaración enviada (sandbox)')
     },
     onError: (e) => void markapAlert.toast.error('Envío fallido', getApiErrorMessage(e)),
@@ -70,8 +71,8 @@ export function useContabilidadMarkPdt621Manual() {
   return useMutation({
     mutationFn: ({ logId, periodId }: { logId: string; periodId: string }) =>
       solRepository.markManualPending(logId, periodId),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: contabilidadSolKeys.root })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'contabilidad')
       void markapAlert.toast.info('Marcado para carga manual en SOL')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),

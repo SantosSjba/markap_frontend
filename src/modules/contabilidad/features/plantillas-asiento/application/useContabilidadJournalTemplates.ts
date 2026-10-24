@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   CreateJournalTemplateBody,
   UpdateJournalTemplateBody,
@@ -14,7 +14,7 @@ export const contabilidadJournalTemplatesKeys = {
 }
 
 export function invalidateContabilidadJournalTemplatesCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadJournalTemplatesKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadJournalTemplates() {
@@ -29,8 +29,8 @@ export function useContabilidadCreateJournalTemplate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateJournalTemplateBody) => templatesRepository.createTemplate(body),
-    onSuccess: () => {
-      void invalidateContabilidadJournalTemplatesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadJournalTemplatesCache(qc)
       void markapAlert.toast.success('Plantilla creada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo crear', getApiErrorMessage(e)),
@@ -42,8 +42,8 @@ export function useContabilidadUpdateJournalTemplate() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdateJournalTemplateBody }) =>
       templatesRepository.updateTemplate(id, body),
-    onSuccess: () => {
-      void invalidateContabilidadJournalTemplatesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadJournalTemplatesCache(qc)
       void markapAlert.toast.success('Plantilla actualizada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),

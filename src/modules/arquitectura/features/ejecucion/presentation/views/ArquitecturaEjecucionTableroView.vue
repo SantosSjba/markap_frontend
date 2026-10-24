@@ -163,7 +163,7 @@ const timelineRows = computed(() => {
     rows.push({
       sortKey: m.plannedDate,
       title: m.title,
-      meta: `Hito Â· ${m.plannedDate}${m.completedAt ? ' Â· Hecho' : ''}`,
+      meta: `Hito · ${m.plannedDate}${m.completedAt ? ' · Hecho' : ''}`,
       badge: m.completedAt ? 'Hecho' : 'Plan',
     })
   }
@@ -174,7 +174,7 @@ const timelineRows = computed(() => {
     rows.push({
       sortKey: ps || pe,
       title: t.title,
-      meta: `${PHASE_LABELS[t.phase] ?? t.phase} Â· ${ps || 'â€”'} â†’ ${pe || 'â€”'}`,
+      meta: `${PHASE_LABELS[t.phase] ?? t.phase} · ${ps || '—'} → ${pe || '—'}`,
       badge: KANBAN_LABELS[t.kanbanStatus] ?? t.kanbanStatus,
     })
   }
@@ -193,7 +193,7 @@ const costCols = [
 const incidentCols = [
   { key: 'reportedAtLabel', label: 'Reporte', align: 'left' as const },
   { key: 'severityLabel', label: 'Severidad', align: 'left' as const },
-  { key: 'title', label: 'TÃ­tulo', align: 'left' as const },
+  { key: 'title', label: 'Título', align: 'left' as const },
   { key: 'statusLabel', label: 'Estado', align: 'left' as const },
   { key: '_a', label: '', align: 'right' as const },
 ]
@@ -264,7 +264,7 @@ async function saveTask() {
 
 async function removeTask(task: ArquitecturaExecutionTaskDto) {
   const ok = await markapAlert.confirmDanger({
-    title: 'Â¿Eliminar tarea?',
+    title: '¿Eliminar tarea?',
     text: task.title,
     confirmText: 'Eliminar',
   })
@@ -302,7 +302,7 @@ async function saveEvidence() {
 
 async function removeEvidence(id: string) {
   const ok = await markapAlert.confirmDanger({
-    title: 'Â¿Eliminar evidencia?',
+    title: '¿Eliminar evidencia?',
     confirmText: 'Eliminar',
   })
   if (!ok) return
@@ -382,7 +382,7 @@ async function saveCost() {
 }
 
 async function removeCost(id: string) {
-  const ok = await markapAlert.confirmDanger({ title: 'Â¿Eliminar costo?', confirmText: 'Eliminar' })
+  const ok = await markapAlert.confirmDanger({ title: '¿Eliminar costo?', confirmText: 'Eliminar' })
   if (!ok) return
   await deleteCost.mutateAsync(id)
 }
@@ -408,9 +408,9 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
         <AppIcon icon="lucide:arrow-left" :size="20" />
       </button>
       <div class="flex-1 min-w-0">
-        <p class="text-xs uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">EjecuciÃ³n</p>
+        <p class="text-xs uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">Ejecución</p>
         <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          {{ ov?.projectName ?? 'â€¦' }}
+          {{ ov?.projectName ?? '…' }}
         </h1>
         <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
           {{ ov?.projectCode }}
@@ -435,7 +435,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
     </div>
 
     <div v-else-if="isError || !ov" class="text-center py-16 space-y-3 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-      <p style="color: var(--color-error)">{{ isError ? getApiErrorMessage(overviewError) : 'No se pudo cargar el tablero de ejecuciÃ³n.' }}</p>
+      <p style="color: var(--color-error)">{{ isError ? getApiErrorMessage(overviewError) : 'No se pudo cargar el tablero de ejecución.' }}</p>
       <div class="flex flex-wrap justify-center gap-2">
         <BaseButton variant="outline" @click="() => refetchOverview()">Reintentar</BaseButton>
         <BaseButton variant="outline" @click="goHub">Volver al hub</BaseButton>
@@ -458,19 +458,19 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
               <StatsCard title="Costo real acumulado" :value="formatSol(ov.costTotals.total)">
                 <template #icon><AppIcon icon="lucide:wallet" :size="20" color="#16a34a" /></template>
               </StatsCard>
-              <StatsCard title="DesviaciÃ³n" :value="ov.varianceVsBudget != null ? formatSol(ov.varianceVsBudget) : 'â€”'">
+              <StatsCard title="Desviación" :value="ov.varianceVsBudget != null ? formatSol(ov.varianceVsBudget) : '—'">
                 <template #icon><AppIcon icon="lucide:trending-down" :size="20" color="#d97706" /></template>
               </StatsCard>
             </div>
             <div class="flex flex-wrap items-end gap-4 p-4 rounded-xl border" :style="{ borderColor: 'var(--color-border)' }">
-              <FormInput v-model="progressDraft" type="number" label="Actualizar avance global (0â€“100)" class="w-40" />
+              <FormInput v-model="progressDraft" type="number" label="Actualizar avance global (0–100)" class="w-40" />
               <BaseButton variant="primary" type="button" :loading="patchProgress.isPending.value" @click="saveProgress">
                 Guardar avance
               </BaseButton>
               <p class="text-xs flex-1 min-w-[200px]" :style="{ color: 'var(--color-text-muted)' }">
                 Referencia presupuesto:
-                {{ ov.budgetReference.code ?? 'â€”' }}
-                <template v-if="ov.budgetReference.version != null">Â· v{{ ov.budgetReference.version }}</template>
+                {{ ov.budgetReference.code ?? '—' }}
+                <template v-if="ov.budgetReference.version != null">· v{{ ov.budgetReference.version }}</template>
               </p>
             </div>
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
@@ -506,7 +506,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                   >
                     <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ task.title }}</p>
                     <p class="text-xs mt-1" :style="{ color: 'var(--color-text-muted)' }">
-                      {{ PHASE_LABELS[task.phase] ?? task.phase }} Â· {{ task.progressPct }}%
+                      {{ PHASE_LABELS[task.phase] ?? task.phase }} · {{ task.progressPct }}%
                     </p>
                     <div class="flex gap-2 mt-2">
                       <button type="button" class="text-xs underline text-red-600" @click.stop="removeTask(task)">Eliminar</button>
@@ -541,7 +541,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
           <!-- Gantt -->
           <div v-show="activeTab === 'gantt'" class="space-y-4 overflow-x-auto">
             <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-              Franjas proporcionales segÃºn fechas planificadas de cada tarea.
+              Franjas proporcionales según fechas planificadas de cada tarea.
             </p>
             <div class="space-y-2 min-w-[640px]">
               <div
@@ -594,7 +594,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                   ...c,
                   amount: formatSol(c.amount),
                   costCategory: COST_CATEGORY_LABELS[c.costCategory] ?? c.costCategory,
-                  mat: c.materialCode ? `${c.materialCode}` : 'â€”',
+                  mat: c.materialCode ? `${c.materialCode}` : '—',
                   _a: '',
                 }))
               "
@@ -691,13 +691,13 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                 { id: '2', c: 'Costo real total', v: formatSol(ov.costTotals.total) },
                 {
                   id: '3',
-                  c: 'VariaciÃ³n (real âˆ’ presupuesto)',
-                  v: ov.varianceVsBudget != null ? formatSol(ov.varianceVsBudget) : 'â€”',
+                  c: 'Variación (real âˆ’ presupuesto)',
+                  v: ov.varianceVsBudget != null ? formatSol(ov.varianceVsBudget) : '—',
                 },
-                { id: '4', c: 'â€” Mano de obra ejecutada', v: formatSol(ov.costTotals.labor) },
-                { id: '5', c: 'â€” Materiales ejecutados', v: formatSol(ov.costTotals.material) },
-                { id: '6', c: 'â€” Transporte ejecutado', v: formatSol(ov.costTotals.transport) },
-                { id: '7', c: 'â€” Gastos', v: formatSol(ov.costTotals.expense) },
+                { id: '4', c: '— Mano de obra ejecutada', v: formatSol(ov.costTotals.labor) },
+                { id: '5', c: '— Materiales ejecutados', v: formatSol(ov.costTotals.material) },
+                { id: '6', c: '— Transporte ejecutado', v: formatSol(ov.costTotals.transport) },
+                { id: '7', c: '— Gastos', v: formatSol(ov.costTotals.expense) },
               ]"
               row-key="id"
             >
@@ -715,8 +715,8 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
     <BaseModal v-model="taskModal" :title="taskEditId ? 'Editar tarea' : 'Nueva tarea'" size="lg">
       <div class="space-y-3">
         <FormSelect v-model="tPhase" label="Fase" :options="phaseOptionsTaskModal" />
-        <FormInput v-model="tTitle" label="TÃ­tulo" required />
-        <FormTextarea v-model="tDesc" label="DescripciÃ³n" :rows="3" />
+        <FormInput v-model="tTitle" label="Título" required />
+        <FormTextarea v-model="tDesc" label="Descripción" :rows="3" />
         <FormSelect v-model="tKanban" label="Columna Kanban" :options="kanbanOptionsModal" />
         <div class="grid sm:grid-cols-2 gap-3">
           <FormInput v-model="tStart" type="date" label="Inicio plan." />
@@ -735,7 +735,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
     <BaseModal v-model="evModal" title="Nueva evidencia" size="md">
       <div class="space-y-3">
         <FormSelect v-model="evKind" label="Tipo" :options="Object.entries(EVIDENCE_LABELS).map(([value, label]) => ({ value, label }))" />
-        <FormInput v-model="evTitle" label="TÃ­tulo" required />
+        <FormInput v-model="evTitle" label="Título" required />
         <FormInput v-model="evUrl" label="URL archivo / imagen" required />
         <FormInput v-model="evCap" type="datetime-local" label="Capturado el" />
         <FormSelect v-model="evTaskId" label="Tarea (opcional)" :options="taskOptionsForEvidence" />
@@ -749,8 +749,8 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
     <BaseModal v-model="incModal" title="Nueva incidencia" size="md">
       <div class="space-y-3">
         <FormSelect v-model="incSev" label="Severidad" :options="Object.entries(SEVERITY_LABELS).map(([value, label]) => ({ value, label }))" />
-        <FormInput v-model="incTitle" label="TÃ­tulo" required />
-        <FormTextarea v-model="incDesc" label="DescripciÃ³n" :rows="3" />
+        <FormInput v-model="incTitle" label="Título" required />
+        <FormTextarea v-model="incDesc" label="Descripción" :rows="3" />
         <FormInput v-model="incAt" type="datetime-local" label="Reportado el" />
         <div class="flex justify-end gap-2">
           <BaseButton variant="secondary" type="button" @click="incModal = false">Cancelar</BaseButton>
@@ -761,7 +761,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
 
     <BaseModal v-model="costModal" title="Costo real" size="md">
       <div class="space-y-3">
-        <FormSelect v-model="costCat" label="CategorÃ­a" :options="Object.entries(COST_CATEGORY_LABELS).map(([value, label]) => ({ value, label }))" />
+        <FormSelect v-model="costCat" label="Categoría" :options="Object.entries(COST_CATEGORY_LABELS).map(([value, label]) => ({ value, label }))" />
         <FormInput v-model="costConcept" label="Concepto" required />
         <FormInput v-model="costAmount" type="number" label="Monto (S/)" required />
         <FormInput v-model="costDate" type="date" label="Fecha" required />

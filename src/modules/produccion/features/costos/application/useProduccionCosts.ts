@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
 import type { ListExtraCostsParams, ListLaborRatesParams, UpdateFurnitureCostingPayload } from '../domain/costs.types'
 import { produccionCostsApi } from '../infrastructure/costs.api.repository'
@@ -41,8 +41,8 @@ export function useUpdateProduccionFurnitureCosting(furnitureId: Ref<string> | s
   return useMutation({
     mutationFn: (payload: UpdateFurnitureCostingPayload) =>
       produccionCostsApi.updateCosting(unref(furnitureId), payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, produccionCostsKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'produccion')
       void markapAlert.toast.success('Costeo guardado')
     },
     onError: (err) => {
@@ -55,8 +55,8 @@ export function useCreateCostingSnapshot(furnitureId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (label?: string) => produccionCostsApi.createSnapshot(unref(furnitureId), label),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, produccionCostsKeys.costing(unref(furnitureId)))
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'produccion')
       void markapAlert.toast.success('Snapshot de costeo guardado')
     },
     onError: (err) => {
@@ -67,22 +67,22 @@ export function useCreateCostingSnapshot(furnitureId: Ref<string> | string) {
 
 export function useLaborRateMutations() {
   const qc = useQueryClient()
-  const invalidate = () => invalidateQuerySubtree(qc, produccionCostsKeys.all)
+  const invalidate = () => invalidateModuleQueries(qc, 'produccion')
 
   const create = useMutation({
     mutationFn: produccionCostsApi.createLaborRate,
-    onSuccess: () => { invalidate(); void markapAlert.toast.success('Tarifa creada') },
+    onSuccess: async () => { await invalidate(); void markapAlert.toast.success('Tarifa creada') },
     onError: (err) => { void markapAlert.toast.error('Error', getApiErrorMessage(err)) },
   })
   const update = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof produccionCostsApi.updateLaborRate>[1] }) =>
       produccionCostsApi.updateLaborRate(id, payload),
-    onSuccess: () => { invalidate(); void markapAlert.toast.success('Tarifa actualizada') },
+    onSuccess: async () => { await invalidate(); void markapAlert.toast.success('Tarifa actualizada') },
     onError: (err) => { void markapAlert.toast.error('Error', getApiErrorMessage(err)) },
   })
   const remove = useMutation({
     mutationFn: produccionCostsApi.deleteLaborRate,
-    onSuccess: () => { invalidate(); void markapAlert.toast.success('Tarifa eliminada') },
+    onSuccess: async () => { await invalidate(); void markapAlert.toast.success('Tarifa eliminada') },
     onError: (err) => { void markapAlert.toast.error('Error', getApiErrorMessage(err)) },
   })
   return { create, update, remove }
@@ -90,22 +90,22 @@ export function useLaborRateMutations() {
 
 export function useExtraCostMutations() {
   const qc = useQueryClient()
-  const invalidate = () => invalidateQuerySubtree(qc, produccionCostsKeys.all)
+  const invalidate = () => invalidateModuleQueries(qc, 'produccion')
 
   const create = useMutation({
     mutationFn: produccionCostsApi.createExtraCost,
-    onSuccess: () => { invalidate(); void markapAlert.toast.success('Gasto creado') },
+    onSuccess: async () => { await invalidate(); void markapAlert.toast.success('Gasto creado') },
     onError: (err) => { void markapAlert.toast.error('Error', getApiErrorMessage(err)) },
   })
   const update = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof produccionCostsApi.updateExtraCost>[1] }) =>
       produccionCostsApi.updateExtraCost(id, payload),
-    onSuccess: () => { invalidate(); void markapAlert.toast.success('Gasto actualizado') },
+    onSuccess: async () => { await invalidate(); void markapAlert.toast.success('Gasto actualizado') },
     onError: (err) => { void markapAlert.toast.error('Error', getApiErrorMessage(err)) },
   })
   const remove = useMutation({
     mutationFn: produccionCostsApi.deleteExtraCost,
-    onSuccess: () => { invalidate(); void markapAlert.toast.success('Gasto eliminado') },
+    onSuccess: async () => { await invalidate(); void markapAlert.toast.success('Gasto eliminado') },
     onError: (err) => { void markapAlert.toast.error('Error', getApiErrorMessage(err)) },
   })
   return { create, update, remove }

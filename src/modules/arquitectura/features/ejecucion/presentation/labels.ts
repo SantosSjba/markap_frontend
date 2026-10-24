@@ -1,8 +1,8 @@
 ﻿export const PHASE_LABELS: Record<string, string> = {
-  DESIGN: 'DiseÃ±o',
+  DESIGN: 'Diseño',
   PURCHASES: 'Compras',
-  PRODUCTION: 'ProducciÃ³n',
-  INSTALLATION: 'InstalaciÃ³n',
+  PRODUCTION: 'Producción',
+  INSTALLATION: 'Instalación',
 }
 
 export const KANBAN_LABELS: Record<string, string> = {
@@ -38,6 +38,6 @@ export const COST_CATEGORY_LABELS: Record<string, string> = {
 }
 
 export function formatSol(amount: number | null | undefined): string {
-  if (amount == null || Number.isNaN(amount)) return 'â€”'
+  if (amount == null || Number.isNaN(amount)) return '—'
   return `S/ ${Number(amount).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }

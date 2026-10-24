@@ -1,3 +1,4 @@
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
@@ -36,8 +37,8 @@ export function useContabilidadCreateInventoryItem() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateInventoryItemBody) => inventoryRepository.createItem(body),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: contabilidadInventoryKeys.root })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'contabilidad')
       void markapAlert.toast.success('Ítem registrado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
@@ -57,8 +58,8 @@ export function useContabilidadCreateInventoryMovement() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateInventoryMovementBody) => inventoryRepository.createMovement(body),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: contabilidadInventoryKeys.root })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'contabilidad')
       void markapAlert.toast.success('Movimiento registrado con asiento')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),

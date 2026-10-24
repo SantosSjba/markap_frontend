@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   CreateTreasuryMovementBody,
   CreateTreasuryTransferBody,
@@ -21,7 +21,7 @@ export const contabilidadTreasuryKeys = {
 }
 
 export function invalidateContabilidadTreasuryCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadTreasuryKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadCashBoxes() {
@@ -66,8 +66,8 @@ export function useContabilidadCreateTreasuryMovement() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateTreasuryMovementBody) => treasuryRepository.createMovement(body),
-    onSuccess: () => {
-      void invalidateContabilidadTreasuryCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadTreasuryCache(qc)
       void markapAlert.toast.success('Movimiento registrado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
@@ -78,8 +78,8 @@ export function useContabilidadCreateTreasuryTransfer() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateTreasuryTransferBody) => treasuryRepository.createTransfer(body),
-    onSuccess: () => {
-      void invalidateContabilidadTreasuryCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadTreasuryCache(qc)
       void markapAlert.toast.success('Transferencia registrada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo transferir', getApiErrorMessage(e)),
@@ -90,8 +90,8 @@ export function useContabilidadCreateBankAccount() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: treasuryRepository.createBankAccount,
-    onSuccess: () => {
-      void invalidateContabilidadTreasuryCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadTreasuryCache(qc)
       void markapAlert.toast.success('Cuenta bancaria creada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo crear', getApiErrorMessage(e)),
@@ -102,8 +102,8 @@ export function useContabilidadUpsertReconciliation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: treasuryRepository.upsertReconciliation,
-    onSuccess: () => {
-      void invalidateContabilidadTreasuryCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadTreasuryCache(qc)
       void markapAlert.toast.success('Conciliación guardada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -115,7 +115,7 @@ export function useContabilidadToggleReconciledMovement() {
   return useMutation({
     mutationFn: (args: { reconciliationId: string; movementId: string; reconciled: boolean }) =>
       treasuryRepository.toggleMovementReconciled(args.reconciliationId, args.movementId, args.reconciled),
-    onSuccess: () => void invalidateContabilidadTreasuryCache(qc),
+    onSuccess: async () => await invalidateContabilidadTreasuryCache(qc),
     onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
   })
 }
@@ -124,8 +124,8 @@ export function useContabilidadCloseReconciliation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => treasuryRepository.closeReconciliation(id),
-    onSuccess: () => {
-      void invalidateContabilidadTreasuryCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadTreasuryCache(qc)
       void markapAlert.toast.success('Conciliación cerrada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo cerrar', getApiErrorMessage(e)),

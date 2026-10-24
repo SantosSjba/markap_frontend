@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type { UpsertContabilidadIncomeTaxPeriodBody } from '../domain/income-tax.types'
 import {
   fetchIncomeTaxDetail,
@@ -16,7 +16,7 @@ export const contabilidadIncomeTaxKeys = {
 }
 
 export function invalidateContabilidadIncomeTaxCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadIncomeTaxKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadIncomeTaxDetail(periodId: Ref<string | undefined>) {
@@ -33,9 +33,9 @@ export function useContabilidadUpsertIncomeTaxPeriod() {
   return useMutation({
     mutationFn: ({ periodId, body }: { periodId: string; body: UpsertContabilidadIncomeTaxPeriodBody }) =>
       upsertIncomeTaxPeriod(periodId, body),
-    onSuccess: (_data, vars) => {
-      void invalidateContabilidadIncomeTaxCache(qc)
-      void qc.invalidateQueries({ queryKey: contabilidadIncomeTaxKeys.detail(vars.periodId) })
+    onSuccess: async () => {
+      await invalidateContabilidadIncomeTaxCache(qc)
+      await invalidateModuleQueries(qc, 'contabilidad')
       void markapAlert.toast.success('Borrador IR guardado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),

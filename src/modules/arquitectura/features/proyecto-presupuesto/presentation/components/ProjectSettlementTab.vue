@@ -70,7 +70,7 @@ const payEditId = ref<string | null>(null)
 
 const paySchema = yup.object({
   paidAt: yup.string().required('Indique fecha y hora'),
-  amount: yup.number().typeError('Monto invÃ¡lido').min(0.01, 'El monto debe ser mayor a cero'),
+  amount: yup.number().typeError('Monto inválido').min(0.01, 'El monto debe ser mayor a cero'),
   concept: yup.string().required('El concepto es requerido').trim(),
   paymentType: yup.string().required('Seleccione el tipo'),
   status: yup.string().required('Seleccione el estado'),
@@ -152,7 +152,7 @@ const onSubmitPayment = payForm.handleSubmit(async (values) => {
 })
 
 async function removePayment(id: string) {
-  const ok = await markapAlert.confirmDanger({ title: 'Â¿Eliminar pago?', confirmText: 'Eliminar' })
+  const ok = await markapAlert.confirmDanger({ title: '¿Eliminar pago?', confirmText: 'Eliminar' })
   if (!ok) return
   await deletePay.mutateAsync(id)
 }
@@ -164,7 +164,7 @@ async function removePayment(id: string) {
       <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
     </div>
     <div v-else-if="isError || !settlement" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-muted)' }">
-      No se pudo cargar la liquidaciÃ³n.
+      No se pudo cargar la liquidación.
     </div>
     <template v-else>
       <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
@@ -190,7 +190,7 @@ async function removePayment(id: string) {
 
       <FormSectionCard
         title="Resumen financiero"
-        subtitle="Equivalente al bloque de liquidaciÃ³n del Excel"
+        subtitle="Equivalente al bloque de liquidación del Excel"
         icon="lucide:pie-chart"
       >
         <dl class="grid sm:grid-cols-2 gap-4 text-sm">
@@ -211,7 +211,7 @@ async function removePayment(id: string) {
 
       <FormSectionCard
         v-if="budget?.sections.length"
-        title="Resumen por secciÃ³n"
+        title="Resumen por sección"
         subtitle="Totales de precio al cliente por zona del proyecto"
         icon="lucide:layers"
       >
@@ -231,7 +231,7 @@ async function removePayment(id: string) {
 
       <FormSectionCard
         title="Pagos del cliente"
-        subtitle="Abonos a cuenta, saldo y pagos finales â€” alimentan la liquidaciÃ³n"
+        subtitle="Abonos a cuenta, saldo y pagos finales — alimentan la liquidación"
         icon="lucide:banknote"
       >
         <template #actions>
@@ -289,7 +289,7 @@ async function removePayment(id: string) {
           <FormInput v-bind="payBinds.amount" type="number" step="0.01" min="0.01" label="Monto (S/)" />
           <FormSelect v-bind="payBinds.paymentType" label="Tipo de pago" :options="PAYMENT_TYPE_OPTIONS" />
         </div>
-        <FormInput v-bind="payBinds.concept" label="Concepto" placeholder="Ej. Transferencia â€” abono a cuenta" />
+        <FormInput v-bind="payBinds.concept" label="Concepto" placeholder="Ej. Transferencia — abono a cuenta" />
         <FormSelect v-bind="payBinds.status" label="Estado" :options="STATUS_OPTIONS" />
       </form>
       <template #footer>

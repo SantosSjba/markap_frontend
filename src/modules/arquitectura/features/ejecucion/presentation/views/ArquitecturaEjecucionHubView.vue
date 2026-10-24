@@ -60,7 +60,7 @@ const onSize = (s: number) => {
 }
 
 const columns = [
-  { key: 'code', label: 'CÃ³digo', align: 'left' as const, sortable: true },
+  { key: 'code', label: 'Código', align: 'left' as const, sortable: true },
   { key: 'name', label: 'Proyecto', align: 'left' as const, sortable: true },
   { key: 'client', label: 'Cliente', align: 'left' as const },
   { key: 'progressPct', label: 'Avance', align: 'left' as const },
@@ -139,7 +139,7 @@ const goProjects = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
   <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1400px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">EjecuciÃ³n</h1>
+        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Ejecución</h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
           Opera la obra real: tareas por fase, Kanban, cronograma, costos ejecutados vs presupuesto aprobado, evidencias e incidencias.
         </p>
@@ -173,7 +173,7 @@ const goProjects = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
         >
           <template #toolbar>
             <div class="flex-1 min-w-0">
-              <SearchInput v-model="searchInput" placeholder="Buscar por cÃ³digo o nombreâ€¦" />
+              <SearchInput v-model="searchInput" placeholder="Buscar por código o nombre…" />
             </div>
           </template>
           <template #row="{ row }">
@@ -226,9 +226,9 @@ const goProjects = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
       </template>
       <div class="p-4 space-y-3">
         <p class="text-sm" style="color: var(--color-text-secondary);">
-          Â¿Marcar como cancelado el proyecto
+          ¿Marcar como cancelado el proyecto
           <span class="font-semibold" style="color: var(--color-text-primary);">{{ cancelTarget?.code }}</span>
-          Â· {{ cancelTarget?.name }}?
+          · {{ cancelTarget?.name }}?
         </p>
       </div>
       <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">

@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree, refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { refetchQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   CreateInteriorClientPayload,
   ListClientsParams,
@@ -81,8 +82,8 @@ export function useCreateInteriorClient() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: (data: CreateInteriorClientPayload) => clientsRepository.create(data),
-    onSuccess: () => {
-      invalidateQuerySubtree(queryClient, interiorClientKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(queryClient, 'interiorismo')
       void markapAlert.toast.success('Cliente registrado')
     },
     onError: (err) => {
@@ -100,8 +101,8 @@ export function useUpdateInteriorClient() {
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateInteriorClientPayload }) =>
       clientsRepository.update(id, data),
-    onSuccess: () => {
-      invalidateQuerySubtree(queryClient, interiorClientKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(queryClient, 'interiorismo')
       void markapAlert.toast.success('Cliente actualizado')
     },
     onError: (err) => {
@@ -118,8 +119,8 @@ export function useDeleteInteriorClient() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => clientsRepository.delete(id),
-    onSuccess: () => {
-      invalidateQuerySubtree(queryClient, interiorClientKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(queryClient, 'interiorismo')
       void markapAlert.toast.success('Cliente eliminado')
     },
     onError: (err) => {

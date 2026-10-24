@@ -77,7 +77,7 @@ function goDetail(row: ContabilidadJournalEntryListItemDTO) {
     </PageHeader>
 
     <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
-      Configure el periodo activo en Configuración ? Contexto contable. para ver y registrar asientos.
+      Configure el periodo activo en ConfiguraciÃ³n ? Contexto contable. para ver y registrar asientos.
     </p>
 
     <div

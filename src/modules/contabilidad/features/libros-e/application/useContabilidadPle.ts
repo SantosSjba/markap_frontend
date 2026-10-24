@@ -1,3 +1,4 @@
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
@@ -56,8 +57,8 @@ export function useContabilidadGeneratePle() {
   return useMutation({
     mutationFn: ({ periodId, bookCodes }: { periodId: string; bookCodes: string[] }) =>
       pleRepository.generateBooks(periodId, bookCodes),
-    onSuccess: (_data, vars) => {
-      void qc.invalidateQueries({ queryKey: contabilidadPleKeys.exportLogs(vars.periodId) })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'contabilidad')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo generar PLE', getApiErrorMessage(e)),
   })
@@ -68,9 +69,9 @@ export function useContabilidadDownloadPleZip() {
   return useMutation({
     mutationFn: ({ periodId, bookCodes }: { periodId: string; bookCodes: string[] }) =>
       pleRepository.downloadZip(periodId, bookCodes),
-    onSuccess: (data, vars) => {
+    onSuccess: async (data) => {
       downloadBlobFile(data.fileName, data.blob)
-      void qc.invalidateQueries({ queryKey: contabilidadPleKeys.exportLogs(vars.periodId) })
+      await invalidateModuleQueries(qc, 'contabilidad')
       void markapAlert.toast.success('ZIP PLE descargado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo descargar ZIP', getApiErrorMessage(e)),

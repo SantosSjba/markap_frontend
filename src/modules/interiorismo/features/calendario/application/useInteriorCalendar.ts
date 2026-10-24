@@ -1,3 +1,4 @@
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
@@ -26,8 +27,8 @@ export function useCreateCalendarEvent() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateCalendarEventPayload) => repo.createEvent(payload),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: interiorCalendarKeys.all })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Evento creado')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo crear', getApiErrorMessage(err)),
@@ -39,8 +40,8 @@ export function useUpdateCalendarEvent() {
   return useMutation({
     mutationFn: ({ eventId, payload }: { eventId: string; payload: UpdateCalendarEventPayload }) =>
       repo.updateEvent(eventId, payload),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: interiorCalendarKeys.all })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Evento actualizado')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(err)),
@@ -51,8 +52,8 @@ export function useDeleteCalendarEvent() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (eventId: string) => repo.deleteEvent(eventId),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: interiorCalendarKeys.all })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Evento eliminado')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),

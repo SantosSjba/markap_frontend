@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   CreateCustomerBody,
   CreateSalesCollectionBody,
@@ -27,7 +27,7 @@ export const contabilidadSalesKeys = {
 }
 
 export function invalidateContabilidadSalesCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadSalesKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadCustomers(params: Ref<{ search?: string; activeOnly?: boolean }>) {
@@ -42,8 +42,8 @@ export function useContabilidadCreateCustomer() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateCustomerBody) => salesRepository.createCustomer(body),
-    onSuccess: () => {
-      void invalidateContabilidadSalesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadSalesCache(qc)
       void markapAlert.toast.success('Cliente registrado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
@@ -55,8 +55,8 @@ export function useContabilidadUpdateCustomer() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdateCustomerBody }) =>
       salesRepository.updateCustomer(id, body),
-    onSuccess: () => {
-      void invalidateContabilidadSalesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadSalesCache(qc)
       void markapAlert.toast.success('Cliente actualizado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
@@ -75,8 +75,8 @@ export function useContabilidadCreateSalesInvoice() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateSalesInvoiceBody) => salesRepository.createInvoice(body),
-    onSuccess: () => {
-      void invalidateContabilidadSalesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadSalesCache(qc)
       void markapAlert.toast.success('Venta registrada con asiento automático')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
@@ -87,8 +87,8 @@ export function useContabilidadCancelSalesInvoice() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => salesRepository.cancelInvoice(id),
-    onSuccess: () => {
-      void invalidateContabilidadSalesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadSalesCache(qc)
       void markapAlert.toast.success('Comprobante anulado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo anular', getApiErrorMessage(e)),
@@ -107,8 +107,8 @@ export function useContabilidadCreateSalesCreditNote() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateSalesCreditNoteBody) => salesRepository.createCreditNote(body),
-    onSuccess: () => {
-      void invalidateContabilidadSalesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadSalesCache(qc)
       void markapAlert.toast.success('Nota de crédito registrada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
@@ -127,8 +127,8 @@ export function useContabilidadCreateSalesDebitNote() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateSalesDebitNoteBody) => salesRepository.createDebitNote(body),
-    onSuccess: () => {
-      void invalidateContabilidadSalesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadSalesCache(qc)
       void markapAlert.toast.success('Nota de débito registrada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
@@ -147,8 +147,8 @@ export function useContabilidadCreateSalesCollection() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateSalesCollectionBody) => salesRepository.createCollection(body),
-    onSuccess: () => {
-      void invalidateContabilidadSalesCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadSalesCache(qc)
       void markapAlert.toast.success('Cobro registrado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),

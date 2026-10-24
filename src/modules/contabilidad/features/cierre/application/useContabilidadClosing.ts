@@ -1,3 +1,4 @@
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
@@ -22,8 +23,8 @@ export function useContabilidadClosePeriod() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (periodId: string) => closingRepository.closePeriod(periodId),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: contabilidadClosingKeys.root })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'contabilidad')
       void markapAlert.toast.success('Periodo cerrado correctamente.')
     },
     onError: (e) =>

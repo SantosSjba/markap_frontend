@@ -78,7 +78,7 @@ const { data: projectsResult, isLoading: projectsLoading } = useArquitecturaProj
 const projectOptions = computed(() =>
   (projectsResult.value?.data ?? []).map((p) => ({
     value: p.id,
-    label: `${p.code} â€” ${p.name}`,
+    label: `${p.code} — ${p.name}`,
   })),
 )
 
@@ -110,7 +110,7 @@ const paginationProps = computed(() => {
 
 const columns = [
   { key: 'project', label: 'Proyecto', align: 'left' as const },
-  { key: 'title', label: 'TÃ­tulo', align: 'left' as const, sortable: true },
+  { key: 'title', label: 'Título', align: 'left' as const, sortable: true },
   { key: 'file', label: 'Archivo / enlace', align: 'left' as const },
   { key: 'createdAt', label: 'Alta', align: 'left' as const },
   { key: 'actions', label: '', align: 'right' as const },
@@ -148,7 +148,7 @@ async function submitCreate() {
     return
   }
   if (!createTitle.value.trim()) {
-    void markapAlert.toast.error('Indica un tÃ­tulo')
+    void markapAlert.toast.error('Indica un título')
     return
   }
   await createMut.mutateAsync({
@@ -172,7 +172,7 @@ function openEdit(row: ArquitecturaDocumentRow) {
 async function submitEdit() {
   if (!editingId.value) return
   if (!editTitle.value.trim()) {
-    void markapAlert.toast.error('Indica un tÃ­tulo')
+    void markapAlert.toast.error('Indica un título')
     return
   }
   await updateMut.mutateAsync({
@@ -189,8 +189,8 @@ async function submitEdit() {
 
 async function removeRow(row: ArquitecturaDocumentRow) {
   const ok = await markapAlert.confirmDanger({
-    title: 'Â¿Eliminar documento?',
-    text: 'Esta acciÃ³n no se puede deshacer.',
+    title: '¿Eliminar documento?',
+    text: 'Esta acción no se puede deshacer.',
     confirmText: 'Eliminar',
   })
   if (!ok) return
@@ -260,7 +260,7 @@ const navIdleClass =
       </div>
       <template v-else>
         <DataTable
-          empty-text="No hay documentos en esta categorÃ­a. AÃ±ade uno o cambia los filtros."
+          empty-text="No hay documentos en esta categoría. Añade uno o cambia los filtros."
           :columns="columns"
           :data="rows"
           row-key="id"
@@ -268,7 +268,7 @@ const navIdleClass =
           <template #toolbar>
             <div class="flex flex-wrap gap-3 flex-1 min-w-0 items-end">
               <div class="flex-1 min-w-[200px]">
-                <SearchInput v-model="searchInput" placeholder="Buscar por tÃ­tulo, cÃ³digo o proyectoâ€¦" />
+                <SearchInput v-model="searchInput" placeholder="Buscar por título, código o proyecto…" />
               </div>
               <div class="flex flex-wrap items-end gap-2 w-full sm:w-auto sm:min-w-[280px]">
                 <div class="flex-1 min-w-[200px]">
@@ -322,7 +322,7 @@ const navIdleClass =
                 <AppIcon icon="lucide:external-link" :size="16" />
                 Abrir
               </a>
-              <span v-else class="text-muted" :style="{ color: 'var(--color-text-secondary)' }">â€”</span>
+              <span v-else class="text-muted" :style="{ color: 'var(--color-text-secondary)' }">—</span>
             </td>
             <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
               {{ formatDate((row as ArquitecturaDocumentRow).createdAt) }}
@@ -353,14 +353,14 @@ const navIdleClass =
           :options="projectOptions"
           :loading="projectsLoading"
         />
-        <FormInput v-model="createTitle" label="TÃ­tulo" placeholder="Ej. Contrato de obra â€” revisiÃ³n 2" required />
+        <FormInput v-model="createTitle" label="Título" placeholder="Ej. Contrato de obra — revisión 2" required />
         <FormInput
           v-model="createFileUrl"
           label="URL del archivo"
-          placeholder="https://â€¦"
+          placeholder="https://…"
         />
         <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-          CategorÃ­a actual: <strong>{{ sectionTitle }}</strong>
+          Categoría actual: <strong>{{ sectionTitle }}</strong>
         </p>
       </div>
       <template #footer>
@@ -373,9 +373,9 @@ const navIdleClass =
 
     <BaseModal v-model="showEdit" title="Editar documento" size="lg">
       <div class="space-y-4">
-        <FormSelect v-model="editDocType" label="CategorÃ­a" required :options="DOCUMENT_TYPE_FORM_OPTIONS" />
-        <FormInput v-model="editTitle" label="TÃ­tulo" required />
-        <FormInput v-model="editFileUrl" label="URL del archivo" placeholder="https://â€¦" />
+        <FormSelect v-model="editDocType" label="Categoría" required :options="DOCUMENT_TYPE_FORM_OPTIONS" />
+        <FormInput v-model="editTitle" label="Título" required />
+        <FormInput v-model="editFileUrl" label="URL del archivo" placeholder="https://…" />
       </div>
       <template #footer>
         <div class="flex justify-end gap-2">

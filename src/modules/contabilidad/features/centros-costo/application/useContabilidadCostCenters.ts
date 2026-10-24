@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   CreateContabilidadCostCenterBody,
   UpdateContabilidadCostCenterBody,
@@ -15,7 +15,7 @@ export const contabilidadCostCentersKeys = {
 }
 
 export function invalidateContabilidadCostCentersCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadCostCentersKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadCostCentersList(search: Ref<string>) {
@@ -30,8 +30,8 @@ export function useContabilidadCreateCostCenter() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateContabilidadCostCenterBody) => costCentersRepository.create(body),
-    onSuccess: () => {
-      void invalidateContabilidadCostCentersCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadCostCentersCache(qc)
       void markapAlert.toast.success('Centro de costo creado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo crear', getApiErrorMessage(e)),
@@ -43,8 +43,8 @@ export function useContabilidadUpdateCostCenter() {
   return useMutation({
     mutationFn: (args: { id: string; body: UpdateContabilidadCostCenterBody }) =>
       costCentersRepository.update(args.id, args.body),
-    onSuccess: () => {
-      void invalidateContabilidadCostCentersCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadCostCentersCache(qc)
       void markapAlert.toast.success('Centro de costo actualizado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
@@ -55,8 +55,8 @@ export function useContabilidadDeactivateCostCenter() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => costCentersRepository.deactivate(id),
-    onSuccess: () => {
-      void invalidateContabilidadCostCentersCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadCostCentersCache(qc)
       void markapAlert.toast.success('Centro de costo desactivado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo desactivar', getApiErrorMessage(e)),

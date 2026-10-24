@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { queryClient } from '@core/plugins/vue-query'
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@modules/auth'
 import { notificationsApiRepository } from '../infrastructure/repositories/notifications.api.repository'
@@ -16,6 +17,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
   const unreadCount = ref(0)
   const isLoading = ref(false)
   const isDropdownOpen = ref(false)
+  let syncTimer: ReturnType<typeof setTimeout> | null = null
+  let refreshAccess = false
+  let refreshNotifications = false
   let disconnectSocket: (() => void) | null = null
 
   const hasUnread = computed(() => unreadCount.value > 0)
@@ -53,6 +57,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
   }
 
   function pushFromSocket(payload: NotificationPayload) {
+    if (list.value.some((item) => item.id === payload.id)) return
     const item: NotificationItem = {
       id: payload.id,
       userId: '',
@@ -70,7 +75,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
   }
 
   async function fetchList(unreadOnly = false) {
-    if (!authStore.accessToken) return
+    const token = authStore.accessToken
+    if (!token) return
     isLoading.value = true
     try {
       const res = await notificationsApiRepository.list({
@@ -78,6 +84,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
         limit: 30,
         offset: 0,
       })
+      if (authStore.accessToken !== token) return
       list.value = res.data
       total.value = res.total
     } catch {
@@ -89,9 +96,11 @@ export const useNotificationsStore = defineStore('notifications', () => {
   }
 
   async function fetchUnreadCount() {
-    if (!authStore.accessToken) return
+    const token = authStore.accessToken
+    if (!token) return
     try {
       const res = await notificationsApiRepository.unreadCount()
+      if (authStore.accessToken !== token) return
       unreadCount.value = res.count
     } catch {
       unreadCount.value = 0
@@ -102,22 +111,43 @@ export const useNotificationsStore = defineStore('notifications', () => {
     try {
       await notificationsApiRepository.markAsRead(id)
       const item = list.value.find((n) => n.id === id)
-      if (item) item.readAt = new Date().toISOString()
-      if (unreadCount.value > 0) unreadCount.value -= 1
+      if (item && !item.readAt) {
+        item.readAt = new Date().toISOString()
+        unreadCount.value = Math.max(0, unreadCount.value - 1)
+      } else if (!item) {
+        await fetchUnreadCount()
+      }
     } catch {
       // ignore
     }
   }
 
   function connectSocket() {
+    disconnect()
     const token = authStore.accessToken
     if (!token) return
     connectNotificationsSocket(token, pushFromSocket, (disconnect) => {
       disconnectSocket = disconnect
+    }, ({ resource }) => {
+      refreshAccess ||= ['users', 'roles', 'applications', '*'].includes(resource)
+      refreshNotifications ||= ['notifications', '*'].includes(resource)
+      if (syncTimer) clearTimeout(syncTimer)
+      syncTimer = setTimeout(() => {
+        syncTimer = null
+        if (authStore.accessToken !== token) return
+        void queryClient.invalidateQueries({ refetchType: 'active' })
+        if (refreshAccess) void authStore.fetchProfile()
+        if (refreshNotifications) { void fetchList(); void fetchUnreadCount() }
+        refreshAccess = false
+        refreshNotifications = false
+      }, 250)
     })
   }
 
   function disconnect() {
+    if (syncTimer) { clearTimeout(syncTimer); syncTimer = null }
+    refreshAccess = false
+    refreshNotifications = false
     if (disconnectSocket) {
       disconnectSocket()
       disconnectSocket = null

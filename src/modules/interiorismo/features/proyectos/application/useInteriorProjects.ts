@@ -2,14 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   CreateInteriorProjectPayload,
   ListInteriorProjectsParams,
   UpdateInteriorProjectPayload,
 } from '../domain/project.types'
 import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
-import { projectBudgetKeys } from '@modules/interiorismo/features/proyecto-presupuesto/application/useProjectBudget'
 import { interiorProjectsApiRepository as repo } from '../infrastructure/projects.api.repository'
 
 export const interiorProjectKeys = {
@@ -37,8 +36,8 @@ export function useCreateInteriorProject() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateInteriorProjectPayload) => repo.create(payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, interiorProjectKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Proyecto creado')
     },
     onError: (err) => {
@@ -52,9 +51,8 @@ export function useUpdateInteriorProject() {
   return useMutation({
     mutationFn: (args: { id: string; payload: UpdateInteriorProjectPayload }) =>
       repo.update(args.id, args.payload),
-    onSuccess: (_data, vars) => {
-      invalidateQuerySubtree(qc, interiorProjectKeys.all)
-      qc.invalidateQueries({ queryKey: projectBudgetKeys.budget(vars.id) })
+    onSuccess: async (_data, vars) => {
+      await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success(
         vars.payload.status === 'CANCELLED' ? 'Proyecto cancelado' : 'Proyecto actualizado',
       )

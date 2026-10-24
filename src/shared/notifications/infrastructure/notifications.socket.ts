@@ -11,13 +11,18 @@ const getBaseUrl = (): string => {
 }
 
 let socket: unknown = null
+let connectionVersion = 0
 
 export function connectNotificationsSocket(
   accessToken: string,
   onNotification: OnNotificationCallback,
   onDisconnect: (disconnect: () => void) => void,
+  onDataChanged?: (payload: { resource: string }) => void,
 ): void {
+  disconnectNotificationsSocket()
+  const version = connectionVersion
   void import('socket.io-client').then(({ io }) => {
+    if (version !== connectionVersion) return
     const baseUrl = getBaseUrl()
     socket = io(`${baseUrl}/notifications`, {
       auth: { token: accessToken },
@@ -32,6 +37,9 @@ export function connectNotificationsSocket(
       disconnect: () => void
     }
     s.on('notification', onNotification)
+    const syncSocket = socket as { on: (event: string, callback: (payload: { resource: string }) => void) => void }
+    syncSocket.on('data-changed', (payload) => onDataChanged?.(payload))
+    syncSocket.on('authenticated', () => onDataChanged?.({ resource: '*' }))
     onDisconnect(() => {
       s.disconnect()
       socket = null
@@ -40,6 +48,7 @@ export function connectNotificationsSocket(
 }
 
 export function disconnectNotificationsSocket(): void {
+  connectionVersion += 1
   if (socket && typeof (socket as { disconnect: () => void }).disconnect === 'function') {
     ;(socket as { disconnect: () => void }).disconnect()
   }

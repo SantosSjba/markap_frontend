@@ -64,7 +64,7 @@ const lensTabs = [
   { id: 'meetings', label: 'Reuniones', icon: 'lucide:users' },
   { id: 'visits', label: 'Visitas', icon: 'lucide:map-pin' },
   { id: 'installations', label: 'Visita de obra', icon: 'lucide:hard-hat' },
-  { id: 'deadlines', label: 'Fechas lÃ­mite', icon: 'lucide:alarm-clock' },
+  { id: 'deadlines', label: 'Fechas límite', icon: 'lucide:alarm-clock' },
   { id: 'team', label: 'Agenda equipo', icon: 'lucide:briefcase' },
 ]
 
@@ -88,7 +88,7 @@ const projectOptions = computed(() => [
   { value: '', label: 'Todos los proyectos' },
   ...(projectsRes.value?.data ?? []).map((p) => ({
     value: p.id,
-    label: `${p.code} Â· ${p.name}`,
+    label: `${p.code} · ${p.name}`,
   })),
 ])
 
@@ -143,7 +143,7 @@ const filteredFeed = computed(() => {
   return [...list].sort((a, b) => a.startsAt.localeCompare(b.startsAt))
 })
 
-/** Mini heatmap: cuÃ¡ntos eventos por dÃ­a (filtrados) */
+/** Mini heatmap: cuántos eventos por día (filtrados) */
 const countsByDay = computed(() => {
   const m: Record<string, number> = {}
   for (const r of filteredFeed.value) {
@@ -184,9 +184,9 @@ watch(projectFilter, (v) => {
 const CAL_EVENT_FORM_ID = 'arq-cal-event-form'
 
 const cols = [
-  { key: 'when', label: 'CuÃ¡ndo', align: 'left' as const },
+  { key: 'when', label: 'Cuándo', align: 'left' as const },
   { key: 'kind', label: 'Tipo', align: 'left' as const },
-  { key: 'title', label: 'TÃ­tulo', align: 'left' as const },
+  { key: 'title', label: 'Título', align: 'left' as const },
   { key: 'project', label: 'Proyecto', align: 'left' as const },
   { key: 'assignee', label: 'Responsable', align: 'left' as const },
   { key: 'source', label: 'Origen', align: 'left' as const },
@@ -200,7 +200,7 @@ const MANUAL_TYPES = ['MEETING', 'VISIT', 'INSTALLATION', 'DEADLINE', 'TEAM_BLOC
 
 const eventSchema = yup.object({
   eventType: yup.string().required('Seleccione el tipo'),
-  title: yup.string().required('El tÃ­tulo es obligatorio').trim(),
+  title: yup.string().required('El título es obligatorio').trim(),
   description: yup.string().trim(),
   location: yup.string().trim(),
   startsAt: yup.string().required('Indique inicio'),
@@ -346,7 +346,7 @@ const onSubmitEvent = evForm.handleSubmit(async (values) => {
 
 async function removeEvent(row: CalendarFeedItemDto) {
   if (row.readOnly) return
-  const ok = await markapAlert.confirmDanger({ title: 'Â¿Eliminar evento?', confirmText: 'Eliminar' })
+  const ok = await markapAlert.confirmDanger({ title: '¿Eliminar evento?', confirmText: 'Eliminar' })
   if (!ok) return
   await deleteEv.mutateAsync(row.id)
 }
@@ -452,7 +452,7 @@ const monthTitle = computed(() =>
         :style="{ borderColor: 'var(--color-border)' }"
       >
         <p class="text-xs mb-2" :style="{ color: 'var(--color-text-muted)' }">
-          Vista rÃ¡pida del mes Â· nÃºmero = cantidad de Ã­tems en esta vista
+          Vista rápida del mes · número = cantidad de ítems en esta vista
         </p>
         <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">
           <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
@@ -487,15 +487,15 @@ const monthTitle = computed(() =>
       </div>
       <DataTable
         v-else
-        empty-text="Sin eventos en el perÃ­odo."
+        empty-text="Sin eventos en el período."
         :columns="cols"
         :data="
           filteredFeed.map((r) => ({
             ...r,
             when: fmtWhen(r),
             kind: CAL_EVENT_TYPE_LABELS[r.eventType] ?? r.eventType,
-            project: r.projectCode ? `${r.projectCode}` : 'â€”',
-            assignee: r.assignedAgentName ?? 'â€”',
+            project: r.projectCode ? `${r.projectCode}` : '—',
+            assignee: r.assignedAgentName ?? '—',
             source: CAL_SOURCE_LABELS[r.source] ?? r.source,
             _a: '',
           }))
@@ -521,7 +521,7 @@ const monthTitle = computed(() =>
               v-if="!(row as CalendarFeedItemDto).readOnly"
               :items="getEventActions(row as CalendarFeedItemDto)"
             />
-            <span v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">â€”</span>
+            <span v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">—</span>
           </td>
         </template>
       </DataTable>
@@ -530,9 +530,9 @@ const monthTitle = computed(() =>
     <BaseModal v-model="modalOpen" :title="editId ? 'Editar evento' : 'Nuevo evento'" size="lg">
       <form :id="CAL_EVENT_FORM_ID" class="space-y-3" @submit.prevent="onSubmitEvent">
         <FormSelect v-bind="evBinds.eventType" label="Tipo" :options="typeOptions" />
-        <FormInput v-bind="evBinds.title" label="TÃ­tulo" />
+        <FormInput v-bind="evBinds.title" label="Título" />
         <FormTextarea v-bind="evBinds.description" label="Detalle" :rows="2" />
-        <FormInput v-bind="evBinds.location" label="UbicaciÃ³n (visitas / obra)" />
+        <FormInput v-bind="evBinds.location" label="Ubicación (visitas / obra)" />
         <div class="flex flex-wrap gap-4 items-center">
           <label class="flex items-center gap-2 text-sm cursor-pointer">
             <input
@@ -541,7 +541,7 @@ const monthTitle = computed(() =>
               :checked="evValues.allDay"
               @change="setFieldValue('allDay', ($event.target as HTMLInputElement).checked)"
             />
-            Todo el dÃ­a
+            Todo el día
           </label>
         </div>
         <FormInput v-bind="evBinds.startsAt" :type="evValues.allDay ? 'date' : 'datetime-local'" label="Inicio" />

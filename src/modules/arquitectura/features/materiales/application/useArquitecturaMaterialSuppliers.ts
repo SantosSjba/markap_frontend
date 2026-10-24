@@ -2,7 +2,7 @@
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
 import type {
   CreateArquitecturaMaterialSupplierPayload,
@@ -39,8 +39,8 @@ export function useCreateArquitecturaMaterialSupplier() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateArquitecturaMaterialSupplierPayload) => repo.create(payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Proveedor creado')
     },
     onError: (err) => {
@@ -54,8 +54,8 @@ export function useUpdateArquitecturaMaterialSupplier(id: Ref<string> | string) 
   return useMutation({
     mutationFn: (payload: UpdateArquitecturaMaterialSupplierPayload) =>
       repo.update(unref(id), payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Proveedor guardado')
     },
     onError: (err) => {
@@ -68,8 +68,8 @@ export function useDeleteArquitecturaMaterialSupplier() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (supplierId: string) => repo.delete(supplierId),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Proveedor eliminado')
     },
     onError: (err) => {
@@ -83,8 +83,8 @@ export function useLinkArquitecturaSupplierCatalog(supplierId: Ref<string> | str
   return useMutation({
     mutationFn: (payload: LinkSupplierCatalogPayload) =>
       repo.linkCatalogMaterial(unref(supplierId), payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Material vinculado')
     },
     onError: (err) => {
@@ -97,8 +97,8 @@ export function useUnlinkArquitecturaSupplierCatalog() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (linkId: string) => repo.unlinkCatalogLink(linkId),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Vínculo eliminado')
     },
     onError: (err) => {
@@ -112,8 +112,8 @@ export function useRecordArquitecturaMaterialPurchase(supplierId: Ref<string> | 
   return useMutation({
     mutationFn: (payload: RecordArquitecturaMaterialPurchasePayload) =>
       repo.recordPurchase(unref(supplierId), payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaMaterialSuppliersKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Compra registrada')
     },
     onError: (err) => {

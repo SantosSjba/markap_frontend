@@ -130,7 +130,7 @@ const showOffset = computed(
     </PageHeader>
 
     <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
-      Configure el periodo activo en Configuraci�n ? Contexto contable.
+      Configure el periodo activo en Configuración → Contexto contable.
     </p>
 
     <div

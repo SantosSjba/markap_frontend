@@ -2,7 +2,7 @@
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
 import type {
   CreateArquitecturaDocumentPayload,
@@ -27,8 +27,8 @@ export function useCreateArquitecturaDocument() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateArquitecturaDocumentPayload) => repo.create(payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaDocumentKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Documento registrado')
     },
     onError: (err) => {
@@ -42,8 +42,8 @@ export function useUpdateArquitecturaDocument() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateArquitecturaDocumentPayload }) =>
       repo.update(id, payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaDocumentKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Documento actualizado')
     },
     onError: (err) => {
@@ -56,8 +56,8 @@ export function useDeleteArquitecturaDocument() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => repo.delete(id),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaDocumentKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Documento eliminado')
     },
     onError: (err) => {

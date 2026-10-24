@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   ContabilidadAppSettingsDTO,
   ContabilidadCompanyProfileDTO,
@@ -14,7 +14,7 @@ export const contabilidadConfigKeys = {
 }
 
 export function invalidateContabilidadConfigCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, contabilidadConfigKeys.root)
+  return invalidateModuleQueries(qc, 'contabilidad')
 }
 
 export function useContabilidadConfigBootstrap() {
@@ -30,8 +30,8 @@ export function useContabilidadSaveCompany() {
   return useMutation({
     mutationFn: (body: Partial<ContabilidadCompanyProfileDTO>) =>
       contabilidadConfigRepository.updateCompany(body),
-    onSuccess: () => {
-      void invalidateContabilidadConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadConfigCache(qc)
       void markapAlert.toast.success('Datos de empresa actualizados')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -43,8 +43,8 @@ export function useContabilidadSaveSettings() {
   return useMutation({
     mutationFn: (body: Partial<ContabilidadAppSettingsDTO>) =>
       contabilidadConfigRepository.updateSettings(body),
-    onSuccess: () => {
-      void invalidateContabilidadConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadConfigCache(qc)
       void markapAlert.toast.success('Parámetros tributarios actualizados')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -58,8 +58,8 @@ export function useContabilidadPatchDocumentSeries() {
       seriesKey: string
       body: { sunatSeries?: string; lastNumber?: number; padLength?: number; isActive?: boolean }
     }) => contabilidadConfigRepository.patchDocumentSeries(args.seriesKey, args.body),
-    onSuccess: () => {
-      void invalidateContabilidadConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateContabilidadConfigCache(qc)
       void markapAlert.toast.success('Serie documental actualizada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),

@@ -2,7 +2,7 @@
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
 import type {
   CreateArquitecturaCatalogMaterialPayload,
@@ -37,8 +37,8 @@ export function useCreateArquitecturaCatalogMaterial() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateArquitecturaCatalogMaterialPayload) => repo.create(payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaCatalogMaterialsKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Material creado')
     },
     onError: (err) => {
@@ -52,8 +52,8 @@ export function useUpdateArquitecturaCatalogMaterial(id: Ref<string> | string) {
   return useMutation({
     mutationFn: (payload: UpdateArquitecturaCatalogMaterialPayload) =>
       repo.update(unref(id), payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaCatalogMaterialsKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Material guardado')
     },
     onError: (err) => {
@@ -66,8 +66,8 @@ export function useDeleteArquitecturaCatalogMaterial() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (materialId: string) => repo.delete(materialId),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaCatalogMaterialsKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Material eliminado')
     },
     onError: (err) => {

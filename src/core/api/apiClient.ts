@@ -40,8 +40,8 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config
 
     // Handle 401 Unauthorized - Token expired or invalid
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
+    if (error.response?.status === 401 && !originalRequest?._retry) {
+      if (originalRequest) originalRequest._retry = true
 
       const authStore = useAuthStore()
 

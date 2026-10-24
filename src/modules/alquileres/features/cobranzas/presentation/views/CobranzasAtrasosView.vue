@@ -52,7 +52,7 @@ const modalError = ref('')
 
 const pendingParams = computed(() => ({
   search: selectedOverdue.value?.tenantName,
-  status: 'OVERDUE' as const,
+  status: 'ALL' as const,
 }))
 
 const {
@@ -64,7 +64,7 @@ const {
 } = usePendingPayments(pendingParams)
 
 const selectedRentalPendingList = computed(
-  () => tenantPendingPayments.value?.filter((p) => p.rentalId === selectedOverdue.value?.rentalId) ?? [],
+  () => tenantPendingPayments.value?.filter((p) => p.rentalId === selectedOverdue.value?.rentalId && p.daysOverdue > 0) ?? [],
 )
 
 const paymentSchema = yup.object({
@@ -91,6 +91,7 @@ const {
   errors: paymentErrors,
   defineComponentBinds: definePaymentBinds,
   resetForm: resetPaymentForm,
+  setFieldValue: setPaymentField,
 } = useForm({
   validationSchema: toTypedSchema(paymentSchema),
   initialValues: {
@@ -143,7 +144,7 @@ function openModal(item: OverduePaymentItem) {
   resetPaymentForm({
     values: {
       paidDate: toCalendarDateString(),
-      paidAmount: item.totalOwed,
+      paidAmount: 0,
       paymentMethod: 'CASH',
       referenceNumber: '',
       notes: '',
@@ -386,7 +387,7 @@ async function handleExport() {
     <div v-else class="flex flex-col gap-4">
       <div
         v-for="item in overdueList"
-        :key="item.tenantId"
+        :key="item.rentalId"
         class="rounded-xl border-l-4 p-5 transition-colors"
         :style="{
           borderLeftColor: getBorderColor(item.overdueLevel),
@@ -583,6 +584,7 @@ async function handleExport() {
                 type="radio"
                 :value="pending.paymentId"
                 v-model="selectedPaymentId"
+                @change="setPaymentField('paidAmount', pending.amount)"
                 class="accent-primary shrink-0"
               />
               <div class="flex-1 min-w-0">

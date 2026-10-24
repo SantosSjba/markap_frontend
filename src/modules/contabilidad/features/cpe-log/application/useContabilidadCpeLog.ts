@@ -1,3 +1,4 @@
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
@@ -23,8 +24,8 @@ export function useContabilidadCreateCpeLog() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateCpeLogBody) => cpeLogRepository.createLog(body),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: contabilidadCpeLogKeys.root })
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'contabilidad')
       void markapAlert.toast.success('Registro CPE guardado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),

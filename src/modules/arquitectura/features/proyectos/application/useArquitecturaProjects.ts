@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type {
   CreateArquitecturaProjectPayload,
   ListArquitecturaProjectsParams,
@@ -36,8 +36,8 @@ export function useCreateArquitecturaProject() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateArquitecturaProjectPayload) => repo.create(payload),
-    onSuccess: () => {
-      invalidateQuerySubtree(qc, arquitecturaProjectKeys.all)
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success('Proyecto creado')
     },
     onError: (err) => {
@@ -51,8 +51,8 @@ export function useUpdateArquitecturaProject() {
   return useMutation({
     mutationFn: (args: { id: string; payload: UpdateArquitecturaProjectPayload }) =>
       repo.update(args.id, args.payload),
-    onSuccess: (_data, vars) => {
-      invalidateQuerySubtree(qc, arquitecturaProjectKeys.all)
+    onSuccess: async (_data, vars) => {
+      await invalidateModuleQueries(qc, 'arquitectura')
       void markapAlert.toast.success(
         vars.payload.status === 'CANCELLED' ? 'Proyecto cancelado' : 'Proyecto actualizado',
       )

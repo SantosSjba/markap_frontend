@@ -30,7 +30,7 @@ const resetSchema = yup.object({
     .required('El código es requerido')
     .length(6, 'El código debe tener exactamente 6 dígitos')
     .matches(/^\d+$/, 'El código solo debe contener números'),
-  newPassword: yup.string().required('La contraseña es requerida').min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  newPassword: yup.string().required('La contraseña es requerida').min(8, 'La contraseña debe tener al menos 8 caracteres').max(50).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Incluye mayúscula, minúscula y número'),
   confirmPassword: yup
     .string()
     .required('Confirma la contraseña')
@@ -168,7 +168,7 @@ const goToLogin = () => {
           v-bind="newPasswordBinds"
           type="password"
           label="Nueva contraseña"
-          placeholder="Mínimo 6 caracteres"
+          placeholder="Mínimo 8 caracteres"
           :error="errors.newPassword"
           required
         />

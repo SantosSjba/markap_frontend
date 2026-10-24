@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { queryClient } from '@core/plugins/vue-query'
 import { ref, computed } from 'vue'
 import { authApiRepository } from '../../infrastructure/repositories/auth.api.repository'
 import type { User, LoginCredentials } from '../../domain/auth.types'
@@ -31,6 +32,7 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   const setAuth = (userData: User, token: string, expires: number) => {
+    queryClient.clear()
     user.value = userData
     accessToken.value = token
     expiresIn.value = expires
@@ -41,6 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const clearAuth = () => {
+    queryClient.clear()
     user.value = null
     accessToken.value = null
     expiresIn.value = null
@@ -121,9 +124,9 @@ export const useAuthStore = defineStore('auth', () => {
     if (storedUser) {
       try {
         user.value = JSON.parse(storedUser)
-        await fetchProfile()
+        if (!(await fetchProfile())) clearAuth()
       } catch {
-        localStorage.removeItem(USER_KEY)
+        clearAuth()
       }
     }
   }

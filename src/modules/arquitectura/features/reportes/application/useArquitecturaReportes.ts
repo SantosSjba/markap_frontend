@@ -1,7 +1,7 @@
 ﻿import { useQuery, type QueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { useQueryErrorToast } from '@/shared/composables'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type { ArquitecturaReportesRangeParams } from '../domain/reportes.types'
 import { arquitecturaReportesApiRepository as interiorReportesRepository } from '../infrastructure/repositories/reportes.api.repository'
 
@@ -15,7 +15,7 @@ export const arquitecturaReportesKeys = {
 }
 
 export function invalidateArquitecturaReportesCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, arquitecturaReportesKeys.root)
+  return invalidateModuleQueries(qc, 'arquitectura')
 }
 
 export function useArquitecturaReportsDashboard(

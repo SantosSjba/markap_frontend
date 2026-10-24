@@ -1,10 +1,10 @@
 ﻿export function formatSol(amount: number | null | undefined): string {
-  if (amount == null || Number.isNaN(amount)) return 'â€”'
+  if (amount == null || Number.isNaN(amount)) return '—'
   return `S/ ${Number(amount).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 export function formatPct(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(value)) return 'â€”'
+  if (value == null || Number.isNaN(value)) return '—'
   return `${Number(value).toFixed(2)}%`
 }
 
@@ -20,7 +20,7 @@ export const INTERVENTION_LEVEL_OPTIONS = Object.entries(INTERVENTION_LEVEL_LABE
 
 export const CURRENCY_OPTIONS = [
   { value: 'PEN', label: 'Soles (PEN)' },
-  { value: 'USD', label: 'DÃ³lares (USD)' },
+  { value: 'USD', label: 'Dólares (USD)' },
 ]
 
 export const PAYMENT_TYPE_LABELS: Record<string, string> = {

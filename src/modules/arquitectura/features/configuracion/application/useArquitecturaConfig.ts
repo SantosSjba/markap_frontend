@@ -1,7 +1,7 @@
 ﻿import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { markapAlert } from '@/shared/composables'
 import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { invalidateQuerySubtree } from '@/shared/utils/invalidateQuerySubtree'
+import { invalidateModuleQueries } from '@/shared/utils/invalidateModuleQueries'
 import type { ArquitecturaProjectStageDTO } from '../domain/config.types'
 import { arquitecturaConfigApiRepository as arquitecturaConfigRepository } from '../infrastructure/repositories/arquitectura-config.api.repository'
 
@@ -11,7 +11,7 @@ export const arquitecturaConfigKeys = {
 }
 
 export function invalidateArquitecturaConfigCache(qc: QueryClient) {
-  return invalidateQuerySubtree(qc, arquitecturaConfigKeys.root)
+  return invalidateModuleQueries(qc, 'arquitectura')
 }
 
 export function useArquitecturaConfigBootstrap() {
@@ -27,8 +27,8 @@ export function useArquitecturaSaveProjectStages() {
   return useMutation({
     mutationFn: (stages: ArquitecturaProjectStageDTO[]) =>
       arquitecturaConfigRepository.replaceProjectStages(stages),
-    onSuccess: () => {
-      void invalidateArquitecturaConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateArquitecturaConfigCache(qc)
       void markapAlert.toast.success('Etapas actualizadas')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
@@ -40,8 +40,8 @@ export function useArquitecturaSaveArquitecturaProjectNumbering() {
   return useMutation({
     mutationFn: (body: { prefix?: string; lastNumber?: number }) =>
       arquitecturaConfigRepository.patchArquitecturaProjectNumbering(body),
-    onSuccess: () => {
-      void invalidateArquitecturaConfigCache(qc)
+    onSuccess: async () => {
+      await invalidateArquitecturaConfigCache(qc)
       void markapAlert.toast.success('Numeración actualizada')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
