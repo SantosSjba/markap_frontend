@@ -1,29 +1,32 @@
 <script setup lang="ts">
-import { formatDateTime, toCalendarDateString } from '@/shared/utils/formatters'
+import { produccionCatalogRepositoryKey } from '../../application/ports/catalog.port'
+import { useService } from '@shared/presentation/di/services'
+import { formatDateTime, toCalendarDateString } from '@shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BasePagination,
-  BaseModal,
-  DataTable,
-  SearchInput,
-  AppIcon,
-  ActionsDropdown,
-  ExcelIcon,
-} from '@shared/components'
-import { useExcelExport } from '@shared/composables'
-import type { ProduccionFurnitureListItem, ListProduccionFurnitureParams } from '../../domain/catalog.types'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import type {
+  ProduccionFurnitureListItem,
+  ListProduccionFurnitureParams,
+} from '../../domain/catalog.types'
 import {
   useProduccionCatalogList,
   useProduccionCatalogStats,
   useDeleteProduccionCatalogItem,
-} from '../../application/useProduccionCatalog'
-import { produccionCatalogRepository } from '@modules/produccion/features/catalogo'
-import { useProduccionFurnitureCategoryOptions } from '@modules/produccion/features/configuracion'
+} from '../composables/useProduccionCatalog'
+import { useProduccionFurnitureCategoryOptions } from '../../../configuracion/presentation/composables/useProduccionConfigOptions'
 import { formatSol } from '../labels'
-import { PRODUCCION_BASE_PATH } from '@modules/produccion/config/routes.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { PRODUCCION_BASE_PATH } from '../../../../config/routes.constants'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const produccionCatalogRepository = useService(produccionCatalogRepositoryKey)
 
 const router = useRouter()
 const ITEMS = 10
@@ -42,10 +45,7 @@ watch([searchInput, categoryFilter, activeFilter], () => {
     page: 1,
     search: searchInput.value.trim() || undefined,
     category: categoryFilter.value.trim() || undefined,
-    isActive:
-      activeFilter.value === 'all'
-        ? undefined
-        : activeFilter.value === 'active',
+    isActive: activeFilter.value === 'all' ? undefined : activeFilter.value === 'active',
   }
 })
 
@@ -124,7 +124,9 @@ const executeDelete = async () => {
   }
 }
 
-const getActions = (r: ProduccionFurnitureListItem): { label: string; icon: string; onClick: () => void }[] => [
+const getActions = (
+  r: ProduccionFurnitureListItem,
+): { label: string; icon: string; onClick: () => void }[] => [
   { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(r) },
   { label: 'Editar', icon: 'lucide:pencil', onClick: () => goDetail(r) },
   { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteConfirm(r) },
@@ -138,10 +140,7 @@ async function handleExport() {
     limit: 10000,
     search: searchInput.value.trim() || undefined,
     category: categoryFilter.value.trim() || undefined,
-    isActive:
-      activeFilter.value === 'all'
-        ? undefined
-        : activeFilter.value === 'active',
+    isActive: activeFilter.value === 'all' ? undefined : activeFilter.value === 'active',
   })
   const now = toCalendarDateString()
   await exportToExcel({

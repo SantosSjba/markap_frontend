@@ -1,23 +1,20 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  FormInput,
-  FormCheckbox,
-  SearchInput,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
 import {
   useContabilidadCostCentersList,
   useContabilidadCreateCostCenter,
   useContabilidadUpdateCostCenter,
   useContabilidadDeactivateCostCenter,
-} from '../../application/useContabilidadCostCenters'
+} from '../composables/useContabilidadCostCenters'
 import type { ContabilidadCostCenterDTO } from '../../domain/cost-center.types'
-
 const searchInput = ref('')
 const debouncedSearch = useDebouncedRef(searchInput)
 
@@ -57,12 +54,22 @@ function submitForm() {
           isActive: form.value.isActive,
         },
       },
-      { onSuccess: () => { modalOpen.value = false; void refetch() } },
+      {
+        onSuccess: () => {
+          modalOpen.value = false
+          void refetch()
+        },
+      },
     )
   } else {
     createCenter(
       { code: form.value.code.trim(), name: form.value.name.trim() },
-      { onSuccess: () => { modalOpen.value = false; void refetch() } },
+      {
+        onSuccess: () => {
+          modalOpen.value = false
+          void refetch()
+        },
+      },
     )
   }
 }

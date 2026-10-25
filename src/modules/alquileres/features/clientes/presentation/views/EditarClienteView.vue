@@ -2,10 +2,13 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, FormSectionCard } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import {
   useClient,
   useDocumentTypes,
@@ -13,7 +16,7 @@ import {
   useProvinces,
   useDistricts,
   useUpdateClient,
-} from '../../application/useClients'
+} from '../composables/useClients'
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
   UBIGEO_OTHER_DISTRICT_ID,
@@ -21,9 +24,8 @@ import {
   mergeDepartmentOptions,
 } from '../../constants/ubigeo-other'
 import { useClientAddressUbigeo } from '../../composables/useClientAddressUbigeo'
-import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
+import { navigateAfterAlquileresSave } from '../../../../presentation/navigation/navigateAfterAlquileresSave'
 import type { DocumentType } from '../../domain/client.types'
-
 const route = useRoute()
 const router = useRouter()
 const appColor = 'var(--color-primary)'
@@ -151,14 +153,14 @@ const documentTypeOptions = computed(() =>
   (documentTypes.value ?? []).map((d: DocumentType) => ({
     value: d.id,
     label: `${d.name} (${d.code})`,
-  }))
+  })),
 )
 const departmentOptions = computed(() => mergeDepartmentOptions(departments.value))
 const provinceOptions = computed(() =>
-  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name }))
+  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name })),
 )
 const districtOptions = computed(() =>
-  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name }))
+  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name })),
 )
 
 watch(
@@ -205,7 +207,7 @@ watch(
   () => clientError.value,
   (isErr) => {
     if (isErr) router.replace('/alquileres/clientes')
-  }
+  },
 )
 
 const goBack = () => router.push('/alquileres/clientes')
@@ -223,8 +225,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         documentNumber: formValues.documentNumber.trim(),
         fullName: formValues.fullName.trim(),
         legalRepresentativeName: formValues.legalRepresentativeName?.trim() || null,
-        legalRepresentativePosition:
-          formValues.legalRepresentativePosition?.trim() || null,
+        legalRepresentativePosition: formValues.legalRepresentativePosition?.trim() || null,
         primaryPhone: formValues.primaryPhone.trim(),
         secondaryPhone: formValues.secondaryPhone?.trim() || null,
         primaryEmail: formValues.primaryEmail?.trim() || null,

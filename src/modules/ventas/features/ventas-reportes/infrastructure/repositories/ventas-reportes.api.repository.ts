@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   VENTAS_REPORTES_APP_SLUG,
   type VentasAgentPerformanceRow,
@@ -7,7 +7,6 @@ import {
   type VentasSalesByPeriodRow,
 } from '../../domain/reportes.types'
 import type { VentasReportesRepository } from '../../domain/repositories/ventas-reportes.repository'
-
 const scope = { applicationSlug: VENTAS_REPORTES_APP_SLUG } as const
 
 function qs(params: Record<string, string | undefined>) {
@@ -21,14 +20,16 @@ function qs(params: Record<string, string | undefined>) {
 export const ventasReportesApiRepository: VentasReportesRepository = {
   salesByPeriod: (params: { startDate?: string; endDate?: string; granularity?: string }) =>
     apiClient
-      .get<VentasSalesByPeriodRow[]>(`/ventas-reports/sales-by-period?${qs({ ...scope, ...params })}`)
+      .get<
+        VentasSalesByPeriodRow[]
+      >(`/ventas-reports/sales-by-period?${qs({ ...scope, ...params })}`)
       .then((r) => r.data),
 
   agentPerformance: (params: { startDate?: string; endDate?: string }) =>
     apiClient
-      .get<VentasAgentPerformanceRow[]>(
-        `/ventas-reports/agent-performance?${qs({ ...scope, ...params })}`,
-      )
+      .get<
+        VentasAgentPerformanceRow[]
+      >(`/ventas-reports/agent-performance?${qs({ ...scope, ...params })}`)
       .then((r) => r.data),
 
   conversion: (params: { startDate?: string; endDate?: string }) =>
@@ -38,6 +39,8 @@ export const ventasReportesApiRepository: VentasReportesRepository = {
 
   financialFlow: (params: { startDate?: string; endDate?: string }) =>
     apiClient
-      .get<VentasFinancialFlowReport>(`/ventas-reports/financial-flow?${qs({ ...scope, ...params })}`)
+      .get<VentasFinancialFlowReport>(
+        `/ventas-reports/financial-flow?${qs({ ...scope, ...params })}`,
+      )
       .then((r) => r.data),
 }

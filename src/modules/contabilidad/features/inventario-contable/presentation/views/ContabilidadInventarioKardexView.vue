@@ -1,25 +1,32 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormSelect, PageHeader, StatsCard } from '@shared/components'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadInventoryCatalog,
   useContabilidadInventoryItems,
   useContabilidadInventoryKardex,
-} from '../../application/useContabilidadInventory'
+} from '../composables/useContabilidadInventory'
 import type { ContabilidadInventoryKardexLineDTO } from '../../domain/inventory.types'
-
 const router = useRouter()
 const selectedItemId = ref('')
 
 const { data: itemsData } = useContabilidadInventoryItems(computed(() => ({})))
 const itemOptions = computed(() =>
-  (itemsData.value?.items ?? []).map((i) => ({ value: i.id, label: `${i.code} — ${i.description}` })),
+  (itemsData.value?.items ?? []).map((i) => ({
+    value: i.id,
+    label: `${i.code} — ${i.description}`,
+  })),
 )
 
 const { data: catalog } = useContabilidadInventoryCatalog()
-const { data: kardexData, isLoading } = useContabilidadInventoryKardex(computed(() => selectedItemId.value || undefined))
+const { data: kardexData, isLoading } = useContabilidadInventoryKardex(
+  computed(() => selectedItemId.value || undefined),
+)
 
 const item = computed(() => kardexData.value?.item)
 const lines = computed(() => kardexData.value?.lines ?? [])

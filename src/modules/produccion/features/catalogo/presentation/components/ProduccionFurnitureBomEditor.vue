@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { BaseButton, FormInput, FormSelect, AppIcon } from '@shared/components'
-import { useProduccionUnitOptions } from '@modules/produccion/features/configuracion'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useProduccionUnitOptions } from '../../../configuracion/presentation/composables/useProduccionConfigOptions'
 export type BomLineDraft = {
   key: string
   materialName: string

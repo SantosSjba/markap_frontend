@@ -1,5 +1,4 @@
 import type { QueryClient } from '@tanstack/vue-query'
-
 type BusinessModule = 'produccion' | 'contabilidad' | 'interiorismo' | 'arquitectura'
 
 /**
@@ -11,12 +10,14 @@ export function invalidateModuleQueries(
   queryClient: QueryClient,
   module: BusinessModule,
 ): Promise<void> {
-  return Promise.all([queryClient.invalidateQueries({
-    predicate: ({ queryKey }) =>
-      typeof queryKey[0] === 'string' && (
-        queryKey[0].startsWith(`${module}-`) ||
-        (queryKey[0] === 'clients' && queryKey[1] === module)
-      ),
-    refetchType: 'active',
-  }), queryClient.invalidateQueries({ queryKey: ['applications', 'me'] })]).then(() => undefined)
+  return Promise.all([
+    queryClient.invalidateQueries({
+      predicate: ({ queryKey }) =>
+        typeof queryKey[0] === 'string' &&
+        (queryKey[0].startsWith(`${module}-`) ||
+          (queryKey[0] === 'clients' && queryKey[1] === module)),
+      refetchType: 'active',
+    }),
+    queryClient.invalidateQueries({ queryKey: ['applications', 'me'] }),
+  ]).then(() => undefined)
 }

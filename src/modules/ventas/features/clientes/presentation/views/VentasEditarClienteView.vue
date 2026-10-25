@@ -2,10 +2,13 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, FormSectionCard } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import {
   useVentasClient,
   useVentasClientDocumentTypes,
@@ -13,11 +16,14 @@ import {
   useVentasClientDepartments,
   useVentasClientProvinces,
   useVentasClientDistricts,
-} from '../../application/useVentasClients'
-import { useVentasAgentsList } from '@modules/ventas/features/agentes'
-import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
+} from '../composables/useVentasClients'
+import { useVentasAgentsList } from '../../../agentes/presentation/composables/useAgents'
+import { navigateAfterVentasSave } from '../../../../presentation/navigation/navigateAfterVentasSave'
 import type { VentasDocumentType } from '../../domain/client.types'
-import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../../domain/leadOrigins.constants'
+import {
+  VENTAS_LEAD_ORIGIN_OPTIONS,
+  VENTAS_SALES_STATUS_OPTIONS,
+} from '../../domain/leadOrigins.constants'
 import type { VentasLeadOriginCode } from '../../domain/leadOrigins.constants'
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
@@ -26,7 +32,6 @@ import {
   buildLocationCustomPayload,
 } from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
-
 interface VentasClienteFormValues {
   documentTypeId: string
   documentNumber: string
@@ -135,31 +140,31 @@ const validationSchema = computed(() =>
 
 const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } =
   useForm<VentasClienteFormValues>({
-  validationSchema,
-  initialValues: {
-    documentTypeId: '',
-    documentNumber: '',
-    fullName: '',
-    legalRepresentativeName: '',
-    legalRepresentativePosition: '',
-    primaryPhone: '',
-    secondaryPhone: '',
-    primaryEmail: '',
-    secondaryEmail: '',
-    salesStatus: 'PROSPECT' as const,
-    leadOrigin: '' as VentasLeadOriginCode | '',
-    assignedAgentId: '',
-    notes: '',
-    addressLine: '',
-    departmentId: '',
-    provinceId: '',
-    districtId: '',
-    reference: '',
-    locationCountry: '',
-    locationDepartment: '',
-    locationProvince: '',
-    locationDistrict: '',
-  },
+    validationSchema,
+    initialValues: {
+      documentTypeId: '',
+      documentNumber: '',
+      fullName: '',
+      legalRepresentativeName: '',
+      legalRepresentativePosition: '',
+      primaryPhone: '',
+      secondaryPhone: '',
+      primaryEmail: '',
+      secondaryEmail: '',
+      salesStatus: 'PROSPECT' as const,
+      leadOrigin: '' as VentasLeadOriginCode | '',
+      assignedAgentId: '',
+      notes: '',
+      addressLine: '',
+      departmentId: '',
+      provinceId: '',
+      districtId: '',
+      reference: '',
+      locationCountry: '',
+      locationDepartment: '',
+      locationProvince: '',
+      locationDistrict: '',
+    },
   })
 
 const documentTypeIdBinds = defineComponentBinds('documentTypeId')
@@ -319,8 +324,7 @@ const onSubmit = handleSubmit(async (formValues) => {
           documentNumber: formValues.documentNumber.trim(),
           fullName: formValues.fullName.trim(),
           legalRepresentativeName: formValues.legalRepresentativeName?.trim() || null,
-          legalRepresentativePosition:
-            formValues.legalRepresentativePosition?.trim() || null,
+          legalRepresentativePosition: formValues.legalRepresentativePosition?.trim() || null,
           primaryPhone: formValues.primaryPhone.trim(),
           secondaryPhone: formValues.secondaryPhone?.trim() || null,
           primaryEmail: formValues.primaryEmail?.trim() || null,
@@ -340,8 +344,7 @@ const onSubmit = handleSubmit(async (formValues) => {
           documentNumber: formValues.documentNumber.trim(),
           fullName: formValues.fullName.trim(),
           legalRepresentativeName: formValues.legalRepresentativeName?.trim() || null,
-          legalRepresentativePosition:
-            formValues.legalRepresentativePosition?.trim() || null,
+          legalRepresentativePosition: formValues.legalRepresentativePosition?.trim() || null,
           primaryPhone: formValues.primaryPhone.trim(),
           secondaryPhone: formValues.secondaryPhone?.trim() || null,
           primaryEmail: formValues.primaryEmail?.trim() || null,

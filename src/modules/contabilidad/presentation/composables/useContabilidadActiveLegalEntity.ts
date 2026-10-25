@@ -1,7 +1,6 @@
 import { computed } from 'vue'
 import { useContabilidadContext } from './useContabilidadContext'
-
-export type { ContabilidadLegalEntityDTO } from './contabilidad-context.types'
+export type { ContabilidadLegalEntityDTO } from '../../domain/legal-entity.types'
 
 /** Compat: delega en el contexto unificado (bootstrap + entidad activa). */
 export function useContabilidadActiveLegalEntity() {

@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import { useService } from '@shared/presentation/di/services'
+import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, FormSectionCard, FileDropzone } from '@shared/components'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import {
   usePropertyById,
   usePropertyTypes,
@@ -14,8 +21,8 @@ import {
   usePropertyOwners,
   useUpdateProperty,
   useUploadPropertyMedia,
-} from '../../application/useProperties'
-import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
+} from '../composables/useProperties'
+import { navigateAfterAlquileresSave } from '../../../../presentation/navigation/navigateAfterAlquileresSave'
 import { formatFormArea, formatFormStat } from '@shared/utils/format-form-stat'
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
@@ -26,14 +33,14 @@ import {
   buildPropertyUbigeoPayload,
   parseLocationFromDescription,
   stripLocationFromDescription,
-} from '@modules/alquileres/features/clientes/constants/ubigeo-other'
-import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
+} from '../../../clientes/constants/ubigeo-other'
+import { useClientAddressUbigeo } from '../../../clientes/composables/useClientAddressUbigeo'
 import type { PropertyType, OwnerOption, PropertyMediaItem } from '../../domain/property.types'
-import { apiClient } from '@core/api/apiClient'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { resolveFileDownloadUrl } from '@shared/utils/archivo-url'
 import PropertyOwnersSection from '../components/PropertyOwnersSection.vue'
+const fileAccess = useService(FILE_ACCESS)
 
 type PropertyFormValues = {
   code: string
@@ -100,50 +107,88 @@ const schema = yup.object({
     otherwise: (s) => s.trim(),
   }),
   description: yup.string().trim(),
-  area: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
-  bedrooms: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
-  bathrooms: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
-  ageYears: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
+  area: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .nullable(),
+  bedrooms: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
+  bathrooms: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
+  ageYears: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
   floorLevel: yup.string().trim(),
-  parkingSpaces: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
+  parkingSpaces: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
   partida1: yup.string().trim().max(100),
   partida2: yup.string().trim().max(100),
   partida3: yup.string().trim().max(100),
   ownerId: yup.string().required('Seleccione el propietario'),
-  monthlyRent: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
-  maintenanceAmount: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
-  depositMonths: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
+  monthlyRent: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .nullable(),
+  maintenanceAmount: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .nullable(),
+  depositMonths: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
 })
 
-const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm<PropertyFormValues>({
-  validationSchema: toTypedSchema(schema) as never,
-  initialValues: {
-    code: '',
-    propertyTypeId: '',
-    addressLine: '',
-    departmentId: '',
-    provinceId: '',
-    districtId: '',
-    locationCountry: '',
-    locationDepartment: '',
-    locationProvince: '',
-    locationDistrict: '',
-    description: '',
-    area: '',
-    bedrooms: '',
-    bathrooms: '',
-    ageYears: '',
-    floorLevel: '',
-    parkingSpaces: '',
-    partida1: '',
-    partida2: '',
-    partida3: '',
-    ownerId: '',
-    monthlyRent: '',
-    maintenanceAmount: '',
-    depositMonths: '',
-  },
-})
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } =
+  useForm<PropertyFormValues>({
+    validationSchema: toTypedSchema(schema) as never,
+    initialValues: {
+      code: '',
+      propertyTypeId: '',
+      addressLine: '',
+      departmentId: '',
+      provinceId: '',
+      districtId: '',
+      locationCountry: '',
+      locationDepartment: '',
+      locationProvince: '',
+      locationDistrict: '',
+      description: '',
+      area: '',
+      bedrooms: '',
+      bathrooms: '',
+      ageYears: '',
+      floorLevel: '',
+      parkingSpaces: '',
+      partida1: '',
+      partida2: '',
+      partida3: '',
+      ownerId: '',
+      monthlyRent: '',
+      maintenanceAmount: '',
+      depositMonths: '',
+    },
+  })
 
 const codeBinds = defineComponentBinds('code')
 const propertyTypeIdBinds = defineComponentBinds('propertyTypeId')
@@ -186,7 +231,11 @@ const { data: propertyTypes, isLoading: loadingTypes } = usePropertyTypes()
 const { data: departments, isLoading: loadingDepartments } = usePropertyDepartments()
 const { data: provinces, isLoading: loadingProvinces } = usePropertyProvinces(selectedDepartmentId)
 const { data: districts, isLoading: loadingDistricts } = usePropertyDistricts(selectedProvinceId)
-const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = usePropertyOwners('alquileres')
+const {
+  data: owners,
+  isLoading: loadingOwners,
+  refetch: refetchOwners,
+} = usePropertyOwners('alquileres')
 const updateMutation = useUpdateProperty()
 const { mutateAsync: uploadMedia, isPending: uploadingMedia } = useUploadPropertyMedia()
 
@@ -202,7 +251,8 @@ const newMediaKind = ref<'photo' | 'plan'>('photo')
 const newMediaError = ref('')
 
 const loading = computed(
-  () => loadingProperty.value || loadingTypes.value || loadingDepartments.value || loadingOwners.value
+  () =>
+    loadingProperty.value || loadingTypes.value || loadingDepartments.value || loadingOwners.value,
 )
 
 watch(
@@ -278,20 +328,20 @@ onMounted(async () => {
 })
 
 const propertyTypeOptions = computed(() =>
-  (propertyTypes.value ?? []).map((p: PropertyType) => ({ value: p.id, label: p.name }))
+  (propertyTypes.value ?? []).map((p: PropertyType) => ({ value: p.id, label: p.name })),
 )
 const departmentOptions = computed(() => mergeDepartmentOptions(departments.value))
 const provinceOptions = computed(() =>
-  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name }))
+  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name })),
 )
 const districtOptions = computed(() =>
-  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name }))
+  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name })),
 )
 const ownerOptions = computed(() =>
   (owners.value ?? []).map((o: OwnerOption) => ({
     value: o.id,
     label: `${o.fullName} (${o.documentNumber})`,
-  }))
+  })),
 )
 
 const selectedOwnerLabel = computed(() => {
@@ -323,7 +373,11 @@ const locationSummary = computed(() => {
 })
 
 const monthlyRentPreview = computed(() => {
-  if (values.monthlyRent === '' || values.monthlyRent === null || values.monthlyRent === undefined) {
+  if (
+    values.monthlyRent === '' ||
+    values.monthlyRent === null ||
+    values.monthlyRent === undefined
+  ) {
     return null
   }
   const n = Number(values.monthlyRent)
@@ -354,10 +408,9 @@ async function onUploadMedia() {
 async function openMediaItem(item: PropertyMediaItem) {
   try {
     if (item.archivoId) {
-      const { data } = await apiClient.get<{ url: string }>(
-        `/gen-archivos/${encodeURIComponent(item.archivoId)}/url`,
-        { params: { applicationSlug: 'alquileres' } },
-      )
+      const data = await fileAccess.getDownloadUrl(encodeURIComponent(item.archivoId), {
+        applicationSlug: 'alquileres',
+      })
       if (data?.url) {
         window.open(data.url, '_blank', 'noopener,noreferrer')
         return
@@ -367,9 +420,7 @@ async function openMediaItem(item: PropertyMediaItem) {
       window.open(item.url, '_blank', 'noopener,noreferrer')
       return
     }
-    const { data } = await apiClient.get<{ url: string }>('/gen-archivos/resolve-url', {
-      params: { objectKey: item.url, applicationSlug: 'alquileres' },
-    })
+    const data = await fileAccess.resolveDownloadUrl(item.url, { applicationSlug: 'alquileres' })
     if (data?.url) {
       window.open(data.url, '_blank', 'noopener,noreferrer')
       return

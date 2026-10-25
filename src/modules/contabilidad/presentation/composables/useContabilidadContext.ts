@@ -1,15 +1,17 @@
+import type { ContabilidadConfigRepository } from '../../features/configuracion/domain/repositories/contabilidad-config.repository'
+import { contabilidadPeriodsRepositoryKey } from '../../features/periodos/application/ports/contabilidad-periods.port'
+import { contabilidadConfigRepositoryKey } from '../../features/configuracion/application/ports/contabilidad-config.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, computed } from 'vue'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { contabilidadConfigApiRepository } from '@modules/contabilidad/features/configuracion/infrastructure/repositories/contabilidad-config.api.repository'
-import type { ContabilidadPeriodDTO } from '@modules/contabilidad/features/periodos/domain/period.types'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import type { ContabilidadPeriodDTO } from '../../features/periodos/domain/period.types'
 import { activeLegalEntityIdRef } from '../../config/api-scope'
-import type { ContabilidadLegalEntityDTO } from './contabilidad-context.types'
+import type { ContabilidadLegalEntityDTO } from '../../domain/legal-entity.types'
 import {
   applyPeriodBootstrap,
   loadPeriodsForEntity,
   useContabilidadActivePeriodState,
 } from './useContabilidadActivePeriod'
-
 const LEGAL_ENTITY_STORAGE_KEY = 'markap.contabilidad.activeLegalEntity'
 
 const entities = ref<ContabilidadLegalEntityDTO[]>([])
@@ -49,7 +51,11 @@ function pickDefaultPeriod(periodList: ContabilidadPeriodDTO[], storedId?: strin
   )
 }
 
-async function runBootstrap(legalEntityId?: string, year?: number) {
+async function runBootstrap(
+  contabilidadConfigApiRepository: ContabilidadConfigRepository,
+  legalEntityId?: string,
+  year?: number,
+) {
   const storedEntityId = legalEntityId ?? readStoredLegalEntityId() ?? undefined
   const { listYear, activePeriod } = useContabilidadActivePeriodState()
   const targetYear = year ?? activePeriod.value?.year ?? listYear.value
@@ -84,14 +90,18 @@ async function runBootstrap(legalEntityId?: string, year?: number) {
   initError.value = null
 }
 
-export async function ensureContabilidadContext(legalEntityId?: string, year?: number) {
+async function ensureContabilidadContext(
+  repository: ContabilidadConfigRepository,
+  legalEntityId?: string,
+  year?: number,
+) {
   if (ready.value && !legalEntityId && year === undefined) return
   if (initPromise && !legalEntityId && year === undefined) return initPromise
 
   initializing.value = true
   initError.value = null
 
-  const task = runBootstrap(legalEntityId, year)
+  const task = runBootstrap(repository, legalEntityId, year)
     .catch((error) => {
       initError.value = getApiErrorMessage(error)
       ready.value = false
@@ -109,6 +119,10 @@ export async function ensureContabilidadContext(legalEntityId?: string, year?: n
 }
 
 export function useContabilidadContext() {
+  const repository = useService(contabilidadConfigRepositoryKey)
+  const periodsRepository = useService(contabilidadPeriodsRepositoryKey)
+  const ensureInitialized = (entityId?: string, year?: number) =>
+    ensureContabilidadContext(repository, entityId, year)
   const periodState = useContabilidadActivePeriodState()
 
   const entityOptions = computed(() =>
@@ -124,22 +138,24 @@ export function useContabilidadContext() {
 
   async function setActiveLegalEntity(entity: ContabilidadLegalEntityDTO) {
     ready.value = false
-    await ensureContabilidadContext(entity.id, periodState.listYear.value)
+    await ensureInitialized(entity.id, periodState.listYear.value)
   }
 
   async function setListYear(year: number) {
     periodState.listYear.value = year
     if (!activeLegalEntityIdRef.value) return
-    await loadPeriodsForEntity(activeLegalEntityIdRef.value, year)
+    await loadPeriodsForEntity(periodsRepository, activeLegalEntityIdRef.value, year)
   }
 
   async function retryInit() {
     ready.value = false
-    return ensureContabilidadContext()
+    return ensureInitialized()
   }
 
   if (!ready.value && !initializing.value && !initPromise) {
-    void ensureContabilidadContext()
+    void ensureInitialized().catch(() => {
+      /* initError is exposed to the layout */
+    })
   }
 
   return {
@@ -151,7 +167,7 @@ export function useContabilidadContext() {
     activeEntity,
     activeLegalEntityId: activeLegalEntityIdRef,
     setActiveLegalEntity,
-    ensureInitialized: ensureContabilidadContext,
+    ensureInitialized,
     retryInit,
     ...periodState,
     setListYear,

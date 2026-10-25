@@ -5,7 +5,6 @@ import type {
   ListInteriorProjectsResponse,
   UpdateInteriorProjectPayload,
 } from '../project.types'
-
 export interface InteriorProjectsRepository {
   getList: (params: ListInteriorProjectsParams) => Promise<ListInteriorProjectsResponse>
   getById: (id: string) => Promise<InteriorProjectDetail>

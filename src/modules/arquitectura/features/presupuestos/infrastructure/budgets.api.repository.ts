@@ -1,11 +1,10 @@
-import { apiClient } from '@core/api/apiClient'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { ARQUITECTURA_APP_SLUG } from '../../../config/app.constants'
 import type { ArquitecturaBudgetsRepository } from '../domain/repositories/budgets.repository'
 import type {
   ListArquitecturaBudgetSummariesParams,
   ListArquitecturaBudgetSummariesResponse,
 } from '../domain/budget.types'
-
 const BASE = '/arquitectura-projects/budget-summaries'
 
 export const arquitecturaBudgetsApiRepository: ArquitecturaBudgetsRepository = {

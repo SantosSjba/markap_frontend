@@ -1,23 +1,26 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { BaseButton, AppIcon, Badge, FormCheckbox, PageHeader } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { formatDateTime } from '@/shared/utils/formatters'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { formatDateTime } from '@shared/utils/formatters'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
 import {
   useContabilidadDownloadPleZip,
   useContabilidadGeneratePle,
   useContabilidadPleBooks,
   useContabilidadPleExportLogs,
   useContabilidadPleMandatoryProfile,
-} from '../../application/useContabilidadPle'
+} from '../composables/useContabilidadPle'
 import {
-  downloadTextFile,
   PLE_EXPORT_STATUS_LABELS,
   type ContabilidadPleGenerateResultDTO,
   type ContabilidadPleValidationIssueDTO,
 } from '../../domain/ple.types'
-
+import { downloadTextFile } from '@shared/infrastructure/browser/download-file'
 const { activePeriod } = useContabilidadActivePeriod()
 const periodId = computed(() => activePeriod.value?.id)
 
@@ -90,11 +93,15 @@ function runGenerate() {
       onSuccess: (result) => {
         lastResult.value = result
         if (result.blocked) {
-          void markapAlert.toast.error(`PLE bloqueado: ${result.errors.length} error(es) crítico(s)`)
+          void markapAlert.toast.error(
+            `PLE bloqueado: ${result.errors.length} error(es) crítico(s)`,
+          )
         } else if (result.errors.length) {
           void markapAlert.toast.warning(`PLE generado con ${result.errors.length} error(es)`)
         } else if (result.warnings.length) {
-          void markapAlert.toast.warning(`PLE generado con ${result.warnings.length} advertencia(s)`)
+          void markapAlert.toast.warning(
+            `PLE generado con ${result.warnings.length} advertencia(s)`,
+          )
         } else {
           void markapAlert.toast.success(`${result.files.length} libro(s) generado(s)`)
         }

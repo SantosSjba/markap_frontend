@@ -1,8 +1,1 @@
-export interface ContabilidadLegalEntityDTO {
-  id: string
-  code: string
-  ruc: string
-  legalName: string
-  tradeName: string | null
-  isDefault: boolean
-}
+export type { ContabilidadLegalEntityDTO } from '../../domain/legal-entity.types'

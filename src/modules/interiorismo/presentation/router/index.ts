@@ -1,18 +1,17 @@
 import type { RouteRecordRaw } from 'vue-router'
 import InteriorismoLayout from '../views/InteriorismoLayout.vue'
-import { SectionLayout } from '@layouts'
+import SectionLayout from '@app/layouts/SectionLayout.vue'
 import { INTERIORISMO_BASE_PATH } from '../../config/routes.constants'
-import { interiorismoClientesRoutes } from '../../features/clientes'
-import { interiorismoProyectosRoutes } from '../../features/proyectos'
+import { interiorismoClientesRoutes } from '../../features/clientes/presentation/router/index'
+import { interiorismoProyectosRoutes } from '../../features/proyectos/presentation/router/index'
 import {
   interiorismoMaterialesCatalogoRoutes,
   interiorismoMaterialesProveedoresRoutes,
-} from '../../features/materiales'
-import { interiorismoEjecucionRoutes } from '../../features/ejecucion'
-import { interiorismoDocumentosRoutes } from '../../features/documentos'
-import { interiorismoReportesRoutes } from '../../features/reportes'
-import { interiorismoConfiguracionRoutes } from '../../features/configuracion'
-
+} from '../../features/materiales/presentation/router/index'
+import { interiorismoEjecucionRoutes } from '../../features/ejecucion/presentation/router/index'
+import { interiorismoDocumentosRoutes } from '../../features/documentos/presentation/router/index'
+import { interiorismoReportesRoutes } from '../../features/reportes/presentation/router/index'
+import { interiorismoConfiguracionRoutes } from '../../features/configuracion/presentation/router/index'
 export const interiorismoRoutes: RouteRecordRaw[] = [
   {
     path: INTERIORISMO_BASE_PATH,
@@ -94,7 +93,8 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
       {
         path: 'calendario',
         name: 'interiorismo-calendario',
-        component: () => import('../../features/calendario/presentation/views/InteriorismoCalendarioView.vue'),
+        component: () =>
+          import('../../features/calendario/presentation/views/InteriorismoCalendarioView.vue'),
         meta: { title: 'Calendario' },
       },
       {

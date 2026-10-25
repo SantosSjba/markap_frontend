@@ -1,5 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-
 export const contabilidadTiposCambioRoutes: RouteRecordRaw[] = [
   {
     path: 'tipos-cambio',

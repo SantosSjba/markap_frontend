@@ -1,20 +1,24 @@
 <script setup lang="ts">
-import { toCalendarDateString } from '@/shared/utils/formatters'
+import { toCalendarDateString } from '@shared/utils/formatters'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
-import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { useRental, useUpdateRental } from '../../application/useRentals'
-import { getAttachmentUrl } from '../../infrastructure/http/rental-attachment-url'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { useRental, useUpdateRental } from '../composables/useRentals'
+import { getAttachmentUrl } from '../downloads/rental-attachment-url'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import RentalContractAlertSettings from '../components/RentalContractAlertSettings.vue'
 import RentalTenantsSection from '../components/RentalTenantsSection.vue'
-import { useClientsList } from '@modules/alquileres/features/clientes'
-import type { ClientListItem } from '@modules/alquileres/features/clientes'
-import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
-
+import { useClientsList } from '../../../clientes/presentation/composables/useClients'
+import type { ClientListItem } from '../../../clientes/domain/client.types'
+import { navigateAfterAlquileresSave } from '../../../../presentation/navigation/navigateAfterAlquileresSave'
 type EditarRentalFormValues = {
   startDate: string
   endDate: string
@@ -40,8 +44,16 @@ const schema = yup.object({
   startDate: yup.string().required('La fecha de inicio es requerida'),
   endDate: yup.string().required('La fecha de fin es requerida'),
   currency: yup.string().required(),
-  monthlyAmount: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).required('El monto mensual es requerido'),
-  securityDeposit: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
+  monthlyAmount: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .required('El monto mensual es requerido'),
+  securityDeposit: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .nullable(),
   paymentDueDay: yup
     .number()
     .transform((_v, originalValue) => {
@@ -57,21 +69,22 @@ const schema = yup.object({
   enableCollectionAlerts: yup.boolean().required(),
 })
 
-const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm<EditarRentalFormValues>({
-  validationSchema: toTypedSchema(schema) as never,
-  initialValues: {
-    startDate: '',
-    endDate: '',
-    currency: 'PEN',
-    monthlyAmount: '',
-    securityDeposit: '',
-    paymentDueDay: 5,
-    notes: '',
-    status: 'ACTIVE',
-    enableExpirationAlerts: true,
-    enableCollectionAlerts: true,
-  },
-})
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } =
+  useForm<EditarRentalFormValues>({
+    validationSchema: toTypedSchema(schema) as never,
+    initialValues: {
+      startDate: '',
+      endDate: '',
+      currency: 'PEN',
+      monthlyAmount: '',
+      securityDeposit: '',
+      paymentDueDay: 5,
+      notes: '',
+      status: 'ACTIVE',
+      enableExpirationAlerts: true,
+      enableCollectionAlerts: true,
+    },
+  })
 
 const startDateBinds = defineComponentBinds('startDate')
 const endDateBinds = defineComponentBinds('endDate')
@@ -128,8 +141,7 @@ watch(
         enableCollectionAlerts: r.enableCollectionAlerts ?? true,
       },
     })
-    const ids =
-      r.tenants?.length ? r.tenants.map((t) => t.id) : r.tenant?.id ? [r.tenant.id] : []
+    const ids = r.tenants?.length ? r.tenants.map((t) => t.id) : r.tenant?.id ? [r.tenant.id] : []
     tenantIds.value = ids.length ? ids : ['']
   },
   { immediate: true },
@@ -170,8 +182,7 @@ onMounted(async () => {
   if (typeof clientId !== 'string' || !clientId) return
   await refetchTenants()
   const indexRaw = route.query.tenantIndex
-  const index =
-    typeof indexRaw === 'string' && indexRaw !== '' ? Number.parseInt(indexRaw, 10) : 0
+  const index = typeof indexRaw === 'string' && indexRaw !== '' ? Number.parseInt(indexRaw, 10) : 0
   const next = [...tenantIds.value]
   const idx = Number.isFinite(index) && index >= 0 ? index : 0
   while (next.length <= idx) next.push('')

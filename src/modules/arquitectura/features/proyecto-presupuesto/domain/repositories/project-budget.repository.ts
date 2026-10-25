@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   CreateLineItemSupplierPaymentPayload,
   CreateProjectBudgetLineItemPayload,
   CreateProjectBudgetSectionPayload,
@@ -13,11 +13,13 @@
   UpdateProjectBudgetLineItemPayload,
   UpdateProjectBudgetSectionPayload,
 } from '../project-budget.types'
-
 export interface ProjectBudgetRepository {
   getBudget(projectId: string): Promise<ProjectBudgetDetailDto>
   getSettlement(projectId: string): Promise<ProjectSettlementDto>
-  createSection(projectId: string, payload: CreateProjectBudgetSectionPayload): Promise<ProjectBudgetSectionDto>
+  createSection(
+    projectId: string,
+    payload: CreateProjectBudgetSectionPayload,
+  ): Promise<ProjectBudgetSectionDto>
   updateSection(
     projectId: string,
     sectionId: string,
@@ -42,8 +44,15 @@ export interface ProjectBudgetRepository {
   fetchPdfHtml(projectId: string): Promise<string>
   duplicateSnapshot(projectId: string): Promise<DuplicateBudgetSnapshotResult>
   syncFromExecution(projectId: string): Promise<SyncBudgetFromExecutionResult>
-  importExcel(projectId: string, file: File, replace?: boolean): Promise<ImportBudgetFromExcelResult>
-  listAttachments(projectId: string, lineItemId?: string | null): Promise<ProjectBudgetAttachmentDto[]>
+  importExcel(
+    projectId: string,
+    file: File,
+    replace?: boolean,
+  ): Promise<ImportBudgetFromExcelResult>
+  listAttachments(
+    projectId: string,
+    lineItemId?: string | null,
+  ): Promise<ProjectBudgetAttachmentDto[]>
   uploadAttachment(
     projectId: string,
     file: File,

@@ -7,21 +7,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@core": ["src/core"],
-      "@core/*": ["src/core/*"],
-      "@shared": ["src/shared"],
+      "@app/*": ["src/app/*"],
       "@shared/*": ["src/shared/*"],
-      "@layouts": ["src/shared/layouts"],
-      "@layouts/*": ["src/shared/layouts/*"],
-      "@modules/*": ["src/modules/*"],
-      "@ventas/sales": ["src/modules/ventas/features/ventas-sales/index.ts"],
-      "@ventas/sales/*": ["src/modules/ventas/features/ventas-sales/*"],
-      "@ventas/finanzas": ["src/modules/ventas/features/ventas-finanzas/index.ts"],
-      "@ventas/finanzas/*": ["src/modules/ventas/features/ventas-finanzas/*"],
-      "@ventas/reportes": ["src/modules/ventas/features/ventas-reportes/index.ts"],
-      "@ventas/reportes/*": ["src/modules/ventas/features/ventas-reportes/*"],
-      "@ventas/configuracion": ["src/modules/ventas/features/ventas-configuracion/index.ts"],
-      "@ventas/configuracion/*": ["src/modules/ventas/features/ventas-configuracion/*"]
+      "@modules/*": ["src/modules/*"]
     },
 
     "strict": true,

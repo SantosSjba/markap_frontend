@@ -1,10 +1,4 @@
-export type InteriorDocumentType =
-  | 'CONTRATO'
-  | 'PDF'
-  | 'RENDERIZADO'
-  | 'PLANO'
-  | 'FACTURA'
-  | 'ACTA'
+export type InteriorDocumentType = 'CONTRATO' | 'PDF' | 'RENDERIZADO' | 'PLANO' | 'FACTURA' | 'ACTA'
 
 export interface InteriorDocumentRow {
   id: string

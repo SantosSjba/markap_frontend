@@ -1,26 +1,23 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  Badge,
-  FormInput,
-  FormCheckbox,
-  SearchInput,
-  FormSelect,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadSuppliers,
   useContabilidadCreateSupplier,
   useContabilidadUpdateSupplier,
-} from '../../application/useContabilidadPurchases'
+} from '../composables/useContabilidadPurchases'
 import type { ContabilidadSupplierDTO } from '../../domain/purchases.types'
 import { SUPPLIER_COUNTRY_OPTIONS } from '../../domain/purchases.types'
-
 const searchInput = ref('')
 const debouncedSearch = useDebouncedRef(searchInput)
 const listParams = computed(() => ({
@@ -56,7 +53,17 @@ function isForeignSupplier(row: ContabilidadSupplierDTO) {
 
 function openNew() {
   editing.value = null
-  form.value = { ruc: '', businessName: '', countryCode: 'PE', isNonDomiciled: false, tradeName: '', address: '', email: '', phone: '', isActive: true }
+  form.value = {
+    ruc: '',
+    businessName: '',
+    countryCode: 'PE',
+    isNonDomiciled: false,
+    tradeName: '',
+    address: '',
+    email: '',
+    phone: '',
+    isActive: true,
+  }
   modalOpen.value = true
 }
 
@@ -96,7 +103,12 @@ function submitForm() {
           isActive: form.value.isActive,
         },
       },
-      { onSuccess: () => { modalOpen.value = false; void refetch() } },
+      {
+        onSuccess: () => {
+          modalOpen.value = false
+          void refetch()
+        },
+      },
     )
   } else {
     if (!/^\d{11}$/.test(form.value.ruc.trim())) {
@@ -114,7 +126,12 @@ function submitForm() {
         email: form.value.email.trim() || null,
         phone: form.value.phone.trim() || null,
       },
-      { onSuccess: () => { modalOpen.value = false; void refetch() } },
+      {
+        onSuccess: () => {
+          modalOpen.value = false
+          void refetch()
+        },
+      },
     )
   }
 }

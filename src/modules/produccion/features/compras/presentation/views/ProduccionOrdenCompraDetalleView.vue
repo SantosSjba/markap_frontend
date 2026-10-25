@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, BaseModal, DataTable, FormInput, FormTextarea, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
   useProduccionPurchaseOrderDetail,
   usePurchaseOrderMutations,
-} from '../../application/useProduccionPurchases'
+} from '../composables/useProduccionPurchases'
 import { formatSol, formatDate, PO_STATUS_LABELS, poStatusClass } from '../labels'
 import { formatQty } from '../../../inventario/presentation/labels'
 import type { ProduccionPurchaseOrderLine } from '../../domain/purchases.types'
-
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
@@ -23,14 +27,18 @@ const receiveQtys = ref<Record<string, number>>({})
 const receiveNotes = ref('')
 const receiving = ref(false)
 
-watch(order, (o) => {
-  if (!o) return
-  const map: Record<string, number> = {}
-  for (const l of o.lines) {
-    if (l.quantityPending > 0) map[l.id] = l.quantityPending
-  }
-  receiveQtys.value = map
-}, { immediate: true })
+watch(
+  order,
+  (o) => {
+    if (!o) return
+    const map: Record<string, number> = {}
+    for (const l of o.lines) {
+      if (l.quantityPending > 0) map[l.id] = l.quantityPending
+    }
+    receiveQtys.value = map
+  },
+  { immediate: true },
+)
 
 const lineColumns = [
   { key: 'material', label: 'Material', align: 'left' as const },
@@ -46,9 +54,7 @@ const canReceive = computed(() => ['SENT', 'PARTIAL'].includes(order.value?.stat
 const canCancel = computed(() => ['DRAFT', 'SENT'].includes(order.value?.status ?? ''))
 const canDelete = computed(() => order.value?.status === 'DRAFT')
 
-const pendingLines = computed(() =>
-  (order.value?.lines ?? []).filter((l) => l.quantityPending > 0),
-)
+const pendingLines = computed(() => (order.value?.lines ?? []).filter((l) => l.quantityPending > 0))
 
 async function doSend() {
   const ok = await markapAlert.confirm({

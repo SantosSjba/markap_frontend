@@ -8,7 +8,6 @@ import type {
   RentalsByMonthItem,
   ReportsSummary,
 } from '../reportes.types'
-
 export interface ReportesRepository {
   getSummary: (applicationSlug?: string, days?: number) => Promise<ReportsSummary>
   getContractsExpiring: (applicationSlug?: string, days?: number) => Promise<ContractExpiringItem[]>

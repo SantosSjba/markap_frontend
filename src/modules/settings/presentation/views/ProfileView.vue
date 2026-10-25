@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ProfileCard } from '@shared/components'
-
+import ProfileCard from '../components/profile/ProfileCard.vue'
 /**
  * ProfileView
  * Vista de perfil en la sección Configuración general

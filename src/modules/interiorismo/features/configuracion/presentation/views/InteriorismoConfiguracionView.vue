@@ -2,19 +2,20 @@
 import { ref, watch, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, BaseTabs } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import FormInput from '@shared/components/forms/FormInput.vue'
-import { markapAlert } from '@/shared/composables'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
 import {
   useInteriorismoConfigBootstrap,
   useInteriorismoSaveProjectStages,
   useInteriorismoSaveInteriorProjectNumbering,
-} from '../../application/useInteriorismoConfig'
+} from '../composables/useInteriorismoConfig'
 import type { InteriorismoProjectStageDTO } from '../../domain/config.types'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const activeTab = ref('accesos')
 
 const tabs = [
@@ -47,7 +48,8 @@ const quickLinks = [
 const { data: boot, isLoading, isError, error, refetch } = useInteriorismoConfigBootstrap()
 const configLoadError = computed(() => (isError.value ? getApiErrorMessage(error.value) : ''))
 const { mutate: saveStages, isPending: savingStages } = useInteriorismoSaveProjectStages()
-const { mutate: saveNumbering, isPending: savingNum } = useInteriorismoSaveInteriorProjectNumbering()
+const { mutate: saveNumbering, isPending: savingNum } =
+  useInteriorismoSaveInteriorProjectNumbering()
 
 const pipelineDraft = ref<InteriorismoProjectStageDTO[]>([])
 
@@ -78,7 +80,9 @@ const REQUIRED_STAGE_COUNT = 5
 function submitPipeline() {
   const sorted = [...pipelineDraft.value].sort((a, b) => a.sortOrder - b.sortOrder)
   if (sorted.length !== REQUIRED_STAGE_COUNT) {
-    void markapAlert.toast.warning('La configuración debe incluir las cinco etapas del ciclo de proyecto')
+    void markapAlert.toast.warning(
+      'La configuración debe incluir las cinco etapas del ciclo de proyecto',
+    )
     return
   }
   const rows = sorted.map((s, i) => ({ ...s, sortOrder: i }))

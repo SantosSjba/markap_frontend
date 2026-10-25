@@ -1,7 +1,6 @@
-import type { ContabilidadAccountDTO } from '@modules/contabilidad/features/plan-cuentas/domain/account.types'
+import type { ContabilidadAccountDTO } from '../../plan-cuentas/domain/account.types'
 import type { JournalLineFormRow } from './journal.types'
-import { convertForeignToPen, FUNCTIONAL_CURRENCY } from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
-
+import { convertForeignToPen, FUNCTIONAL_CURRENCY } from '../../../domain/currency'
 export function formatPen(amount: number | string | null | undefined): string {
   if (amount == null || amount === '') return '—'
   const n = typeof amount === 'number' ? amount : Number(String(amount).replace(',', '.'))
@@ -80,8 +79,7 @@ export function applyForeignToPenLine(line: JournalLineFormRow) {
 export function linesToBody(lines: JournalLineFormRow[]) {
   return lines.map((line) => {
     const currency = line.foreignCurrency.trim().toUpperCase()
-    const hasForeign =
-      currency && currency !== FUNCTIONAL_CURRENCY && line.foreignAmount.trim()
+    const hasForeign = currency && currency !== FUNCTIONAL_CURRENCY && line.foreignAmount.trim()
     return {
       accountId: line.accountId,
       debit: line.debit ? parsePenInput(line.debit) : 0,

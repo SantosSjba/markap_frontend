@@ -1,5 +1,4 @@
 import type { QueryClient, QueryKey } from '@tanstack/vue-query'
-
 /**
  * Invalida todas las queries cuyo `queryKey` empieza por el prefijo dado y fuerza refetch
  * de queries activas e inactivas, para que listas en otras rutas no queden obsoletas en caché.

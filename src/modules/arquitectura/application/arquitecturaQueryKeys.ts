@@ -1,5 +1,4 @@
 import { ARQUITECTURA_APP_SLUG } from '../config/app.constants'
-
 /**
  * Raíces de query keys del módulo Arquitectura.
  * Todas las queries del módulo deben empezar por `['arquitectura', …]` para poder invalidar en bloque.

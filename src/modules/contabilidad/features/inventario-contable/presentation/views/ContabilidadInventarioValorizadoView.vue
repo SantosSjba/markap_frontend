@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { PageHeader, StatsCard } from '@shared/components'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useContabilidadInventoryValuedBalance } from '../../application/useContabilidadInventory'
-
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import { formatPen } from '../../../asientos/domain/journal.utils'
+import { useContabilidadInventoryValuedBalance } from '../composables/useContabilidadInventory'
 const { data, isLoading } = useContabilidadInventoryValuedBalance()
 const lines = computed(() => data.value?.lines ?? [])
 const totalValue = computed(() => data.value?.totalValue ?? '0.00')

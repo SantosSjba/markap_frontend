@@ -1,28 +1,28 @@
 <script setup lang="ts">
+import { rentalsRepositoryKey } from '../../application/ports/rentals.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
-import {
-  BaseButton,
-  BasePagination,
-  StatsCard,
-  Badge,
-  DataTable,
-  ActionsDropdown,
-  FormSelect,
-  SearchInput,
-  AppIcon,
-  ExcelIcon,
-} from '@shared/components'
-import { useExcelExport } from '@shared/composables'
-import { useRentalsList, useRentalStats, useCancelRental } from '../../application/useRentals'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { useRentalsList, useRentalStats, useCancelRental } from '../composables/useRentals'
 import type { RentalListItem, ListRentalsParams } from '../../domain/rental.types'
 import { ALQUILERES_APP_SLUG } from '../../../../config/app.constants'
-import { rentalsRepository } from '@modules/alquileres/features/alquileres'
-import { BaseModal } from '@shared/components'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@/shared/utils/formatters'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@shared/utils/formatters'
+const rentalsRepository = useService(rentalsRepositoryKey)
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -66,7 +66,7 @@ watch(
       status: filterStatus.value === 'ALL' ? undefined : filterStatus.value,
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const onPageChange = (page: number) => {
@@ -117,23 +117,35 @@ function formatGuarantee(item: RentalListItem): string {
   return `Garantía: ${sym} ${Number(item.securityDeposit).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
 }
 
-const statusBadgeVariant = (display: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' => {
+const statusBadgeVariant = (
+  display: string,
+): 'success' | 'info' | 'warning' | 'error' | 'neutral' => {
   switch (display) {
-    case 'vigente': return 'success'
-    case 'porVencer': return 'warning'
-    case 'vencido': return 'error'
-    case 'proximo': return 'info'
-    default: return 'neutral'
+    case 'vigente':
+      return 'success'
+    case 'porVencer':
+      return 'warning'
+    case 'vencido':
+      return 'error'
+    case 'proximo':
+      return 'info'
+    default:
+      return 'neutral'
   }
 }
 
 const statusBadgeLabel = (display: string) => {
   switch (display) {
-    case 'vigente': return 'Vigente'
-    case 'porVencer': return 'Por Vencer'
-    case 'vencido': return 'Vencido'
-    case 'proximo': return 'Próximo'
-    default: return display
+    case 'vigente':
+      return 'Vigente'
+    case 'porVencer':
+      return 'Por Vencer'
+    case 'vencido':
+      return 'Vencido'
+    case 'proximo':
+      return 'Próximo'
+    default:
+      return display
   }
 }
 
@@ -141,7 +153,8 @@ const goToNew = () => router.push('/alquileres/contratos/nuevo')
 
 const goToDetail = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}`)
 const goToEdit = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}/editar`)
-const goToFinancialConfig = (item: RentalListItem) => router.push(`/alquileres/contratos/${item.id}/distribucion-financiera`)
+const goToFinancialConfig = (item: RentalListItem) =>
+  router.push(`/alquileres/contratos/${item.id}/distribucion-financiera`)
 
 // Cancel rental confirm modal
 const showCancelModal = ref(false)
@@ -163,14 +176,24 @@ const executeCancelRental = () => {
   cancelRental(rentalToCancel.value.id, { onSuccess: closeCancelModal })
 }
 
-const getActions = (item: RentalListItem): { label: string; icon: string; onClick: () => void }[] => {
+const getActions = (
+  item: RentalListItem,
+): { label: string; icon: string; onClick: () => void }[] => {
   const actions: { label: string; icon: string; onClick: () => void }[] = [
     { label: 'Ver detalle', icon: 'lucide:eye', onClick: () => goToDetail(item) },
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(item) },
-    { label: 'Distribución financiera', icon: 'lucide:sliders-horizontal', onClick: () => goToFinancialConfig(item) },
+    {
+      label: 'Distribución financiera',
+      icon: 'lucide:sliders-horizontal',
+      onClick: () => goToFinancialConfig(item),
+    },
   ]
   if (item.status === 'ACTIVE') {
-    actions.push({ label: 'Cancelar contrato', icon: 'lucide:x-circle', onClick: () => openCancelModal(item) })
+    actions.push({
+      label: 'Cancelar contrato',
+      icon: 'lucide:x-circle',
+      onClick: () => openCancelModal(item),
+    })
   }
   return actions
 }

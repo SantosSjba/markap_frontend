@@ -1,0 +1,181 @@
+import { ventasFinanzasRepositoryKey } from '../../application/ports/ventas-finanzas.port'
+import { useService } from '@shared/presentation/di/services'
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
+import { computed, unref, type Ref } from 'vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { invalidateQuerySubtree } from '@shared/utils/invalidateQuerySubtree'
+import { invalidateVentasReportesCache } from '../../../ventas-reportes/presentation/composables/useVentasReportes'
+export const ventasFinanzasKeys = {
+  root: ['ventas-finanzas'] as const,
+  buyerPayments: (params: object) =>
+    [...ventasFinanzasKeys.root, 'buyer-payments', params] as const,
+  commissions: (params: object) => [...ventasFinanzasKeys.root, 'commissions', params] as const,
+  docCosts: (params: object) => [...ventasFinanzasKeys.root, 'doc-costs', params] as const,
+  profiles: () => [...ventasFinanzasKeys.root, 'profiles'] as const,
+  profitability: (closingId: string) =>
+    [...ventasFinanzasKeys.root, 'profitability', closingId] as const,
+}
+
+export function invalidateVentasFinanzasCache(qc: QueryClient) {
+  return invalidateQuerySubtree(qc, ventasFinanzasKeys.root)
+}
+
+/** Cierres y finanzas comparten comisiones y costos; mantener listas alineadas. */
+function invalidateVentasSalesAndFinanzas(qc: QueryClient) {
+  return Promise.all([
+    invalidateQuerySubtree(qc, ['ventas-sales']),
+    invalidateVentasFinanzasCache(qc),
+    invalidateVentasReportesCache(qc),
+  ]).then(() => undefined)
+}
+
+export function useVentasBuyerPaymentsList(
+  params: Ref<{
+    page: number
+    limit: number
+    buyerClientId?: string
+    kind?: string
+    displayStatus?: string
+  }>,
+) {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  return useQuery({
+    queryKey: computed(() => ventasFinanzasKeys.buyerPayments(params.value)),
+    queryFn: () => ventasFinanzasRepository.listBuyerPayments(params.value),
+  })
+}
+
+export function useVentasCreateBuyerPayment() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ventasFinanzasRepository.createBuyerPayment,
+    onSuccess: () => {
+      void invalidateVentasSalesAndFinanzas(qc)
+      void markapAlert.toast.success('Pago registrado')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasMarkBuyerPaymentPaid() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, paidAt }: { id: string; paidAt?: string | null }) =>
+      ventasFinanzasRepository.markBuyerPaymentPaid(id, paidAt !== undefined ? { paidAt } : {}),
+    onSuccess: () => {
+      void invalidateVentasSalesAndFinanzas(qc)
+      void markapAlert.toast.success('Pago marcado como pagado')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasCommissionsList(
+  params: Ref<{ page: number; limit: number; status?: string; agentId?: string }>,
+) {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  return useQuery({
+    queryKey: computed(() => ventasFinanzasKeys.commissions(params.value)),
+    queryFn: () => ventasFinanzasRepository.listCommissions(params.value),
+  })
+}
+
+export function useVentasCommissionProfiles() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  return useQuery({
+    queryKey: ventasFinanzasKeys.profiles(),
+    queryFn: () => ventasFinanzasRepository.listCommissionProfiles(),
+  })
+}
+
+export function useVentasMarkCommissionPaid() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => ventasFinanzasRepository.markCommissionPaid(id),
+    onSuccess: () => {
+      void invalidateVentasSalesAndFinanzas(qc)
+      void markapAlert.toast.success('Comisión marcada como pagada')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasMarkCommissionPaymentPartPaid() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (partId: string) => ventasFinanzasRepository.markCommissionPaymentPartPaid(partId),
+    onSuccess: () => {
+      void invalidateVentasSalesAndFinanzas(qc)
+      void markapAlert.toast.success('Cuota marcada como pagada')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasRecalculateCommission() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => ventasFinanzasRepository.recalculateCommission(id),
+    onSuccess: () => {
+      void invalidateVentasSalesAndFinanzas(qc)
+      void markapAlert.toast.success('Comisión recalculada según perfil del asesor')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo recalcular', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasUpsertCommissionProfile() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ventasFinanzasRepository.upsertCommissionProfile,
+    onSuccess: () => {
+      void invalidateVentasFinanzasCache(qc)
+      void markapAlert.toast.success('Porcentaje guardado')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasDocumentationCostsList(
+  params: Ref<{
+    page: number
+    limit: number
+    saleClosingId?: string
+    buyerClientId?: string
+  }>,
+) {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  return useQuery({
+    queryKey: computed(() => ventasFinanzasKeys.docCosts(params.value)),
+    queryFn: () => ventasFinanzasRepository.listDocumentationCosts(params.value),
+  })
+}
+
+export function useVentasCreateDocumentationCost() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ventasFinanzasRepository.createDocumentationCost,
+    onSuccess: () => {
+      void invalidateVentasSalesAndFinanzas(qc)
+      void markapAlert.toast.success('Costo registrado')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasClosingProfitability(closingId: Ref<string> | string) {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  return useQuery({
+    queryKey: computed(() => ventasFinanzasKeys.profitability(unref(closingId))),
+    queryFn: () => ventasFinanzasRepository.getProfitability(unref(closingId)),
+    enabled: computed(() => !!unref(closingId)),
+  })
+}

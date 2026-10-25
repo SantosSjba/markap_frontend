@@ -1,5 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-
 export const produccionInventarioRoutes: RouteRecordRaw[] = [
   {
     path: 'materiales',

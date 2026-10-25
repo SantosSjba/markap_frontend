@@ -33,14 +33,7 @@ export type RoleCode = (typeof ROLE_CODES)[number]
  */
 export const ROLE_APPLICATION_ACCESS: Record<RoleCode, readonly ApplicationSlug[]> = {
   ADMIN: APPLICATION_SLUGS,
-  MANAGER: [
-    'alquileres',
-    'ventas',
-    'interiorismo',
-    'arquitectura',
-    'produccion',
-    'contabilidad',
-  ],
+  MANAGER: ['alquileres', 'ventas', 'interiorismo', 'arquitectura', 'produccion', 'contabilidad'],
   ADMIN_CONTAB: ['alquileres', 'contabilidad'],
   ASIST_ARQUITECTURA: ['arquitectura'],
   ASIST_ADMIN: ['alquileres', 'ventas', 'contabilidad'],

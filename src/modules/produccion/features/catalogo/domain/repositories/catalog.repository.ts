@@ -6,7 +6,6 @@ import type {
   ProduccionFurnitureStats,
   UpdateProduccionFurniturePayload,
 } from '../catalog.types'
-
 export interface ProduccionCatalogRepository {
   getList(params?: ListProduccionFurnitureParams): Promise<ListProduccionFurnitureResponse>
   getStats(): Promise<ProduccionFurnitureStats>

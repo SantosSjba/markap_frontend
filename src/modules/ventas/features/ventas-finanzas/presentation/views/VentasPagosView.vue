@@ -1,29 +1,30 @@
 <script setup lang="ts">
+import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
+import { ventasSalesRepositoryKey } from '../../../ventas-sales/application/ports/ventas-sales.port'
+import { useService } from '@shared/presentation/di/services'
 import { computed, ref, watch } from 'vue'
 import * as yup from 'yup'
-import {
-  DataTable,
-  BaseButton,
-  FormSelect,
-  FormInput,
-  FormTextarea,
-  AppIcon,
-  BasePagination,
-  Badge,
-} from '@shared/components'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { ventasClientsRepository } from '@modules/ventas/features/clientes'
-import { ventasSalesRepository } from '@ventas/sales'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import type { BuyerPaymentRow } from '../../domain/finanzas.types'
 import {
   useVentasBuyerPaymentsList,
   useVentasCreateBuyerPayment,
   useVentasMarkBuyerPaymentPaid,
-} from '../../application/useVentasFinanzas'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { formatShortDate } from '@/shared/utils/formatters'
+} from '../composables/useVentasFinanzas'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { formatShortDate } from '@shared/utils/formatters'
+const ventasClientsRepository = useService(ventasClientsRepositoryKey)
+const ventasSalesRepository = useService(ventasSalesRepositoryKey)
 
 const ITEMS = 15
 const listParams = ref({
@@ -41,8 +42,13 @@ const listApi = computed(() => ({
   kind: listParams.value.kind || undefined,
 }))
 
-const { data: listResult, isLoading, isError, error: listQueryError, refetch: refetchList } =
-  useVentasBuyerPaymentsList(listApi)
+const {
+  data: listResult,
+  isLoading,
+  isError,
+  error: listQueryError,
+  refetch: refetchList,
+} = useVentasBuyerPaymentsList(listApi)
 const rows = computed(() => listResult.value?.data ?? [])
 const total = computed(() => listResult.value?.total ?? 0)
 
@@ -60,7 +66,9 @@ const paginationProps = computed(() => {
   }
 })
 
-const buyerFilterOptions = ref<{ value: string; label: string }[]>([{ value: '', label: 'Todos los clientes' }])
+const buyerFilterOptions = ref<{ value: string; label: string }[]>([
+  { value: '', label: 'Todos los clientes' },
+])
 const buyersLoadState = ref<'idle' | 'loading' | 'error'>('idle')
 const buyersErrorMsg = ref('')
 
@@ -103,12 +111,28 @@ const kindFilterOptions = [
 ]
 
 const columns = [
-  { key: 'client', label: 'Cliente', sortAccessor: (r: unknown) => (r as BuyerPaymentRow).closing.buyer.fullName },
-  { key: 'prop', label: 'Inmueble', sortAccessor: (r: unknown) => (r as BuyerPaymentRow).closing.property.code },
+  {
+    key: 'client',
+    label: 'Cliente',
+    sortAccessor: (r: unknown) => (r as BuyerPaymentRow).closing.buyer.fullName,
+  },
+  {
+    key: 'prop',
+    label: 'Inmueble',
+    sortAccessor: (r: unknown) => (r as BuyerPaymentRow).closing.property.code,
+  },
   { key: 'kind', label: 'Tipo', sortAccessor: (r: unknown) => (r as BuyerPaymentRow).kind },
   { key: 'amt', label: 'Monto', sortAccessor: (r: unknown) => (r as BuyerPaymentRow).amount },
-  { key: 'due', label: 'Vencimiento', sortAccessor: (r: unknown) => (r as BuyerPaymentRow).dueDate },
-  { key: 'st', label: 'Estado', sortAccessor: (r: unknown) => (r as BuyerPaymentRow).displayStatus },
+  {
+    key: 'due',
+    label: 'Vencimiento',
+    sortAccessor: (r: unknown) => (r as BuyerPaymentRow).dueDate,
+  },
+  {
+    key: 'st',
+    label: 'Estado',
+    sortAccessor: (r: unknown) => (r as BuyerPaymentRow).displayStatus,
+  },
   { key: 'act', label: '' },
 ]
 

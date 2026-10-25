@@ -1,24 +1,29 @@
 <script setup lang="ts">
-import { formatDateTime, formatShortDate } from '@/shared/utils/formatters'
+import { formatDateTime, formatShortDate } from '@shared/utils/formatters'
 import { computed, ref } from 'vue'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { BaseButton, Badge, AppIcon, FormInput, FormSelect, FormTextarea, FormSectionCard } from '@shared/components'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import {
   useVentasProcessDetail,
   useVentasAddProcessNote,
   useVentasAddActivity,
   useVentasAddReminder,
   useVentasCompleteReminder,
-} from '../../application/useVentasSales'
+} from '../composables/useVentasSales'
 import type { SaleProcessDetail } from '../../domain/sales.types'
 import { ACTIVITY_TYPE_OPTIONS } from '../../domain/activityTypes.constants'
 import {
   saleProcessNoteFormSchema,
   saleProcessActivityFormSchema,
   saleProcessReminderFormSchema,
-} from '../../infrastructure/schemas/saleProcessFollowUpSchemas'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+} from '../validation/saleProcessFollowUpSchemas'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const props = withDefaults(
   defineProps<{
     processId: string

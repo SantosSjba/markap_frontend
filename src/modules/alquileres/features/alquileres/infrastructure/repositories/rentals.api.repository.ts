@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { ALQUILERES_APP_SLUG } from '../../../../config/app.constants'
 import type {
   CreateRentalPayload,
@@ -21,7 +21,6 @@ import {
   mapRentalFinancialConfig,
   mapRentalStats,
 } from '../mappers/rental.mapper'
-
 export const rentalsApiRepository: RentalsRepository = {
   getById: (id: string) =>
     apiClient.get<RentalDetail>(`/rentals/${id}`).then((r) => mapRentalDetail(r.data)),
@@ -58,7 +57,9 @@ export const rentalsApiRepository: RentalsRepository = {
         })
         .then((r) => mapRentalCreated(r.data))
     }
-    return apiClient.patch<RentalCreated>(`/rentals/${id}`, data).then((r) => mapRentalCreated(r.data))
+    return apiClient
+      .patch<RentalCreated>(`/rentals/${id}`, data)
+      .then((r) => mapRentalCreated(r.data))
   },
 
   getList: (params: ListRentalsParams) => {
@@ -95,10 +96,7 @@ export const rentalsApiRepository: RentalsRepository = {
 
   cancel: (id: string) => apiClient.delete(`/rentals/${id}`).then((r) => r.data),
 
-  create: (
-    data: CreateRentalPayload,
-    files?: { contractFile?: File; deliveryActFile?: File },
-  ) => {
+  create: (data: CreateRentalPayload, files?: { contractFile?: File; deliveryActFile?: File }) => {
     const form = new FormData()
     form.append('applicationSlug', data.applicationSlug ?? ALQUILERES_APP_SLUG)
     form.append('propertyId', data.propertyId)

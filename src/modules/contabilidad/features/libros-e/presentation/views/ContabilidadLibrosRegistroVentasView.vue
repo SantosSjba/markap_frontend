@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { DataTable, PageHeader, SearchInput } from '@shared/components'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useContabilidadSalesInvoices } from '@modules/contabilidad/features/ventas-contables/application/useContabilidadSales'
-import type { ContabilidadSalesInvoiceDTO } from '@modules/contabilidad/features/ventas-contables/domain/sales.types'
-
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
+import { useContabilidadSalesInvoices } from '../../../ventas-contables/presentation/composables/useContabilidadSales'
+import type { ContabilidadSalesInvoiceDTO } from '../../../ventas-contables/domain/sales.types'
 const { activePeriod } = useContabilidadActivePeriod()
 const searchInput = ref('')
 const debouncedSearch = useDebouncedRef(searchInput)

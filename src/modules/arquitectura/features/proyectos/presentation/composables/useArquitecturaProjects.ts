@@ -1,0 +1,68 @@
+import { arquitecturaProjectsRepositoryKey as repoKey } from '../../application/ports/projects.port'
+import { useService } from '@shared/presentation/di/services'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { computed, unref, type Ref } from 'vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { invalidateModuleQueries } from '@shared/utils/invalidateModuleQueries'
+import type {
+  CreateArquitecturaProjectPayload,
+  ListArquitecturaProjectsParams,
+  UpdateArquitecturaProjectPayload,
+} from '../../domain/project.types'
+import { ARQUITECTURA_APP_SLUG } from '../../../../config/app.constants'
+export const arquitecturaProjectKeys = {
+  all: ['arquitectura-projects', ARQUITECTURA_APP_SLUG] as const,
+  list: (p: ListArquitecturaProjectsParams) => [...arquitecturaProjectKeys.all, 'list', p] as const,
+  detail: (id: string) => [...arquitecturaProjectKeys.all, 'detail', id] as const,
+}
+
+export function useArquitecturaProjectsList(params: Ref<ListArquitecturaProjectsParams>) {
+  const repo = useService(repoKey)
+  return useQuery({
+    queryKey: computed(() => arquitecturaProjectKeys.list(params.value)),
+    queryFn: () => repo.getList(params.value),
+  })
+}
+
+export function useArquitecturaProjectDetail(id: Ref<string> | string) {
+  const repo = useService(repoKey)
+  return useQuery({
+    queryKey: computed(() => arquitecturaProjectKeys.detail(unref(id))),
+    queryFn: () => repo.getById(unref(id)),
+    enabled: computed(() => !!unref(id)),
+  })
+}
+
+export function useCreateArquitecturaProject() {
+  const repo = useService(repoKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateArquitecturaProjectPayload) => repo.create(payload),
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'arquitectura')
+      void markapAlert.toast.success('Proyecto creado')
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo crear el proyecto', getApiErrorMessage(err))
+    },
+  })
+}
+
+export function useUpdateArquitecturaProject() {
+  const repo = useService(repoKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (args: { id: string; payload: UpdateArquitecturaProjectPayload }) =>
+      repo.update(args.id, args.payload),
+    onSuccess: async (_data, vars) => {
+      await invalidateModuleQueries(qc, 'arquitectura')
+      void markapAlert.toast.success(
+        vars.payload.status === 'CANCELLED' ? 'Proyecto cancelado' : 'Proyecto actualizado',
+      )
+    },
+    onError: (err) => {
+      void markapAlert.toast.error('No se pudo actualizar el proyecto', getApiErrorMessage(err))
+    },
+  })
+}

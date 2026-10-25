@@ -1,15 +1,10 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_FINANCIAL_APP_SLUG } from '../../domain/financial.types'
 import type { ContabilidadFinancialRepository } from '../../domain/repositories/contabilidad-financial.repository'
-
-export type FinancialExportKind =
-  | 'balance-sheet'
-  | 'income-statement'
-  | 'trial-balance'
-  | 'cash-flow'
-
-export type FinancialExportFormat = 'excel' | 'pdf'
-
+import type {
+  FinancialExportKind,
+  FinancialExportFormat,
+} from '../../domain/financial-export.types'
 function qs(periodId: string, comparePrior?: boolean) {
   const u = new URLSearchParams()
   u.set('applicationSlug', CONTABILIDAD_FINANCIAL_APP_SLUG)
@@ -30,15 +25,6 @@ function exportQs(
   u.set('type', type)
   if (costCenterId) u.set('costCenterId', costCenterId)
   return `/contabilidad-financial-statements/export/${format}?${u.toString()}`
-}
-
-export function triggerBlobDownload(blob: Blob, fileName: string) {
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = fileName
-  anchor.click()
-  URL.revokeObjectURL(url)
 }
 
 export const contabilidadFinancialApiRepository: ContabilidadFinancialRepository = {
@@ -63,6 +49,8 @@ export const contabilidadFinancialApiRepository: ContabilidadFinancialRepository
     periodId: string,
     costCenterId?: string,
   ) {
-    return apiClient.get<Blob>(exportQs(format, type, periodId, costCenterId), { responseType: 'blob' })
+    return apiClient.get<Blob>(exportQs(format, type, periodId, costCenterId), {
+      responseType: 'blob',
+    })
   },
 }

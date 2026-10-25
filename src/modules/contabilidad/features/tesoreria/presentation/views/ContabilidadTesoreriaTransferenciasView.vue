@@ -1,21 +1,18 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
 import {
   useContabilidadCashBoxes,
   useContabilidadBankAccounts,
   useContabilidadCreateTreasuryTransfer,
-} from '../../application/useContabilidadTreasury'
-
+} from '../composables/useContabilidadTreasury'
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
 const { data: cashData } = useContabilidadCashBoxes()
@@ -42,20 +39,36 @@ const form = ref({
   description: '',
 })
 
-watch(cashBoxes, (boxes) => {
-  if (!form.value.fromCashBoxId && boxes[0]) form.value.fromCashBoxId = boxes[0].id
-}, { immediate: true })
-watch(banks, (list) => {
-  if (!form.value.toBankAccountId && list[0]) form.value.toBankAccountId = list[0].id
-}, { immediate: true })
-watch(activePeriod, (p) => {
-  if (!p) return
-  const now = new Date()
-  form.value.movementDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
-}, { immediate: true })
+watch(
+  cashBoxes,
+  (boxes) => {
+    if (!form.value.fromCashBoxId && boxes[0]) form.value.fromCashBoxId = boxes[0].id
+  },
+  { immediate: true },
+)
+watch(
+  banks,
+  (list) => {
+    if (!form.value.toBankAccountId && list[0]) form.value.toBankAccountId = list[0].id
+  },
+  { immediate: true },
+)
+watch(
+  activePeriod,
+  (p) => {
+    if (!p) return
+    const now = new Date()
+    form.value.movementDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
+  },
+  { immediate: true },
+)
 
-const fromCashOptions = computed(() => cashBoxes.value.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })))
-const fromBankOptions = computed(() => banks.value.map((b) => ({ value: b.id, label: `${b.code} — ${b.bankName}` })))
+const fromCashOptions = computed(() =>
+  cashBoxes.value.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
+)
+const fromBankOptions = computed(() =>
+  banks.value.map((b) => ({ value: b.id, label: `${b.code} — ${b.bankName}` })),
+)
 const toCashOptions = fromCashOptions
 const toBankOptions = fromBankOptions
 

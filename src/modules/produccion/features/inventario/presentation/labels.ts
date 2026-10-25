@@ -6,11 +6,20 @@ export function formatSol(amount: number | null | undefined): string {
 export function formatQty(qty: number | null | undefined, unit?: string): string {
   if (qty == null || Number.isNaN(qty)) return '—'
   const n = Number(qty)
-  const formatted = n % 1 === 0 ? n.toLocaleString('es-PE') : n.toLocaleString('es-PE', { maximumFractionDigits: 4 })
+  const formatted =
+    n % 1 === 0
+      ? n.toLocaleString('es-PE')
+      : n.toLocaleString('es-PE', { maximumFractionDigits: 4 })
   return unit ? `${formatted} ${unit}` : formatted
 }
 
-export const MATERIAL_CATEGORIES = ['Tableros', 'Herrajes', 'Adhesivos', 'Acabados', 'Otros'] as const
+export const MATERIAL_CATEGORIES = [
+  'Tableros',
+  'Herrajes',
+  'Adhesivos',
+  'Acabados',
+  'Otros',
+] as const
 
 export const MOVEMENT_TYPE_LABELS: Record<string, string> = {
   IN: 'Ingreso',

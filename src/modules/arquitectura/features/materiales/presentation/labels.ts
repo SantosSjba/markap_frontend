@@ -1,4 +1,4 @@
-﻿export function formatSol(amount: number | null | undefined): string {
+export function formatSol(amount: number | null | undefined): string {
   if (amount == null || Number.isNaN(amount)) return '—'
   return `S/ ${Number(amount).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }

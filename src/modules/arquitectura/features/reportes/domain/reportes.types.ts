@@ -1,4 +1,4 @@
-﻿export type ArquitecturaReportesRangeParams = {
+export type ArquitecturaReportesRangeParams = {
   startDate: string
   endDate: string
 }

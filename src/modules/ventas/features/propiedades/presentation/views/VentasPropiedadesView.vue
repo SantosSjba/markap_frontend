@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { toCalendarDateString } from '@/shared/utils/formatters'
+import { ventasPropertiesRepositoryKey } from '../../application/ports/ventas-properties.port'
+import { useService } from '@shared/presentation/di/services'
+import { toCalendarDateString } from '@shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
-import {
-  BaseButton,
-  BasePagination,
-  StatsCard,
-  Badge,
-  DataTable,
-  ActionsDropdown,
-  FormSelect,
-  FormInput,
-  SearchInput,
-  BaseModal,
-  AppIcon,
-  ExcelIcon,
-  PageHeader,
-} from '@shared/components'
-import { useExcelExport } from '@shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import {
   useVentasPropertiesList,
   useVentasPropertyStats,
@@ -28,10 +28,13 @@ import {
   useVentasPropertyDistricts,
   useVentasUpdatePropertyListingStatus,
   useVentasDeleteProperty,
-} from '../../application/useVentasProperties'
-import type { VentasPropertyListItem, VentasListPropertiesParams } from '../../domain/property.types'
-import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+} from '../composables/useVentasProperties'
+import type {
+  VentasPropertyListItem,
+  VentasListPropertiesParams,
+} from '../../domain/property.types'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const ventasPropertiesRepository = useService(ventasPropertiesRepositoryKey)
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -197,7 +200,8 @@ const tableColumns = [
 ]
 
 const goToNew = () => router.push('/ventas/propiedades/nueva')
-const goToEdit = (row: VentasPropertyListItem) => router.push(`/ventas/propiedades/${row.id}/editar`)
+const goToEdit = (row: VentasPropertyListItem) =>
+  router.push(`/ventas/propiedades/${row.id}/editar`)
 
 const showStatusModal = ref(false)
 const propertyForStatus = ref<VentasPropertyListItem | null>(null)
@@ -309,7 +313,9 @@ const districtFilterOptions = computed(() =>
   (filterDistricts.value ?? []).map((d) => ({ value: d.id, label: d.name })),
 )
 
-function listingStatusVariant(status: string | null): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
+function listingStatusVariant(
+  status: string | null,
+): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
   if (!status) return 'neutral'
   switch (status) {
     case 'AVAILABLE':
@@ -345,8 +351,7 @@ const SALE_CURRENCY_SYMBOL: Record<string, string> = {
 
 function formatSalePrice(salePrice: number | null, saleCurrency?: string | null): string {
   if (salePrice == null) return '—'
-  const sym =
-    (saleCurrency && SALE_CURRENCY_SYMBOL[saleCurrency]) || saleCurrency || 'S/'
+  const sym = (saleCurrency && SALE_CURRENCY_SYMBOL[saleCurrency]) || saleCurrency || 'S/'
   return `${sym} ${Number(salePrice).toLocaleString('es-PE', { maximumFractionDigits: 0 })}`
 }
 

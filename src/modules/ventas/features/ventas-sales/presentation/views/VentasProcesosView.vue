@@ -1,24 +1,25 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  DataTable,
-  SearchInput,
-  FormSelect,
-  Badge,
-  AppIcon,
-  BasePagination,
-  PageHeader,
-} from '@shared/components'
-import { useVentasProcessesList } from '../../application/useVentasSales'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useVentasProcessesList } from '../composables/useVentasSales'
 import type { SaleProcessListRow } from '../../domain/sales.types'
-import { useVentasPipelineStages } from '@ventas/configuracion'
+import { useVentasPipelineStages } from '../../../ventas-configuracion/presentation/composables/useVentasConfig'
 import { PROCESS_STATUS_OPTIONS, processStatusLabel } from '../../domain/pipeline.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const router = useRouter()
-const { stageOptions, labelFor: pipelineStageLabel, query: pipelineConfigQuery } = useVentasPipelineStages()
+const {
+  stageOptions,
+  labelFor: pipelineStageLabel,
+  query: pipelineConfigQuery,
+} = useVentasPipelineStages()
 const pipelineFilterOptions = computed(() => [
   { value: '', label: 'Todas las etapas' },
   ...stageOptions.value,
@@ -41,8 +42,13 @@ const listParamsForApi = computed(() => ({
   status: listParams.value.status || undefined,
 }))
 
-const { data: listResult, isLoading, isError: listQueryError, error: listFetchError, refetch: refetchList } =
-  useVentasProcessesList(listParamsForApi)
+const {
+  data: listResult,
+  isLoading,
+  isError: listQueryError,
+  error: listFetchError,
+  refetch: refetchList,
+} = useVentasProcessesList(listParamsForApi)
 const rows = computed(() => listResult.value?.data ?? [])
 const total = computed(() => listResult.value?.total ?? 0)
 
@@ -61,7 +67,12 @@ const paginationProps = computed(() => {
 })
 
 const tableColumns = [
-  { key: 'code', label: 'Código', sortable: true, sortAccessor: (r: unknown) => (r as SaleProcessListRow).code },
+  {
+    key: 'code',
+    label: 'Código',
+    sortable: true,
+    sortAccessor: (r: unknown) => (r as SaleProcessListRow).code,
+  },
   {
     key: 'buyer',
     label: 'Cliente',
@@ -74,8 +85,18 @@ const tableColumns = [
     sortable: true,
     sortAccessor: (r: unknown) => (r as SaleProcessListRow).property.code,
   },
-  { key: 'stage', label: 'Etapa', sortable: true, sortAccessor: (r: unknown) => (r as SaleProcessListRow).pipelineStage },
-  { key: 'status', label: 'Estado', sortable: true, sortAccessor: (r: unknown) => (r as SaleProcessListRow).status },
+  {
+    key: 'stage',
+    label: 'Etapa',
+    sortable: true,
+    sortAccessor: (r: unknown) => (r as SaleProcessListRow).pipelineStage,
+  },
+  {
+    key: 'status',
+    label: 'Estado',
+    sortable: true,
+    sortAccessor: (r: unknown) => (r as SaleProcessListRow).status,
+  },
   { key: 'actions', label: '', align: 'right' as const },
 ]
 

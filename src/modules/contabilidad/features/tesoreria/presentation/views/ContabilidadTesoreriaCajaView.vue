@@ -1,27 +1,24 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  Badge,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-  StatsCard,
-} from '@shared/components'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
-import { flattenMovementAccounts, formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { useContabilidadAccountsTree } from '../../../plan-cuentas/presentation/composables/useContabilidadAccounts'
+import { flattenMovementAccounts, formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadCashBoxes,
   useContabilidadTreasuryMovements,
   useContabilidadCreateTreasuryMovement,
-} from '../../application/useContabilidadTreasury'
+} from '../composables/useContabilidadTreasury'
 import { TREASURY_MOVEMENT_TYPE_LABELS } from '../../domain/treasury.types'
 import type { ContabilidadTreasuryMovementDTO } from '../../domain/treasury.types'
-
 const { activePeriod } = useContabilidadActivePeriod()
 const { data: cashData, isLoading: loadingBoxes } = useContabilidadCashBoxes()
 const emptySearch = ref('')
@@ -29,13 +26,19 @@ const { data: accountsData } = useContabilidadAccountsTree(emptySearch)
 
 const selectedCashBoxId = ref('')
 const cashBoxes = computed(() => cashData.value?.cashBoxes ?? [])
-const selectedCashBox = computed(() => cashBoxes.value.find((c) => c.id === selectedCashBoxId.value))
+const selectedCashBox = computed(() =>
+  cashBoxes.value.find((c) => c.id === selectedCashBoxId.value),
+)
 
-watch(cashBoxes, (boxes) => {
-  if (!selectedCashBoxId.value && boxes.length) {
-    selectedCashBoxId.value = boxes.find((b) => b.isActive)?.id ?? boxes[0]!.id
-  }
-}, { immediate: true })
+watch(
+  cashBoxes,
+  (boxes) => {
+    if (!selectedCashBoxId.value && boxes.length) {
+      selectedCashBoxId.value = boxes.find((b) => b.isActive)?.id ?? boxes[0]!.id
+    }
+  },
+  { immediate: true },
+)
 
 const movementParams = computed(() => ({
   periodId: activePeriod.value?.id,
@@ -43,13 +46,18 @@ const movementParams = computed(() => ({
   sourceType: 'CASH',
 }))
 
-const { data: movementsData, isLoading: loadingMovements, refetch } =
-  useContabilidadTreasuryMovements(movementParams)
+const {
+  data: movementsData,
+  isLoading: loadingMovements,
+  refetch,
+} = useContabilidadTreasuryMovements(movementParams)
 const movements = computed(() => movementsData.value?.movements ?? [])
 
 const offsetOptions = computed(() => {
   const ledgerIds = new Set(cashBoxes.value.map((c) => c.accountId))
-  return flattenMovementAccounts(accountsData.value?.tree ?? []).filter((o) => !ledgerIds.has(o.value))
+  return flattenMovementAccounts(accountsData.value?.tree ?? []).filter(
+    (o) => !ledgerIds.has(o.value),
+  )
 })
 
 const cashBoxOptions = computed(() =>
@@ -61,11 +69,15 @@ const movementType = ref<'IN' | 'OUT'>('IN')
 const form = ref({ amount: '', movementDate: '', description: '', offsetAccountId: '' })
 const { mutate: createMovement, isPending: saving } = useContabilidadCreateTreasuryMovement()
 
-watch(activePeriod, (p) => {
-  if (!p) return
-  const now = new Date()
-  form.value.movementDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
-}, { immediate: true })
+watch(
+  activePeriod,
+  (p) => {
+    if (!p) return
+    const now = new Date()
+    form.value.movementDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
+  },
+  { immediate: true },
+)
 
 function openModal(type: 'IN' | 'OUT') {
   movementType.value = type
@@ -91,7 +103,12 @@ function submitMovement() {
       movementDate: form.value.movementDate,
       description: form.value.description.trim(),
     },
-    { onSuccess: () => { modalOpen.value = false; void refetch() } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    },
   )
 }
 

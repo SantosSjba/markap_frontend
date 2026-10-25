@@ -1,8 +1,7 @@
-﻿import { apiClient } from '@core/api/apiClient'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { ARQUITECTURA_APP_SLUG } from '../../../../config/app.constants'
 import type { ArquitecturaReportsDashboard } from '../../domain/reportes.types'
 import type { ArquitecturaReportesRepository } from '../../domain/repositories/reportes.repository'
-
 function qs(params: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   Object.entries(params).forEach(([k, v]) => {

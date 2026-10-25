@@ -1,7 +1,10 @@
-import { apiClient } from '@core/api/apiClient'
-import { VENTAS_CONFIG_APP_SLUG, type VentasConfigBootstrap, type VentasPipelineStageDTO } from '../../domain/config.types'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import {
+  VENTAS_CONFIG_APP_SLUG,
+  type VentasConfigBootstrap,
+  type VentasPipelineStageDTO,
+} from '../../domain/config.types'
 import type { VentasConfigRepository } from '../../domain/repositories/ventas-config.repository'
-
 const scope = { applicationSlug: VENTAS_CONFIG_APP_SLUG } as const
 
 function qs(params: Record<string, string | undefined>) {
@@ -27,9 +30,8 @@ export const ventasConfigApiRepository: VentasConfigRepository = {
 
   patchSaleProcessNumbering: (body: { prefix?: string; lastNumber?: number }) =>
     apiClient
-      .patch<VentasConfigBootstrap['numbering']>(
-        `/ventas-config/numbering/sale-process?${qs({ ...scope })}`,
-        body,
-      )
+      .patch<
+        VentasConfigBootstrap['numbering']
+      >(`/ventas-config/numbering/sale-process?${qs({ ...scope })}`, body)
       .then((r) => r.data),
 }

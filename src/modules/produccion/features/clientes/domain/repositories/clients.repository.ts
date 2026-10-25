@@ -10,7 +10,6 @@ import type {
   Province,
   UpdateProduccionClientPayload,
 } from '../client.types'
-
 export interface ProduccionClientsRepository {
   getDocumentTypes: () => Promise<DocumentType[]>
   getDepartments: () => Promise<Department[]>

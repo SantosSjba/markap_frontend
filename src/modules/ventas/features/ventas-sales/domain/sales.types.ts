@@ -13,12 +13,7 @@ export interface SaleProcessParticipant {
 
 export type SaleCommissionCalculationType = 'PERCENT' | 'FIXED'
 
-export type SaleCommissionDeductibleType =
-  | 'TRAVEL'
-  | 'TAX'
-  | 'NOTARY'
-  | 'REGISTRY'
-  | 'OTHER'
+export type SaleCommissionDeductibleType = 'TRAVEL' | 'TAX' | 'NOTARY' | 'REGISTRY' | 'OTHER'
 
 export interface SaleCommissionPaymentPart {
   id: string

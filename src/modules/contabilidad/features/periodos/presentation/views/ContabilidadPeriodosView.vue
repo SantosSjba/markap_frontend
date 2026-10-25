@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { BaseButton, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
   useContabilidadPeriodsList,
   useContabilidadSetPeriodStatus,
-} from '../../application/useContabilidadPeriods'
+} from '../composables/useContabilidadPeriods'
 import { CONTABILIDAD_PERIOD_STATUS_LABELS } from '../../domain/period.types'
 import type { ContabilidadPeriodDTO } from '../../domain/period.types'
-
 const selectedYear = ref(new Date().getFullYear())
 
 const { data, isLoading, isError, refetch } = useContabilidadPeriodsList(selectedYear)
@@ -31,10 +31,7 @@ async function togglePeriod(period: ContabilidadPeriodDTO) {
         })
       : true
   if (!ok) return
-  setStatus(
-    { id: period.id, status: next },
-    { onSuccess: () => void refetch() },
-  )
+  setStatus({ id: period.id, status: next }, { onSuccess: () => void refetch() })
 }
 </script>
 

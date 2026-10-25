@@ -2,17 +2,21 @@
 import { ref, watch, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, DataTable, FormInput, BaseTabs, PageHeader } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { markapAlert } from '@/shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
   useVentasConfigBootstrap,
   useVentasSavePipelineStages,
   useVentasSaveNumbering,
-} from '../../application/useVentasConfig'
+} from '../composables/useVentasConfig'
 import type { VentasPipelineStageDTO } from '../../domain/config.types'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const activeTab = ref('accesos')
 
 const tabs = [
@@ -23,14 +27,24 @@ const tabs = [
 
 /** Solo pantallas del módulo Ventas; usuarios/roles son ajustes globales fuera de esta vista. */
 const quickLinks = [
-  { to: '/ventas/agentes', label: 'Asesores', icon: 'lucide:user-check', desc: 'Agentes comerciales' },
+  {
+    to: '/ventas/agentes',
+    label: 'Asesores',
+    icon: 'lucide:user-check',
+    desc: 'Agentes comerciales',
+  },
   {
     to: '/ventas/comisiones',
     label: 'Porcentajes de comisión',
     icon: 'lucide:percent',
     desc: '% por asesor y comisiones por cierre',
   },
-  { to: '/ventas/reportes', label: 'Reportes', icon: 'lucide:bar-chart-2', desc: 'Indicadores y exportación' },
+  {
+    to: '/ventas/reportes',
+    label: 'Reportes',
+    icon: 'lucide:bar-chart-2',
+    desc: 'Indicadores y exportación',
+  },
 ]
 
 const { data: boot, isLoading, isError, error, refetch } = useVentasConfigBootstrap()

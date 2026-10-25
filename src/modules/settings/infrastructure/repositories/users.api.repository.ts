@@ -1,7 +1,11 @@
-import { apiClient } from '@core/api/apiClient'
-import type { UserListItem, CreateUserData, UpdateUserData, RoleInfo } from '../../domain/settings.types'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import type {
+  UserListItem,
+  CreateUserData,
+  UpdateUserData,
+  RoleInfo,
+} from '../../domain/settings.types'
 import type { UsersRepository } from '../../domain/repositories/users.repository'
-
 export const usersApiRepository: UsersRepository = {
   async getAll(): Promise<UserListItem[]> {
     const { data } = await apiClient.get<UserListItem[]>('/users')
@@ -15,8 +19,7 @@ export const usersApiRepository: UsersRepository = {
 
   async create(userData: CreateUserData): Promise<UserListItem> {
     const { roleIds, ...body } = userData
-    const payload =
-      roleIds && roleIds.length > 0 ? { ...body, roleIds } : body
+    const payload = roleIds && roleIds.length > 0 ? { ...body, roleIds } : body
     const { data } = await apiClient.post<UserListItem>('/users', payload)
     return data
   },

@@ -1,5 +1,4 @@
 import type { MenuItem } from '@shared/domain/menu.types'
-
 export const CONTABILIDAD_FALLBACK_MENUS: MenuItem[] = [
   {
     id: 'cont-fb-dash',

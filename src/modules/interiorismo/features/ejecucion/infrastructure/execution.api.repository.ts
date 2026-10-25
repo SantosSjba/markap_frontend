@@ -1,5 +1,5 @@
-import { apiClient } from '@core/api/apiClient'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { INTERIORISMO_APP_SLUG } from '../../../config/app.constants'
 import type { InteriorExecutionRepository } from '../domain/repositories/execution.repository'
 import type {
   CreateExecutionActualCostPayload,
@@ -14,7 +14,6 @@ import type {
   UpdateExecutionTaskPayload,
   UploadExecutionEvidencePayload,
 } from '../domain/execution.types'
-
 const BASE = '/interiorismo-execution'
 
 const q = () => ({ params: { applicationSlug: INTERIORISMO_APP_SLUG } })
@@ -37,7 +36,11 @@ export const interiorExecutionApiRepository: InteriorExecutionRepository = {
 
   updateTask: (projectId: string, taskId: string, payload: UpdateExecutionTaskPayload) =>
     apiClient
-      .patch<InteriorExecutionTaskDto>(`${BASE}/projects/${projectId}/tasks/${taskId}`, payload, q())
+      .patch<InteriorExecutionTaskDto>(
+        `${BASE}/projects/${projectId}/tasks/${taskId}`,
+        payload,
+        q(),
+      )
       .then((r) => r.data),
 
   deleteTask: (projectId: string, taskId: string) =>
@@ -73,7 +76,11 @@ export const interiorExecutionApiRepository: InteriorExecutionRepository = {
       .post<InteriorExecutionIncidentDto>(`${BASE}/projects/${projectId}/incidents`, payload, q())
       .then((r) => r.data),
 
-  updateIncident: (projectId: string, incidentId: string, payload: UpdateExecutionIncidentPayload) =>
+  updateIncident: (
+    projectId: string,
+    incidentId: string,
+    payload: UpdateExecutionIncidentPayload,
+  ) =>
     apiClient
       .patch<InteriorExecutionIncidentDto>(
         `${BASE}/projects/${projectId}/incidents/${incidentId}`,
@@ -83,9 +90,7 @@ export const interiorExecutionApiRepository: InteriorExecutionRepository = {
       .then((r) => r.data),
 
   createActualCost: (projectId: string, payload: CreateExecutionActualCostPayload) =>
-    apiClient
-      .post(`${BASE}/projects/${projectId}/actual-costs`, payload, q())
-      .then((r) => r.data),
+    apiClient.post(`${BASE}/projects/${projectId}/actual-costs`, payload, q()).then((r) => r.data),
 
   deleteActualCost: (projectId: string, costId: string) =>
     apiClient
@@ -93,7 +98,5 @@ export const interiorExecutionApiRepository: InteriorExecutionRepository = {
       .then(() => undefined),
 
   getDownloadUrl: (archivoId: string) =>
-    apiClient
-      .get<{ url: string }>(`/gen-archivos/${archivoId}/url`, q())
-      .then((r) => r.data.url),
+    apiClient.get<{ url: string }>(`/gen-archivos/${archivoId}/url`, q()).then((r) => r.data.url),
 }

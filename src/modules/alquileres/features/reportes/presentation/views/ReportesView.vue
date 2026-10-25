@@ -1,19 +1,20 @@
 <script setup lang="ts">
+import { reportesRepositoryKey } from '../../application/ports/reportes.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { FormInput, FormSelect } from '@shared/components'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import type { FinancialDistributionParams, RentalsByMonthParams } from '../../domain/reportes.types'
-import {
-  StatsCard,
-  BaseTabs,
-  BaseButton,
-  AppIcon,
-  ExcelIcon,
-  TableBodySkeleton,
-} from '@shared/components'
-import { useExcelExport } from '@shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@/shared/utils/formatters'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import TableBodySkeleton from '@shared/presentation/components/ui/TableBodySkeleton.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@shared/utils/formatters'
 import {
   useReportsSummary,
   useContractsExpiring,
@@ -23,11 +24,8 @@ import {
   useMonthlyMetrics,
   useRentalsByMonth,
   useFinancialDistributionReport,
-} from '../../application/useReportes'
-import { reportesRepository } from '@modules/alquileres/features/reportes'
-import {
-  RENTAL_UTILITY_NET_SHORT_LABEL,
-} from '@modules/alquileres/features/alquileres/domain/rental-financial.labels'
+} from '../composables/useReportes'
+import { RENTAL_UTILITY_NET_SHORT_LABEL } from '../../../alquileres/domain/rental-financial.labels'
 import type {
   ContractExpiringItem,
   PropertyWithoutContractItem,
@@ -35,6 +33,7 @@ import type {
   RentalsByMonthItem,
   FinancialDistributionReportItem,
 } from '../../domain/reportes.types'
+const reportesRepository = useService(reportesRepositoryKey)
 
 const router = useRouter()
 
@@ -65,11 +64,11 @@ function getDefaultRentalsByMonthFilters() {
 const hasActiveRentalsByMonthFilters = computed(() => {
   const defaults = getDefaultRentalsByMonthFilters()
   return (
-    filterMode.value !== defaults.filterMode
-    || yearFilter.value !== defaults.year
-    || monthFilter.value !== defaults.month
-    || !!startDateFilter.value
-    || !!endDateFilter.value
+    filterMode.value !== defaults.filterMode ||
+    yearFilter.value !== defaults.year ||
+    monthFilter.value !== defaults.month ||
+    !!startDateFilter.value ||
+    !!endDateFilter.value
   )
 })
 
@@ -135,41 +134,66 @@ const contractStatusQuery = useContractStatusSummary(APPLICATION_SLUG)
 const monthlyMetricsQuery = useMonthlyMetrics(APPLICATION_SLUG)
 const rentalsByMonthQuery = useRentalsByMonth(APPLICATION_SLUG, rentalsByMonthParams)
 
-const stats = computed(() => summaryQuery.data.value ?? {
-  contratosPorVencer: 0,
-  propiedadesSinContrato: 0,
-  clientesActivos: 0,
-  clientesConIncidencias: 0,
-})
-
-const contratosPorVencerRows = computed(() => contractsExpiringQuery.data.value ?? [])
-const propertiesWithoutContractRows = computed(() => propertiesWithoutContractQuery.data.value ?? [])
-const activeClientsRows = computed(() => activeClientsQuery.data.value ?? [])
-
-const statusSummary = computed(() => contractStatusQuery.data.value ?? {
-  vigentes: 0,
-  porVencer: 0,
-  proximos: 0,
-  urgentes: 0,
-})
-
-const resumenContratos = computed(() => [
-  { label: 'Vigentes (más de 90 días)', value: statusSummary.value.vigentes, color: 'var(--color-success)' },
-  { label: 'Por vencer (61-90 días)', value: statusSummary.value.porVencer, color: 'var(--color-surface-elevated)' },
-  { label: 'Próximos (31-60 días)', value: statusSummary.value.proximos, color: 'var(--color-warning)' },
-  { label: 'Urgentes (0-30 días)', value: statusSummary.value.urgentes, color: 'var(--color-error)' },
-])
-
-const totalResumen = computed(() =>
-  resumenContratos.value.reduce((acc, r) => acc + r.value, 0)
+const stats = computed(
+  () =>
+    summaryQuery.data.value ?? {
+      contratosPorVencer: 0,
+      propiedadesSinContrato: 0,
+      clientesActivos: 0,
+      clientesConIncidencias: 0,
+    },
 )
 
-const metricasMes = computed(() => monthlyMetricsQuery.data.value ?? {
-  tasaOcupacion: 0,
-  tasaCobranza: 0,
-  contratosRenovados: 0,
-  clientesNuevos: 0,
-})
+const contratosPorVencerRows = computed(() => contractsExpiringQuery.data.value ?? [])
+const propertiesWithoutContractRows = computed(
+  () => propertiesWithoutContractQuery.data.value ?? [],
+)
+const activeClientsRows = computed(() => activeClientsQuery.data.value ?? [])
+
+const statusSummary = computed(
+  () =>
+    contractStatusQuery.data.value ?? {
+      vigentes: 0,
+      porVencer: 0,
+      proximos: 0,
+      urgentes: 0,
+    },
+)
+
+const resumenContratos = computed(() => [
+  {
+    label: 'Vigentes (más de 90 días)',
+    value: statusSummary.value.vigentes,
+    color: 'var(--color-success)',
+  },
+  {
+    label: 'Por vencer (61-90 días)',
+    value: statusSummary.value.porVencer,
+    color: 'var(--color-surface-elevated)',
+  },
+  {
+    label: 'Próximos (31-60 días)',
+    value: statusSummary.value.proximos,
+    color: 'var(--color-warning)',
+  },
+  {
+    label: 'Urgentes (0-30 días)',
+    value: statusSummary.value.urgentes,
+    color: 'var(--color-error)',
+  },
+])
+
+const totalResumen = computed(() => resumenContratos.value.reduce((acc, r) => acc + r.value, 0))
+
+const metricasMes = computed(
+  () =>
+    monthlyMetricsQuery.data.value ?? {
+      tasaOcupacion: 0,
+      tasaCobranza: 0,
+      contratosRenovados: 0,
+      clientesNuevos: 0,
+    },
+)
 
 function formatDate(dateStr: string) {
   return formatShortDate(dateStr)
@@ -338,11 +362,12 @@ async function handleExportTab() {
       p.startDate,
       p.endDate,
     )
-    const fileLabel = filterMode.value === 'range'
-      ? `${p.startDate ?? ''}_${p.endDate ?? ''}`
-      : filterMode.value === 'month'
-        ? `${p.year}_mes${p.month}`
-        : String(p.year ?? yearFilter.value)
+    const fileLabel =
+      filterMode.value === 'range'
+        ? `${p.startDate ?? ''}_${p.endDate ?? ''}`
+        : filterMode.value === 'month'
+          ? `${p.year}_mes${p.month}`
+          : String(p.year ?? yearFilter.value)
 
     await exportToExcel({
       fileName: `alquiler_por_mes_${fileLabel}_${now}`,

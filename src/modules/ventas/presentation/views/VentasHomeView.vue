@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter, type RouteLocationRaw } from 'vue-router'
-import { StatsCard, BaseButton, AppIcon } from '@shared/components'
-import { useAuthStore } from '@modules/auth'
-import { VENTAS_BASE_PATH } from '@modules/ventas/config/routes.constants'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
+import { VENTAS_BASE_PATH } from '../../config/routes.constants'
 import {
   useVentasConversionReport,
   useVentasFinancialFlowReport,
   useVentasSalesByPeriodReport,
-} from '@modules/ventas/features/ventas-reportes/application/useVentasReportes'
-import type { VentasReportesRangeParams } from '@modules/ventas/features/ventas-reportes/domain/reportes.types'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { parseCalendarDate, toCalendarDateString, formatDate } from '@/shared/utils/formatters'
-
+} from '../../features/ventas-reportes/presentation/composables/useVentasReportes'
+import type { VentasReportesRangeParams } from '../../features/ventas-reportes/domain/reportes.types'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { parseCalendarDate, toCalendarDateString, formatDate } from '@shared/utils/formatters'
 const silentReportOpts = { toastOnLoadError: false as const }
 
 const router = useRouter()

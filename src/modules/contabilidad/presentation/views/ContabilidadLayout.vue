@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { AppLayoutSidebar, AppHeader } from '@layouts/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { useContabilidadAppLayout } from '../composables'
+import { ref, computed } from 'vue'
+import AppLayoutSidebar from '@app/layouts/components/AppLayoutSidebar.vue'
+import AppHeader from '@app/layouts/components/AppHeader.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useContabilidadAppLayout } from '../composables/useContabilidadAppLayout'
 import ContabilidadContextInfoBar from '../components/ContabilidadContextInfoBar.vue'
-import { ensureContabilidadContext } from '../composables/useContabilidadContext'
-
+import { useContabilidadContext } from '../composables/useContabilidadContext'
 const { application, menus, menusLoading } = useContabilidadAppLayout()
 
 const isSidebarCollapsed = ref(false)
@@ -39,9 +39,7 @@ const applicationInfo = computed(() =>
       },
 )
 
-onMounted(() => {
-  void ensureContabilidadContext()
-})
+useContabilidadContext()
 </script>
 
 <template>

@@ -1,28 +1,29 @@
 <script setup lang="ts">
+import { useService } from '@shared/presentation/di/services'
+import { DIRECTORY } from '@shared/application/ports/directory.port'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import * as yup from 'yup'
-import { BaseButton } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { apiClient } from '@core/api/apiClient'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
-import { useInteriorClientsList } from '@modules/interiorismo/features/clientes'
-import { useCreateInteriorProject } from '../../application/useInteriorProjects'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { INTERIORISMO_APP_SLUG } from '../../../../config/app.constants'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
+import { useInteriorClientsList } from '../../../clientes/presentation/composables/useClients'
+import { useCreateInteriorProject } from '../composables/useInteriorProjects'
 import type { InteriorProjectStatus, InteriorProjectType } from '../../domain/project.types'
-import type {
-  ClientListItem,
-  ListClientsParams,
-} from '@modules/interiorismo/features/clientes/domain/client.types'
+import type { ClientListItem, ListClientsParams } from '../../../clientes/domain/client.types'
 import { PROJECT_TYPE_LABELS } from '../labels'
-import { useInteriorProjectStageOptions } from '../../application/useInteriorProjectStageOptions'
+import { useInteriorProjectStageOptions } from '../composables/useInteriorProjectStageOptions'
 import {
   CURRENCY_OPTIONS,
   INTERVENTION_LEVEL_OPTIONS,
-} from '@modules/interiorismo/features/proyecto-presupuesto/presentation/labels'
+} from '../../../proyecto-presupuesto/presentation/labels'
+const directory = useService(DIRECTORY)
 
 const router = useRouter()
 
@@ -36,8 +37,10 @@ const { data: clientsRes, isLoading: loadingClients } = useInteriorClientsList(l
 const { data: agentsRes, isLoading: loadingAgents } = useQuery({
   queryKey: ['agents', INTERIORISMO_APP_SLUG, 'interior-pick'],
   queryFn: async () => {
-    const { data } = await apiClient.get<{ data: { id: string; fullName: string }[] }>('/agents', {
-      params: { applicationSlug: INTERIORISMO_APP_SLUG, limit: 500, page: 1 },
+    const data = await directory.listAgents({
+      applicationSlug: INTERIORISMO_APP_SLUG,
+      limit: 500,
+      page: 1,
     })
     return data
   },
@@ -157,8 +160,7 @@ const loading = computed(() => loadingClients.value || loadingAgents.value)
 
 const goBack = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)
 
-const emptyToUndef = (s: string | undefined | null) =>
-  s?.trim() ? s.trim() : undefined
+const emptyToUndef = (s: string | undefined | null) => (s?.trim() ? s.trim() : undefined)
 
 const onSubmit = handleSubmit(async (v) => {
   try {

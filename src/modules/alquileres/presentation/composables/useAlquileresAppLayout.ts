@@ -1,7 +1,9 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useMyApplications, useApplicationMenus } from '@modules/applications'
-
+import {
+  useMyApplications,
+  useApplicationMenus,
+} from '@modules/applications/presentation/composables/useApplications'
 /**
  * Composable de presentación: depende de Vue Router + menús por slug (Alquileres).
  */
@@ -13,9 +15,7 @@ export function useAlquileresAppLayout() {
   })
 
   const { data: applications } = useMyApplications()
-  const application = computed(
-    () => applications.value?.find((a) => a.slug === slug.value) ?? null,
-  )
+  const application = computed(() => applications.value?.find((a) => a.slug === slug.value) ?? null)
 
   const { data: menus, isLoading: menusLoading } = useApplicationMenus(slug)
 

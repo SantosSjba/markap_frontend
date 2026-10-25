@@ -6,7 +6,6 @@ import type {
   ImportPcgeResult,
   UpdateContabilidadAccountBody,
 } from '../account.types'
-
 export interface ContabilidadAccountsRepository {
   listTree(search?: string): Promise<ContabilidadAccountsTreeResponse>
   getPcgeClasses(): Promise<{ classes: ContabilidadPcgeClassMeta[] }>

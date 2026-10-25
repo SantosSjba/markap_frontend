@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import { propertiesRepositoryKey } from '../../application/ports/properties.port'
+import { useService } from '@shared/presentation/di/services'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, FormSectionCard, FileDropzone } from '@shared/components'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import {
   usePropertyTypes,
   usePropertyDepartments,
@@ -12,19 +19,19 @@ import {
   usePropertyDistricts,
   usePropertyOwners,
   useCreateProperty,
-} from '../../application/useProperties'
-import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
+} from '../composables/useProperties'
+import { navigateAfterAlquileresSave } from '../../../../presentation/navigation/navigateAfterAlquileresSave'
 import { formatFormArea, formatFormStat } from '@shared/utils/format-form-stat'
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
   UBIGEO_OTHER_DEPARTMENT_LABEL,
   mergeDepartmentOptions,
   buildPropertyUbigeoPayload,
-} from '@modules/alquileres/features/clientes/constants/ubigeo-other'
-import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
+} from '../../../clientes/constants/ubigeo-other'
+import { useClientAddressUbigeo } from '../../../clientes/composables/useClientAddressUbigeo'
 import type { PropertyType, OwnerOption } from '../../domain/property.types'
-import { propertiesApiRepository } from '../../infrastructure/repositories/properties.api.repository'
 import PropertyOwnersSection from '../components/PropertyOwnersSection.vue'
+const propertiesApiRepository = useService(propertiesRepositoryKey)
 
 type PropertyFormValues = {
   code: string
@@ -88,51 +95,89 @@ const schema = yup.object({
     otherwise: (s) => s.trim(),
   }),
   description: yup.string().trim(),
-  area: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
-  bedrooms: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
-  bathrooms: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
-  ageYears: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
+  area: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .nullable(),
+  bedrooms: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
+  bathrooms: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
+  ageYears: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
   floorLevel: yup.string().trim(),
-  parkingSpaces: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
+  parkingSpaces: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
   partida1: yup.string().trim().max(100),
   partida2: yup.string().trim().max(100),
   partida3: yup.string().trim().max(100),
   ownerId: yup.string().required('Seleccione el propietario'),
-  monthlyRent: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
-  maintenanceAmount: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
-  depositMonths: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).integer().nullable(),
+  monthlyRent: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .nullable(),
+  maintenanceAmount: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .nullable(),
+  depositMonths: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .integer()
+    .nullable(),
 })
 
-const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm<PropertyFormValues>({
-  // yup output types (number | null) no coinciden con valores de input en UI (string | number); el esquema sigue validando en runtime
-  validationSchema: toTypedSchema(schema) as never,
-  initialValues: {
-    code: 'PROP-',
-    propertyTypeId: '',
-    addressLine: '',
-    departmentId: '',
-    provinceId: '',
-    districtId: '',
-    locationCountry: '',
-    locationDepartment: '',
-    locationProvince: '',
-    locationDistrict: '',
-    description: '',
-    area: '',
-    bedrooms: '',
-    bathrooms: '',
-    ageYears: '',
-    floorLevel: '',
-    parkingSpaces: '',
-    partida1: '',
-    partida2: '',
-    partida3: '',
-    ownerId: '',
-    monthlyRent: '',
-    maintenanceAmount: '',
-    depositMonths: '',
-  },
-})
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } =
+  useForm<PropertyFormValues>({
+    // yup output types (number | null) no coinciden con valores de input en UI (string | number); el esquema sigue validando en runtime
+    validationSchema: toTypedSchema(schema) as never,
+    initialValues: {
+      code: 'PROP-',
+      propertyTypeId: '',
+      addressLine: '',
+      departmentId: '',
+      provinceId: '',
+      districtId: '',
+      locationCountry: '',
+      locationDepartment: '',
+      locationProvince: '',
+      locationDistrict: '',
+      description: '',
+      area: '',
+      bedrooms: '',
+      bathrooms: '',
+      ageYears: '',
+      floorLevel: '',
+      parkingSpaces: '',
+      partida1: '',
+      partida2: '',
+      partida3: '',
+      ownerId: '',
+      monthlyRent: '',
+      maintenanceAmount: '',
+      depositMonths: '',
+    },
+  })
 
 const codeBinds = defineComponentBinds('code')
 const propertyTypeIdBinds = defineComponentBinds('propertyTypeId')
@@ -174,7 +219,11 @@ const { data: propertyTypes, isLoading: loadingTypes } = usePropertyTypes()
 const { data: departments, isLoading: loadingDepartments } = usePropertyDepartments()
 const { data: provinces, isLoading: loadingProvinces } = usePropertyProvinces(selectedDepartmentId)
 const { data: districts, isLoading: loadingDistricts } = usePropertyDistricts(selectedProvinceId)
-const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = usePropertyOwners('alquileres')
+const {
+  data: owners,
+  isLoading: loadingOwners,
+  refetch: refetchOwners,
+} = usePropertyOwners('alquileres')
 const createMutation = useCreateProperty()
 
 const { isOtherLocation } = useClientAddressUbigeo({ values, setFieldValue })
@@ -192,24 +241,24 @@ function removeMediaRow(i: number) {
 }
 
 const loading = computed(
-  () => loadingTypes.value || loadingDepartments.value || loadingOwners.value
+  () => loadingTypes.value || loadingDepartments.value || loadingOwners.value,
 )
 
 const propertyTypeOptions = computed(() =>
-  (propertyTypes.value ?? []).map((p: PropertyType) => ({ value: p.id, label: p.name }))
+  (propertyTypes.value ?? []).map((p: PropertyType) => ({ value: p.id, label: p.name })),
 )
 const departmentOptions = computed(() => mergeDepartmentOptions(departments.value))
 const provinceOptions = computed(() =>
-  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name }))
+  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name })),
 )
 const districtOptions = computed(() =>
-  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name }))
+  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name })),
 )
 const ownerOptions = computed(() =>
   (owners.value ?? []).map((o: OwnerOption) => ({
     value: o.id,
     label: `${o.fullName} (${o.documentNumber})`,
-  }))
+  })),
 )
 
 const selectedOwnerLabel = computed(() => {
@@ -241,7 +290,11 @@ const locationSummary = computed(() => {
 })
 
 const monthlyRentPreview = computed(() => {
-  if (values.monthlyRent === '' || values.monthlyRent === null || values.monthlyRent === undefined) {
+  if (
+    values.monthlyRent === '' ||
+    values.monthlyRent === null ||
+    values.monthlyRent === undefined
+  ) {
     return null
   }
   const n = Number(values.monthlyRent)

@@ -1,5 +1,4 @@
 import type { MenuItem } from '@shared/domain/menu.types'
-
 /**
  * Menú alineado al flujo operativo (fallback si la API no responde).
  * Cliente → Catálogo → Costos → Compras → Inventario → Producción → Ventas → Reportes

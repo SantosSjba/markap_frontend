@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, FormTextarea, AppIcon } from '@shared/components'
-import { PRODUCCION_BASE_PATH } from '@modules/produccion/config/routes.constants'
-import { useProduccionFurnitureCategoryOptions } from '@modules/produccion/features/configuracion'
-import { useCreateProduccionCatalogItem } from '../../application/useProduccionCatalog'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { PRODUCCION_BASE_PATH } from '../../../../config/routes.constants'
+import { useProduccionFurnitureCategoryOptions } from '../../../configuracion/presentation/composables/useProduccionConfigOptions'
+import { useCreateProduccionCatalogItem } from '../composables/useProduccionCatalog'
 const router = useRouter()
 const createMut = useCreateProduccionCatalogItem()
 const { options: categoryOptions, defaultCategory } = useProduccionFurnitureCategoryOptions()

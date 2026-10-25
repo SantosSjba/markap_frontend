@@ -1,19 +1,18 @@
 import type { RouteRecordRaw } from 'vue-router'
 import VentasLayout from '../views/VentasLayout.vue'
-import { SectionLayout } from '@layouts'
+import SectionLayout from '@app/layouts/SectionLayout.vue'
 import { VENTAS_BASE_PATH } from '../../config/routes.constants'
-import { ventasAgentesRoutes } from '@modules/ventas/features/agentes'
-import { ventasClientesRoutes } from '@modules/ventas/features/clientes'
-import { ventasPropiedadesRoutes } from '@modules/ventas/features/propiedades'
+import { ventasAgentesRoutes } from '../../features/agentes/presentation/router/index'
+import { ventasClientesRoutes } from '../../features/clientes/presentation/router/index'
+import { ventasPropiedadesRoutes } from '../../features/propiedades/presentation/router/index'
 import {
   ventasSalesProcesosRoutes,
   ventasSalesSeparacionesRoutes,
   ventasSalesCierresRoutes,
-} from '@ventas/sales'
-import { ventasFinanzasComisionesRoutes } from '@ventas/finanzas'
-import { ventasReportesRoutes } from '@ventas/reportes'
-import { ventasConfiguracionRoutes } from '@ventas/configuracion'
-
+} from '../../features/ventas-sales/presentation/router/index'
+import { ventasFinanzasComisionesRoutes } from '../../features/ventas-finanzas/presentation/router/index'
+import { ventasReportesRoutes } from '../../features/ventas-reportes/presentation/router/index'
+import { ventasConfiguracionRoutes } from '../../features/ventas-configuracion/presentation/router/index'
 export const ventasRoutes: RouteRecordRaw[] = [
   {
     path: VENTAS_BASE_PATH,

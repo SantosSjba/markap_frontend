@@ -1,31 +1,33 @@
 <script setup lang="ts">
+import { paymentsRepositoryKey } from '../../application/ports/payments.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import * as yup from 'yup'
-import StatsCard from '@shared/components/ui/StatsCard.vue'
-import Badge from '@shared/components/ui/Badge.vue'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
-import BaseButton from '@shared/components/ui/BaseButton.vue'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import ExcelIcon from '@shared/components/ui/ExcelIcon.vue'
-import SearchInput from '@shared/components/forms/SearchInput.vue'
-import FormInput from '@shared/components/forms/FormInput.vue'
-import FormSelect from '@shared/components/forms/FormSelect.vue'
-import FormTextarea from '@shared/components/forms/FormTextarea.vue'
-import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useExcelExport } from '@shared/composables'
-import { useForm, toTypedSchema } from '@shared/components/forms'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import {
   useOverduePayments,
   useRegisterPayment,
   usePendingPayments,
   useSaveCommunicationNote,
-} from '../../application/usePayments'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
+} from '../composables/usePayments'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
 import type { OverduePaymentItem, PaymentMethod } from '../../domain/payment.types'
-import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
+const paymentsRepository = useService(paymentsRepositoryKey)
 
 const router = useRouter()
 
@@ -42,7 +44,9 @@ const {
 
 // KPI stats derivados
 const totalOwed = computed(() => overdueList.value?.reduce((s, i) => s + i.totalOwed, 0) ?? 0)
-const criticalCount = computed(() => overdueList.value?.filter((i) => i.overdueLevel === 'critical').length ?? 0)
+const criticalCount = computed(
+  () => overdueList.value?.filter((i) => i.overdueLevel === 'critical').length ?? 0,
+)
 
 // Modal de cobro rápido
 const showModal = ref(false)
@@ -64,7 +68,10 @@ const {
 } = usePendingPayments(pendingParams)
 
 const selectedRentalPendingList = computed(
-  () => tenantPendingPayments.value?.filter((p) => p.rentalId === selectedOverdue.value?.rentalId && p.daysOverdue > 0) ?? [],
+  () =>
+    tenantPendingPayments.value?.filter(
+      (p) => p.rentalId === selectedOverdue.value?.rentalId && p.daysOverdue > 0,
+    ) ?? [],
 )
 
 const paymentSchema = yup.object({
@@ -207,19 +214,28 @@ const onNoteSave = submitNoteForm((vals) => {
   )
 })
 
-function getOverdueLevelBadge(level: string): { variant: 'error' | 'warning' | 'info'; label: string } {
+function getOverdueLevelBadge(level: string): {
+  variant: 'error' | 'warning' | 'info'
+  label: string
+} {
   switch (level) {
-    case 'critical': return { variant: 'error', label: 'Crítico' }
-    case 'high': return { variant: 'warning', label: 'Alto' }
-    default: return { variant: 'info', label: 'Moderado' }
+    case 'critical':
+      return { variant: 'error', label: 'Crítico' }
+    case 'high':
+      return { variant: 'warning', label: 'Alto' }
+    default:
+      return { variant: 'info', label: 'Moderado' }
   }
 }
 
 function getBorderColor(level: string) {
   switch (level) {
-    case 'critical': return 'var(--color-error, #ef4444)'
-    case 'high': return '#f59e0b'
-    default: return '#3b82f6'
+    case 'critical':
+      return 'var(--color-error, #ef4444)'
+    case 'high':
+      return '#f59e0b'
+    default:
+      return '#3b82f6'
   }
 }
 
@@ -233,10 +249,24 @@ function formatDate(dateStr: string | null) {
 }
 
 function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
 }
 
-const avatarColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#14b8a6', '#3b82f6', '#f97316']
+const avatarColors = [
+  '#6366f1',
+  '#8b5cf6',
+  '#ec4899',
+  '#f59e0b',
+  '#10b981',
+  '#14b8a6',
+  '#3b82f6',
+  '#f97316',
+]
 function getAvatarColor(name: string) {
   let hash = 0
   for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % avatarColors.length

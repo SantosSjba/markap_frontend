@@ -1,33 +1,36 @@
 <script setup lang="ts">
-import { toCalendarDateString } from '@/shared/utils/formatters'
+import { ventasClientsRepositoryKey } from '../../application/ports/ventas-clients.port'
+import { useService } from '@shared/presentation/di/services'
+import { toCalendarDateString } from '@shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
-import {
-  BaseButton,
-  BasePagination,
-  StatsCard,
-  Badge,
-  Avatar,
-  DataTable,
-  ActionsDropdown,
-  FormSelect,
-  SearchInput,
-  AppIcon,
-  ExcelIcon,
-  PageHeader,
-} from '@shared/components'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
-import { useExcelExport } from '@shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import Avatar from '@shared/presentation/components/ui/Avatar.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import {
   useVentasClientsList,
   useVentasClientStats,
   useVentasDeleteClient,
-} from '../../application/useVentasClients'
+} from '../composables/useVentasClients'
 import type { VentasClientListItem, ListVentasClientsParams } from '../../domain/client.types'
-import { ventasClientsRepository } from '@modules/ventas/features/clientes'
-import { VENTAS_LEAD_ORIGIN_OPTIONS, VENTAS_SALES_STATUS_OPTIONS } from '../../domain/leadOrigins.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import {
+  VENTAS_LEAD_ORIGIN_OPTIONS,
+  VENTAS_SALES_STATUS_OPTIONS,
+} from '../../domain/leadOrigins.constants'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const ventasClientsRepository = useService(ventasClientsRepositoryKey)
 
 const router = useRouter()
 const route = useRoute()

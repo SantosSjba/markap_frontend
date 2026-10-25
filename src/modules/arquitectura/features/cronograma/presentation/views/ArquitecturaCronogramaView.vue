@@ -1,41 +1,41 @@
 ﻿<script setup lang="ts">
+import { useService } from '@shared/presentation/di/services'
+import { DIRECTORY } from '@shared/application/ports/directory.port'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import * as yup from 'yup'
-import {
-  BaseButton,
-  BaseTabs,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  Badge,
-  AppIcon,
-  ActionsDropdown,
-} from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { apiClient } from '@core/api/apiClient'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import {
   formatDate,
   formatDateTime,
   formatShortDate,
   toCalendarDateString,
-} from '@/shared/utils/formatters'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
-import { useArquitecturaProjectsList } from '@modules/arquitectura/features/proyectos/application/useArquitecturaProjects'
-import type { ListArquitecturaProjectsParams } from '@modules/arquitectura/features/proyectos/domain/project.types'
+} from '@shared/utils/formatters'
+import { ARQUITECTURA_APP_SLUG } from '../../../../config/app.constants'
+import { useArquitecturaProjectsList } from '../../../proyectos/presentation/composables/useArquitecturaProjects'
+import type { ListArquitecturaProjectsParams } from '../../../proyectos/domain/project.types'
 import type { CalendarFeedItemDto } from '../../domain/calendar.types'
 import {
   useArquitecturaCalendarFeed,
   useCreateCalendarEvent,
   useUpdateCalendarEvent,
   useDeleteCalendarEvent,
-} from '../../application/useArquitecturaCalendar'
+} from '../composables/useArquitecturaCalendar'
 import { CAL_EVENT_TYPE_LABELS, CAL_SOURCE_LABELS } from '../labels'
+const directory = useService(DIRECTORY)
 
 const route = useRoute()
 const router = useRouter()
@@ -75,14 +75,24 @@ const feedParams = computed(() => ({
   ...(agentFilter.value.trim() ? { agentId: agentFilter.value.trim() } : {}),
 }))
 
-const { data: feed, isLoading, isError, error: feedError, refetch: refetchFeed } = useArquitecturaCalendarFeed(feedParams)
+const {
+  data: feed,
+  isLoading,
+  isError,
+  error: feedError,
+  refetch: refetchFeed,
+} = useArquitecturaCalendarFeed(feedParams)
 const createEv = useCreateCalendarEvent()
 const updateEv = useUpdateCalendarEvent()
 const deleteEv = useDeleteCalendarEvent()
 
 const listParams = ref<ListArquitecturaProjectsParams>({ page: 1, limit: 400 })
-const { data: projectsRes, isError: projectsQueryError, error: projectsListError, refetch: refetchProjects } =
-  useArquitecturaProjectsList(listParams)
+const {
+  data: projectsRes,
+  isError: projectsQueryError,
+  error: projectsListError,
+  refetch: refetchProjects,
+} = useArquitecturaProjectsList(listParams)
 
 const projectOptions = computed(() => [
   { value: '', label: 'Todos los proyectos' },
@@ -100,8 +110,10 @@ const {
 } = useQuery({
   queryKey: ['agents', ARQUITECTURA_APP_SLUG, 'calendar'],
   queryFn: async () => {
-    const { data } = await apiClient.get<{ data: { id: string; fullName: string }[] }>('/agents', {
-      params: { applicationSlug: ARQUITECTURA_APP_SLUG, limit: 500, page: 1 },
+    const data = await directory.listAgents({
+      applicationSlug: ARQUITECTURA_APP_SLUG,
+      limit: 500,
+      page: 1,
     })
     return data
   },
@@ -346,12 +358,17 @@ const onSubmitEvent = evForm.handleSubmit(async (values) => {
 
 async function removeEvent(row: CalendarFeedItemDto) {
   if (row.readOnly) return
-  const ok = await markapAlert.confirmDanger({ title: '¿Eliminar evento?', confirmText: 'Eliminar' })
+  const ok = await markapAlert.confirmDanger({
+    title: '¿Eliminar evento?',
+    confirmText: 'Eliminar',
+  })
   if (!ok) return
   await deleteEv.mutateAsync(row.id)
 }
 
-function getEventActions(row: CalendarFeedItemDto): { label: string; icon: string; onClick: () => void }[] {
+function getEventActions(
+  row: CalendarFeedItemDto,
+): { label: string; icon: string; onClick: () => void }[] {
   if (row.readOnly) return []
   return [
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => openEdit(row) },

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { BaseButton, FormTextarea } from '@shared/components'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 const props = defineProps<{
   modelValue: boolean
   processCode?: string

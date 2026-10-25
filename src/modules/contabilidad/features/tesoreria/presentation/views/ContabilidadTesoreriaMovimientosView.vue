@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  Badge,
-  DataTable,
-  FormSelect,
-  PageHeader,
-  SearchInput,
-} from '@shared/components'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useContabilidadTreasuryMovements } from '../../application/useContabilidadTreasury'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
+import { useContabilidadTreasuryMovements } from '../composables/useContabilidadTreasury'
 import {
   TREASURY_MOVEMENT_FILTER_OPTIONS,
   TREASURY_SOURCE_FILTER_OPTIONS,
@@ -20,7 +18,6 @@ import {
   TREASURY_SOURCE_TYPE_LABELS,
   type ContabilidadTreasuryMovementDTO,
 } from '../../domain/treasury.types'
-
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
 

@@ -1,5 +1,5 @@
-﻿import { apiClient } from '@core/api/apiClient'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { ARQUITECTURA_APP_SLUG } from '../../../config/app.constants'
 import type {
   CreateArquitecturaDocumentPayload,
   ArquitecturaDocumentRow,
@@ -9,7 +9,6 @@ import type {
   UploadArquitecturaDocumentPayload,
 } from '../domain/document.types'
 import type { ArquitecturaDocumentsRepository } from '../domain/repositories/documents.repository'
-
 const BASE = '/arquitectura-documents'
 
 function queryParams(params: ListArquitecturaDocumentsParams) {
@@ -25,7 +24,9 @@ function queryParams(params: ListArquitecturaDocumentsParams) {
 
 export const arquitecturaDocumentsApiRepository: ArquitecturaDocumentsRepository = {
   list: (params: ListArquitecturaDocumentsParams) =>
-    apiClient.get<ListArquitecturaDocumentsResponse>(`${BASE}?${queryParams(params)}`).then((r) => r.data),
+    apiClient
+      .get<ListArquitecturaDocumentsResponse>(`${BASE}?${queryParams(params)}`)
+      .then((r) => r.data),
 
   create: (payload: CreateArquitecturaDocumentPayload) =>
     apiClient

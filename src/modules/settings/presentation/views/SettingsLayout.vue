@@ -2,9 +2,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { useAuthStore } from '@modules/auth'
-import { ThemeToggle } from '@shared/components'
-
+import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
+import ThemeToggle from '@shared/presentation/components/ui/ThemeToggle.vue'
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -42,7 +41,7 @@ const allMenuItems = [
 ]
 
 const menuItems = computed(() =>
-  allMenuItems.filter((item) => !item.adminOnly || authStore.isAdmin)
+  allMenuItems.filter((item) => !item.adminOnly || authStore.isAdmin),
 )
 
 const pageTitle = computed(() => {
@@ -52,11 +51,25 @@ const pageTitle = computed(() => {
 
 const isActive = (path: string) => route.path === path
 
-const toggleUserMenu = () => { isUserMenuOpen.value = !isUserMenuOpen.value }
-const closeUserMenu = () => { isUserMenuOpen.value = false }
-const goToApplications = () => { closeUserMenu(); router.push('/applications') }
-const goToProfile = () => { closeUserMenu(); router.push('/settings/profile') }
-const handleLogout = () => { closeUserMenu(); authStore.logout(); router.push('/auth/login') }
+const toggleUserMenu = () => {
+  isUserMenuOpen.value = !isUserMenuOpen.value
+}
+const closeUserMenu = () => {
+  isUserMenuOpen.value = false
+}
+const goToApplications = () => {
+  closeUserMenu()
+  router.push('/applications')
+}
+const goToProfile = () => {
+  closeUserMenu()
+  router.push('/settings/profile')
+}
+const handleLogout = () => {
+  closeUserMenu()
+  authStore.logout()
+  router.push('/auth/login')
+}
 
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as HTMLElement

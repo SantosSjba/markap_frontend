@@ -1,10 +1,7 @@
-import { apiClient } from '@core/api/apiClient'
-import { CONTABILIDAD_PERIOD_APP_SLUG } from '@modules/contabilidad/features/periodos/domain/period.types'
-import type {
-  ContabilidadCostCenterDTO,
-} from '../../domain/cost-center.types'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { CONTABILIDAD_PERIOD_APP_SLUG } from '../../../periodos/domain/period.types'
+import type { ContabilidadCostCenterDTO } from '../../domain/cost-center.types'
 import type { ContabilidadCostCentersRepository } from '../../domain/repositories/contabilidad-cost-centers.repository'
-
 const scope = { applicationSlug: CONTABILIDAD_PERIOD_APP_SLUG } as const
 
 function qs(params: Record<string, string | undefined>) {
@@ -28,11 +25,16 @@ export const contabilidadCostCentersApiRepository: ContabilidadCostCentersReposi
 
   update: (id, body) =>
     apiClient
-      .patch<ContabilidadCostCenterDTO>(`/contabilidad-cost-centers/${id}?${qs({ ...scope })}`, body)
+      .patch<ContabilidadCostCenterDTO>(
+        `/contabilidad-cost-centers/${id}?${qs({ ...scope })}`,
+        body,
+      )
       .then((r) => r.data),
 
   deactivate: (id) =>
     apiClient
-      .patch<ContabilidadCostCenterDTO>(`/contabilidad-cost-centers/${id}/deactivate?${qs({ ...scope })}`)
+      .patch<ContabilidadCostCenterDTO>(
+        `/contabilidad-cost-centers/${id}/deactivate?${qs({ ...scope })}`,
+      )
       .then((r) => r.data),
 }

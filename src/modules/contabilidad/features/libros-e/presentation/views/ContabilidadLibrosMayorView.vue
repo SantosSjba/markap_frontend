@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { AppIcon, FormSelect, PageHeader } from '@shared/components'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
-import { flattenMovementAccounts, formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useContabilidadLibroMayor } from '../../application/useContabilidadPle'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { useContabilidadAccountsTree } from '../../../plan-cuentas/presentation/composables/useContabilidadAccounts'
+import { flattenMovementAccounts, formatPen } from '../../../asientos/domain/journal.utils'
+import { useContabilidadLibroMayor } from '../composables/useContabilidadPle'
 import type { ContabilidadLibroMayorAccountDTO } from '../../domain/ple.types'
-
 const { activePeriod } = useContabilidadActivePeriod()
 const periodId = computed(() => activePeriod.value?.id)
 const accountFilter = ref('')

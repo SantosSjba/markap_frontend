@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, BaseModal, DataTable, FormInput, FormSelect, FormTextarea, SearchInput, AppIcon } from '@shared/components'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import {
   useProduccionDeliveriesList,
   useProduccionOrdersList,
   useDeliveryMutations,
-} from '../../application/useProduccionSales'
+} from '../composables/useProduccionSales'
 import {
   formatDate,
   DELIVERY_STATUS_LABELS,
@@ -14,7 +21,6 @@ import {
   deliveryStatusClass,
 } from '../labels'
 import type { ProduccionDeliveryListItem } from '../../domain/sales.types'
-
 const route = useRoute()
 const router = useRouter()
 
@@ -22,7 +28,11 @@ const listParams = ref({ page: 1, limit: 50 })
 const searchInput = ref('')
 const statusFilter = ref('')
 
-const { data: result, isLoading, refetch } = useProduccionDeliveriesList(
+const {
+  data: result,
+  isLoading,
+  refetch,
+} = useProduccionDeliveriesList(
   computed(() => ({
     ...listParams.value,
     search: searchInput.value.trim() || undefined,

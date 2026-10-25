@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, BaseModal, FormInput, FormSelect, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useProduccionWorkOrderDetail, useWorkOrderMutations } from '../../application/useProduccionWorkOrders'
-import { useProduccionMaterialsList } from '../../../inventario/application/useProduccionInventory'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import {
+  useProduccionWorkOrderDetail,
+  useWorkOrderMutations,
+} from '../composables/useProduccionWorkOrders'
+import { useProduccionMaterialsList } from '../../../inventario/presentation/composables/useProduccionInventory'
 import { formatDate, WO_STATUS_LABELS, STAGE_STATUS_LABELS, woStatusClass } from '../labels'
 import { formatQty } from '../../../inventario/presentation/labels'
 import type { ProduccionWorkOrderStage } from '../../domain/work-orders.types'
-
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
@@ -18,7 +24,10 @@ const { start, updateStage, complete, cancel, consumeMaterials, remove } = useWo
 
 const { data: materialsRes } = useProduccionMaterialsList(ref({ page: 1, limit: 200 }))
 const materialOptions = computed(() =>
-  (materialsRes.value?.data ?? []).map((m) => ({ value: m.id, label: `${m.code} · ${m.name} (stock ${m.currentStock})` })),
+  (materialsRes.value?.data ?? []).map((m) => ({
+    value: m.id,
+    label: `${m.code} · ${m.name} (stock ${m.currentStock})`,
+  })),
 )
 
 const showConsumeModal = ref(false)

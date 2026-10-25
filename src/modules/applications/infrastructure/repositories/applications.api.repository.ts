@@ -1,8 +1,7 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import type { Application } from '../../domain/application.types'
-import type { MenuItem } from '@shared/domain'
+import type { MenuItem } from '@shared/domain/menu.types'
 import type { ApplicationsRepository } from '../../domain/repositories/applications.repository'
-
 export const applicationsApiRepository: ApplicationsRepository = {
   async getMyApplications(): Promise<Application[]> {
     const { data } = await apiClient.get<Application[]>('/applications/me')

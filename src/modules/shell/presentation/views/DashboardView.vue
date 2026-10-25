@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { BaseCard } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { useAuthStore } from '@modules/auth'
-
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
 /**
  * DashboardView
  * Main dashboard page

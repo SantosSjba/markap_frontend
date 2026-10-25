@@ -1,5 +1,5 @@
-import { apiClient } from '@core/api/apiClient'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { INTERIORISMO_APP_SLUG } from '../../../../config/app.constants'
 import type {
   ClientDetail,
   ClientStats,
@@ -13,13 +13,11 @@ import type {
   UpdateInteriorClientPayload,
 } from '../../domain/client.types'
 import type { InteriorClientsRepository } from '../../domain/repositories/clients.repository'
-
 const clientsApi: InteriorClientsRepository = {
   getDocumentTypes: () =>
     apiClient.get<DocumentType[]>('/clients/document-types').then((r) => r.data),
 
-  getDepartments: () =>
-    apiClient.get<Department[]>('/clients/departments').then((r) => r.data),
+  getDepartments: () => apiClient.get<Department[]>('/clients/departments').then((r) => r.data),
 
   getProvinces: (departmentId?: string) => {
     const params = departmentId ? { departmentId } : {}

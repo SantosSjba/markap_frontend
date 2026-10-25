@@ -20,10 +20,7 @@ export function pipelineStageLabel(code: string): string {
 }
 
 /** Icono y color por etapa (Kanban / pipeline visual) */
-export const PIPELINE_STAGE_META: Record<
-  PipelineStageValue,
-  { icon: string; color: string }
-> = {
+export const PIPELINE_STAGE_META: Record<PipelineStageValue, { icon: string; color: string }> = {
   SEPARATION: { icon: 'lucide:bookmark', color: '#ca8a04' },
   ARRAS: { icon: 'lucide:file-signature', color: '#2563eb' },
   MINUTA: { icon: 'lucide:file-text', color: '#7c3aed' },
@@ -40,9 +37,7 @@ export function pipelineStageMeta(code: string | null | undefined) {
   )
 }
 
-export function processStatusBadgeVariant(
-  status: string,
-): 'success' | 'neutral' | 'error' {
+export function processStatusBadgeVariant(status: string): 'success' | 'neutral' | 'error' {
   if (status === 'ACTIVE') return 'success'
   if (status === 'LOST') return 'error'
   return 'neutral'
@@ -58,10 +53,7 @@ export function processStatusLabel(code: string): string {
   return PROCESS_STATUS_OPTIONS.find((o) => o.value === code)?.label ?? code
 }
 
-export function pipelineStageIndexIn(
-  code: string,
-  orderedCodes: readonly string[],
-): number {
+export function pipelineStageIndexIn(code: string, orderedCodes: readonly string[]): number {
   const key = normalizePipelineStage(code)
   const idx = orderedCodes.indexOf(key)
   return idx >= 0 ? idx : 0

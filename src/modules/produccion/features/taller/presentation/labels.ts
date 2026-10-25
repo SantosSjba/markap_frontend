@@ -1,3 +1,4 @@
+import { formatDate as formatCalendarDate } from '@shared/utils/formatters'
 export const WO_STATUS_LABELS: Record<string, string> = {
   PENDING: 'Pendiente',
   IN_PROGRESS: 'En proceso',
@@ -24,8 +25,6 @@ export const PRODUCCION_STAGES = [
   { key: 'ensamble', label: 'Ensamble' },
   { key: 'acabados', label: 'Acabados' },
 ] as const
-
-import { formatDate as formatCalendarDate } from '@/shared/utils/formatters'
 
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'

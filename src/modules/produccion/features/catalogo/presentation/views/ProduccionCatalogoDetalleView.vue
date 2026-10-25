@@ -1,21 +1,23 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, FormInput, FormTextarea, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { PRODUCCION_BASE_PATH } from '@modules/produccion/config/routes.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { PRODUCCION_BASE_PATH } from '../../../../config/routes.constants'
 import {
   useProduccionCatalogDetail,
   useUpdateProduccionCatalogItem,
   useDeleteProduccionCatalogItem,
-} from '../../application/useProduccionCatalog'
+} from '../composables/useProduccionCatalog'
 import { formatSol, formatDimensions } from '../labels'
-import { useProduccionFurnitureCategoryOptions } from '@modules/produccion/features/configuracion'
+import { useProduccionFurnitureCategoryOptions } from '../../../configuracion/presentation/composables/useProduccionConfigOptions'
 import ProduccionFurnitureBomEditor, {
   type BomLineDraft,
 } from '../components/ProduccionFurnitureBomEditor.vue'
 import type { ProduccionFurnitureBomLineInput } from '../../domain/catalog.types'
-
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))

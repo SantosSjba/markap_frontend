@@ -1,4 +1,4 @@
-﻿export type ArquitecturaClientType = 'RESIDENTIAL' | 'CORPORATE'
+export type ArquitecturaClientType = 'RESIDENTIAL' | 'CORPORATE'
 
 export interface DocumentType {
   id: string

@@ -7,7 +7,6 @@ import type {
   PendingPaymentItem,
   RegisterPaymentPayload,
 } from '../payment.types'
-
 export interface PaymentsRepository {
   getStats: (applicationSlug?: string) => Promise<PaymentStats>
   listPending: (params?: ListPendingParams) => Promise<PendingPaymentItem[]>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ConfigToggleRow, FormSectionCard } from '@shared/components'
-
+import ConfigToggleRow from '@shared/presentation/components/ui/ConfigToggleRow.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 defineProps<{
   enableExpirationAlerts: boolean
   enableCollectionAlerts: boolean

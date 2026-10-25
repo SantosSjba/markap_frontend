@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_JOURNAL_TEMPLATES_APP_SLUG } from '../../domain/journal-template.types'
 import type { ContabilidadJournalTemplatesRepository } from '../../domain/repositories/contabilidad-journal-templates.repository'
-
 function qs() {
   return `applicationSlug=${CONTABILIDAD_JOURNAL_TEMPLATES_APP_SLUG}`
 }
@@ -14,8 +13,12 @@ export const contabilidadJournalTemplatesApiRepository: ContabilidadJournalTempl
     apiClient.post(`/contabilidad-extensions/journal-templates?${qs()}`, body).then((r) => r.data),
 
   updateTemplate: (id, body) =>
-    apiClient.patch(`/contabilidad-extensions/journal-templates/${id}?${qs()}`, body).then((r) => r.data),
+    apiClient
+      .patch(`/contabilidad-extensions/journal-templates/${id}?${qs()}`, body)
+      .then((r) => r.data),
 
   applyTemplate: (id) =>
-    apiClient.post(`/contabilidad-extensions/journal-templates/${id}/apply?${qs()}`).then((r) => r.data),
+    apiClient
+      .post(`/contabilidad-extensions/journal-templates/${id}/apply?${qs()}`)
+      .then((r) => r.data),
 }

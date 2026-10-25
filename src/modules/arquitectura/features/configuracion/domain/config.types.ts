@@ -1,4 +1,4 @@
-﻿export const ARQUITECTURA_CONFIG_APP_SLUG = 'arquitectura' as const
+export const ARQUITECTURA_CONFIG_APP_SLUG = 'arquitectura' as const
 
 export interface ArquitecturaProjectStageDTO {
   code: string

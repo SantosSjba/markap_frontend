@@ -10,7 +10,6 @@ import type {
   CreateRetentionBody,
   PayDetraccionBody,
 } from '../taxes.types'
-
 export interface ContabilidadTaxesRepository {
   getDashboard(periodId?: string): Promise<ContabilidadTaxDashboardDTO>
   exportPdt621(periodId: string): Promise<ContabilidadPdt621ExportDTO>

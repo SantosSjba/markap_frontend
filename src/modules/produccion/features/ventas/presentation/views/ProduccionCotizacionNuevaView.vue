@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, FormInput, FormSelect, FormTextarea, AppIcon } from '@shared/components'
-import { useProduccionClientsList } from '../../../clientes/application/useClients'
-import { useProduccionCatalogList } from '../../../catalogo/application/useProduccionCatalog'
-import { useQuotationMutations } from '../../application/useProduccionSales'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useProduccionClientsList } from '../../../clientes/presentation/composables/useClients'
+import { useProduccionCatalogList } from '../../../catalogo/presentation/composables/useProduccionCatalog'
+import { useQuotationMutations } from '../composables/useProduccionSales'
 import { formatSol } from '../labels'
-
 const route = useRoute()
 const router = useRouter()
 const { create } = useQuotationMutations()

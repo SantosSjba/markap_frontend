@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  FormInput,
-  FormSelect,
-  FormCheckbox,
-  PageHeader,
-} from '@shared/components'
-import { useContabilidadActiveLegalEntity } from '@modules/contabilidad/presentation/composables/useContabilidadActiveLegalEntity'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useContabilidadActiveLegalEntity } from '../../../../presentation/composables/useContabilidadActiveLegalEntity'
 import {
   useContabilidadCpeProviderConfig,
   useContabilidadSaveCpeProviderConfig,
-} from '../../application/useContabilidadCpe'
+} from '../composables/useContabilidadCpe'
 import { CPE_PROVIDER_OPTIONS } from '../../domain/cpe.types'
-
 const { activeLegalEntityId, entities } = useContabilidadActiveLegalEntity()
-const activeEntity = computed(() =>
-  entities.value?.find((e) => e.id === activeLegalEntityId.value),
-)
+const activeEntity = computed(() => entities.value?.find((e) => e.id === activeLegalEntityId.value))
 
 const { data, isLoading, refetch } = useContabilidadCpeProviderConfig()
 const { mutate: saveConfig, isPending: saving } = useContabilidadSaveCpeProviderConfig()

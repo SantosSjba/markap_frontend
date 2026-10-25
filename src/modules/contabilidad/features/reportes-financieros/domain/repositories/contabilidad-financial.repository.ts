@@ -1,13 +1,6 @@
-import type {
-  BalanceSheetDTO,
-  CashFlowStatementDTO,
-  IncomeStatementDTO,
-} from '../financial.types'
-import type {
-  FinancialExportFormat,
-  FinancialExportKind,
-} from '../../infrastructure/repositories/contabilidad-financial.api.repository'
-
+import type { BalanceSheetDTO, CashFlowStatementDTO, IncomeStatementDTO } from '../financial.types'
+import type { FinancialExportFormat } from '../financial-export.types'
+import type { FinancialExportKind } from '../financial-export.types'
 export interface ContabilidadFinancialRepository {
   getBalanceSheet(periodId: string, comparePrior?: boolean): Promise<BalanceSheetDTO>
   getIncomeStatement(periodId: string, comparePrior?: boolean): Promise<IncomeStatementDTO>
@@ -17,5 +10,5 @@ export interface ContabilidadFinancialRepository {
     type: FinancialExportKind,
     periodId: string,
     costCenterId?: string,
-  ): Promise<import('axios').AxiosResponse<Blob>>
+  ): Promise<{ data: Blob; headers: Record<string, unknown> }>
 }

@@ -1,7 +1,6 @@
 import { computed, type Ref } from 'vue'
-import { useContabilidadExchangeRates } from '@modules/contabilidad/features/tipos-cambio/application/useContabilidadExchangeRates'
-import { FUNCTIONAL_CURRENCY } from './useContabilidadCurrencies'
-
+import { useContabilidadExchangeRates } from '../../features/tipos-cambio/presentation/composables/useContabilidadExchangeRates'
+import { FUNCTIONAL_CURRENCY } from '../../domain/currency'
 export function useContabilidadExchangeRateLookup(
   currencyCode: Ref<string>,
   rateDate: Ref<string>,

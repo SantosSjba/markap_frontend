@@ -1,16 +1,20 @@
 ﻿<script setup lang="ts">
+import { useService } from '@shared/presentation/di/services'
+import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, FileDropzone, AppIcon } from '@shared/components'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 import {
   useCreateArquitecturaCatalogMaterial,
   useUploadArquitecturaCatalogAsset,
-} from '../../application/useArquitecturaCatalogMaterials'
-import { apiClient } from '@core/api/apiClient'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
+} from '../composables/useArquitecturaCatalogMaterials'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const fileAccess = useService(FILE_ACCESS)
 
 const router = useRouter()
 const createMut = useCreateArquitecturaCatalogMaterial()
@@ -71,10 +75,9 @@ function removeImage(idx: number) {
 async function openStored(path: string, archivoId?: string | null) {
   try {
     if (archivoId) {
-      const { data } = await apiClient.get<{ url: string }>(
-        `/gen-archivos/${encodeURIComponent(archivoId)}/url`,
-        { params: { applicationSlug: ARQUITECTURA_APP_SLUG } },
-      )
+      const data = await fileAccess.getDownloadUrl(encodeURIComponent(archivoId), {
+        applicationSlug: 'arquitectura',
+      })
       if (data?.url) {
         window.open(data.url, '_blank', 'noopener,noreferrer')
         return
@@ -84,9 +87,7 @@ async function openStored(path: string, archivoId?: string | null) {
       window.open(path, '_blank', 'noopener,noreferrer')
       return
     }
-    const { data } = await apiClient.get<{ url: string }>('/gen-archivos/resolve-url', {
-      params: { objectKey: path, applicationSlug: ARQUITECTURA_APP_SLUG },
-    })
+    const data = await fileAccess.resolveDownloadUrl(path, { applicationSlug: 'arquitectura' })
     if (data?.url) {
       window.open(data.url, '_blank', 'noopener,noreferrer')
       return

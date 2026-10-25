@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   ALQUILERES_REPORTS_SLUG,
   type ActiveClientReportItem,
@@ -11,7 +11,6 @@ import {
   type ReportsSummary,
 } from '../../domain/reportes.types'
 import type { ReportesRepository } from '../../domain/repositories/reportes.repository'
-
 export const reportesApiRepository: ReportesRepository = {
   getSummary(applicationSlug: string = ALQUILERES_REPORTS_SLUG, days: number = 30) {
     return apiClient

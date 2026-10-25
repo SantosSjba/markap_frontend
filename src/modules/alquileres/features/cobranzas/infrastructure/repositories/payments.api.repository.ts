@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import type {
   ListHistoryParams,
   ListPaymentHistoryResponse,
@@ -9,7 +9,6 @@ import type {
   RegisterPaymentPayload,
 } from '../../domain/payment.types'
 import type { PaymentsRepository } from '../../domain/repositories/payments.repository'
-
 export const paymentsApiRepository: PaymentsRepository = {
   getStats: (applicationSlug = 'alquileres') =>
     apiClient
@@ -21,7 +20,9 @@ export const paymentsApiRepository: PaymentsRepository = {
     p.set('applicationSlug', params.applicationSlug ?? 'alquileres')
     if (params.search) p.set('search', params.search)
     if (params.status && params.status !== 'ALL') p.set('status', params.status)
-    return apiClient.get<PendingPaymentItem[]>(`/payments/pending?${p.toString()}`).then((r) => r.data)
+    return apiClient
+      .get<PendingPaymentItem[]>(`/payments/pending?${p.toString()}`)
+      .then((r) => r.data)
   },
 
   registerPayment: (paymentId: string, data: RegisterPaymentPayload) =>
@@ -45,7 +46,9 @@ export const paymentsApiRepository: PaymentsRepository = {
     const p = new URLSearchParams()
     p.set('applicationSlug', applicationSlug)
     if (search) p.set('search', search)
-    return apiClient.get<OverduePaymentItem[]>(`/payments/overdue?${p.toString()}`).then((r) => r.data)
+    return apiClient
+      .get<OverduePaymentItem[]>(`/payments/overdue?${p.toString()}`)
+      .then((r) => r.data)
   },
 
   saveCommunicationNote: (rentalId: string, note: string): Promise<{ message: string }> =>

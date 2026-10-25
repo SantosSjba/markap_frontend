@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_INVENTORY_APP_SLUG } from '../../domain/inventory.types'
 import type { ContabilidadInventoryRepository } from '../../domain/repositories/contabilidad-inventory.repository'
-
 function qs(extra?: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   u.set('applicationSlug', CONTABILIDAD_INVENTORY_APP_SLUG)

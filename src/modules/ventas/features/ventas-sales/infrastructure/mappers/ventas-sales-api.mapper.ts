@@ -4,7 +4,6 @@ import type {
   SaleProcessListRow,
   SaleSeparationRow,
 } from '../../domain/sales.types'
-
 export function mapSaleProcessesListPayload(raw: { data: SaleProcessListRow[]; total: number }) {
   return raw
 }

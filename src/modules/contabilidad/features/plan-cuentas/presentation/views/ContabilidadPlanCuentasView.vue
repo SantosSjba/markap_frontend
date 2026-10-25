@@ -1,19 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  Badge,
-  FormInput,
-  FormCheckbox,
-  FormSelect,
-  SearchInput,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useExcelExport } from '@/shared/composables/useExcelExport'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
 import {
   useContabilidadAccountsTree,
   useContabilidadCreateAccount,
@@ -21,7 +19,7 @@ import {
   useContabilidadDeactivateAccount,
   useContabilidadPcgeClasses,
   useContabilidadImportPcge,
-} from '../../application/useContabilidadAccounts'
+} from '../composables/useContabilidadAccounts'
 import {
   CONTABILIDAD_ACCOUNT_TYPE_OPTIONS,
   type ContabilidadAccountDTO,
@@ -31,7 +29,6 @@ import {
   collectExpandableIds,
   flattenAccountTree,
 } from '../../domain/account-tree.utils'
-
 const searchInput = ref('')
 const debouncedSearch = useDebouncedRef(searchInput, 300)
 
@@ -194,12 +191,20 @@ function submitForm() {
       isMovement: form.value.isMovement,
       sortOrder: form.value.sortOrder,
     }
-    if (!editingAccount.value.hasMovements && form.value.code.trim() !== editingAccount.value.code) {
+    if (
+      !editingAccount.value.hasMovements &&
+      form.value.code.trim() !== editingAccount.value.code
+    ) {
       body.code = form.value.code.trim()
     }
     updateAccount(
       { id: editingAccount.value.id, body },
-      { onSuccess: () => { modalOpen.value = false; void refetch() } },
+      {
+        onSuccess: () => {
+          modalOpen.value = false
+          void refetch()
+        },
+      },
     )
   }
 }
@@ -243,7 +248,10 @@ function exportPlan() {
   })
 }
 
-const accountTypeOptions = CONTABILIDAD_ACCOUNT_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))
+const accountTypeOptions = CONTABILIDAD_ACCOUNT_TYPE_OPTIONS.map((o) => ({
+  value: o.value,
+  label: o.label,
+}))
 
 const codeReadonly = computed(
   () => modalMode.value === 'edit' && Boolean(editingAccount.value?.hasMovements),

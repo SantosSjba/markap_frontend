@@ -2,11 +2,10 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { useAuthStore } from '@modules/auth'
-import { ThemeToggle } from '@shared/components'
-import { useMyApplications } from '../../application/useApplications'
+import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
+import ThemeToggle from '@shared/presentation/components/ui/ThemeToggle.vue'
+import { useMyApplications } from '../composables/useApplications'
 import type { Application } from '../../domain/application.types'
-
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -49,11 +48,25 @@ const navigateToApp = (app: Application) => {
   if (app.url) router.push(app.url)
 }
 
-const toggleUserMenu = () => { isUserMenuOpen.value = !isUserMenuOpen.value }
-const closeUserMenu = () => { isUserMenuOpen.value = false }
-const goToProfile = () => { closeUserMenu(); router.push('/settings/profile') }
-const goToSettings = () => { closeUserMenu(); router.push('/settings') }
-const handleLogout = () => { closeUserMenu(); authStore.logout(); router.push('/auth/login') }
+const toggleUserMenu = () => {
+  isUserMenuOpen.value = !isUserMenuOpen.value
+}
+const closeUserMenu = () => {
+  isUserMenuOpen.value = false
+}
+const goToProfile = () => {
+  closeUserMenu()
+  router.push('/settings/profile')
+}
+const goToSettings = () => {
+  closeUserMenu()
+  router.push('/settings')
+}
+const handleLogout = () => {
+  closeUserMenu()
+  authStore.logout()
+  router.push('/auth/login')
+}
 
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as HTMLElement

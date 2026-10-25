@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { PRODUCCION_CONFIG_APP_SLUG } from '../../domain/config.types'
 import type {
   ProduccionAppSettingsDTO,
@@ -10,7 +10,6 @@ import type {
   ProduccionNumberingSeriesDTO,
 } from '../../domain/config.types'
 import type { ProduccionConfigRepository } from '../../domain/repositories/produccion-config.repository'
-
 const scope = { applicationSlug: PRODUCCION_CONFIG_APP_SLUG } as const
 
 function qs(params: Record<string, string | undefined>) {
@@ -34,26 +33,23 @@ export const produccionConfigApiRepository: ProduccionConfigRepository = {
 
   replaceFurnitureCategories: (categories) =>
     apiClient
-      .put<ProduccionFurnitureCategoryDTO[]>(
-        `/produccion-config/furniture-categories?${qs({ ...scope })}`,
-        { categories },
-      )
+      .put<
+        ProduccionFurnitureCategoryDTO[]
+      >(`/produccion-config/furniture-categories?${qs({ ...scope })}`, { categories })
       .then((r) => r.data),
 
   replaceMaterialCategories: (categories) =>
     apiClient
-      .put<ProduccionMaterialCategoryDTO[]>(
-        `/produccion-config/material-categories?${qs({ ...scope })}`,
-        { categories },
-      )
+      .put<
+        ProduccionMaterialCategoryDTO[]
+      >(`/produccion-config/material-categories?${qs({ ...scope })}`, { categories })
       .then((r) => r.data),
 
   replaceProductionStages: (stages) =>
     apiClient
-      .put<ProduccionProductionStageDTO[]>(
-        `/produccion-config/production-stages?${qs({ ...scope })}`,
-        { stages },
-      )
+      .put<
+        ProduccionProductionStageDTO[]
+      >(`/produccion-config/production-stages?${qs({ ...scope })}`, { stages })
       .then((r) => r.data),
 
   replaceUnits: (units) =>

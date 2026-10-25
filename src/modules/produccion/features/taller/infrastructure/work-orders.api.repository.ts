@@ -1,5 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
-import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
+import type { ProduccionWorkOrdersRepository } from '../domain/repositories/work-orders.repository'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { PRODUCCION_APP_SLUG } from '../../../config/app.constants'
 import type {
   CreateWorkOrderPayload,
   ListWorkOrdersParams,
@@ -7,7 +8,6 @@ import type {
   ProduccionWorkOrderListItem,
   ProduccionWorkOrderStats,
 } from '../domain/work-orders.types'
-
 const BASE = '/produccion-work-orders'
 
 function query(params: ListWorkOrdersParams = {}) {
@@ -23,7 +23,7 @@ function query(params: ListWorkOrdersParams = {}) {
   return sp.toString()
 }
 
-export const produccionWorkOrdersApi = {
+export const produccionWorkOrdersApi: ProduccionWorkOrdersRepository = {
   list: (params: ListWorkOrdersParams = {}) =>
     apiClient
       .get<{ data: ProduccionWorkOrderListItem[]; total: number }>(`${BASE}?${query(params)}`)
@@ -31,17 +31,23 @@ export const produccionWorkOrdersApi = {
 
   getStats: () =>
     apiClient
-      .get<ProduccionWorkOrderStats>(`${BASE}/stats`, { params: { applicationSlug: PRODUCCION_APP_SLUG } })
+      .get<ProduccionWorkOrderStats>(`${BASE}/stats`, {
+        params: { applicationSlug: PRODUCCION_APP_SLUG },
+      })
       .then((r) => r.data),
 
   getById: (id: string) =>
     apiClient
-      .get<ProduccionWorkOrderDetail>(`${BASE}/${id}`, { params: { applicationSlug: PRODUCCION_APP_SLUG } })
+      .get<ProduccionWorkOrderDetail>(`${BASE}/${id}`, {
+        params: { applicationSlug: PRODUCCION_APP_SLUG },
+      })
       .then((r) => r.data),
 
   create: (payload: CreateWorkOrderPayload) =>
     apiClient
-      .post<ProduccionWorkOrderDetail>(BASE, payload, { params: { applicationSlug: PRODUCCION_APP_SLUG } })
+      .post<ProduccionWorkOrderDetail>(BASE, payload, {
+        params: { applicationSlug: PRODUCCION_APP_SLUG },
+      })
       .then((r) => r.data),
 
   update: (id: string, payload: Partial<CreateWorkOrderPayload>) =>
@@ -53,12 +59,20 @@ export const produccionWorkOrdersApi = {
 
   start: (id: string) =>
     apiClient
-      .post<ProduccionWorkOrderDetail>(`${BASE}/${id}/start`, {}, {
-        params: { applicationSlug: PRODUCCION_APP_SLUG },
-      })
+      .post<ProduccionWorkOrderDetail>(
+        `${BASE}/${id}/start`,
+        {},
+        {
+          params: { applicationSlug: PRODUCCION_APP_SLUG },
+        },
+      )
       .then((r) => r.data),
 
-  updateStage: (id: string, stageId: string, payload: { assignee?: string | null; notes?: string | null; markDone?: boolean }) =>
+  updateStage: (
+    id: string,
+    stageId: string,
+    payload: { assignee?: string | null; notes?: string | null; markDone?: boolean },
+  ) =>
     apiClient
       .patch<ProduccionWorkOrderDetail>(`${BASE}/${id}/stages/${stageId}`, payload, {
         params: { applicationSlug: PRODUCCION_APP_SLUG },
@@ -67,25 +81,42 @@ export const produccionWorkOrdersApi = {
 
   complete: (id: string) =>
     apiClient
-      .post<ProduccionWorkOrderDetail>(`${BASE}/${id}/complete`, {}, {
-        params: { applicationSlug: PRODUCCION_APP_SLUG },
-      })
+      .post<ProduccionWorkOrderDetail>(
+        `${BASE}/${id}/complete`,
+        {},
+        {
+          params: { applicationSlug: PRODUCCION_APP_SLUG },
+        },
+      )
       .then((r) => r.data),
 
   cancel: (id: string) =>
     apiClient
-      .post<ProduccionWorkOrderDetail>(`${BASE}/${id}/cancel`, {}, {
-        params: { applicationSlug: PRODUCCION_APP_SLUG },
-      })
+      .post<ProduccionWorkOrderDetail>(
+        `${BASE}/${id}/cancel`,
+        {},
+        {
+          params: { applicationSlug: PRODUCCION_APP_SLUG },
+        },
+      )
       .then((r) => r.data),
 
-  consumeMaterials: (id: string, items: { materialId: string; quantity: number; notes?: string | null }[]) =>
+  consumeMaterials: (
+    id: string,
+    items: { materialId: string; quantity: number; notes?: string | null }[],
+  ) =>
     apiClient
-      .post<ProduccionWorkOrderDetail>(`${BASE}/${id}/consume-materials`, { items }, {
-        params: { applicationSlug: PRODUCCION_APP_SLUG },
-      })
+      .post<ProduccionWorkOrderDetail>(
+        `${BASE}/${id}/consume-materials`,
+        { items },
+        {
+          params: { applicationSlug: PRODUCCION_APP_SLUG },
+        },
+      )
       .then((r) => r.data),
 
   delete: (id: string) =>
-    apiClient.delete(`${BASE}/${id}`, { params: { applicationSlug: PRODUCCION_APP_SLUG } }).then(() => undefined),
+    apiClient
+      .delete(`${BASE}/${id}`, { params: { applicationSlug: PRODUCCION_APP_SLUG } })
+      .then(() => undefined),
 }

@@ -1,17 +1,17 @@
-﻿import { apiClient } from '@core/api/apiClient'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
+import type { ArquitecturaCalendarRepository } from '../domain/repositories/calendar.repository'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { ARQUITECTURA_APP_SLUG } from '../../../config/app.constants'
 import type {
   CalendarFeedItemDto,
   CalendarFeedParams,
   CreateCalendarEventPayload,
   UpdateCalendarEventPayload,
 } from '../domain/calendar.types'
-
 const BASE = '/arquitectura-calendar'
 
 const q = () => ({ params: { applicationSlug: ARQUITECTURA_APP_SLUG } })
 
-export const arquitecturaCalendarApiRepository = {
+export const arquitecturaCalendarApiRepository: ArquitecturaCalendarRepository = {
   getFeed: (params: CalendarFeedParams) =>
     apiClient
       .get<CalendarFeedItemDto[]>(`${BASE}/feed`, {
@@ -29,7 +29,9 @@ export const arquitecturaCalendarApiRepository = {
     apiClient.post<CalendarFeedItemDto>(`${BASE}/events`, payload, q()).then((r) => r.data),
 
   updateEvent: (eventId: string, payload: UpdateCalendarEventPayload) =>
-    apiClient.patch<CalendarFeedItemDto>(`${BASE}/events/${encodeURIComponent(eventId)}`, payload, q()).then((r) => r.data),
+    apiClient
+      .patch<CalendarFeedItemDto>(`${BASE}/events/${encodeURIComponent(eventId)}`, payload, q())
+      .then((r) => r.data),
 
   deleteEvent: (eventId: string) =>
     apiClient.delete(`${BASE}/events/${encodeURIComponent(eventId)}`, q()).then(() => undefined),

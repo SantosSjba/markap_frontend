@@ -1,26 +1,24 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  Badge,
-  BaseModal,
-  DataTable,
-  FormCheckbox,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
-import { useContabilidadCostCentersList } from '@modules/contabilidad/features/centros-costo/application/useContabilidadCostCenters'
-import { flattenMovementAccounts } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useContabilidadAccountsTree } from '../../../plan-cuentas/presentation/composables/useContabilidadAccounts'
+import { useContabilidadCostCentersList } from '../../../centros-costo/presentation/composables/useContabilidadCostCenters'
+import { flattenMovementAccounts } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadJournalTemplates,
   useContabilidadCreateJournalTemplate,
   useContabilidadUpdateJournalTemplate,
-} from '../../application/useContabilidadJournalTemplates'
+} from '../composables/useContabilidadJournalTemplates'
 import type { ContabilidadJournalTemplateDTO } from '../../domain/journal-template.types'
 import {
   linesFromTemplate,
@@ -28,7 +26,6 @@ import {
   newJournalTemplateLineRow,
   type JournalTemplateLineFormRow,
 } from '../../domain/journal-template.types'
-
 const { data, isLoading, refetch } = useContabilidadJournalTemplates()
 const rows = computed(() => data.value?.templates ?? [])
 
@@ -54,7 +51,10 @@ const form = ref({
   description: '',
   isActive: true,
 })
-const lines = ref<JournalTemplateLineFormRow[]>([newJournalTemplateLineRow(), newJournalTemplateLineRow()])
+const lines = ref<JournalTemplateLineFormRow[]>([
+  newJournalTemplateLineRow(),
+  newJournalTemplateLineRow(),
+])
 
 const columns = [
   { key: 'name', label: 'Nombre' },
@@ -113,10 +113,20 @@ function submit() {
   if (editing.value) {
     updateTemplate(
       { id: editing.value.id, body: payload },
-      { onSuccess: () => { modalOpen.value = false; void refetch() } },
+      {
+        onSuccess: () => {
+          modalOpen.value = false
+          void refetch()
+        },
+      },
     )
   } else {
-    createTemplate(payload, { onSuccess: () => { modalOpen.value = false; void refetch() } })
+    createTemplate(payload, {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    })
   }
 }
 

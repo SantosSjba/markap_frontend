@@ -1,5 +1,5 @@
-import { apiClient } from '@core/api/apiClient'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { INTERIORISMO_APP_SLUG } from '../../../config/app.constants'
 import type {
   CreateInteriorProjectPayload,
   InteriorProjectDetail,
@@ -8,7 +8,6 @@ import type {
   UpdateInteriorProjectPayload,
 } from '../domain/project.types'
 import type { InteriorProjectsRepository } from '../domain/repositories/projects.repository'
-
 const BASE = '/interiorismo-projects'
 
 export const interiorProjectsApiRepository: InteriorProjectsRepository = {

@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   type CompliancePendingItem,
   type SaleComplianceChecklist,
@@ -19,7 +19,6 @@ import {
   mapSaleProcessesListPayload,
   mapSaleSeparationsListPayload,
 } from '../mappers/ventas-sales-api.mapper'
-
 const scope = { applicationSlug: VENTAS_SALES_APP_SLUG } as const
 
 function qs(params: Record<string, string | number | boolean | undefined>) {
@@ -39,14 +38,17 @@ const api: VentasSalesRepository = {
     status?: string
   }) =>
     apiClient
-      .get<{ data: SaleProcessListRow[]; total: number }>(
-        `/ventas-sales/processes?${qs({ ...scope, ...params })}`,
-      )
+      .get<{
+        data: SaleProcessListRow[]
+        total: number
+      }>(`/ventas-sales/processes?${qs({ ...scope, ...params })}`)
       .then((r) => mapSaleProcessesListPayload(r.data)),
 
   getProcess: (id: string) =>
     apiClient
-      .get<SaleProcessDetail>(`/ventas-sales/processes/${encodeURIComponent(id)}?${qs({ ...scope })}`)
+      .get<SaleProcessDetail>(
+        `/ventas-sales/processes/${encodeURIComponent(id)}?${qs({ ...scope })}`,
+      )
       .then((r) => mapSaleProcessDetail(r.data)),
 
   listFinancingChannels: () =>
@@ -64,8 +66,7 @@ const api: VentasSalesRepository = {
     pipelineStage?: string
     financingChannelId?: string | null
     commissions?: import('../../domain/sales.types').CreateProcessCommissionInput[]
-  }) =>
-    apiClient.post(`/ventas-sales/processes?${qs({ ...scope })}`, body).then((r) => r.data),
+  }) => apiClient.post(`/ventas-sales/processes?${qs({ ...scope })}`, body).then((r) => r.data),
 
   updateProcess: (
     id: string,
@@ -79,7 +80,10 @@ const api: VentasSalesRepository = {
     },
   ) =>
     apiClient
-      .patch<SaleProcessDetail>(`/ventas-sales/processes/${encodeURIComponent(id)}?${qs({ ...scope })}`, body)
+      .patch<SaleProcessDetail>(
+        `/ventas-sales/processes/${encodeURIComponent(id)}?${qs({ ...scope })}`,
+        body,
+      )
       .then((r) => mapSaleProcessDetail(r.data)),
 
   addNote: (processId: string, text: string) =>
@@ -114,14 +118,17 @@ const api: VentasSalesRepository = {
 
   completeReminder: (reminderId: string) =>
     apiClient
-      .patch(`/ventas-sales/reminders/${encodeURIComponent(reminderId)}/complete?${qs({ ...scope })}`)
+      .patch(
+        `/ventas-sales/reminders/${encodeURIComponent(reminderId)}/complete?${qs({ ...scope })}`,
+      )
       .then((r) => r.data),
 
   listSeparations: (params: { page?: number; limit?: number; status?: string }) =>
     apiClient
-      .get<{ data: SaleSeparationRow[]; total: number }>(
-        `/ventas-sales/separations?${qs({ ...scope, ...params })}`,
-      )
+      .get<{
+        data: SaleSeparationRow[]
+        total: number
+      }>(`/ventas-sales/separations?${qs({ ...scope, ...params })}`)
       .then((r) => mapSaleSeparationsListPayload(r.data)),
 
   createSeparation: (body: {
@@ -158,9 +165,10 @@ const api: VentasSalesRepository = {
 
   listClosings: (params: { page?: number; limit?: number }) =>
     apiClient
-      .get<{ data: SaleClosingRow[]; total: number }>(
-        `/ventas-sales/closings?${qs({ ...scope, ...params })}`,
-      )
+      .get<{
+        data: SaleClosingRow[]
+        total: number
+      }>(`/ventas-sales/closings?${qs({ ...scope, ...params })}`)
       .then((r) => mapSaleClosingsListPayload(r.data)),
 
   createClosing: (body: {
@@ -178,10 +186,10 @@ const api: VentasSalesRepository = {
     commissionAutoFromProfile?: boolean
   }) =>
     apiClient
-      .post<{ closingId: string; commissionId?: string | null }>(
-        `/ventas-sales/closings?${qs({ ...scope })}`,
-        body,
-      )
+      .post<{
+        closingId: string
+        commissionId?: string | null
+      }>(`/ventas-sales/closings?${qs({ ...scope })}`, body)
       .then((r) => r.data),
 
   uploadClosingContract: (id: string, file: File) => {
@@ -209,15 +217,11 @@ const api: VentasSalesRepository = {
       .then((r) => r.data),
 
   upsertComplianceChecklist: (body: SaleComplianceChecklist) =>
-    apiClient
-      .put(`/ventas-compliance/checklist?${qs({ ...scope })}`, body)
-      .then((r) => r.data),
+    apiClient.put(`/ventas-compliance/checklist?${qs({ ...scope })}`, body).then((r) => r.data),
 
   listComplianceDocuments: (params: { propertyId: string; buyerClientId: string }) =>
     apiClient
-      .get<SaleComplianceDocument[]>(
-        `/ventas-compliance/documents?${qs({ ...scope, ...params })}`,
-      )
+      .get<SaleComplianceDocument[]>(`/ventas-compliance/documents?${qs({ ...scope, ...params })}`)
       .then((r) => r.data),
 
   uploadComplianceDocument: (body: {
@@ -246,11 +250,7 @@ const api: VentasSalesRepository = {
       .then((r) => r.data)
   },
 
-  uploadPaymentEvidence: (body: {
-    propertyId: string
-    buyerClientId: string
-    file: File
-  }) => {
+  uploadPaymentEvidence: (body: { propertyId: string; buyerClientId: string; file: File }) => {
     const fd = new FormData()
     fd.append('file', body.file)
     fd.append('propertyId', body.propertyId)
@@ -280,9 +280,10 @@ const api: VentasSalesRepository = {
     onlyOverdue?: boolean
   }) =>
     apiClient
-      .get<{ data: CompliancePendingItem[]; total: number }>(
-        `/ventas-compliance/pending-board?${qs({ ...scope, ...(params ?? {}) })}`,
-      )
+      .get<{
+        data: CompliancePendingItem[]
+        total: number
+      }>(`/ventas-compliance/pending-board?${qs({ ...scope, ...(params ?? {}) })}`)
       .then((r) => r.data),
 
   dispatchComplianceAlerts: (body?: {

@@ -1,5 +1,5 @@
-import { apiClient } from '@core/api/apiClient'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { ARQUITECTURA_APP_SLUG } from '../../../config/app.constants'
 import type {
   CreateArquitecturaProjectPayload,
   ArquitecturaProjectDetail,
@@ -8,7 +8,6 @@ import type {
   UpdateArquitecturaProjectPayload,
 } from '../domain/project.types'
 import type { ArquitecturaProjectsRepository } from '../domain/repositories/projects.repository'
-
 const BASE = '/arquitectura-projects'
 
 export const arquitecturaProjectsApiRepository: ArquitecturaProjectsRepository = {

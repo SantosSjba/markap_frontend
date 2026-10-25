@@ -1,22 +1,24 @@
 <script setup lang="ts">
+import { paymentsRepositoryKey } from '../../application/ports/payments.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import StatsCard from '@shared/components/ui/StatsCard.vue'
-import BasePagination from '@shared/components/ui/BasePagination.vue'
-import BaseButton from '@shared/components/ui/BaseButton.vue'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import ExcelIcon from '@shared/components/ui/ExcelIcon.vue'
-import SearchInput from '@shared/components/forms/SearchInput.vue'
-import FormSelect from '@shared/components/forms/FormSelect.vue'
-import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
-import { ListRowsSkeleton } from '@shared/components'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useExcelExport } from '@shared/composables'
-import { usePaymentHistory } from '../../application/usePayments'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import ListRowsSkeleton from '@shared/presentation/components/ui/ListRowsSkeleton.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { usePaymentHistory } from '../composables/usePayments'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
 import type { PaymentHistoryItem } from '../../domain/payment.types'
-import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
+const paymentsRepository = useService(paymentsRepositoryKey)
 
 const router = useRouter()
 
@@ -54,12 +56,18 @@ const yearOptions = Array.from({ length: 4 }, (_, i) => ({
 }))
 
 const monthOptions = [
-  { value: '1', label: 'Enero' }, { value: '2', label: 'Febrero' },
-  { value: '3', label: 'Marzo' }, { value: '4', label: 'Abril' },
-  { value: '5', label: 'Mayo' }, { value: '6', label: 'Junio' },
-  { value: '7', label: 'Julio' }, { value: '8', label: 'Agosto' },
-  { value: '9', label: 'Septiembre' }, { value: '10', label: 'Octubre' },
-  { value: '11', label: 'Noviembre' }, { value: '12', label: 'Diciembre' },
+  { value: '1', label: 'Enero' },
+  { value: '2', label: 'Febrero' },
+  { value: '3', label: 'Marzo' },
+  { value: '4', label: 'Abril' },
+  { value: '5', label: 'Mayo' },
+  { value: '6', label: 'Junio' },
+  { value: '7', label: 'Julio' },
+  { value: '8', label: 'Agosto' },
+  { value: '9', label: 'Septiembre' },
+  { value: '10', label: 'Octubre' },
+  { value: '11', label: 'Noviembre' },
+  { value: '12', label: 'Diciembre' },
 ]
 
 const methodOptions = [
@@ -73,8 +81,13 @@ const methodOptions = [
 ]
 
 const methodLabels: Record<string, string> = {
-  CASH: 'Efectivo', TRANSFER: 'Transferencia', DEPOSIT: 'Depósito',
-  YAPE: 'Yape', PLIN: 'Plin', CHECK: 'Cheque', OTHER: 'Otro',
+  CASH: 'Efectivo',
+  TRANSFER: 'Transferencia',
+  DEPOSIT: 'Depósito',
+  YAPE: 'Yape',
+  PLIN: 'Plin',
+  CHECK: 'Cheque',
+  OTHER: 'Otro',
 }
 
 function formatCurrency(amount: number, currency = 'PEN') {
@@ -87,12 +100,23 @@ function formatDate(dateStr: string) {
 }
 
 function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
 }
 
 const avatarColors = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
-  '#10b981', '#14b8a6', '#3b82f6', '#f97316',
+  '#6366f1',
+  '#8b5cf6',
+  '#ec4899',
+  '#f59e0b',
+  '#10b981',
+  '#14b8a6',
+  '#3b82f6',
+  '#f97316',
 ]
 function getAvatarColor(name: string) {
   let hash = 0

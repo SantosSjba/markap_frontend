@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { AuthLayout } from '@layouts'
-
+import AuthLayout from '@app/layouts/AuthLayout.vue'
 export const authRoutes: RouteRecordRaw[] = [
   {
     path: '/auth',

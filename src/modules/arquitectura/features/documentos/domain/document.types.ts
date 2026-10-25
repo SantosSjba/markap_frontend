@@ -1,4 +1,4 @@
-﻿export type ArquitecturaDocumentType =
+export type ArquitecturaDocumentType =
   | 'CONTRATO'
   | 'PLANO'
   | 'RENDER'

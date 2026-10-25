@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Badge, DataTable, FormInput, FormSelect, PageHeader } from '@shared/components'
-import { useContabilidadAuditLogs } from '../../application/useContabilidadAudit'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useContabilidadAuditLogs } from '../composables/useContabilidadAudit'
 import type { ContabilidadAuditLogDTO } from '../../domain/audit.types'
-import { formatDateTime } from '@/shared/utils/formatters'
-
+import { formatDateTime } from '@shared/utils/formatters'
 const entityTypeFilter = ref('')
 const actionFilter = ref('')
 const dateFrom = ref('')

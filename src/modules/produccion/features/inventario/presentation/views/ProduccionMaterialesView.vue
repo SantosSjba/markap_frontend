@@ -1,21 +1,24 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
-  BaseButton,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  SearchInput,
-  AppIcon,
-  BaseModal,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useProduccionUnitOptions, useProduccionMaterialCategoryOptions } from '@modules/produccion/features/configuracion'
-import { useProduccionMaterialsList, useMaterialMutations } from '../../application/useProduccionInventory'
+  useProduccionUnitOptions,
+  useProduccionMaterialCategoryOptions,
+} from '../../../configuracion/presentation/composables/useProduccionConfigOptions'
+import {
+  useProduccionMaterialsList,
+  useMaterialMutations,
+} from '../composables/useProduccionInventory'
 import { formatSol, formatQty } from '../labels'
 import type { ProduccionMaterial } from '../../domain/inventory.types'
-
 const listParams = ref({ page: 1, limit: 50 })
 const searchInput = ref('')
 const categoryFilter = ref('')

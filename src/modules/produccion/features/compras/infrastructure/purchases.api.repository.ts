@@ -1,5 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
-import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
+import type { ProduccionPurchasesRepository } from '../domain/repositories/purchases.repository'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { PRODUCCION_APP_SLUG } from '../../../config/app.constants'
 import type {
   CreatePurchaseOrderPayload,
   CreateSupplierPayload,
@@ -11,11 +12,10 @@ import type {
   ProduccionSupplierListItem,
   ReceivePurchaseOrderPayload,
 } from '../domain/purchases.types'
-
 const SUPPLIERS_BASE = '/produccion-suppliers'
 const ORDERS_BASE = '/produccion-purchase-orders'
 
-export const produccionPurchasesApi = {
+export const produccionPurchasesApi: ProduccionPurchasesRepository = {
   listSuppliers: (params: ListSuppliersParams = {}) => {
     const sp = new URLSearchParams()
     sp.set('applicationSlug', PRODUCCION_APP_SLUG)
@@ -107,9 +107,13 @@ export const produccionPurchasesApi = {
 
   sendPurchaseOrder: (id: string) =>
     apiClient
-      .post<ProduccionPurchaseOrderDetail>(`${ORDERS_BASE}/${id}/send`, {}, {
-        params: { applicationSlug: PRODUCCION_APP_SLUG },
-      })
+      .post<ProduccionPurchaseOrderDetail>(
+        `${ORDERS_BASE}/${id}/send`,
+        {},
+        {
+          params: { applicationSlug: PRODUCCION_APP_SLUG },
+        },
+      )
       .then((r) => r.data),
 
   receivePurchaseOrder: (id: string, payload: ReceivePurchaseOrderPayload) =>
@@ -121,9 +125,13 @@ export const produccionPurchasesApi = {
 
   cancelPurchaseOrder: (id: string) =>
     apiClient
-      .post<ProduccionPurchaseOrderDetail>(`${ORDERS_BASE}/${id}/cancel`, {}, {
-        params: { applicationSlug: PRODUCCION_APP_SLUG },
-      })
+      .post<ProduccionPurchaseOrderDetail>(
+        `${ORDERS_BASE}/${id}/cancel`,
+        {},
+        {
+          params: { applicationSlug: PRODUCCION_APP_SLUG },
+        },
+      )
       .then((r) => r.data),
 
   deletePurchaseOrder: (id: string) =>

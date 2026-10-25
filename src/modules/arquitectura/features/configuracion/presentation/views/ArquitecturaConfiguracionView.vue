@@ -2,19 +2,20 @@
 import { ref, watch, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, BaseTabs } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import FormInput from '@shared/components/forms/FormInput.vue'
-import { markapAlert } from '@/shared/composables'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 import {
   useArquitecturaConfigBootstrap,
   useArquitecturaSaveProjectStages,
   useArquitecturaSaveArquitecturaProjectNumbering,
-} from '../../application/useArquitecturaConfig'
+} from '../composables/useArquitecturaConfig'
 import type { ArquitecturaProjectStageDTO } from '../../domain/config.types'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const activeTab = ref('accesos')
 
 const tabs = [
@@ -47,7 +48,8 @@ const quickLinks = [
 const { data: boot, isLoading, isError, error, refetch } = useArquitecturaConfigBootstrap()
 const configLoadError = computed(() => (isError.value ? getApiErrorMessage(error.value) : ''))
 const { mutate: saveStages, isPending: savingStages } = useArquitecturaSaveProjectStages()
-const { mutate: saveNumbering, isPending: savingNum } = useArquitecturaSaveArquitecturaProjectNumbering()
+const { mutate: saveNumbering, isPending: savingNum } =
+  useArquitecturaSaveArquitecturaProjectNumbering()
 
 const pipelineDraft = ref<ArquitecturaProjectStageDTO[]>([])
 
@@ -78,7 +80,9 @@ const REQUIRED_STAGE_COUNT = 5
 function submitPipeline() {
   const sorted = [...pipelineDraft.value].sort((a, b) => a.sortOrder - b.sortOrder)
   if (sorted.length !== REQUIRED_STAGE_COUNT) {
-    void markapAlert.toast.warning('La configuración debe incluir las cinco etapas del ciclo de proyecto')
+    void markapAlert.toast.warning(
+      'La configuración debe incluir las cinco etapas del ciclo de proyecto',
+    )
     return
   }
   const rows = sorted.map((s, i) => ({ ...s, sortOrder: i }))
@@ -127,7 +131,11 @@ const onSubmitNumbering = submitNum((vals) => {
 const flowSteps = [
   { label: 'Cliente', path: `${ARQUITECTURA_BASE_PATH}/clientes`, icon: 'lucide:user' },
   { label: 'Proyecto', path: `${ARQUITECTURA_BASE_PATH}/proyectos`, icon: 'lucide:folder-kanban' },
-  { label: 'Presupuesto', path: `${ARQUITECTURA_BASE_PATH}/presupuestos`, icon: 'lucide:file-text' },
+  {
+    label: 'Presupuesto',
+    path: `${ARQUITECTURA_BASE_PATH}/presupuestos`,
+    icon: 'lucide:file-text',
+  },
   { label: 'Cronograma', path: `${ARQUITECTURA_BASE_PATH}/cronograma`, icon: 'lucide:calendar' },
   { label: 'Reportes', path: `${ARQUITECTURA_BASE_PATH}/reportes`, icon: 'lucide:line-chart' },
 ]

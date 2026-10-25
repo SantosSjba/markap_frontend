@@ -1,22 +1,20 @@
 ﻿<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BasePagination,
-  BaseModal,
-  DataTable,
-  SearchInput,
-  AppIcon,
-  ActionsDropdown,
-  FileDropzone,
-  FormInput,
-  FormSelect,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { formatDateTime } from '@/shared/utils/formatters'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-import { useArquitecturaProjectsList } from '@modules/arquitectura/features/proyectos/application/useArquitecturaProjects'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { formatDateTime } from '@shared/utils/formatters'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
+import { useArquitecturaProjectsList } from '../../../proyectos/presentation/composables/useArquitecturaProjects'
 import type {
   ArquitecturaDocumentRow,
   ArquitecturaDocumentType,
@@ -27,9 +25,10 @@ import {
   useUploadArquitecturaDocument,
   useUpdateArquitecturaDocument,
   useDeleteArquitecturaDocument,
-  openArquitecturaDocumentFile,
-} from '../../application/useArquitecturaDocuments'
+  useOpenArquitecturaDocumentFile,
+} from '../composables/useArquitecturaDocuments'
 import { DOCUMENT_TYPE_FORM_OPTIONS, ARQUITECTURA_DOCUMENT_NAV } from '../documentNav'
+const openArquitecturaDocumentFile = useOpenArquitecturaDocumentFile()
 
 const route = useRoute()
 const router = useRouter()
@@ -76,7 +75,8 @@ watch(projectFilter, () => {
 })
 
 const projectsParams = ref({ page: 1, limit: 200 })
-const { data: projectsResult, isLoading: projectsLoading } = useArquitecturaProjectsList(projectsParams)
+const { data: projectsResult, isLoading: projectsLoading } =
+  useArquitecturaProjectsList(projectsParams)
 const projectOptions = computed(() =>
   (projectsResult.value?.data ?? []).map((p) => ({
     value: p.id,
@@ -212,7 +212,9 @@ function goProject(id: string) {
   void router.push(`${ARQUITECTURA_BASE_PATH}/proyectos/${id}`)
 }
 
-function getDocActions(row: ArquitecturaDocumentRow): { label: string; icon: string; onClick: () => void }[] {
+function getDocActions(
+  row: ArquitecturaDocumentRow,
+): { label: string; icon: string; onClick: () => void }[] {
   return [
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => openEdit(row) },
     { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => void removeRow(row) },

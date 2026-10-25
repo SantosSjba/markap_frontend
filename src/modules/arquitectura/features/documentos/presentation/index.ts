@@ -1,1 +1,0 @@
-﻿export { arquitecturaDocumentosRoutes } from './router'

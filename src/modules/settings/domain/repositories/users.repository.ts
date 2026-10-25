@@ -1,5 +1,4 @@
 import type { UserListItem, CreateUserData, UpdateUserData, RoleInfo } from '../settings.types'
-
 export interface UsersRepository {
   getAll(): Promise<UserListItem[]>
   getById(id: string): Promise<UserListItem>

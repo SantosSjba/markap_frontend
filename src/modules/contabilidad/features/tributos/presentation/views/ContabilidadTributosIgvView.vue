@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { BaseButton, AppIcon, PageHeader, StatsCard } from '@shared/components'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useExcelExport } from '@/shared/composables/useExcelExport'
-import { markapAlert } from '@/shared/composables'
-import { useContabilidadTaxDashboard, fetchContabilidadPdt621Export } from '../../application/useContabilidadTaxes'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import {
+  useContabilidadTaxDashboard,
+  useFetchContabilidadPdt621Export,
+} from '../composables/useContabilidadTaxes'
+const fetchContabilidadPdt621Export = useFetchContabilidadPdt621Export()
 
 const { activePeriod } = useContabilidadActivePeriod()
 const periodId = computed(() => activePeriod.value?.id)

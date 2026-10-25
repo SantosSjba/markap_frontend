@@ -1,5 +1,4 @@
-import { CONTABILIDAD_APP_SLUG } from '@modules/contabilidad/config/app.constants'
-
+import { CONTABILIDAD_APP_SLUG } from '../../../config/app.constants'
 export const CONTABILIDAD_PERIOD_APP_SLUG = CONTABILIDAD_APP_SLUG
 
 export type ContabilidadPeriodStatus = 'OPEN' | 'CLOSED'

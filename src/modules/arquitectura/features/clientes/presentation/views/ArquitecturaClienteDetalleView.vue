@@ -1,11 +1,12 @@
 ﻿<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, Badge, AppIcon } from '@shared/components'
-import { useArquitecturaClient } from '../../application/useClients'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useArquitecturaClient } from '../composables/useClients'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 import type { ClientDetail } from '../../domain/client.types'
-
 const route = useRoute()
 const router = useRouter()
 

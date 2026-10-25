@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   VENTAS_APP_SLUG,
   type VentasCreatePropertyPayload,
@@ -15,7 +15,6 @@ import {
   type VentasUpdatePropertyPayload,
 } from '../../domain/property.types'
 import type { VentasPropertiesRepository } from '../../domain/repositories/ventas-properties.repository'
-
 const ventasScope = { applicationSlug: VENTAS_APP_SLUG }
 
 export const ventasPropertiesApiRepository: VentasPropertiesRepository = {

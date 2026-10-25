@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   VENTAS_FINANZAS_APP_SLUG,
   type BuyerPaymentRow,
@@ -8,7 +8,6 @@ import {
   type ProfitabilitySummary,
 } from '../../domain/finanzas.types'
 import type { VentasFinanzasRepository } from '../../domain/repositories/ventas-finanzas.repository'
-
 const scope = { applicationSlug: VENTAS_FINANZAS_APP_SLUG } as const
 
 function qs(params: Record<string, string | number | undefined>) {
@@ -28,9 +27,10 @@ export const ventasFinanzasApiRepository: VentasFinanzasRepository = {
     displayStatus?: string
   }) =>
     apiClient
-      .get<{ data: BuyerPaymentRow[]; total: number }>(
-        `/ventas-finanzas/buyer-payments?${qs({ ...scope, ...params })}`,
-      )
+      .get<{
+        data: BuyerPaymentRow[]
+        total: number
+      }>(`/ventas-finanzas/buyer-payments?${qs({ ...scope, ...params })}`)
       .then((r) => r.data),
 
   createBuyerPayment: (body: {
@@ -41,9 +41,7 @@ export const ventasFinanzasApiRepository: VentasFinanzasRepository = {
     dueDate: string
     notes?: string | null
   }) =>
-    apiClient
-      .post(`/ventas-finanzas/buyer-payments?${qs({ ...scope })}`, body)
-      .then((r) => r.data),
+    apiClient.post(`/ventas-finanzas/buyer-payments?${qs({ ...scope })}`, body).then((r) => r.data),
 
   markBuyerPaymentPaid: (id: string, body?: { paidAt?: string | null }) =>
     apiClient
@@ -55,9 +53,10 @@ export const ventasFinanzasApiRepository: VentasFinanzasRepository = {
 
   listCommissions: (params: { page?: number; limit?: number; status?: string; agentId?: string }) =>
     apiClient
-      .get<{ data: CommissionRow[]; total: number }>(
-        `/ventas-finanzas/commissions?${qs({ ...scope, ...params })}`,
-      )
+      .get<{
+        data: CommissionRow[]
+        total: number
+      }>(`/ventas-finanzas/commissions?${qs({ ...scope, ...params })}`)
       .then((r) => r.data),
 
   markCommissionPaid: (id: string, body?: { paidAt?: string | null }) =>
@@ -100,9 +99,10 @@ export const ventasFinanzasApiRepository: VentasFinanzasRepository = {
     buyerClientId?: string
   }) =>
     apiClient
-      .get<{ data: DocumentationCostRow[]; total: number }>(
-        `/ventas-finanzas/documentation-costs?${qs({ ...scope, ...params })}`,
-      )
+      .get<{
+        data: DocumentationCostRow[]
+        total: number
+      }>(`/ventas-finanzas/documentation-costs?${qs({ ...scope, ...params })}`)
       .then((r) => r.data),
 
   createDocumentationCost: (body: {

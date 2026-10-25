@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import type {
   ClientDetail,
   ClientStats,
@@ -12,13 +12,11 @@ import type {
   UpdateClientPayload,
 } from '../../domain/client.types'
 import type { ClientsRepository } from '../../domain/repositories/clients.repository'
-
 const clientsApi: ClientsRepository = {
   getDocumentTypes: () =>
     apiClient.get<DocumentType[]>('/clients/document-types').then((r) => r.data),
 
-  getDepartments: () =>
-    apiClient.get<Department[]>('/clients/departments').then((r) => r.data),
+  getDepartments: () => apiClient.get<Department[]>('/clients/departments').then((r) => r.data),
 
   getProvinces: (departmentId?: string) => {
     const params = departmentId ? { departmentId } : {}
@@ -51,11 +49,12 @@ const clientsApi: ClientsRepository = {
 
   create: (data: CreateClientPayload) =>
     apiClient
-      .post<{ id: string } & Record<string, unknown>>('/clients', { ...data, applicationSlug: 'alquileres' })
+      .post<
+        { id: string } & Record<string, unknown>
+      >('/clients', { ...data, applicationSlug: 'alquileres' })
       .then((r) => r.data),
 
-  getById: (id: string) =>
-    apiClient.get<ClientDetail>(`/clients/${id}`).then((r) => r.data),
+  getById: (id: string) => apiClient.get<ClientDetail>(`/clients/${id}`).then((r) => r.data),
 
   update: (id: string, data: UpdateClientPayload) =>
     apiClient.patch(`/clients/${id}`, data).then((r) => r.data),

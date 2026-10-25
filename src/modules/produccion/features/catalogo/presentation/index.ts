@@ -1,1 +1,0 @@
-export { produccionCatalogoRoutes } from './router'

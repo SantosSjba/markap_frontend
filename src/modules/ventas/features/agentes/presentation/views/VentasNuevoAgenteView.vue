@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, AppIcon, Badge, FormSectionCard } from '@shared/components'
-import { FormInput, FormSelect } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { markapAlert } from '@/shared/composables'
-import { useVentasCreateAgent } from '../../application/useAgents'
-import { useUsers } from '@modules/settings'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useVentasCreateAgent } from '../composables/useAgents'
+import { useUsers } from '@modules/settings/presentation/composables/useUsers'
 import type { VentasAgentType } from '../../domain/agent.types'
-import { ventasAgentCreateFormSchema } from '../../infrastructure/schemas/agentFormSchema'
-import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
-
+import { ventasAgentCreateFormSchema } from '../validation/agentFormSchema'
+import { navigateAfterVentasSave } from '../../../../presentation/navigation/navigateAfterVentasSave'
 const route = useRoute()
 const router = useRouter()
 
@@ -67,10 +70,7 @@ const selectedUser = computed(() => {
 function fillFromUser(userId: string) {
   const u = usersList.value?.find((x) => x.id === userId)
   if (!u) return
-  setFieldValue(
-    'fullName',
-    u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email,
-  )
+  setFieldValue('fullName', u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email)
   setFieldValue('email', u.email ?? '')
 }
 
@@ -103,36 +103,33 @@ function onInvalidSubmit() {
   )
 }
 
-const onSubmit = handleSubmit(
-  async (formValues) => {
-    try {
-      const data = await createMutation.mutateAsync({
-        type: formValues.type,
-        userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
-        fullName: formValues.fullName.trim(),
-        email: formValues.email?.trim() || null,
-        phone: formValues.phone?.trim() || null,
-        documentTypeId: formValues.documentTypeId || null,
-        documentNumber: formValues.documentNumber?.trim() || null,
-      })
-      resetForm()
-      await navigateAfterVentasSave(router, {
-        listPath: '/ventas/agentes',
-        returnTo: returnTo.value || undefined,
-        returnQuery:
-          returnTo.value && data?.id
-            ? {
-                selectedAgentId: data.id,
-                ...(agentField.value ? { agentField: agentField.value } : {}),
-              }
-            : undefined,
-      })
-    } catch {
-      void 0
-    }
-  },
-  onInvalidSubmit,
-)
+const onSubmit = handleSubmit(async (formValues) => {
+  try {
+    const data = await createMutation.mutateAsync({
+      type: formValues.type,
+      userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
+      fullName: formValues.fullName.trim(),
+      email: formValues.email?.trim() || null,
+      phone: formValues.phone?.trim() || null,
+      documentTypeId: formValues.documentTypeId || null,
+      documentNumber: formValues.documentNumber?.trim() || null,
+    })
+    resetForm()
+    await navigateAfterVentasSave(router, {
+      listPath: '/ventas/agentes',
+      returnTo: returnTo.value || undefined,
+      returnQuery:
+        returnTo.value && data?.id
+          ? {
+              selectedAgentId: data.id,
+              ...(agentField.value ? { agentField: agentField.value } : {}),
+            }
+          : undefined,
+    })
+  } catch {
+    void 0
+  }
+}, onInvalidSubmit)
 </script>
 
 <template>

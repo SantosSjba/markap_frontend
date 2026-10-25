@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { BaseButton } from '@shared/components'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 /**
  * NotFoundView
  * 404 error page

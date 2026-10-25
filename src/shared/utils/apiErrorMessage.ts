@@ -1,5 +1,4 @@
 import { isAxiosError } from 'axios'
-
 /** Contacto de soporte opcional (VITE_SUPPORT_CONTACT), p. ej. correo o teléfono. */
 const SUPPORT_CONTACT = String(import.meta.env.VITE_SUPPORT_CONTACT ?? '').trim()
 
@@ -43,7 +42,8 @@ function withPeriod(text: string): string {
 
 function serverMessage(data: unknown): string | null {
   if (!data || typeof data !== 'object') return null
-  const raw = (data as { message?: unknown; error?: unknown }).message ?? (data as { error?: unknown }).error
+  const raw =
+    (data as { message?: unknown; error?: unknown }).message ?? (data as { error?: unknown }).error
   const parts = (Array.isArray(raw) ? raw : [raw]).filter(
     (v): v is string => typeof v === 'string' && v.trim() !== '' && !isTechnicalErrorMessage(v),
   )
@@ -95,6 +95,11 @@ export function getApiErrorMessage(error: unknown, fallback = DEFAULT_FALLBACK):
 
   if (error instanceof Error && error.message && !isTechnicalErrorMessage(error.message))
     return withPeriod(error.message)
-  if (typeof error === 'string' && error.trim() && !isTechnicalErrorMessage(error)) return withPeriod(error)
+  if (typeof error === 'string' && error.trim() && !isTechnicalErrorMessage(error))
+    return withPeriod(error)
   return `${base} ${SUPPORT_HINT}`
+}
+
+export function getApiErrorStatus(error: unknown): number | undefined {
+  return isAxiosError(error) ? error.response?.status : undefined
 }

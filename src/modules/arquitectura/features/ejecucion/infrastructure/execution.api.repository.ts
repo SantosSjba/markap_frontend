@@ -1,5 +1,5 @@
-﻿import { apiClient } from '@core/api/apiClient'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { ARQUITECTURA_APP_SLUG } from '../../../config/app.constants'
 import type { ArquitecturaExecutionRepository } from '../domain/repositories/execution.repository'
 import type {
   CreateExecutionActualCostPayload,
@@ -14,7 +14,6 @@ import type {
   UpdateExecutionTaskPayload,
   UploadExecutionEvidencePayload,
 } from '../domain/execution.types'
-
 const BASE = '/arquitectura-execution'
 
 const q = () => ({ params: { applicationSlug: ARQUITECTURA_APP_SLUG } })
@@ -37,7 +36,11 @@ export const arquitecturaExecutionApiRepository: ArquitecturaExecutionRepository
 
   updateTask: (projectId: string, taskId: string, payload: UpdateExecutionTaskPayload) =>
     apiClient
-      .patch<ArquitecturaExecutionTaskDto>(`${BASE}/projects/${projectId}/tasks/${taskId}`, payload, q())
+      .patch<ArquitecturaExecutionTaskDto>(
+        `${BASE}/projects/${projectId}/tasks/${taskId}`,
+        payload,
+        q(),
+      )
       .then((r) => r.data),
 
   deleteTask: (projectId: string, taskId: string) =>
@@ -45,7 +48,11 @@ export const arquitecturaExecutionApiRepository: ArquitecturaExecutionRepository
 
   createEvidence: (projectId: string, payload: CreateExecutionEvidencePayload) =>
     apiClient
-      .post<ArquitecturaExecutionEvidenceDto>(`${BASE}/projects/${projectId}/evidences`, payload, q())
+      .post<ArquitecturaExecutionEvidenceDto>(
+        `${BASE}/projects/${projectId}/evidences`,
+        payload,
+        q(),
+      )
       .then((r) => r.data),
 
   uploadEvidence: (projectId: string, payload: UploadExecutionEvidencePayload) => {
@@ -56,10 +63,14 @@ export const arquitecturaExecutionApiRepository: ArquitecturaExecutionRepository
     fd.append('capturedAt', payload.capturedAt)
     if (payload.taskId) fd.append('taskId', payload.taskId)
     return apiClient
-      .post<ArquitecturaExecutionEvidenceDto>(`${BASE}/projects/${projectId}/evidences/upload`, fd, {
-        ...q(),
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      .post<ArquitecturaExecutionEvidenceDto>(
+        `${BASE}/projects/${projectId}/evidences/upload`,
+        fd,
+        {
+          ...q(),
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
+      )
       .then((r) => r.data)
   },
 
@@ -70,10 +81,18 @@ export const arquitecturaExecutionApiRepository: ArquitecturaExecutionRepository
 
   createIncident: (projectId: string, payload: CreateExecutionIncidentPayload) =>
     apiClient
-      .post<ArquitecturaExecutionIncidentDto>(`${BASE}/projects/${projectId}/incidents`, payload, q())
+      .post<ArquitecturaExecutionIncidentDto>(
+        `${BASE}/projects/${projectId}/incidents`,
+        payload,
+        q(),
+      )
       .then((r) => r.data),
 
-  updateIncident: (projectId: string, incidentId: string, payload: UpdateExecutionIncidentPayload) =>
+  updateIncident: (
+    projectId: string,
+    incidentId: string,
+    payload: UpdateExecutionIncidentPayload,
+  ) =>
     apiClient
       .patch<ArquitecturaExecutionIncidentDto>(
         `${BASE}/projects/${projectId}/incidents/${incidentId}`,
@@ -83,9 +102,7 @@ export const arquitecturaExecutionApiRepository: ArquitecturaExecutionRepository
       .then((r) => r.data),
 
   createActualCost: (projectId: string, payload: CreateExecutionActualCostPayload) =>
-    apiClient
-      .post(`${BASE}/projects/${projectId}/actual-costs`, payload, q())
-      .then((r) => r.data),
+    apiClient.post(`${BASE}/projects/${projectId}/actual-costs`, payload, q()).then((r) => r.data),
 
   deleteActualCost: (projectId: string, costId: string) =>
     apiClient
@@ -93,7 +110,5 @@ export const arquitecturaExecutionApiRepository: ArquitecturaExecutionRepository
       .then(() => undefined),
 
   getDownloadUrl: (archivoId: string) =>
-    apiClient
-      .get<{ url: string }>(`/gen-archivos/${archivoId}/url`, q())
-      .then((r) => r.data.url),
+    apiClient.get<{ url: string }>(`/gen-archivos/${archivoId}/url`, q()).then((r) => r.data.url),
 }

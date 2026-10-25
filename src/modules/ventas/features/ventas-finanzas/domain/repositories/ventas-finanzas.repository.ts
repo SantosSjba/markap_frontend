@@ -5,7 +5,6 @@ import type {
   DocumentationCostRow,
   ProfitabilitySummary,
 } from '../finanzas.types'
-
 export interface VentasFinanzasRepository {
   listBuyerPayments: (params: {
     page?: number
@@ -23,15 +22,26 @@ export interface VentasFinanzasRepository {
     notes?: string | null
   }) => Promise<unknown>
   markBuyerPaymentPaid: (id: string, body?: { paidAt?: string | null }) => Promise<unknown>
-  listCommissions: (params: { page?: number; limit?: number; status?: string; agentId?: string }) => Promise<{
+  listCommissions: (params: {
+    page?: number
+    limit?: number
+    status?: string
+    agentId?: string
+  }) => Promise<{
     data: CommissionRow[]
     total: number
   }>
   markCommissionPaid: (id: string, body?: { paidAt?: string | null }) => Promise<unknown>
-  markCommissionPaymentPartPaid: (partId: string, body?: { paidAt?: string | null }) => Promise<unknown>
+  markCommissionPaymentPartPaid: (
+    partId: string,
+    body?: { paidAt?: string | null },
+  ) => Promise<unknown>
   recalculateCommission: (id: string) => Promise<unknown>
   listCommissionProfiles: () => Promise<CommissionProfileRow[]>
-  upsertCommissionProfile: (body: { agentId: string; commissionPercent: number }) => Promise<unknown>
+  upsertCommissionProfile: (body: {
+    agentId: string
+    commissionPercent: number
+  }) => Promise<unknown>
   listDocumentationCosts: (params: {
     page?: number
     limit?: number

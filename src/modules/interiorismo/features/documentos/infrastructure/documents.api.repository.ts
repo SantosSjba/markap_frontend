@@ -1,5 +1,5 @@
-import { apiClient } from '@core/api/apiClient'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { INTERIORISMO_APP_SLUG } from '../../../config/app.constants'
 import type {
   CreateInteriorDocumentPayload,
   InteriorDocumentRow,
@@ -9,7 +9,6 @@ import type {
   UploadInteriorDocumentPayload,
 } from '../domain/document.types'
 import type { InteriorDocumentsRepository } from '../domain/repositories/documents.repository'
-
 const BASE = '/interiorismo-documents'
 
 function queryParams(params: ListInteriorDocumentsParams) {
@@ -25,7 +24,9 @@ function queryParams(params: ListInteriorDocumentsParams) {
 
 export const interiorDocumentsApiRepository: InteriorDocumentsRepository = {
   list: (params: ListInteriorDocumentsParams) =>
-    apiClient.get<ListInteriorDocumentsResponse>(`${BASE}?${queryParams(params)}`).then((r) => r.data),
+    apiClient
+      .get<ListInteriorDocumentsResponse>(`${BASE}?${queryParams(params)}`)
+      .then((r) => r.data),
 
   create: (payload: CreateInteriorDocumentPayload) =>
     apiClient

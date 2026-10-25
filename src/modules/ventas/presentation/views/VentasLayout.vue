@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { AppLayoutSidebar, AppHeader } from '@layouts/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
+import AppLayoutSidebar from '@app/layouts/components/AppLayoutSidebar.vue'
+import AppHeader from '@app/layouts/components/AppHeader.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { useVentasAppLayout } from '../composables/useVentasAppLayout'
-
 /**
  * VentasLayout — mismo shell que Alquileres (`AppLayoutSidebar` + `AppHeader` en @layouts).
  * Menús: API por slug `ventas`. Notificaciones: filtradas a ventas en el header.
@@ -34,7 +34,7 @@ const applicationInfo = computed(() =>
         icon: application.value.icon,
         color: application.value.color,
       }
-    : { name: 'Ventas Inmobiliarias', slug: 'ventas', icon: 'home', color: '#3B82F6' }
+    : { name: 'Ventas Inmobiliarias', slug: 'ventas', icon: 'home', color: '#3B82F6' },
 )
 </script>
 

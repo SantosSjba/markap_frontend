@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { SALES_DOCUMENT_TYPE } from '../../domain/sales.types'
-
 export const contabilidadVentasContablesRoutes: RouteRecordRaw[] = [
   {
     path: '',

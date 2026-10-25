@@ -1,12 +1,5 @@
 export type PaymentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'PARTIAL'
-export type PaymentMethod =
-  | 'CASH'
-  | 'TRANSFER'
-  | 'DEPOSIT'
-  | 'YAPE'
-  | 'PLIN'
-  | 'CHECK'
-  | 'OTHER'
+export type PaymentMethod = 'CASH' | 'TRANSFER' | 'DEPOSIT' | 'YAPE' | 'PLIN' | 'CHECK' | 'OTHER'
 
 export interface PaymentStats {
   totalPending: number

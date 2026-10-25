@@ -1,5 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
-import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
+import type { ProduccionInventoryRepository } from '../domain/repositories/inventory.repository'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { PRODUCCION_APP_SLUG } from '../../../config/app.constants'
 import type {
   CreateMaterialPayload,
   CreateMovementPayload,
@@ -10,7 +11,6 @@ import type {
   ProduccionStockMovement,
   UpdateMaterialPayload,
 } from '../domain/inventory.types'
-
 const MATERIALS_BASE = '/produccion-materials'
 const MOVEMENTS_BASE = '/produccion-stock-movements'
 
@@ -37,10 +37,13 @@ function movementsQuery(params: ListMovementsParams = {}) {
   return sp.toString()
 }
 
-export const produccionInventoryApi = {
+export const produccionInventoryApi: ProduccionInventoryRepository = {
   listMaterials: (params: ListMaterialsParams = {}) =>
     apiClient
-      .get<{ data: ProduccionMaterial[]; total: number }>(`${MATERIALS_BASE}?${materialsQuery(params)}`)
+      .get<{
+        data: ProduccionMaterial[]
+        total: number
+      }>(`${MATERIALS_BASE}?${materialsQuery(params)}`)
       .then((r) => r.data),
 
   getStats: () =>
@@ -78,7 +81,10 @@ export const produccionInventoryApi = {
 
   listMovements: (params: ListMovementsParams = {}) =>
     apiClient
-      .get<{ data: ProduccionStockMovement[]; total: number }>(`${MOVEMENTS_BASE}?${movementsQuery(params)}`)
+      .get<{
+        data: ProduccionStockMovement[]
+        total: number
+      }>(`${MOVEMENTS_BASE}?${movementsQuery(params)}`)
       .then((r) => r.data),
 
   createMovement: (payload: CreateMovementPayload) =>

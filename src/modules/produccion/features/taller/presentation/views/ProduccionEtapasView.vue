@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import ProduccionWorkOrdersListPanel from '../components/ProduccionWorkOrdersListPanel.vue'
 import { PRODUCCION_STAGES } from '../labels'
-
 const route = useRoute()
 const stageKey = computed(() => {
   const q = route.query.etapa

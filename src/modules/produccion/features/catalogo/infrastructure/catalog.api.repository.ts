@@ -1,5 +1,5 @@
-import { apiClient } from '@core/api/apiClient'
-import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { PRODUCCION_APP_SLUG } from '../../../config/app.constants'
 import type { ProduccionCatalogRepository } from '../domain/repositories/catalog.repository'
 import type {
   CreateProduccionFurniturePayload,
@@ -9,7 +9,6 @@ import type {
   ProduccionFurnitureStats,
   UpdateProduccionFurniturePayload,
 } from '../domain/catalog.types'
-
 const BASE = '/produccion-furniture'
 
 function slug(params?: ListProduccionFurnitureParams) {

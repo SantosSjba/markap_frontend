@@ -1,25 +1,26 @@
 <script setup lang="ts">
+import { useService } from '@shared/presentation/di/services'
+import { DIRECTORY } from '@shared/application/ports/directory.port'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import * as yup from 'yup'
-import { BaseButton } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { apiClient } from '@core/api/apiClient'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-import { useArquitecturaClientsList } from '@modules/arquitectura/features/clientes'
-import { useArquitecturaConfigBootstrap } from '@modules/arquitectura/features/configuracion'
-import { useCreateArquitecturaProject } from '../../application/useArquitecturaProjects'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { ARQUITECTURA_APP_SLUG } from '../../../../config/app.constants'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
+import { useArquitecturaClientsList } from '../../../clientes/presentation/composables/useClients'
+import { useArquitecturaConfigBootstrap } from '../../../configuracion/presentation/composables/useArquitecturaConfig'
+import { useCreateArquitecturaProject } from '../composables/useArquitecturaProjects'
 import type { ArquitecturaProjectStatus, ArquitecturaProjectType } from '../../domain/project.types'
-import type {
-  ClientListItem,
-  ListClientsParams,
-} from '@modules/arquitectura/features/clientes/domain/client.types'
+import type { ClientListItem, ListClientsParams } from '../../../clientes/domain/client.types'
 import { PROJECT_TYPE_LABELS, CURRENCY_OPTIONS, INTERVENTION_LEVEL_OPTIONS } from '../labels'
-import { useArquitecturaProjectStageOptions } from '../../application/useArquitecturaProjectStageOptions'
+import { useArquitecturaProjectStageOptions } from '../composables/useArquitecturaProjectStageOptions'
+const directory = useService(DIRECTORY)
 
 const router = useRouter()
 const route = useRoute()
@@ -29,13 +30,16 @@ const listClientsParams = ref<ListClientsParams>({
   page: 1,
   limit: 500,
 })
-const { data: clientsRes, isLoading: loadingClients } = useArquitecturaClientsList(listClientsParams)
+const { data: clientsRes, isLoading: loadingClients } =
+  useArquitecturaClientsList(listClientsParams)
 
 const { data: agentsRes, isLoading: loadingAgents } = useQuery({
   queryKey: ['agents', ARQUITECTURA_APP_SLUG, 'arquitectura-pick'],
   queryFn: async () => {
-    const { data } = await apiClient.get<{ data: { id: string; fullName: string }[] }>('/agents', {
-      params: { applicationSlug: ARQUITECTURA_APP_SLUG, limit: 500, page: 1 },
+    const data = await directory.listAgents({
+      applicationSlug: ARQUITECTURA_APP_SLUG,
+      limit: 500,
+      page: 1,
     })
     return data
   },
@@ -170,8 +174,7 @@ const goBack = () => {
   router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
 }
 
-const emptyToUndef = (s: string | undefined | null) =>
-  s?.trim() ? s.trim() : undefined
+const emptyToUndef = (s: string | undefined | null) => (s?.trim() ? s.trim() : undefined)
 
 const onSubmit = handleSubmit(async (v) => {
   try {

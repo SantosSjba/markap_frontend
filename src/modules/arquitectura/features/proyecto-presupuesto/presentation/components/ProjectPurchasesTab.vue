@@ -1,27 +1,27 @@
 ﻿<script setup lang="ts">
 import { computed, ref, toRef } from 'vue'
-import {
-  BaseButton,
-  BaseModal,
-  Badge,
-  DataTable,
-  FormInput,
-  FormSectionCard,
-  StatsCard,
-  AppIcon,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useArquitecturaMaterialSuppliersList } from '@modules/arquitectura/features/materiales/application/useArquitecturaMaterialSuppliers'
-import type { ProjectBudgetDetailDto, ProjectBudgetLineItemDto } from '../../domain/project-budget.types'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useArquitecturaMaterialSuppliersList } from '../../../materiales/presentation/composables/useArquitecturaMaterialSuppliers'
+import type {
+  ProjectBudgetDetailDto,
+  ProjectBudgetLineItemDto,
+} from '../../domain/project-budget.types'
 import {
   useCreateSupplierPayment,
   useDeleteSupplierPayment,
   useSyncBudgetFromExecution,
   useUpdateBudgetLineItem,
-} from '../../application/useProjectBudget'
+} from '../composables/useProjectBudget'
 import { formatSol } from '../labels'
-import { toCalendarDateString } from '@/shared/utils/formatters'
-
+import { toCalendarDateString } from '@shared/utils/formatters'
 const props = defineProps<{
   projectId: string
   budget: ProjectBudgetDetailDto
@@ -124,8 +124,7 @@ const purchaseCols = [
 
 const allItems = () => props.budget.sections.flatMap((s) => s.lineItems)
 const totalAbonos = () => allItems().reduce((s, i) => s + i.totalSupplierPayments, 0)
-const totalSaldo = () =>
-  allItems().reduce((s, i) => s + (i.supplierBalance ?? 0), 0)
+const totalSaldo = () => allItems().reduce((s, i) => s + (i.supplierBalance ?? 0), 0)
 </script>
 
 <template>

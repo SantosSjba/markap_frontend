@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   VENTAS_AGENTS_APPLICATION_SLUG,
   type CreateVentasAgentPayload,
@@ -8,7 +8,6 @@ import {
   type VentasAgentListItem,
 } from '../../domain/agent.types'
 import type { VentasAgentsRepository } from '../../domain/repositories/ventas-agents.repository'
-
 const BASE = '/agents'
 
 const ventasScope = { applicationSlug: VENTAS_AGENTS_APPLICATION_SLUG }
@@ -32,9 +31,7 @@ export const ventasAgentsApiRepository: VentasAgentsRepository = {
   },
 
   create(payload: CreateVentasAgentPayload): Promise<VentasAgentListItem> {
-    return apiClient
-      .post(BASE, { ...payload, ...ventasScope })
-      .then((r) => r.data)
+    return apiClient.post(BASE, { ...payload, ...ventasScope }).then((r) => r.data)
   },
 
   update(id: string, payload: UpdateVentasAgentPayload): Promise<VentasAgentListItem> {

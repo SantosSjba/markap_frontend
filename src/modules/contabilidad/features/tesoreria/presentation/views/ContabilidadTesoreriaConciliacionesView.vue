@@ -1,38 +1,41 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  Badge,
-  FormCheckbox,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-  StatsCard,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadBankAccounts,
   useContabilidadBankReconciliation,
   useContabilidadUpsertReconciliation,
   useContabilidadToggleReconciledMovement,
   useContabilidadCloseReconciliation,
-} from '../../application/useContabilidadTreasury'
+} from '../composables/useContabilidadTreasury'
 import type { ContabilidadTreasuryMovementDTO } from '../../domain/treasury.types'
-
 const { activePeriod } = useContabilidadActivePeriod()
 const { data: bankData } = useContabilidadBankAccounts()
 const banks = computed(() => (bankData.value?.bankAccounts ?? []).filter((b) => b.isActive))
 
 const selectedBankId = ref('')
-watch(banks, (list) => {
-  if (!selectedBankId.value && list[0]) selectedBankId.value = list[0].id
-}, { immediate: true })
+watch(
+  banks,
+  (list) => {
+    if (!selectedBankId.value && list[0]) selectedBankId.value = list[0].id
+  },
+  { immediate: true },
+)
 
-const bankOptions = computed(() => banks.value.map((b) => ({ value: b.id, label: `${b.code} — ${b.bankName}` })))
+const bankOptions = computed(() =>
+  banks.value.map((b) => ({ value: b.id, label: `${b.code} — ${b.bankName}` })),
+)
 
 const periodId = computed(() => activePeriod.value?.id)
 const { data, isLoading, refetch } = useContabilidadBankReconciliation(selectedBankId, periodId)
@@ -41,14 +44,19 @@ const reconciliation = computed(() => data.value?.reconciliation)
 const movements = computed(() => data.value?.movements ?? [])
 
 const statementForm = ref({ balance: '', notes: '' })
-watch(reconciliation, (rec) => {
-  if (rec) {
-    statementForm.value.balance = rec.statementBalance
-    statementForm.value.notes = rec.notes ?? ''
-  }
-}, { immediate: true })
+watch(
+  reconciliation,
+  (rec) => {
+    if (rec) {
+      statementForm.value.balance = rec.statementBalance
+      statementForm.value.notes = rec.notes ?? ''
+    }
+  },
+  { immediate: true },
+)
 
-const { mutate: upsertReconciliation, isPending: savingStatement } = useContabilidadUpsertReconciliation()
+const { mutate: upsertReconciliation, isPending: savingStatement } =
+  useContabilidadUpsertReconciliation()
 const { mutate: toggleReconciled, isPending: toggling } = useContabilidadToggleReconciledMovement()
 const { mutate: closeReconciliation, isPending: closing } = useContabilidadCloseReconciliation()
 

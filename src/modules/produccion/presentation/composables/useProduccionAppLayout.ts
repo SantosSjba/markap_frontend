@@ -1,11 +1,10 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useMyApplications, useApplicationMenus } from '@modules/applications'
 import {
-  PRODUCCION_FALLBACK_MENUS,
-  produccionMenusLookComplete,
-} from '../../config/fallbackMenus'
-
+  useMyApplications,
+  useApplicationMenus,
+} from '@modules/applications/presentation/composables/useApplications'
+import { PRODUCCION_FALLBACK_MENUS, produccionMenusLookComplete } from '../../config/fallbackMenus'
 export function useProduccionAppLayout() {
   const route = useRoute()
   const slug = computed(() => {
@@ -15,9 +14,7 @@ export function useProduccionAppLayout() {
 
   const { data: menusFromApi, isLoading: menusLoading } = useApplicationMenus(slug)
   const { data: applications } = useMyApplications()
-  const application = computed(
-    () => applications.value?.find((a) => a.slug === slug.value) ?? null,
-  )
+  const application = computed(() => applications.value?.find((a) => a.slug === slug.value) ?? null)
 
   const menus = computed(() => {
     if (slug.value !== 'produccion') {

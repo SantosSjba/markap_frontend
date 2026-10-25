@@ -1,27 +1,29 @@
 <script setup lang="ts">
+import { paymentsRepositoryKey } from '../../application/ports/payments.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import * as yup from 'yup'
-import StatsCard from '@shared/components/ui/StatsCard.vue'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
-import BaseButton from '@shared/components/ui/BaseButton.vue'
-import Badge from '@shared/components/ui/Badge.vue'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import ExcelIcon from '@shared/components/ui/ExcelIcon.vue'
-import SearchInput from '@shared/components/forms/SearchInput.vue'
-import FormSelect from '@shared/components/forms/FormSelect.vue'
-import FormInput from '@shared/components/forms/FormInput.vue'
-import FormTextarea from '@shared/components/forms/FormTextarea.vue'
-import ActionsDropdown from '@shared/components/ui/ActionsDropdown.vue'
-import { ListRowsSkeleton } from '@shared/components'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useExcelExport } from '@shared/composables'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../../application/usePayments'
-import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import ListRowsSkeleton from '@shared/presentation/components/ui/ListRowsSkeleton.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../composables/usePayments'
+import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import type { PendingPaymentItem, PaymentMethod } from '../../domain/payment.types'
-import { paymentsRepository } from '@modules/alquileres/features/cobranzas'
+const paymentsRepository = useService(paymentsRepositoryKey)
 
 const router = useRouter()
 
@@ -154,19 +156,27 @@ const onPaymentSubmit = submitPaymentForm(async (vals) => {
   }
 })
 
-function getStatusBadge(status: string): { variant: 'success' | 'warning' | 'error' | 'info'; label: string } {
+function getStatusBadge(status: string): {
+  variant: 'success' | 'warning' | 'error' | 'info'
+  label: string
+} {
   switch (status) {
-    case 'PAID':   return { variant: 'success', label: 'Pagado' }
-    case 'OVERDUE': return { variant: 'error', label: 'Atrasado' }
-    case 'PARTIAL': return { variant: 'warning', label: 'Parcial' }
-    default:        return { variant: 'warning', label: 'Pendiente' }
+    case 'PAID':
+      return { variant: 'success', label: 'Pagado' }
+    case 'OVERDUE':
+      return { variant: 'error', label: 'Atrasado' }
+    case 'PARTIAL':
+      return { variant: 'warning', label: 'Parcial' }
+    default:
+      return { variant: 'warning', label: 'Pendiente' }
   }
 }
 
 function getStatusBadgeLabel(item: PendingPaymentItem) {
   if (item.status === 'OVERDUE') return `Atrasado (${item.daysOverdue}d)`
   if (item.status === 'PENDING' && item.daysOverdue > 0) return `Pendiente (+${item.daysOverdue}d)`
-  if (item.status === 'PENDING' && item.daysOverdue < 0) return `Pendiente (${Math.abs(item.daysOverdue)}d)`
+  if (item.status === 'PENDING' && item.daysOverdue < 0)
+    return `Pendiente (${Math.abs(item.daysOverdue)}d)`
   return getStatusBadge(item.status).label
 }
 
@@ -180,10 +190,24 @@ function formatDate(dateStr: string) {
 }
 
 function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
 }
 
-const avatarColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#14b8a6', '#3b82f6', '#f97316']
+const avatarColors = [
+  '#6366f1',
+  '#8b5cf6',
+  '#ec4899',
+  '#f59e0b',
+  '#10b981',
+  '#14b8a6',
+  '#3b82f6',
+  '#f97316',
+]
 
 function getAvatarColor(name: string) {
   let hash = 0

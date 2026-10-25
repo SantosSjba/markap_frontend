@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import type {
   CreatePropertyPayload,
   Department,
@@ -13,13 +13,11 @@ import type {
   UpdatePropertyPayload,
 } from '../../domain/property.types'
 import type { PropertiesRepository } from '../../domain/repositories/properties.repository'
-
 export const propertiesApiRepository: PropertiesRepository = {
   getPropertyTypes: () =>
     apiClient.get<PropertyType[]>('/properties/property-types').then((r) => r.data),
 
-  getDepartments: () =>
-    apiClient.get<Department[]>('/properties/departments').then((r) => r.data),
+  getDepartments: () => apiClient.get<Department[]>('/properties/departments').then((r) => r.data),
 
   getProvinces: (departmentId?: string) => {
     const params = departmentId ? { departmentId } : {}
@@ -64,17 +62,23 @@ export const propertiesApiRepository: PropertiesRepository = {
     if (listingStatus) query.listingStatus = listingStatus
     if (minSalePrice != null && Number.isFinite(minSalePrice)) query.minSalePrice = minSalePrice
     if (maxSalePrice != null && Number.isFinite(maxSalePrice)) query.maxSalePrice = maxSalePrice
-    return apiClient.get<ListPropertiesResponse>('/properties', { params: query }).then((r) => r.data)
+    return apiClient
+      .get<ListPropertiesResponse>('/properties', { params: query })
+      .then((r) => r.data)
   },
 
   getStats: (applicationSlug = 'alquileres') =>
-    apiClient.get<PropertyStats>('/properties/stats', { params: { applicationSlug } }).then((r) => r.data),
+    apiClient
+      .get<PropertyStats>('/properties/stats', { params: { applicationSlug } })
+      .then((r) => r.data),
 
   getById: (id: string) =>
     apiClient.get<PropertyDetail>('/properties/' + encodeURIComponent(id)).then((r) => r.data),
 
   update: (id: string, data: UpdatePropertyPayload) =>
-    apiClient.patch<PropertyDetail>('/properties/' + encodeURIComponent(id), data).then((r) => r.data),
+    apiClient
+      .patch<PropertyDetail>('/properties/' + encodeURIComponent(id), data)
+      .then((r) => r.data),
 
   updateListingStatus: (id: string, listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE') =>
     apiClient

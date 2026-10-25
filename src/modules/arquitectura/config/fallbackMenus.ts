@@ -1,5 +1,4 @@
 import type { MenuItem } from '@shared/domain/menu.types'
-
 /**
  * Menú lateral HITO Arquitectura cuando la API aún no tiene el árbol completo.
  * Alineado con `prisma/seed/data/menus-arquitectura.ts` y el router.
@@ -104,9 +103,27 @@ export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
     path: null,
     order: 5,
     children: [
-      { id: 'arq-fb-doc-contratos', label: 'Contratos', icon: null, path: '/arquitectura/documentos/contratos', order: 0 },
-      { id: 'arq-fb-doc-planos', label: 'Planos', icon: null, path: '/arquitectura/documentos/planos', order: 1 },
-      { id: 'arq-fb-doc-renders', label: 'Renders', icon: null, path: '/arquitectura/documentos/renders', order: 2 },
+      {
+        id: 'arq-fb-doc-contratos',
+        label: 'Contratos',
+        icon: null,
+        path: '/arquitectura/documentos/contratos',
+        order: 0,
+      },
+      {
+        id: 'arq-fb-doc-planos',
+        label: 'Planos',
+        icon: null,
+        path: '/arquitectura/documentos/planos',
+        order: 1,
+      },
+      {
+        id: 'arq-fb-doc-renders',
+        label: 'Renders',
+        icon: null,
+        path: '/arquitectura/documentos/renders',
+        order: 2,
+      },
       {
         id: 'arq-fb-doc-memoria',
         label: 'Memoria descriptiva',
@@ -114,8 +131,20 @@ export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
         path: '/arquitectura/documentos/memoria-descriptiva',
         order: 3,
       },
-      { id: 'arq-fb-doc-facturas', label: 'Facturas', icon: null, path: '/arquitectura/documentos/facturas', order: 4 },
-      { id: 'arq-fb-doc-actas', label: 'Actas', icon: null, path: '/arquitectura/documentos/actas', order: 5 },
+      {
+        id: 'arq-fb-doc-facturas',
+        label: 'Facturas',
+        icon: null,
+        path: '/arquitectura/documentos/facturas',
+        order: 4,
+      },
+      {
+        id: 'arq-fb-doc-actas',
+        label: 'Actas',
+        icon: null,
+        path: '/arquitectura/documentos/actas',
+        order: 5,
+      },
     ],
   },
   {
@@ -125,8 +154,20 @@ export const ARQUITECTURA_FALLBACK_MENUS: MenuItem[] = [
     path: null,
     order: 6,
     children: [
-      { id: 'arq-fb-mat-catalogo', label: 'Catálogo', icon: null, path: '/arquitectura/materiales/catalogo', order: 0 },
-      { id: 'arq-fb-mat-proveedores', label: 'Proveedores', icon: null, path: '/arquitectura/materiales/proveedores', order: 1 },
+      {
+        id: 'arq-fb-mat-catalogo',
+        label: 'Catálogo',
+        icon: null,
+        path: '/arquitectura/materiales/catalogo',
+        order: 0,
+      },
+      {
+        id: 'arq-fb-mat-proveedores',
+        label: 'Proveedores',
+        icon: null,
+        path: '/arquitectura/materiales/proveedores',
+        order: 1,
+      },
     ],
   },
   {
@@ -156,8 +197,5 @@ export function arquitecturaMenusLookComplete(apiMenus: MenuItem[]): boolean {
   if (!apiMenus.length) return false
   const proyectos = apiMenus.find((m) => m.label.trim() === 'Proyectos')
   const presupuestos = apiMenus.find((m) => m.label.trim() === 'Presupuestos')
-  return !!(
-    proyectos?.children?.length &&
-    presupuestos?.children?.length
-  )
+  return !!(proyectos?.children?.length && presupuestos?.children?.length)
 }

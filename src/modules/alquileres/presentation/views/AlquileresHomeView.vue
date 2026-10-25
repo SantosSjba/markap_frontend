@@ -1,22 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAuthStore } from '@modules/auth'
-import { useRentalStats } from '@modules/alquileres'
+import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
+import { useRentalStats } from '../../features/alquileres/presentation/composables/useRentals'
 import {
   useReportsSummary,
   useContractsExpiring,
   useContractStatusSummary,
   useMonthlyMetrics,
   useRentalsByMonth,
-} from '@modules/alquileres/features/reportes'
-
+} from '../../features/reportes/presentation/composables/useReportes'
 import DashboardKpiCard from '../components/DashboardKpiCard.vue'
 import DashboardAlertasList from '../components/DashboardAlertasList.vue'
 import DashboardBarChart from '../components/DashboardBarChart.vue'
 import DashboardAccionesRapidas from '../components/DashboardAccionesRapidas.vue'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { formatDate } from '@/shared/utils/formatters'
-
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { formatDate } from '@shared/utils/formatters'
 const authStore = useAuthStore()
 const currentYear = ref(new Date().getFullYear())
 
@@ -25,7 +23,10 @@ const summaryQuery = useReportsSummary()
 const expiringQuery = useContractsExpiring('alquileres', 30)
 const contractStatusQuery = useContractStatusSummary()
 const monthlyMetricsQuery = useMonthlyMetrics()
-const rentalsByMonthQuery = useRentalsByMonth('alquileres', computed(() => ({ year: currentYear.value })))
+const rentalsByMonthQuery = useRentalsByMonth(
+  'alquileres',
+  computed(() => ({ year: currentYear.value })),
+)
 
 const loading = computed(
   () =>
@@ -33,17 +34,36 @@ const loading = computed(
     summaryQuery.isPending.value ||
     expiringQuery.isPending.value ||
     contractStatusQuery.isPending.value ||
-    monthlyMetricsQuery.isPending.value
+    monthlyMetricsQuery.isPending.value,
 )
 
-const stats = computed(() => rentalStatsQuery.data.value ?? { total: 0, vigentes: 0, porVencer: 0, vencidos: 0 })
-const summary = computed(() => summaryQuery.data.value ?? { contratosPorVencer: 0, propiedadesSinContrato: 0, clientesActivos: 0, clientesConIncidencias: 0 })
-const metrics = computed(() => monthlyMetricsQuery.data.value ?? { tasaOcupacion: 0, tasaCobranza: 0, contratosRenovados: 0, clientesNuevos: 0 })
+const stats = computed(
+  () => rentalStatsQuery.data.value ?? { total: 0, vigentes: 0, porVencer: 0, vencidos: 0 },
+)
+const summary = computed(
+  () =>
+    summaryQuery.data.value ?? {
+      contratosPorVencer: 0,
+      propiedadesSinContrato: 0,
+      clientesActivos: 0,
+      clientesConIncidencias: 0,
+    },
+)
+const metrics = computed(
+  () =>
+    monthlyMetricsQuery.data.value ?? {
+      tasaOcupacion: 0,
+      tasaCobranza: 0,
+      contratosRenovados: 0,
+      clientesNuevos: 0,
+    },
+)
 const expiringItems = computed(() => expiringQuery.data.value ?? [])
 const rentalsByMonth = computed(() => rentalsByMonthQuery.data.value ?? [])
 
 const greetingHour = new Date().getHours()
-const greeting = greetingHour < 12 ? 'Buenos días' : greetingHour < 19 ? 'Buenas tardes' : 'Buenas noches'
+const greeting =
+  greetingHour < 12 ? 'Buenos días' : greetingHour < 19 ? 'Buenas tardes' : 'Buenas noches'
 const firstName = computed(() => authStore.user?.firstName ?? 'Usuario')
 
 type ChartMode = 'newContracts' | 'expiredContracts' | 'activeAtEndOfMonth'

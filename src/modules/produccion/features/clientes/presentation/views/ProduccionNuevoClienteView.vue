@@ -2,20 +2,21 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import {
   useDocumentTypes,
   useDepartments,
   useProvinces,
   useDistricts,
   useCreateProduccionClient,
-} from '../../application/useClients'
+} from '../composables/useClients'
 import type { DocumentType } from '../../domain/client.types'
-import { PRODUCCION_BASE_PATH } from '@modules/produccion/config/routes.constants'
-
+import { PRODUCCION_BASE_PATH } from '../../../../config/routes.constants'
 const router = useRouter()
 const appColor = 'var(--color-primary)'
 

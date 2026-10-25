@@ -1,37 +1,40 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, AppIcon, FormSelect, FormSectionCard } from '@shared/components'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import {
   useVentasClosingReadiness,
   useVentasFinancingChannels,
   useVentasProcessDetail,
   useVentasUpdateProcess,
-} from '../../application/useVentasSales'
+} from '../composables/useVentasSales'
 import {
   useVentasMarkCommissionPaid,
   useVentasRecalculateCommission,
-} from '@ventas/finanzas'
+} from '../../../ventas-finanzas/presentation/composables/useVentasFinanzas'
 import type {
   SaleFinancingChannel,
   SaleProcessCommission,
   SaleProcessDetail,
 } from '../../domain/sales.types'
-import { useVentasPipelineStages } from '@ventas/configuracion'
-import {
-  processStatusLabel,
-  allowedForwardStageOptions,
-} from '../../domain/pipeline.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { useVentasPipelineStages } from '../../../ventas-configuracion/presentation/composables/useVentasConfig'
+import { processStatusLabel, allowedForwardStageOptions } from '../../domain/pipeline.constants'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import SaleProcessFollowUpPanel from '../components/SaleProcessFollowUpPanel.vue'
 import MarkSaleLostModal from '../components/MarkSaleLostModal.vue'
-
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
 
-const { stageOptions, orderedCodes, labelFor: pipelineStageLabel, query: pipelineConfigQuery } =
-  useVentasPipelineStages()
+const {
+  stageOptions,
+  orderedCodes,
+  labelFor: pipelineStageLabel,
+  query: pipelineConfigQuery,
+} = useVentasPipelineStages()
 
 const {
   data: proc,

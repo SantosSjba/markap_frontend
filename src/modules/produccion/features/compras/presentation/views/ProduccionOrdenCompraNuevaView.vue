@@ -1,22 +1,39 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, FormSelect, FormTextarea, AppIcon } from '@shared/components'
-import { useProduccionSuppliersList, usePurchaseOrderMutations } from '../../application/useProduccionPurchases'
-import { useProduccionMaterialsList } from '../../../inventario/application/useProduccionInventory'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import {
+  useProduccionSuppliersList,
+  usePurchaseOrderMutations,
+} from '../composables/useProduccionPurchases'
+import { useProduccionMaterialsList } from '../../../inventario/presentation/composables/useProduccionInventory'
 import { formatSol } from '../labels'
-
 const router = useRouter()
 const { create } = usePurchaseOrderMutations()
 
-const { data: suppliersRes } = useProduccionSuppliersList(ref({ page: 1, limit: 100, isActive: true }))
-const { data: materialsRes } = useProduccionMaterialsList(ref({ page: 1, limit: 200, isActive: true }))
+const { data: suppliersRes } = useProduccionSuppliersList(
+  ref({ page: 1, limit: 100, isActive: true }),
+)
+const { data: materialsRes } = useProduccionMaterialsList(
+  ref({ page: 1, limit: 200, isActive: true }),
+)
 
 const supplierOptions = computed(() =>
-  (suppliersRes.value?.data ?? []).map((s) => ({ value: s.id, label: `${s.companyName} (${s.ruc})` })),
+  (suppliersRes.value?.data ?? []).map((s) => ({
+    value: s.id,
+    label: `${s.companyName} (${s.ruc})`,
+  })),
 )
 const materialOptions = computed(() =>
-  (materialsRes.value?.data ?? []).map((m) => ({ value: m.id, label: `${m.code} · ${m.name}`, unitCost: m.unitCost })),
+  (materialsRes.value?.data ?? []).map((m) => ({
+    value: m.id,
+    label: `${m.code} · ${m.name}`,
+    unitCost: m.unitCost,
+  })),
 )
 
 const supplierId = ref('')
@@ -28,7 +45,10 @@ const lines = ref<{ materialId: string; quantityOrdered: number; unitPrice: numb
 const saving = ref(false)
 
 const total = computed(() =>
-  lines.value.reduce((s, l) => s + (Number(l.quantityOrdered) || 0) * (Number(l.unitPrice) || 0), 0),
+  lines.value.reduce(
+    (s, l) => s + (Number(l.quantityOrdered) || 0) * (Number(l.unitPrice) || 0),
+    0,
+  ),
 )
 
 function addLine() {

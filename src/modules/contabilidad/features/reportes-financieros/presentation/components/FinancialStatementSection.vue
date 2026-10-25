@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import type { FinancialStatementLineDTO } from '../../domain/financial.types'
-
 defineProps<{
   title: string
   lines: FinancialStatementLineDTO[]

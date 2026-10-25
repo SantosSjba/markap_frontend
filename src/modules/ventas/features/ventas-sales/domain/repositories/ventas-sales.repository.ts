@@ -10,7 +10,6 @@ import type {
   SaleProcessListRow,
   SaleSeparationRow,
 } from '../sales.types'
-
 /**
  * Puerto (contrato) de acceso a datos de ventas — desacopla application del transporte HTTP.
  */

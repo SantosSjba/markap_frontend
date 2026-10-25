@@ -1,20 +1,27 @@
 <script setup lang="ts">
+import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
+import { ventasPropertiesRepositoryKey } from '../../../propiedades/application/ports/ventas-properties.port'
+import { useService } from '@shared/presentation/di/services'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, FormSelect, AppIcon, FormSectionCard } from '@shared/components'
-import { useVentasPipelineStages } from '@ventas/configuracion'
-import { useVentasCreateProcess, useVentasFinancingChannels } from '../../application/useVentasSales'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import { useVentasPipelineStages } from '../../../ventas-configuracion/presentation/composables/useVentasConfig'
+import { useVentasCreateProcess, useVentasFinancingChannels } from '../composables/useVentasSales'
 import type {
   SaleFinancingChannel,
   SaleCommissionCalculationType,
   SaleCommissionDeductibleType,
   CreateProcessCommissionInput,
 } from '../../domain/sales.types'
-import { ventasClientsRepository } from '@modules/ventas/features/clientes'
-import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
-import { useVentasAgentsList } from '@modules/ventas/features/agentes'
-import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { useVentasAgentsList } from '../../../agentes/presentation/composables/useAgents'
+import { navigateAfterVentasSave } from '../../../../presentation/navigation/navigateAfterVentasSave'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const ventasClientsRepository = useService(ventasClientsRepositoryKey)
+const ventasPropertiesRepository = useService(ventasPropertiesRepositoryKey)
 
 const router = useRouter()
 const loading = ref(false)
@@ -39,7 +46,9 @@ const calculationTypeOptions = [
 
 const buyerOptions = ref<{ value: string; label: string }[]>([])
 const propertyOptions = ref<{ value: string; label: string }[]>([])
-const propertyOwners = ref<{ id: string; fullName: string; documentNumber: string; isPrimary: boolean }[]>([])
+const propertyOwners = ref<
+  { id: string; fullName: string; documentNumber: string; isPrimary: boolean }[]
+>([])
 const propertySalePrice = ref<number | null>(null)
 const loadingPropertyOwners = ref(false)
 
@@ -85,9 +94,7 @@ function buildEqualPaymentParts(count: number, existing?: PaymentPartDraft[]): P
   let assignedPct = 0
   for (let i = 0; i < n; i++) {
     const pct =
-      i === n - 1
-        ? Math.round((100 - assignedPct) * 100) / 100
-        : Math.round((100 / n) * 100) / 100
+      i === n - 1 ? Math.round((100 - assignedPct) * 100) / 100 : Math.round((100 / n) * 100) / 100
     assignedPct += pct
     const prev = existing?.[i]
     parts.push({
@@ -214,7 +221,8 @@ const commissionsPreview = computed(() =>
       const agent = agentsRes.value?.data.find((a) => a.id === row.agentId)
       const gross = resolveCommissionAmount(row)
       const deductiblesTotal = resolveDeductiblesTotal(row)
-      const net = gross != null ? Math.max(0, Math.round((gross - deductiblesTotal) * 100) / 100) : null
+      const net =
+        gross != null ? Math.max(0, Math.round((gross - deductiblesTotal) * 100) / 100) : null
       return {
         row,
         agentName: agent?.fullName ?? '—',

@@ -1,5 +1,5 @@
-import { apiClient } from '@core/api/apiClient'
-import { getContabilidadApiScope } from '@modules/contabilidad/config/api-scope'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { getContabilidadApiScope } from '../../../../config/api-scope'
 import type {
   ContabilidadJournalDetailResponse,
   ContabilidadJournalEntryDetailDTO,
@@ -7,7 +7,6 @@ import type {
   ListContabilidadJournalParams,
 } from '../../domain/journal.types'
 import type { ContabilidadJournalRepository } from '../../domain/repositories/contabilidad-journal.repository'
-
 function qs(extra?: ListContabilidadJournalParams) {
   const u = new URLSearchParams()
   Object.entries({ ...getContabilidadApiScope(), ...extra }).forEach(([k, v]) => {
@@ -38,9 +37,7 @@ export const contabilidadJournalApiRepository: ContabilidadJournalRepository = {
       .then((r) => r.data),
 
   deleteDraft: (id) =>
-    apiClient
-      .delete(`/contabilidad-journal-entries/${id}?${qs()}`)
-      .then(() => undefined),
+    apiClient.delete(`/contabilidad-journal-entries/${id}?${qs()}`).then(() => undefined),
 
   post: (id) =>
     apiClient
@@ -49,6 +46,8 @@ export const contabilidadJournalApiRepository: ContabilidadJournalRepository = {
 
   reverse: (id) =>
     apiClient
-      .post<ContabilidadJournalEntryDetailDTO>(`/contabilidad-journal-entries/${id}/reverse?${qs()}`)
+      .post<ContabilidadJournalEntryDetailDTO>(
+        `/contabilidad-journal-entries/${id}/reverse?${qs()}`,
+      )
       .then((r) => r.data),
 }

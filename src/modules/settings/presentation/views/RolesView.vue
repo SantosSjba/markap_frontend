@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
-import { useRoles } from '../../application/useUsers'
+import { useRoles } from '../composables/useUsers'
 import type { RoleInfo } from '../../domain/settings.types'
-
 /**
  * RolesView
  * Roles list view (read-only) — uses TanStack Query

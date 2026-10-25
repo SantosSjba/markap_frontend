@@ -1,27 +1,27 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  Badge,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-  SearchInput,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { formatDateTime } from '@/shared/utils/formatters'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { formatDateTime } from '@shared/utils/formatters'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
 import {
   CPE_DOCUMENT_KIND_OPTIONS,
   CPE_SUNAT_STATUS_OPTIONS,
   type ContabilidadCpeLogDTO,
 } from '../../domain/cpe-log.types'
-import { useContabilidadCpeLogs, useContabilidadCreateCpeLog } from '../../application/useContabilidadCpeLog'
-
+import {
+  useContabilidadCpeLogs,
+  useContabilidadCreateCpeLog,
+} from '../composables/useContabilidadCpeLog'
 const { activePeriod } = useContabilidadActivePeriod()
 
 const searchInput = ref('')
@@ -91,7 +91,12 @@ function submitForm() {
       cdrReference: form.value.cdrReference.trim() || null,
       notes: form.value.notes.trim() || null,
     },
-    { onSuccess: () => { modalOpen.value = false; void refetch() } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    },
   )
 }
 </script>

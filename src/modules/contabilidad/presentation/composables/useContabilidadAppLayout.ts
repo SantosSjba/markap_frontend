@@ -1,11 +1,13 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useMyApplications, useApplicationMenus } from '@modules/applications'
+import {
+  useMyApplications,
+  useApplicationMenus,
+} from '@modules/applications/presentation/composables/useApplications'
 import {
   CONTABILIDAD_FALLBACK_MENUS,
   contabilidadMenusLookComplete,
 } from '../../config/fallbackMenus'
-
 export function useContabilidadAppLayout() {
   const route = useRoute()
   const slug = computed(() => {
@@ -15,9 +17,7 @@ export function useContabilidadAppLayout() {
 
   const { data: menusFromApi, isLoading: menusLoading } = useApplicationMenus(slug)
   const { data: applications } = useMyApplications()
-  const application = computed(
-    () => applications.value?.find((a) => a.slug === slug.value) ?? null,
-  )
+  const application = computed(() => applications.value?.find((a) => a.slug === slug.value) ?? null)
 
   const menus = computed(() => {
     if (slug.value !== 'contabilidad') {

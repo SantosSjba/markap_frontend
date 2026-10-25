@@ -99,7 +99,7 @@ export function inRange(value: number, min: number, max: number): boolean {
  */
 export function isValidRuc(ruc: string): boolean {
   if (!/^\d{11}$/.test(ruc)) return false
-  
+
   // Basic validation - starts with 10, 15, 17 or 20
   const validPrefixes = ['10', '15', '17', '20']
   return validPrefixes.some((prefix) => ruc.startsWith(prefix))

@@ -3,7 +3,6 @@ import {
   ARQUITECTURA_PROJECT_LIFECYCLE_CODES,
   ARQUITECTURA_PROJECT_STATUS_LABELS,
 } from './project-stages.constants'
-
 export const PROJECT_TYPE_LABELS: Record<ArquitecturaProjectType, string> = {
   RESIDENTIAL: 'Residencial',
   COMMERCIAL: 'Comercial',

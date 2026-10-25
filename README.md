@@ -1,27 +1,28 @@
 # Markap Frontend
 
-El proyecto usa **arquitectura modular (Clean + FSD)**. **Imports de dominio**: alias `@modules/*` (ver `docs/CLEAN_MODULES.md` para el mapa físico). Core en `app/`, layouts en `shared/layouts` (`@layouts`), UI compartida en `shared`.
+Aplicación Vue 3, TypeScript, Vite, Pinia y TanStack Vue Query. Organizada por módulos de negocio con contratos tipados y adaptadores registrados en el arranque.
 
-- **[Arquitectura](docs/ARCHITECTURE.md)** — Capas, dependencias y convenciones.
-- **[Cómo agregar funcionalidades](docs/ADDING_FEATURES.md)** — Pasos para nuevas aplicaciones, funciones o features.
+- [Arquitectura y patrones](docs/ARCHITECTURE.md)
+- [Agregar funcionalidades](docs/ADDING_FEATURES.md)
+- [Mapa de módulos](docs/CLEAN_MODULES.md)
+- [Despliegue](DEPLOYMENT.md)
 
-## Requisitos
+## Desarrollo
 
-- Node.js 20+
-- [pnpm](https://pnpm.io/) 11 (`corepack enable pnpm`)
+Requiere Node.js 20.19+ o 22.12+ y pnpm 11. Se recomienda usar una versión LTS compatible.
 
-## Pasos de ejecución
-
-```bash
-# 1. Instalar dependencias
+```sh
 pnpm install
-
-# 2. (Opcional) Copiar variables de entorno
 cp .env.example .env
-# Configurar VITE_API_BASE_URL si la API no está en localhost:3000
-
-# 3. Iniciar servidor de desarrollo
-pnpm run dev
+pnpm dev
 ```
 
-La aplicación estará disponible en `http://localhost:5173`
+Configurar `VITE_API_BASE_URL` en `.env` con la URL de la API, incluyendo su prefijo `/api`. Vite muestra la dirección local al iniciar.
+
+```sh
+pnpm verify  # Arquitectura, tipos, regresión y compilación
+pnpm build  # Artefactos en dist/
+pnpm preview
+```
+
+`template/` contiene material local de referencia y permanece ignorado por Git.

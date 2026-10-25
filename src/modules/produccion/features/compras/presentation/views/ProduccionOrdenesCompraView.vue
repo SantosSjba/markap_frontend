@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, DataTable, FormSelect, SearchInput, AppIcon } from '@shared/components'
-import { useProduccionPurchaseOrdersList } from '../../application/useProduccionPurchases'
-import { formatSol, formatDate, PO_STATUS_LABELS, PO_STATUS_OPTIONS, poStatusClass } from '../labels'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useProduccionPurchaseOrdersList } from '../composables/useProduccionPurchases'
+import {
+  formatSol,
+  formatDate,
+  PO_STATUS_LABELS,
+  PO_STATUS_OPTIONS,
+  poStatusClass,
+} from '../labels'
 import type { ProduccionPurchaseOrderListItem } from '../../domain/purchases.types'
-
 const router = useRouter()
 const listParams = ref({ page: 1, limit: 50 })
 const searchInput = ref('')
@@ -15,7 +24,9 @@ const { data: result, isLoading } = useProduccionPurchaseOrdersList(
   computed(() => ({
     ...listParams.value,
     search: searchInput.value.trim() || undefined,
-    status: (statusFilter.value || undefined) as ProduccionPurchaseOrderListItem['status'] | undefined,
+    status: (statusFilter.value || undefined) as
+      | ProduccionPurchaseOrderListItem['status']
+      | undefined,
   })),
 )
 

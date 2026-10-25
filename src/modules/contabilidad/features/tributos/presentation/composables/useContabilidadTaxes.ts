@@ -1,0 +1,133 @@
+import { contabilidadTaxesRepositoryKey as taxesRepositoryKey } from '../../application/ports/contabilidad-taxes.port'
+import { useService } from '@shared/presentation/di/services'
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
+import { computed, type Ref } from 'vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { invalidateModuleQueries } from '@shared/utils/invalidateModuleQueries'
+import type {
+  CreateDetraccionBody,
+  CreatePerceptionBody,
+  CreateRetentionBody,
+  PayDetraccionBody,
+} from '../../domain/taxes.types'
+export const contabilidadTaxesKeys = {
+  root: ['contabilidad-taxes'] as const,
+  dashboard: (periodId?: string) => [...contabilidadTaxesKeys.root, 'dashboard', periodId] as const,
+  detraccionRates: () => [...contabilidadTaxesKeys.root, 'detraccion-rates'] as const,
+  detracciones: (params: Record<string, string | undefined>) =>
+    [...contabilidadTaxesKeys.root, 'detracciones', params] as const,
+  retentions: (params: Record<string, string | undefined>) =>
+    [...contabilidadTaxesKeys.root, 'retentions', params] as const,
+  perceptions: (params: Record<string, string | undefined>) =>
+    [...contabilidadTaxesKeys.root, 'perceptions', params] as const,
+}
+
+export function invalidateContabilidadTaxesCache(qc: QueryClient) {
+  return invalidateModuleQueries(qc, 'contabilidad')
+}
+
+export function useContabilidadTaxDashboard(periodId: Ref<string | undefined>) {
+  const taxesRepository = useService(taxesRepositoryKey)
+  return useQuery({
+    queryKey: computed(() => contabilidadTaxesKeys.dashboard(periodId.value)),
+    queryFn: () => taxesRepository.getDashboard(periodId.value),
+    staleTime: 10_000,
+  })
+}
+
+export function useContabilidadDetraccionRates() {
+  const taxesRepository = useService(taxesRepositoryKey)
+  return useQuery({
+    queryKey: contabilidadTaxesKeys.detraccionRates(),
+    queryFn: () => taxesRepository.listDetraccionRates(),
+    staleTime: 60_000,
+  })
+}
+
+export function useContabilidadDetracciones(params: Ref<Record<string, string | undefined>>) {
+  const taxesRepository = useService(taxesRepositoryKey)
+  return useQuery({
+    queryKey: computed(() => contabilidadTaxesKeys.detracciones(params.value)),
+    queryFn: () => taxesRepository.listDetracciones(params.value),
+    staleTime: 10_000,
+  })
+}
+
+export function useContabilidadCreateDetraccion() {
+  const taxesRepository = useService(taxesRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateDetraccionBody) => taxesRepository.createDetraccion(body),
+    onSuccess: async () => {
+      await invalidateContabilidadTaxesCache(qc)
+      void markapAlert.toast.success('Detracción registrada')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
+  })
+}
+
+export function useContabilidadPayDetraccion() {
+  const taxesRepository = useService(taxesRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: PayDetraccionBody }) =>
+      taxesRepository.payDetraccion(id, body),
+    onSuccess: async () => {
+      await invalidateContabilidadTaxesCache(qc)
+      void markapAlert.toast.success('Pago SPOT registrado')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo pagar', getApiErrorMessage(e)),
+  })
+}
+
+export function useContabilidadRetentions(params: Ref<Record<string, string | undefined>>) {
+  const taxesRepository = useService(taxesRepositoryKey)
+  return useQuery({
+    queryKey: computed(() => contabilidadTaxesKeys.retentions(params.value)),
+    queryFn: () => taxesRepository.listRetentions(params.value),
+    staleTime: 10_000,
+  })
+}
+
+export function useContabilidadCreateRetention() {
+  const taxesRepository = useService(taxesRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateRetentionBody) => taxesRepository.createRetention(body),
+    onSuccess: async () => {
+      await invalidateContabilidadTaxesCache(qc)
+      void markapAlert.toast.success('Retención registrada')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
+  })
+}
+
+export function useContabilidadPerceptions(params: Ref<Record<string, string | undefined>>) {
+  const taxesRepository = useService(taxesRepositoryKey)
+  return useQuery({
+    queryKey: computed(() => contabilidadTaxesKeys.perceptions(params.value)),
+    queryFn: () => taxesRepository.listPerceptions(params.value),
+    staleTime: 10_000,
+  })
+}
+
+export function useContabilidadCreatePerception() {
+  const taxesRepository = useService(taxesRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreatePerceptionBody) => taxesRepository.createPerception(body),
+    onSuccess: async () => {
+      await invalidateContabilidadTaxesCache(qc)
+      void markapAlert.toast.success('Percepción registrada')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo registrar', getApiErrorMessage(e)),
+  })
+}
+
+export function useFetchContabilidadPdt621Export() {
+  const taxesRepository = useService(taxesRepositoryKey)
+  return async function fetchContabilidadPdt621Export(periodId: string) {
+    return taxesRepository.exportPdt621(periodId)
+  }
+}

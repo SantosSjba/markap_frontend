@@ -1,19 +1,18 @@
 import type { RouteRecordRaw } from 'vue-router'
 import ArquitecturaLayout from '../views/ArquitecturaLayout.vue'
-import { SectionLayout } from '@layouts'
+import SectionLayout from '@app/layouts/SectionLayout.vue'
 import { ARQUITECTURA_BASE_PATH } from '../../config/routes.constants'
-import { arquitecturaClientesRoutes } from '../../features/clientes'
-import { arquitecturaConfiguracionRoutes } from '../../features/configuracion'
-import { arquitecturaProyectosRoutes } from '../../features/proyectos'
-import { arquitecturaPresupuestosRoutes } from '../../features/presupuestos'
-import { arquitecturaDocumentosRoutes } from '../../features/documentos'
-import { arquitecturaEjecucionRoutes } from '../../features/ejecucion'
+import { arquitecturaClientesRoutes } from '../../features/clientes/presentation/router/index'
+import { arquitecturaConfiguracionRoutes } from '../../features/configuracion/presentation/router/index'
+import { arquitecturaProyectosRoutes } from '../../features/proyectos/presentation/router/index'
+import { arquitecturaPresupuestosRoutes } from '../../features/presupuestos/presentation/router/index'
+import { arquitecturaDocumentosRoutes } from '../../features/documentos/presentation/router/index'
+import { arquitecturaEjecucionRoutes } from '../../features/ejecucion/presentation/router/index'
 import {
   arquitecturaMaterialesCatalogoRoutes,
   arquitecturaMaterialesProveedoresRoutes,
-} from '../../features/materiales'
-import { arquitecturaReportesRoutes } from '../../features/reportes'
-
+} from '../../features/materiales/presentation/router/index'
+import { arquitecturaReportesRoutes } from '../../features/reportes/presentation/router/index'
 export const arquitecturaRoutes: RouteRecordRaw[] = [
   {
     path: ARQUITECTURA_BASE_PATH,
@@ -53,7 +52,8 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
       {
         path: 'cronograma',
         name: 'arquitectura-cronograma',
-        component: () => import('../../features/cronograma/presentation/views/ArquitecturaCronogramaView.vue'),
+        component: () =>
+          import('../../features/cronograma/presentation/views/ArquitecturaCronogramaView.vue'),
         meta: { title: 'Cronograma' },
       },
       {

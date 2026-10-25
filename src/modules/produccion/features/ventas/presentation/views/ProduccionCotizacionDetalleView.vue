@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, DataTable, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useProduccionQuotationDetail, useQuotationMutations, openProduccionQuotationPdf } from '../../application/useProduccionSales'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
-  formatSol,
-  formatDate,
-  QUOTATION_STATUS_LABELS,
-  quotationStatusClass,
-} from '../labels'
+  useProduccionQuotationDetail,
+  useQuotationMutations,
+  useOpenProduccionQuotationPdf,
+} from '../composables/useProduccionSales'
+import { formatSol, formatDate, QUOTATION_STATUS_LABELS, quotationStatusClass } from '../labels'
 import type { ProduccionQuotationLine } from '../../domain/sales.types'
+const openProduccionQuotationPdf = useOpenProduccionQuotationPdf()
 
 const route = useRoute()
 const router = useRouter()
@@ -51,7 +53,10 @@ async function doAccept() {
 }
 
 async function doReject() {
-  const ok = await markapAlert.confirmDanger({ title: '¿Rechazar cotización?', confirmText: 'Rechazar' })
+  const ok = await markapAlert.confirmDanger({
+    title: '¿Rechazar cotización?',
+    confirmText: 'Rechazar',
+  })
   if (!ok) return
   await reject.mutateAsync(id.value)
   void refetch()
@@ -67,7 +72,10 @@ async function doExportPdf() {
 }
 
 async function doDelete() {
-  const ok = await markapAlert.confirmDanger({ title: '¿Eliminar borrador?', confirmText: 'Eliminar' })
+  const ok = await markapAlert.confirmDanger({
+    title: '¿Eliminar borrador?',
+    confirmText: 'Eliminar',
+  })
   if (!ok) return
   await remove.mutateAsync(id.value)
   void router.push({ name: 'produccion-ventas-cotizaciones' })

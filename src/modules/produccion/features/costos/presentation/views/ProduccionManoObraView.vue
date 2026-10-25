@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { BaseButton, DataTable, FormInput, SearchInput, AppIcon, BaseModal } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useProduccionLaborRatesList, useLaborRateMutations } from '../../application/useProduccionCosts'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import {
+  useProduccionLaborRatesList,
+  useLaborRateMutations,
+} from '../composables/useProduccionCosts'
 import { formatSol, LABOR_STAGES } from '../labels'
 import type { ProduccionLaborRate } from '../../domain/costs.types'
-
 const listParams = ref({ page: 1, limit: 50 })
 const searchInput = ref('')
 

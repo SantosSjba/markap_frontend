@@ -1,21 +1,19 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BasePagination,
-  BaseModal,
-  DataTable,
-  SearchInput,
-  AppIcon,
-  ActionsDropdown,
-  FileDropzone,
-  FormInput,
-  FormSelect,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
-import { useInteriorProjectsList } from '@modules/interiorismo/features/proyectos/application/useInteriorProjects'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
+import { useInteriorProjectsList } from '../../../proyectos/presentation/composables/useInteriorProjects'
 import type {
   InteriorDocumentRow,
   InteriorDocumentType,
@@ -26,10 +24,11 @@ import {
   useUploadInteriorDocument,
   useUpdateInteriorDocument,
   useDeleteInteriorDocument,
-  openInteriorDocumentFile,
-} from '../../application/useInteriorDocuments'
+  useOpenInteriorDocumentFile,
+} from '../composables/useInteriorDocuments'
 import { DOCUMENT_TYPE_FORM_OPTIONS, INTERIOR_DOCUMENT_NAV } from '../documentNav'
-import { formatDateTime } from '@/shared/utils/formatters'
+import { formatDateTime } from '@shared/utils/formatters'
+const openInteriorDocumentFile = useOpenInteriorDocumentFile()
 
 const route = useRoute()
 const router = useRouter()
@@ -212,7 +211,9 @@ function goProject(id: string) {
   void router.push(`${INTERIORISMO_BASE_PATH}/proyectos/${id}`)
 }
 
-function getDocActions(row: InteriorDocumentRow): { label: string; icon: string; onClick: () => void }[] {
+function getDocActions(
+  row: InteriorDocumentRow,
+): { label: string; icon: string; onClick: () => void }[] {
   return [
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => openEdit(row) },
     { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => void removeRow(row) },

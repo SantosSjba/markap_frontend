@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { DataTable, PageHeader } from '@shared/components'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useContabilidadTreasuryMovements } from '@modules/contabilidad/features/tesoreria/application/useContabilidadTreasury'
-import type { ContabilidadTreasuryMovementDTO } from '@modules/contabilidad/features/tesoreria/domain/treasury.types'
-
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
+import { useContabilidadTreasuryMovements } from '../../../tesoreria/presentation/composables/useContabilidadTreasury'
+import type { ContabilidadTreasuryMovementDTO } from '../../../tesoreria/domain/treasury.types'
 const { activePeriod } = useContabilidadActivePeriod()
 
 const listParams = computed(() => ({

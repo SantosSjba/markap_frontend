@@ -1,10 +1,13 @@
+import type { ContabilidadPeriodsRepository } from '../../features/periodos/domain/repositories/contabilidad-periods.repository'
+import { contabilidadPeriodsRepositoryKey } from '../../features/periodos/application/ports/contabilidad-periods.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, watch, computed } from 'vue'
-import type { ContabilidadPeriodDTO } from '@modules/contabilidad/features/periodos/domain/period.types'
-import { contabilidadPeriodsApiRepository } from '@modules/contabilidad/features/periodos/infrastructure/repositories/contabilidad-periods.api.repository'
+import type { ContabilidadPeriodDTO } from '../../features/periodos/domain/period.types'
 import { activeLegalEntityIdRef } from '../../config/api-scope'
-
 function periodStorageKey(entityId?: string) {
-  return entityId ? `markap.contabilidad.activePeriod.${entityId}` : 'markap.contabilidad.activePeriod'
+  return entityId
+    ? `markap.contabilidad.activePeriod.${entityId}`
+    : 'markap.contabilidad.activePeriod'
 }
 
 export interface ContabilidadActivePeriod extends ContabilidadPeriodDTO {}
@@ -61,7 +64,11 @@ export function applyPeriodBootstrap(
   }
 }
 
-export async function loadPeriodsForEntity(entityId: string, year?: number) {
+export async function loadPeriodsForEntity(
+  contabilidadPeriodsApiRepository: ContabilidadPeriodsRepository,
+  entityId: string,
+  year?: number,
+) {
   loading.value = true
   try {
     const y = year ?? listYear.value
@@ -110,18 +117,19 @@ export function useContabilidadActivePeriodState() {
 
 /** @deprecated Prefer useContabilidadContext() for layout init; kept for views that only need period state. */
 export function useContabilidadActivePeriod() {
+  const repository = useService(contabilidadPeriodsRepositoryKey)
   const state = useContabilidadActivePeriodState()
 
   return {
     ...state,
     loadPeriods: () =>
       activeLegalEntityIdRef.value
-        ? loadPeriodsForEntity(activeLegalEntityIdRef.value)
+        ? loadPeriodsForEntity(repository, activeLegalEntityIdRef.value)
         : Promise.resolve(),
     setListYear: (year: number) => {
       listYear.value = year
       return activeLegalEntityIdRef.value
-        ? loadPeriodsForEntity(activeLegalEntityIdRef.value, year)
+        ? loadPeriodsForEntity(repository, activeLegalEntityIdRef.value, year)
         : Promise.resolve()
     },
   }

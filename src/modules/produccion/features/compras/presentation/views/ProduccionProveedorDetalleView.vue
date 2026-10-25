@@ -1,23 +1,20 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  AppIcon,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
   useProduccionSupplierDetail,
   useSupplierMutations,
-} from '../../application/useProduccionPurchases'
-import { useProduccionMaterialsList } from '../../../inventario/application/useProduccionInventory'
+} from '../composables/useProduccionPurchases'
+import { useProduccionMaterialsList } from '../../../inventario/presentation/composables/useProduccionInventory'
 import type { ProduccionSupplierMaterialLink } from '../../domain/purchases.types'
-
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
@@ -34,19 +31,25 @@ const notes = ref('')
 const isActive = ref(true)
 const saving = ref(false)
 
-watch(detail, (d) => {
-  if (!d) return
-  companyName.value = d.companyName
-  ruc.value = d.ruc
-  contactName.value = d.contactName ?? ''
-  phone.value = d.phone ?? ''
-  email.value = d.email ?? ''
-  notes.value = d.notes ?? ''
-  isActive.value = d.isActive
-}, { immediate: true })
+watch(
+  detail,
+  (d) => {
+    if (!d) return
+    companyName.value = d.companyName
+    ruc.value = d.ruc
+    contactName.value = d.contactName ?? ''
+    phone.value = d.phone ?? ''
+    email.value = d.email ?? ''
+    notes.value = d.notes ?? ''
+    isActive.value = d.isActive
+  },
+  { immediate: true },
+)
 
 const { data: materialsRes } = useProduccionMaterialsList(ref({ page: 1, limit: 200 }))
-const linkedIds = computed(() => new Set((detail.value?.materialLinks ?? []).map((l) => l.materialId)))
+const linkedIds = computed(
+  () => new Set((detail.value?.materialLinks ?? []).map((l) => l.materialId)),
+)
 const materialOptions = computed(() =>
   (materialsRes.value?.data ?? [])
     .filter((m) => !linkedIds.value.has(m.id))

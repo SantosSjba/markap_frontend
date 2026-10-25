@@ -1,5 +1,4 @@
 import type { LoginCredentials, LoginResponse, User } from '../auth.types'
-
 export interface AuthRepository {
   login(credentials: LoginCredentials): Promise<LoginResponse>
   getProfile(): Promise<User>

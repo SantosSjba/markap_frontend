@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_CPE_LOG_APP_SLUG } from '../../domain/cpe-log.types'
 import type { ContabilidadCpeLogRepository } from '../../domain/repositories/contabilidad-cpe-log.repository'
-
 function qs(params: Record<string, string | undefined> = {}) {
   const parts = [`applicationSlug=${CONTABILIDAD_CPE_LOG_APP_SLUG}`]
   for (const [key, value] of Object.entries(params)) {
@@ -12,8 +11,12 @@ function qs(params: Record<string, string | undefined> = {}) {
 
 export const contabilidadCpeLogApiRepository: ContabilidadCpeLogRepository = {
   listLogs: (params) =>
-    apiClient.get(`/contabilidad-extensions/electronic-document-logs?${qs(params)}`).then((r) => r.data),
+    apiClient
+      .get(`/contabilidad-extensions/electronic-document-logs?${qs(params)}`)
+      .then((r) => r.data),
 
   createLog: (body) =>
-    apiClient.post(`/contabilidad-extensions/electronic-document-logs?${qs()}`, body).then((r) => r.data),
+    apiClient
+      .post(`/contabilidad-extensions/electronic-document-logs?${qs()}`, body)
+      .then((r) => r.data),
 }

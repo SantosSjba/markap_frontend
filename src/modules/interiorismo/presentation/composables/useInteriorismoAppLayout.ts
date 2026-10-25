@@ -1,11 +1,13 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useMyApplications, useApplicationMenus } from '@modules/applications'
+import {
+  useMyApplications,
+  useApplicationMenus,
+} from '@modules/applications/presentation/composables/useApplications'
 import {
   INTERIORISMO_FALLBACK_MENUS,
   interiorismoMenusLookComplete,
 } from '../../config/fallbackMenus'
-
 /**
  * Layout de Interiorismo: menús por API; si el seed no creó el árbol (solo ítems planos o vacío),
  * se usa un menú estático equivalente al seed para que el sidebar siempre sea usable.
@@ -19,9 +21,7 @@ export function useInteriorismoAppLayout() {
 
   const { data: menusFromApi, isLoading: menusLoading } = useApplicationMenus(slug)
   const { data: applications } = useMyApplications()
-  const application = computed(
-    () => applications.value?.find((a) => a.slug === slug.value) ?? null,
-  )
+  const application = computed(() => applications.value?.find((a) => a.slug === slug.value) ?? null)
 
   const menus = computed(() => {
     if (slug.value !== 'interiorismo') {

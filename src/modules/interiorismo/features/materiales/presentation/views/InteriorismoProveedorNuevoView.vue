@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, AppIcon } from '@shared/components'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
-import { useCreateInteriorMaterialSupplier } from '../../application/useInteriorMaterialSuppliers'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
+import { useCreateInteriorMaterialSupplier } from '../composables/useInteriorMaterialSuppliers'
 const router = useRouter()
 const createMut = useCreateInteriorMaterialSupplier()
 

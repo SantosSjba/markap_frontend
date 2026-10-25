@@ -1,23 +1,26 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
 import {
-  BaseButton,
-  BasePagination,
-  BaseModal,
-  DataTable,
-  SearchInput,
-  Badge,
-  AppIcon,
-  ActionsDropdown,
-} from '@shared/components'
-import { useInteriorProjectsList, useUpdateInteriorProject } from '@modules/interiorismo/features/proyectos/application/useInteriorProjects'
-import type { InteriorProjectListItem, ListInteriorProjectsParams } from '@modules/interiorismo/features/proyectos/domain/project.types'
-import { projectStatusLabel } from '@modules/interiorismo/features/proyectos/presentation/labels'
-import { useInteriorProjectStageOptions } from '@modules/interiorismo/features/proyectos/application/useInteriorProjectStageOptions'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+  useInteriorProjectsList,
+  useUpdateInteriorProject,
+} from '../../../proyectos/presentation/composables/useInteriorProjects'
+import type {
+  InteriorProjectListItem,
+  ListInteriorProjectsParams,
+} from '../../../proyectos/domain/project.types'
+import { projectStatusLabel } from '../../../proyectos/presentation/labels'
+import { useInteriorProjectStageOptions } from '../../../proyectos/presentation/composables/useInteriorProjectStageOptions'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const router = useRouter()
 const { stageLabelMap } = useInteriorProjectStageOptions()
 const ITEMS = 12
@@ -116,7 +119,9 @@ const executeCancel = async () => {
   }
 }
 
-const getActions = (r: InteriorProjectListItem): { label: string; icon: string; onClick: () => void }[] => {
+const getActions = (
+  r: InteriorProjectListItem,
+): { label: string; icon: string; onClick: () => void }[] => {
   const items: { label: string; icon: string; onClick: () => void }[] = [
     { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(r) },
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => goEdit(r) },

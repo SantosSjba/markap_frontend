@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import { ventasPropertiesRepositoryKey } from '../../application/ports/ventas-properties.port'
+import { useService } from '@shared/presentation/di/services'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, FormSectionCard, FileDropzone } from '@shared/components'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import {
   useVentasPropertyTypes,
   useVentasPropertyCurrencies,
@@ -13,20 +20,20 @@ import {
   useVentasPropertyDistricts,
   useVentasPropertyOwners,
   useVentasCreateProperty,
-} from '../../application/useVentasProperties'
+} from '../composables/useVentasProperties'
 import type {
   VentasPropertyType,
   VentasCurrency,
   VentasOwnerOption,
 } from '../../domain/property.types'
-import { ventasPropertiesApiRepository } from '../../infrastructure/repositories/ventas-properties.api.repository'
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
   mergeDepartmentOptions,
   buildPropertyUbigeoPayload,
 } from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
-import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
+import { navigateAfterVentasSave } from '../../../../presentation/navigation/navigateAfterVentasSave'
+const ventasPropertiesApiRepository = useService(ventasPropertiesRepositoryKey)
 
 type ListingVentas = 'AVAILABLE' | 'RESERVED' | 'SOLD'
 
@@ -93,12 +100,36 @@ const schema = yup.object({
     otherwise: (s) => s.trim(),
   }),
   description: yup.string().trim(),
-  area: yup.number().transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v))).min(0).nullable(),
-  bedrooms: yup.number().transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v))).min(0).integer().nullable(),
-  bathrooms: yup.number().transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v))).min(0).integer().nullable(),
-  ageYears: yup.number().transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v))).min(0).integer().nullable(),
+  area: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v)))
+    .min(0)
+    .nullable(),
+  bedrooms: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v)))
+    .min(0)
+    .integer()
+    .nullable(),
+  bathrooms: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v)))
+    .min(0)
+    .integer()
+    .nullable(),
+  ageYears: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v)))
+    .min(0)
+    .integer()
+    .nullable(),
   floorLevel: yup.string().trim(),
-  parkingSpaces: yup.number().transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v))).min(0).integer().nullable(),
+  parkingSpaces: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v)))
+    .min(0)
+    .integer()
+    .nullable(),
   partida1: yup.string().trim().max(100),
   partida2: yup.string().trim().max(100),
   partida3: yup.string().trim().max(100),
@@ -110,42 +141,40 @@ const schema = yup.object({
     .transform((v) => (v === '' || isNaN(Number(v)) ? undefined : Number(v)))
     .required('Indique el precio de venta')
     .min(0),
-  listingStatus: yup
-    .mixed<ListingVentas>()
-    .oneOf(['AVAILABLE', 'RESERVED', 'SOLD'])
-    .required(),
+  listingStatus: yup.mixed<ListingVentas>().oneOf(['AVAILABLE', 'RESERVED', 'SOLD']).required(),
 })
 
-const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm<PropertyFormValues>({
-  validationSchema: toTypedSchema(schema) as never,
-  initialValues: {
-    code: 'VNT-',
-    propertyTypeId: '',
-    addressLine: '',
-    departmentId: '',
-    provinceId: '',
-    districtId: '',
-    locationCountry: '',
-    locationDepartment: '',
-    locationProvince: '',
-    locationDistrict: '',
-    description: '',
-    area: '',
-    bedrooms: '',
-    bathrooms: '',
-    ageYears: '',
-    floorLevel: '',
-    parkingSpaces: '',
-    partida1: '',
-    partida2: '',
-    partida3: '',
-    ownerId: '',
-    projectName: '',
-    saleCurrency: 'PEN',
-    salePrice: '',
-    listingStatus: 'AVAILABLE',
-  },
-})
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } =
+  useForm<PropertyFormValues>({
+    validationSchema: toTypedSchema(schema) as never,
+    initialValues: {
+      code: 'VNT-',
+      propertyTypeId: '',
+      addressLine: '',
+      departmentId: '',
+      provinceId: '',
+      districtId: '',
+      locationCountry: '',
+      locationDepartment: '',
+      locationProvince: '',
+      locationDistrict: '',
+      description: '',
+      area: '',
+      bedrooms: '',
+      bathrooms: '',
+      ageYears: '',
+      floorLevel: '',
+      parkingSpaces: '',
+      partida1: '',
+      partida2: '',
+      partida3: '',
+      ownerId: '',
+      projectName: '',
+      saleCurrency: 'PEN',
+      salePrice: '',
+      listingStatus: 'AVAILABLE',
+    },
+  })
 
 const codeBinds = defineComponentBinds('code')
 const propertyTypeIdBinds = defineComponentBinds('propertyTypeId')
@@ -178,8 +207,10 @@ const selectedProvinceId = computed(() => values.provinceId || undefined)
 const { data: propertyTypes, isLoading: loadingTypes } = useVentasPropertyTypes()
 const { data: currencies, isLoading: loadingCurrencies } = useVentasPropertyCurrencies()
 const { data: departments, isLoading: loadingDepartments } = useVentasPropertyDepartments()
-const { data: provinces, isLoading: loadingProvinces } = useVentasPropertyProvinces(selectedDepartmentId)
-const { data: districts, isLoading: loadingDistricts } = useVentasPropertyDistricts(selectedProvinceId)
+const { data: provinces, isLoading: loadingProvinces } =
+  useVentasPropertyProvinces(selectedDepartmentId)
+const { data: districts, isLoading: loadingDistricts } =
+  useVentasPropertyDistricts(selectedProvinceId)
 const { data: owners, isLoading: loadingOwners, refetch: refetchOwners } = useVentasPropertyOwners()
 const createMutation = useVentasCreateProperty()
 
@@ -207,7 +238,10 @@ watch(
 
 const loading = computed(
   () =>
-    loadingTypes.value || loadingCurrencies.value || loadingDepartments.value || loadingOwners.value,
+    loadingTypes.value ||
+    loadingCurrencies.value ||
+    loadingDepartments.value ||
+    loadingOwners.value,
 )
 
 const currencyOptions = computed(() =>
@@ -252,7 +286,9 @@ const selectedOwnerLabel = computed(() => {
   return o ? o.fullName : '—'
 })
 const selectedTypeLabel = computed(() => {
-  const t = (propertyTypes.value ?? []).find((x: VentasPropertyType) => x.id === values.propertyTypeId)
+  const t = (propertyTypes.value ?? []).find(
+    (x: VentasPropertyType) => x.id === values.propertyTypeId,
+  )
   return t ? t.name : '—'
 })
 

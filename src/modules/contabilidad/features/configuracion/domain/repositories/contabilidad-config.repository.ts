@@ -4,10 +4,14 @@ import type {
   ContabilidadConfigBootstrap,
   ContabilidadDocumentSeriesDTO,
 } from '../config.types'
-
 export interface ContabilidadConfigRepository {
-  bootstrap(params?: { legalEntityId?: string; year?: number }): Promise<ContabilidadConfigBootstrap>
-  updateCompany(body: Partial<ContabilidadCompanyProfileDTO>): Promise<ContabilidadCompanyProfileDTO>
+  bootstrap(params?: {
+    legalEntityId?: string
+    year?: number
+  }): Promise<ContabilidadConfigBootstrap>
+  updateCompany(
+    body: Partial<ContabilidadCompanyProfileDTO>,
+  ): Promise<ContabilidadCompanyProfileDTO>
   updateSettings(body: Partial<ContabilidadAppSettingsDTO>): Promise<ContabilidadAppSettingsDTO>
   patchDocumentSeries(
     seriesKey: string,

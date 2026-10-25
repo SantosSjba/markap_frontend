@@ -1,26 +1,28 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  DataTable,
-  BaseButton,
-  FormSelect,
-  AppIcon,
-  BasePagination,
-  Badge,
-  PageHeader,
-} from '@shared/components'
-import { useVentasAgentsList } from '@modules/ventas/features/agentes'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useVentasAgentsList } from '../../../agentes/presentation/composables/useAgents'
 import type { CommissionRow } from '../../domain/finanzas.types'
 import {
   useVentasCommissionsList,
   useVentasMarkCommissionPaid,
   useVentasMarkCommissionPaymentPartPaid,
   useVentasRecalculateCommission,
-} from '../../application/useVentasFinanzas'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+} from '../composables/useVentasFinanzas'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const ITEMS = 12
-const listParams = ref({ page: 1, limit: ITEMS, status: '' as string | undefined, agentId: '' as string | undefined })
+const listParams = ref({
+  page: 1,
+  limit: ITEMS,
+  status: '' as string | undefined,
+  agentId: '' as string | undefined,
+})
 const listApi = computed(() => ({
   page: listParams.value.page,
   limit: listParams.value.limit,
@@ -126,7 +128,9 @@ function commissionStatusLabel(status: string): string {
   return 'Pendiente'
 }
 
-function commissionStatusVariant(status: string): 'success' | 'warning' | 'info' | 'error' | 'neutral' {
+function commissionStatusVariant(
+  status: string,
+): 'success' | 'warning' | 'info' | 'error' | 'neutral' {
   if (status === 'PAID') return 'success'
   if (status === 'PARTIAL') return 'info'
   if (status === 'CANCELLED') return 'neutral'
@@ -140,18 +144,46 @@ function canPayCommission(row: CommissionRow): boolean {
 }
 
 const columns = [
-  { key: 'prop', label: 'Inmueble', sortAccessor: (r: unknown) => commissionPropertyCode(r as CommissionRow) },
-  { key: 'buyer', label: 'Cliente', sortAccessor: (r: unknown) => commissionBuyerName(r as CommissionRow) },
-  { key: 'origin', label: 'Origen', sortAccessor: (r: unknown) => commissionOriginLabel(r as CommissionRow) },
-  { key: 'agent', label: 'Asesor', sortAccessor: (r: unknown) => (r as CommissionRow).agent.fullName },
-  { key: 'tipo', label: 'Tipo asesor', sortAccessor: (r: unknown) => (r as CommissionRow).agent.type ?? '' },
-  { key: 'calc', label: 'Cálculo', sortAccessor: (r: unknown) => calculationLabel(r as CommissionRow) },
+  {
+    key: 'prop',
+    label: 'Inmueble',
+    sortAccessor: (r: unknown) => commissionPropertyCode(r as CommissionRow),
+  },
+  {
+    key: 'buyer',
+    label: 'Cliente',
+    sortAccessor: (r: unknown) => commissionBuyerName(r as CommissionRow),
+  },
+  {
+    key: 'origin',
+    label: 'Origen',
+    sortAccessor: (r: unknown) => commissionOriginLabel(r as CommissionRow),
+  },
+  {
+    key: 'agent',
+    label: 'Asesor',
+    sortAccessor: (r: unknown) => (r as CommissionRow).agent.fullName,
+  },
+  {
+    key: 'tipo',
+    label: 'Tipo asesor',
+    sortAccessor: (r: unknown) => (r as CommissionRow).agent.type ?? '',
+  },
+  {
+    key: 'calc',
+    label: 'Cálculo',
+    sortAccessor: (r: unknown) => calculationLabel(r as CommissionRow),
+  },
   {
     key: 'price',
     label: 'Base',
     sortAccessor: (r: unknown) => commissionBasePrice(r as CommissionRow) ?? 0,
   },
-  { key: 'amt', label: 'Bruto / Neto', sortAccessor: (r: unknown) => commissionNet(r as CommissionRow) },
+  {
+    key: 'amt',
+    label: 'Bruto / Neto',
+    sortAccessor: (r: unknown) => commissionNet(r as CommissionRow),
+  },
   { key: 'st', label: 'Estado', sortAccessor: (r: unknown) => (r as CommissionRow).status },
   { key: 'act', label: '' },
 ]

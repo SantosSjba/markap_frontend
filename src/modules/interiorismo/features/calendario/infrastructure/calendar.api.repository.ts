@@ -1,17 +1,17 @@
-import { apiClient } from '@core/api/apiClient'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+import type { InteriorCalendarRepository } from '../domain/repositories/calendar.repository'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { INTERIORISMO_APP_SLUG } from '../../../config/app.constants'
 import type {
   CalendarFeedItemDto,
   CalendarFeedParams,
   CreateCalendarEventPayload,
   UpdateCalendarEventPayload,
 } from '../domain/calendar.types'
-
 const BASE = '/interiorismo-calendar'
 
 const q = () => ({ params: { applicationSlug: INTERIORISMO_APP_SLUG } })
 
-export const interiorCalendarApiRepository = {
+export const interiorCalendarApiRepository: InteriorCalendarRepository = {
   getFeed: (params: CalendarFeedParams) =>
     apiClient
       .get<CalendarFeedItemDto[]>(`${BASE}/feed`, {
@@ -29,7 +29,9 @@ export const interiorCalendarApiRepository = {
     apiClient.post<CalendarFeedItemDto>(`${BASE}/events`, payload, q()).then((r) => r.data),
 
   updateEvent: (eventId: string, payload: UpdateCalendarEventPayload) =>
-    apiClient.patch<CalendarFeedItemDto>(`${BASE}/events/${encodeURIComponent(eventId)}`, payload, q()).then((r) => r.data),
+    apiClient
+      .patch<CalendarFeedItemDto>(`${BASE}/events/${encodeURIComponent(eventId)}`, payload, q())
+      .then((r) => r.data),
 
   deleteEvent: (eventId: string) =>
     apiClient.delete(`${BASE}/events/${encodeURIComponent(eventId)}`, q()).then(() => undefined),

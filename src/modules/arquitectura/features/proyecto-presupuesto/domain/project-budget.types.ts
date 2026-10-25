@@ -1,4 +1,4 @@
-﻿export interface ProjectBudgetSupplierPaymentDto {
+export interface ProjectBudgetSupplierPaymentDto {
   id: string
   paymentNumber: number
   amount: number

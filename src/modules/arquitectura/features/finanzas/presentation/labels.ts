@@ -1,4 +1,4 @@
-﻿export const SCHEDULE_KIND_LABELS: Record<string, string> = {
+export const SCHEDULE_KIND_LABELS: Record<string, string> = {
   ADVANCE: 'Adelanto',
   INSTALLMENT: 'Cuota',
   OTHER: 'Otro ingreso programado',

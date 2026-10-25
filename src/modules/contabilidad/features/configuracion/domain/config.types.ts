@@ -1,7 +1,6 @@
-import { CONTABILIDAD_APP_SLUG } from '@modules/contabilidad/config/app.constants'
-import type { ContabilidadPeriodDTO } from '@modules/contabilidad/features/periodos/domain/period.types'
-import type { ContabilidadLegalEntityDTO } from '@modules/contabilidad/presentation/composables/contabilidad-context.types'
-
+import { CONTABILIDAD_APP_SLUG } from '../../../config/app.constants'
+import type { ContabilidadPeriodDTO } from '../../periodos/domain/period.types'
+import type { ContabilidadLegalEntityDTO } from '../../../domain/legal-entity.types'
 export const CONTABILIDAD_CONFIG_APP_SLUG = CONTABILIDAD_APP_SLUG
 
 export interface ContabilidadCompanyProfileDTO {

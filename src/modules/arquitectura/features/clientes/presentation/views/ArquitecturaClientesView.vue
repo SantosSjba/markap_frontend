@@ -1,33 +1,33 @@
 ﻿<script setup lang="ts">
+import { arquitecturaClientsRepositoryKey } from '../../application/ports/clients.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
-import {
-  BaseButton,
-  BasePagination,
-  StatsCard,
-  Badge,
-  Avatar,
-  DataTable,
-  ActionsDropdown,
-  FormSelect,
-  SearchInput,
-  AppIcon,
-  ExcelIcon,
-} from '@shared/components'
-import { useExcelExport } from '@shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import Avatar from '@shared/presentation/components/ui/Avatar.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import {
   useArquitecturaClientsList,
   useArquitecturaClientStats,
   useDeleteArquitecturaClient,
-} from '../../application/useClients'
+} from '../composables/useClients'
 import type { ClientListItem, ListClientsParams } from '../../domain/client.types'
-import { arquitecturaClientsRepository } from '@modules/arquitectura/features/clientes'
-import { BaseModal } from '@shared/components'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { toCalendarDateString } from '@/shared/utils/formatters'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { ARQUITECTURA_APP_SLUG } from '../../../../config/app.constants'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { toCalendarDateString } from '@shared/utils/formatters'
+const arquitecturaClientsRepository = useService(arquitecturaClientsRepositoryKey)
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -69,10 +69,7 @@ watch(
       page: 1,
       search: searchInput.value.trim() || undefined,
       clientType: filterType.value === 'ALL' ? undefined : filterType.value,
-      isActive:
-        filterStatus.value === 'ALL'
-          ? undefined
-          : filterStatus.value === 'active',
+      isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
     }
   },
   { immediate: true },
@@ -161,7 +158,9 @@ const executeDelete = () => {
 const typeLabel = (t: ClientListItem['clientType']) =>
   t === 'RESIDENTIAL' ? 'Residencial' : 'Corporativo'
 
-const getActions = (client: ClientListItem): { label: string; icon: string; onClick: () => void }[] => [
+const getActions = (
+  client: ClientListItem,
+): { label: string; icon: string; onClick: () => void }[] => [
   { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goToDetail(client) },
   { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(client) },
   { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteConfirm(client) },

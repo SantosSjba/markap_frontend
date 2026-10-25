@@ -2,23 +2,21 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import {
-  BaseButton,
-  BaseTabs,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  StatsCard,
-  Badge,
-  AppIcon,
-} from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { toCalendarDateString, formatDateTime } from '@/shared/utils/formatters'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { toCalendarDateString, formatDateTime } from '@shared/utils/formatters'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 import type { ArquitecturaFinanceScheduleDto } from '../../domain/finance.types'
 import {
   useArquitecturaFinanceOverview,
@@ -28,7 +26,7 @@ import {
   useCreateFinancePayment,
   useUpdateFinancePayment,
   useDeleteFinancePayment,
-} from '../../application/useArquitecturaFinance'
+} from '../composables/useArquitecturaFinance'
 import {
   SCHEDULE_KIND_LABELS,
   SCHEDULE_STATUS_LABELS,
@@ -36,7 +34,6 @@ import {
   COST_CATEGORY_FIN_LABELS,
   formatSol,
 } from '../labels'
-
 const props = withDefaults(
   defineProps<{
     /** Cuando se incrusta en el detalle de proyecto */
@@ -63,7 +60,13 @@ const tabs = [
   { id: 'reportes', label: 'Reportes', icon: 'lucide:file-spreadsheet' },
 ]
 
-const { data: ov, isLoading, isError, error: overviewError, refetch: refetchOverview } = useArquitecturaFinanceOverview(projectId)
+const {
+  data: ov,
+  isLoading,
+  isError,
+  error: overviewError,
+  refetch: refetchOverview,
+} = useArquitecturaFinanceOverview(projectId)
 const createSch = useCreateFinanceSchedule(projectId)
 const updateSch = useUpdateFinanceSchedule(projectId)
 const deleteSch = useDeleteFinanceSchedule(projectId)
@@ -118,7 +121,10 @@ const movementCols = [
 ]
 
 const kindOptions = Object.entries(SCHEDULE_KIND_LABELS).map(([value, label]) => ({ value, label }))
-const payStatusOptions = Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => ({ value, label }))
+const payStatusOptions = Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}))
 const scheduleLinkOptions = computed(() => [
   { value: '', label: 'Sin vínculo a cuota' },
   ...(ov.value?.schedules ?? []).map((s) => ({
@@ -260,7 +266,14 @@ function openCreatePayment() {
   payModal.value = true
 }
 
-function openEditPayment(row: { id: string; paidAt: string; amount: number; concept: string; status: string; scheduleItemId: string | null }) {
+function openEditPayment(row: {
+  id: string
+  paidAt: string
+  amount: number
+  concept: string
+  status: string
+  scheduleItemId: string | null
+}) {
   payEditId.value = row.id
   const d = new Date(row.paidAt)
   const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)

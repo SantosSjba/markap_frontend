@@ -1,4 +1,4 @@
-﻿export interface ArquitecturaCatalogMaterialImageDto {
+export interface ArquitecturaCatalogMaterialImageDto {
   id: string
   sortOrder: number
   url: string

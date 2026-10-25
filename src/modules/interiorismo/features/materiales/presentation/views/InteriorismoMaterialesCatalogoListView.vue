@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BasePagination,
-  BaseModal,
-  DataTable,
-  SearchInput,
-  FormInput,
-  AppIcon,
-  ActionsDropdown,
-} from '@shared/components'
-import type { InteriorCatalogMaterialListItem, ListInteriorCatalogMaterialsParams } from '../../domain/catalog.types'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import type {
+  InteriorCatalogMaterialListItem,
+  ListInteriorCatalogMaterialsParams,
+} from '../../domain/catalog.types'
 import {
   useInteriorCatalogMaterialsList,
   useDeleteInteriorCatalogMaterial,
-} from '../../application/useInteriorCatalogMaterials'
+} from '../composables/useInteriorCatalogMaterials'
 import { formatSol, formatQty } from '../labels'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const router = useRouter()
 const ITEMS = 10
 
@@ -89,7 +89,8 @@ const goNew = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo/n
 
 const showDeleteModal = ref(false)
 const deleteTarget = ref<InteriorCatalogMaterialListItem | null>(null)
-const { mutateAsync: deleteMaterial, isPending: isDeletingMaterial } = useDeleteInteriorCatalogMaterial()
+const { mutateAsync: deleteMaterial, isPending: isDeletingMaterial } =
+  useDeleteInteriorCatalogMaterial()
 
 const openDeleteConfirm = (r: InteriorCatalogMaterialListItem) => {
   deleteTarget.value = r
@@ -112,7 +113,9 @@ const executeDelete = async () => {
   }
 }
 
-const getActions = (r: InteriorCatalogMaterialListItem): { label: string; icon: string; onClick: () => void }[] => [
+const getActions = (
+  r: InteriorCatalogMaterialListItem,
+): { label: string; icon: string; onClick: () => void }[] => [
   { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(r) },
   { label: 'Editar', icon: 'lucide:pencil', onClick: () => goDetail(r) },
   { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteConfirm(r) },

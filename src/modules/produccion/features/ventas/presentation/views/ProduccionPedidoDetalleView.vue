@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, DataTable, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useProduccionOrderDetail, useOrderMutations } from '../../application/useProduccionSales'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useProduccionOrderDetail, useOrderMutations } from '../composables/useProduccionSales'
 import { formatSol, formatDate, ORDER_STATUS_LABELS, orderStatusClass } from '../labels'
 import type { ProduccionOrderLine } from '../../domain/sales.types'
-
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
@@ -61,14 +62,20 @@ async function goScheduleDelivery() {
 }
 
 async function doCancel() {
-  const ok = await markapAlert.confirmDanger({ title: '¿Cancelar pedido?', confirmText: 'Cancelar' })
+  const ok = await markapAlert.confirmDanger({
+    title: '¿Cancelar pedido?',
+    confirmText: 'Cancelar',
+  })
   if (!ok) return
   await cancel.mutateAsync(id.value)
   void refetch()
 }
 
 async function doDelete() {
-  const ok = await markapAlert.confirmDanger({ title: '¿Eliminar pedido?', confirmText: 'Eliminar' })
+  const ok = await markapAlert.confirmDanger({
+    title: '¿Eliminar pedido?',
+    confirmText: 'Eliminar',
+  })
   if (!ok) return
   await remove.mutateAsync(id.value)
   void router.push({ name: 'produccion-ventas-pedidos' })

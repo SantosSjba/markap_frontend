@@ -7,7 +7,6 @@ import type {
   CreateTreasuryTransferBody,
   ListTreasuryMovementsParams,
 } from '../treasury.types'
-
 export interface ContabilidadTreasuryRepository {
   listCashBoxes(): Promise<{ cashBoxes: ContabilidadCashBoxDTO[] }>
   listBankAccounts(): Promise<{ bankAccounts: ContabilidadBankAccountDTO[] }>
@@ -35,7 +34,9 @@ export interface ContabilidadTreasuryRepository {
     movementTypeLabels: Record<string, string>
   }>
   createMovement(body: CreateTreasuryMovementBody): Promise<ContabilidadTreasuryMovementDTO>
-  createTransfer(body: CreateTreasuryTransferBody): Promise<{ movements: ContabilidadTreasuryMovementDTO[] }>
+  createTransfer(
+    body: CreateTreasuryTransferBody,
+  ): Promise<{ movements: ContabilidadTreasuryMovementDTO[] }>
   getReconciliation(
     bankAccountId: string,
     periodId: string,

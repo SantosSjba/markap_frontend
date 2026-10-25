@@ -1,5 +1,5 @@
-import { apiClient } from '@core/api/apiClient'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { INTERIORISMO_APP_SLUG } from '../../../config/app.constants'
 import type { ProjectBudgetRepository } from '../domain/repositories/project-budget.repository'
 import type {
   ProjectBudgetDetailDto,
@@ -11,7 +11,6 @@ import type {
   ImportBudgetFromExcelResult,
   ProjectBudgetAttachmentDto,
 } from '../domain/project-budget.types'
-
 const slug = () => ({ applicationSlug: INTERIORISMO_APP_SLUG })
 const base = (projectId: string) => `/interiorismo-projects/${projectId}`
 
@@ -28,7 +27,9 @@ export const projectBudgetApiRepository: ProjectBudgetRepository = {
 
   createSection: (projectId, payload) =>
     apiClient
-      .post<ProjectBudgetSectionDto>(`${base(projectId)}/budget/sections`, payload, { params: slug() })
+      .post<ProjectBudgetSectionDto>(`${base(projectId)}/budget/sections`, payload, {
+        params: slug(),
+      })
       .then((r) => r.data),
 
   updateSection: (projectId, sectionId, payload) =>
@@ -45,14 +46,20 @@ export const projectBudgetApiRepository: ProjectBudgetRepository = {
 
   createLineItem: (projectId, payload) =>
     apiClient
-      .post<ProjectBudgetLineItemDto>(`${base(projectId)}/budget/line-items`, payload, { params: slug() })
+      .post<ProjectBudgetLineItemDto>(`${base(projectId)}/budget/line-items`, payload, {
+        params: slug(),
+      })
       .then((r) => r.data),
 
   updateLineItem: (projectId, lineItemId, payload) =>
     apiClient
-      .patch<ProjectBudgetLineItemDto>(`${base(projectId)}/budget/line-items/${lineItemId}`, payload, {
-        params: slug(),
-      })
+      .patch<ProjectBudgetLineItemDto>(
+        `${base(projectId)}/budget/line-items/${lineItemId}`,
+        payload,
+        {
+          params: slug(),
+        },
+      )
       .then((r) => r.data),
 
   deleteLineItem: (projectId, lineItemId) =>
@@ -130,5 +137,7 @@ export const projectBudgetApiRepository: ProjectBudgetRepository = {
       .then(() => undefined),
 
   getAttachmentDownloadUrl: (attachmentId) =>
-    apiClient.get<{ url: string }>(`/gen-archivos/${attachmentId}/url`, { params: slug() }).then((r) => r.data.url),
+    apiClient
+      .get<{ url: string }>(`/gen-archivos/${attachmentId}/url`, { params: slug() })
+      .then((r) => r.data.url),
 }

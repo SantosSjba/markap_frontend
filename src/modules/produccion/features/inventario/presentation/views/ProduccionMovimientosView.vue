@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { formatDateTime } from '@/shared/utils/formatters'
+import { formatDateTime } from '@shared/utils/formatters'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import {
-  BaseButton,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  SearchInput,
-  AppIcon,
-  BaseModal,
-} from '@shared/components'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import {
   useProduccionMaterialsList,
   useProduccionMovementsList,
   useMovementMutations,
-} from '../../application/useProduccionInventory'
+} from '../composables/useProduccionInventory'
 import { formatQty, MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_OPTIONS } from '../labels'
-import type { ProduccionStockMovement, ProduccionStockMovementType } from '../../domain/inventory.types'
-
+import type {
+  ProduccionStockMovement,
+  ProduccionStockMovementType,
+} from '../../domain/inventory.types'
 const route = useRoute()
 
 const listParams = ref({ page: 1, limit: 50 })

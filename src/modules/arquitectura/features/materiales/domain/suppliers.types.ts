@@ -1,4 +1,4 @@
-﻿export interface ArquitecturaSupplierListItem {
+export interface ArquitecturaSupplierListItem {
   id: string
   companyName: string
   ruc: string

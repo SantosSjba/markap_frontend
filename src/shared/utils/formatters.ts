@@ -16,7 +16,9 @@ export const PERU_LOCALE = 'es-PE'
 export function parseCalendarDate(value: Date | string | number): Date {
   if (value instanceof Date) return value
   if (typeof value === 'number') return new Date(value)
-  const m = String(value).trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
+  const m = String(value)
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (m) {
     return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
   }

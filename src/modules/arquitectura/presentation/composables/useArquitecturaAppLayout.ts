@@ -1,11 +1,13 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useMyApplications, useApplicationMenus } from '@modules/applications'
+import {
+  useMyApplications,
+  useApplicationMenus,
+} from '@modules/applications/presentation/composables/useApplications'
 import {
   ARQUITECTURA_FALLBACK_MENUS,
   arquitecturaMenusLookComplete,
 } from '../../config/fallbackMenus'
-
 /**
  * Menús por API; fallback si el árbol de Proyectos no está en BD (sin seed o datos viejos).
  */
@@ -18,9 +20,7 @@ export function useArquitecturaAppLayout() {
 
   const { data: menusFromApi, isLoading: menusLoading } = useApplicationMenus(slug)
   const { data: applications } = useMyApplications()
-  const application = computed(
-    () => applications.value?.find((a) => a.slug === slug.value) ?? null,
-  )
+  const application = computed(() => applications.value?.find((a) => a.slug === slug.value) ?? null)
 
   const menus = computed(() => {
     if (slug.value !== 'arquitectura') {

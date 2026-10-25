@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AppIcon, PageHeader } from '@shared/components'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useContabilidadCashFlowTreasury } from '../../application/useContabilidadReports'
-
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
+import { useContabilidadCashFlowTreasury } from '../composables/useContabilidadReports'
 const { activePeriod } = useContabilidadActivePeriod()
 const periodId = computed(() => activePeriod.value?.id)
 

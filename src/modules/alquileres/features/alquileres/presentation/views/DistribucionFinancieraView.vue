@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, AppIcon, FormSectionCard } from '@shared/components'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useRental, useRentalFinancialBreakdown, useUpsertRentalFinancialConfig } from '../../application/useRentals'
-import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
-import { useAgentsList } from '@modules/alquileres/features/agentes'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import {
+  useRental,
+  useRentalFinancialBreakdown,
+  useUpsertRentalFinancialConfig,
+} from '../composables/useRentals'
+import { navigateAfterAlquileresSave } from '../../../../presentation/navigation/navigateAfterAlquileresSave'
+import { useAgentsList } from '../../../agentes/presentation/composables/useAgents'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { RENTAL_UTILITY_NET_LABEL } from '../../domain/rental-financial.labels'
-
 const route = useRoute()
 const router = useRouter()
 
@@ -29,8 +36,20 @@ const {
   refetch: refetchBreakdown,
 } = useRentalFinancialBreakdown(id)
 const upsertFinancial = useUpsertRentalFinancialConfig()
-const externalAgentsParams = ref({ applicationSlug: 'alquileres', type: 'EXTERNAL' as const, page: 1, limit: 200, isActive: true })
-const internalAgentsParams = ref({ applicationSlug: 'alquileres', type: 'INTERNAL' as const, page: 1, limit: 200, isActive: true })
+const externalAgentsParams = ref({
+  applicationSlug: 'alquileres',
+  type: 'EXTERNAL' as const,
+  page: 1,
+  limit: 200,
+  isActive: true,
+})
+const internalAgentsParams = ref({
+  applicationSlug: 'alquileres',
+  type: 'INTERNAL' as const,
+  page: 1,
+  limit: 200,
+  isActive: true,
+})
 const {
   data: externalAgentsResult,
   isError: externalAgentsQueryError,
@@ -64,27 +83,31 @@ const form = ref({
   internalAgentName: '',
 })
 
-watch(breakdown, (b) => {
-  if (!b?.config) return
-  const c = b.config
-  form.value = {
-    baseAmount: c.baseAmount ?? '',
-    expenseType: c.expenseType,
-    expenseValue: c.expenseValue,
-    expenseDetail: c.expenseDetail ?? '',
-    taxType: c.taxType,
-    taxValue: c.taxValue,
-    taxDetail: c.taxDetail ?? '',
-    externalAgentId: c.externalAgentId ?? '',
-    externalAgentType: c.externalAgentType,
-    externalAgentValue: c.externalAgentValue,
-    externalAgentName: c.externalAgentName ?? '',
-    internalAgentId: c.internalAgentId ?? '',
-    internalAgentType: c.internalAgentType,
-    internalAgentValue: c.internalAgentValue,
-    internalAgentName: c.internalAgentName ?? '',
-  }
-}, { immediate: true })
+watch(
+  breakdown,
+  (b) => {
+    if (!b?.config) return
+    const c = b.config
+    form.value = {
+      baseAmount: c.baseAmount ?? '',
+      expenseType: c.expenseType,
+      expenseValue: c.expenseValue,
+      expenseDetail: c.expenseDetail ?? '',
+      taxType: c.taxType,
+      taxValue: c.taxValue,
+      taxDetail: c.taxDetail ?? '',
+      externalAgentId: c.externalAgentId ?? '',
+      externalAgentType: c.externalAgentType,
+      externalAgentValue: c.externalAgentValue,
+      externalAgentName: c.externalAgentName ?? '',
+      internalAgentId: c.internalAgentId ?? '',
+      internalAgentType: c.internalAgentType,
+      internalAgentValue: c.internalAgentValue,
+      internalAgentName: c.internalAgentName ?? '',
+    }
+  },
+  { immediate: true },
+)
 
 function formatAmount(amount: number, currency: string): string {
   const sym = currency === 'USD' ? 'US$' : 'S/'
@@ -175,7 +198,9 @@ const expenseTypeOptions = [
 ]
 const internalAgentIdModel = computed({
   get: () => form.value.internalAgentId ?? '',
-  set: (v: string | null) => { form.value.internalAgentId = (v === null || v === '') ? '' : v },
+  set: (v: string | null) => {
+    form.value.internalAgentId = v === null || v === '' ? '' : v
+  },
 })
 const internalAgentOptions = computed(() => [
   { value: '', label: 'Ninguno (nombre manual)' },
@@ -183,7 +208,9 @@ const internalAgentOptions = computed(() => [
 ])
 const externalAgentIdModel = computed({
   get: () => form.value.externalAgentId ?? '',
-  set: (v: string | null) => { form.value.externalAgentId = (v === null || v === '') ? '' : v },
+  set: (v: string | null) => {
+    form.value.externalAgentId = v === null || v === '' ? '' : v
+  },
 })
 const externalAgentOptions = computed(() => [
   { value: '', label: 'Ninguno (nombre manual)' },

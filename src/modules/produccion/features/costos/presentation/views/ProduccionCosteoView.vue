@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import { formatDateTime } from '@/shared/utils/formatters'
+import { produccionCatalogRepositoryKey } from '../../../catalogo/application/ports/catalog.port'
+import { useService } from '@shared/presentation/di/services'
+import { formatDateTime } from '@shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, FormInput, AppIcon, StatsCard } from '@shared/components'
-import { PRODUCCION_BASE_PATH } from '@modules/produccion/config/routes.constants'
-import { produccionCatalogRepository } from '@modules/produccion/features/catalogo'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import { PRODUCCION_BASE_PATH } from '../../../../config/routes.constants'
 import {
   useProduccionFurnitureCosting,
   useUpdateProduccionFurnitureCosting,
   useCreateCostingSnapshot,
   useProduccionLaborRatesList,
   useProduccionExtraCostsList,
-} from '../../application/useProduccionCosts'
+} from '../composables/useProduccionCosts'
 import { formatSol, formatPercent } from '../labels'
+const produccionCatalogRepository = useService(produccionCatalogRepositoryKey)
 
 const route = useRoute()
 const router = useRouter()
@@ -26,11 +31,21 @@ const { data: costing, isLoading, refetch } = useProduccionFurnitureCosting(furn
 const updateMut = useUpdateProduccionFurnitureCosting(furnitureId)
 const snapshotMut = useCreateCostingSnapshot(furnitureId)
 
-const { data: laborRates } = useProduccionLaborRatesList(ref({ page: 1, limit: 100, isActive: true }))
-const { data: extraCatalog } = useProduccionExtraCostsList(ref({ page: 1, limit: 100, isActive: true }))
+const { data: laborRates } = useProduccionLaborRatesList(
+  ref({ page: 1, limit: 100, isActive: true }),
+)
+const { data: extraCatalog } = useProduccionExtraCostsList(
+  ref({ page: 1, limit: 100, isActive: true }),
+)
 
 type MaterialDraft = { id: string; unitCost: number | '' }
-type LaborDraft = { key: string; laborRateId: string; description: string; hours: number; hourlyRate: number }
+type LaborDraft = {
+  key: string
+  laborRateId: string
+  description: string
+  hours: number
+  hourlyRate: number
+}
 type ExtraDraft = { key: string; catalogItemId: string; description: string; amount: number }
 
 const materialDrafts = ref<MaterialDraft[]>([])

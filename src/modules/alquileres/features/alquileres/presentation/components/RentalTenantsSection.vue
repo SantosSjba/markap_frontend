@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormSectionCard } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { FormSelect } from '@shared/components'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 export type TenantOption = { value: string; label: string }
 
 const props = defineProps<{
@@ -20,14 +20,10 @@ const emit = defineEmits<{
 
 const router = useRouter()
 
-const rows = computed(() =>
-  props.tenantIds.length > 0 ? props.tenantIds : [''],
-)
+const rows = computed(() => (props.tenantIds.length > 0 ? props.tenantIds : ['']))
 
 function optionsForIndex(index: number) {
-  const selectedElsewhere = new Set(
-    props.tenantIds.filter((id, i) => i !== index && id),
-  )
+  const selectedElsewhere = new Set(props.tenantIds.filter((id, i) => i !== index && id))
   return props.tenantOptions.filter((o) => !selectedElsewhere.has(o.value))
 }
 

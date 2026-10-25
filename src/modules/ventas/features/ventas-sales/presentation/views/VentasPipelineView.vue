@@ -3,11 +3,14 @@ import { reactive, ref, watch, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
 import type { DraggableEvent } from 'vue-draggable-plus'
-import { BaseButton, Badge, AppIcon, PageHeader } from '@shared/components'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import SaleProcessFollowUpPanel from '../components/SaleProcessFollowUpPanel.vue'
-import { useVentasPipelineBoard, useVentasUpdateProcessQuiet } from '../../application/useVentasSales'
-import { useVentasPipelineStages } from '@ventas/configuracion'
+import { useVentasPipelineBoard, useVentasUpdateProcessQuiet } from '../composables/useVentasSales'
+import { useVentasPipelineStages } from '../../../ventas-configuracion/presentation/composables/useVentasConfig'
 import type { SaleProcessListRow } from '../../domain/sales.types'
 import {
   processStatusLabel,
@@ -17,10 +20,9 @@ import {
   isForwardPipelineTransition,
   type PipelineStageValue,
 } from '../../domain/pipeline.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import MarkSaleLostModal from '../components/MarkSaleLostModal.vue'
-
 const router = useRouter()
 
 const followUpOpen = ref(false)
@@ -242,11 +244,7 @@ function goNewProcess() {
 const group = computed(() => ({
   name: 'ventas-pipeline',
   pull: true,
-  put(
-    to: { el: HTMLElement },
-    from: { el: HTMLElement },
-    dragEl: HTMLElement,
-  ) {
+  put(to: { el: HTMLElement }, from: { el: HTMLElement }, dragEl: HTMLElement) {
     const toStage = pipelineStageFromListEl(to.el)
     const fromStage = pipelineStageFromListEl(from.el)
     if (!toStage || !fromStage) return true

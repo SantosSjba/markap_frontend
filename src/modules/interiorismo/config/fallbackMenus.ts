@@ -1,5 +1,4 @@
 import type { MenuItem } from '@shared/domain/menu.types'
-
 /** Retirados del sidebar: presupuesto/compras/liquidación viven en detalle de Proyecto. */
 const OBSOLETE_PARENT_LABELS = new Set(['Presupuestos', 'Finanzas'])
 
@@ -180,8 +179,5 @@ export function interiorismoMenusLookComplete(apiMenus: MenuItem[]): boolean {
   if (apiMenus.some((m) => OBSOLETE_PARENT_LABELS.has(m.label.trim()))) return false
   const proyectos = apiMenus.find((m) => m.label.trim() === 'Proyectos')
   const documentos = apiMenus.find((m) => m.label.trim() === 'Documentos')
-  return !!(
-    proyectos?.children?.length &&
-    documentos?.children?.length
-  )
+  return !!(proyectos?.children?.length && documentos?.children?.length)
 }

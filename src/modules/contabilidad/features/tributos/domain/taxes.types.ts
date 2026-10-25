@@ -24,10 +24,12 @@ export const RETENTION_TYPE_LABELS: Record<string, string> = {
   RENTA: 'Retención renta',
 }
 
-export const RETENTION_TYPE_OPTIONS = Object.entries(RETENTION_TYPE_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}))
+export const RETENTION_TYPE_OPTIONS = Object.entries(RETENTION_TYPE_LABELS).map(
+  ([value, label]) => ({
+    value,
+    label,
+  }),
+)
 
 export const DETRACTION_STATUS_FILTER_OPTIONS = [
   { value: '', label: 'Todos' },

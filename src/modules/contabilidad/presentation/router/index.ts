@@ -1,26 +1,25 @@
 import type { RouteRecordRaw } from 'vue-router'
 import ContabilidadLayout from '../views/ContabilidadLayout.vue'
-import { SectionLayout } from '@layouts'
+import SectionLayout from '@app/layouts/SectionLayout.vue'
 import { CONTABILIDAD_BASE_PATH } from '../../config/routes.constants'
-import { contabilidadConfiguracionRoutes } from '../../features/configuracion'
-import { contabilidadPlanCuentasRoutes } from '../../features/plan-cuentas'
-import { contabilidadPeriodosRoutes } from '../../features/periodos'
-import { contabilidadCentrosCostoRoutes } from '../../features/centros-costo'
-import { contabilidadAsientosRoutes } from '../../features/asientos'
-import { contabilidadTesoreriaRoutes } from '../../features/tesoreria'
-import { contabilidadComprasRoutes } from '../../features/compras'
-import { contabilidadVentasContablesRoutes } from '../../features/ventas-contables'
-import { contabilidadTributosRoutes } from '../../features/tributos'
-import { contabilidadLibrosERoutes } from '../../features/libros-e'
-import { contabilidadReportesFinancierosRoutes } from '../../features/reportes-financieros'
-import { contabilidadPlantillasAsientoRoutes } from '../../features/plantillas-asiento'
-import { contabilidadTiposCambioRoutes } from '../../features/tipos-cambio'
-import { contabilidadCpeLogRoutes } from '../../features/cpe-log'
-import { contabilidadInventarioContableRoutes } from '../../features/inventario-contable'
-import { contabilidadAuditoriaRoutes } from '../../features/auditoria'
-import { contabilidadFacturacionElectronicaRoutes } from '../../features/facturacion-electronica'
-import { ContabilidadCierreMensualView } from '../../features/cierre'
-
+import { contabilidadConfiguracionRoutes } from '../../features/configuracion/presentation/router/index'
+import { contabilidadPlanCuentasRoutes } from '../../features/plan-cuentas/presentation/router/index'
+import { contabilidadPeriodosRoutes } from '../../features/periodos/presentation/router/index'
+import { contabilidadCentrosCostoRoutes } from '../../features/centros-costo/presentation/router/index'
+import { contabilidadAsientosRoutes } from '../../features/asientos/presentation/router/index'
+import { contabilidadTesoreriaRoutes } from '../../features/tesoreria/presentation/router/index'
+import { contabilidadComprasRoutes } from '../../features/compras/presentation/router/index'
+import { contabilidadVentasContablesRoutes } from '../../features/ventas-contables/presentation/router/index'
+import { contabilidadTributosRoutes } from '../../features/tributos/presentation/router/index'
+import { contabilidadLibrosERoutes } from '../../features/libros-e/presentation/router/index'
+import { contabilidadReportesFinancierosRoutes } from '../../features/reportes-financieros/presentation/router/index'
+import { contabilidadPlantillasAsientoRoutes } from '../../features/plantillas-asiento/presentation/router/index'
+import { contabilidadTiposCambioRoutes } from '../../features/tipos-cambio/presentation/router/index'
+import { contabilidadCpeLogRoutes } from '../../features/cpe-log/presentation/router/index'
+import { contabilidadInventarioContableRoutes } from '../../features/inventario-contable/presentation/router/index'
+import { contabilidadAuditoriaRoutes } from '../../features/auditoria/presentation/router/index'
+import { contabilidadFacturacionElectronicaRoutes } from '../../features/facturacion-electronica/presentation/router/index'
+import ContabilidadCierreMensualView from '../../features/cierre/presentation/views/ContabilidadCierreMensualView.vue'
 export const contabilidadRoutes: RouteRecordRaw[] = [
   {
     path: CONTABILIDAD_BASE_PATH,
@@ -137,7 +136,10 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
           ...contabilidadTiposCambioRoutes,
           ...contabilidadCpeLogRoutes,
           ...contabilidadFacturacionElectronicaRoutes,
-          ...contabilidadAuditoriaRoutes.map((r) => ({ ...r, path: r.path === '' ? 'auditoria' : r.path })),
+          ...contabilidadAuditoriaRoutes.map((r) => ({
+            ...r,
+            path: r.path === '' ? 'auditoria' : r.path,
+          })),
         ],
       },
     ],

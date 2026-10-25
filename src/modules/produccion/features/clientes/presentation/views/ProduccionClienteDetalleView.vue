@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, Badge, AppIcon } from '@shared/components'
-import { useProduccionClient } from '../../application/useClients'
-import { useProduccionQuotationsList, useProduccionOrdersList } from '../../../ventas/application/useProduccionSales'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useProduccionClient } from '../composables/useClients'
+import {
+  useProduccionQuotationsList,
+  useProduccionOrdersList,
+} from '../../../ventas/presentation/composables/useProduccionSales'
 import {
   formatSol,
   formatDate,
@@ -12,9 +17,8 @@ import {
   ORDER_STATUS_LABELS,
   orderStatusClass,
 } from '../../../ventas/presentation/labels'
-import { PRODUCCION_BASE_PATH } from '@modules/produccion/config/routes.constants'
+import { PRODUCCION_BASE_PATH } from '../../../../config/routes.constants'
 import type { ClientDetail } from '../../domain/client.types'
-
 const route = useRoute()
 const router = useRouter()
 

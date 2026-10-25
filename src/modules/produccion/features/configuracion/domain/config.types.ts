@@ -1,5 +1,4 @@
-import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
-
+import { PRODUCCION_APP_SLUG } from '../../../config/app.constants'
 export const PRODUCCION_CONFIG_APP_SLUG = PRODUCCION_APP_SLUG
 
 export interface ProduccionAppSettingsDTO {

@@ -19,7 +19,10 @@ interface EnvConfig {
 
 export const envConfig: EnvConfig = {
   // API Configuration
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+  apiBaseUrl: (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api').replace(
+    /\/+$/,
+    '',
+  ),
   apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
 
   // App Configuration
@@ -33,3 +36,6 @@ export const envConfig: EnvConfig = {
 
 export const isDev = envConfig.appEnv === 'development'
 export const isProd = envConfig.appEnv === 'production'
+
+/** Origen del servidor para sockets y descargas legacy, derivado de la misma API. */
+export const apiServerUrl = envConfig.apiBaseUrl.replace(/\/api$/, '')

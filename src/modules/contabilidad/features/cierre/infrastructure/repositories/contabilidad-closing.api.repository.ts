@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_CLOSING_APP_SLUG } from '../../domain/closing.types'
 import type { ContabilidadClosingRepository } from '../../domain/repositories/contabilidad-closing.repository'
-
 function qs() {
   return `applicationSlug=${CONTABILIDAD_CLOSING_APP_SLUG}`
 }

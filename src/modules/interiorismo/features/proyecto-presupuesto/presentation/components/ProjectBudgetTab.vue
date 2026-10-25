@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { ref, toRef } from 'vue'
-import {
-  BaseButton,
-  BaseModal,
-  DataTable,
-  FormCheckbox,
-  FormInput,
-  FormSectionCard,
-  StatsCard,
-  AppIcon,
-  ActionsDropdown,
-  FileDropzone,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import type { ProjectBudgetDetailDto } from '../../domain/project-budget.types'
 import ProjectBudgetAttachments from './ProjectBudgetAttachments.vue'
 import {
@@ -24,9 +22,10 @@ import {
   useImportBudgetExcel,
   useUpdateBudgetLineItem,
   useUpdateBudgetSection,
-} from '../../application/useProjectBudget'
+} from '../composables/useProjectBudget'
 import { formatSol, INTERVENTION_LEVEL_LABELS } from '../labels'
-import { openProjectBudgetPdf } from '../../application/useProjectBudget'
+import { useOpenProjectBudgetPdf } from '../composables/useProjectBudget'
+const openProjectBudgetPdf = useOpenProjectBudgetPdf()
 
 const props = defineProps<{
   projectId: string

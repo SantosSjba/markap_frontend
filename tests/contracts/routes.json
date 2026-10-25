@@ -1,0 +1,2468 @@
+[
+  {
+    "path": "/",
+    "name": "",
+    "meta": {},
+    "redirect": "/applications"
+  },
+  {
+    "path": "/:pathMatch(.*)*",
+    "name": "not-found",
+    "meta": {
+      "title": "Página no encontrada"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres",
+    "name": "",
+    "meta": {
+      "requiresAuth": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres",
+    "name": "alquileres-home",
+    "meta": {
+      "title": "Alquileres"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/agentes",
+    "name": "",
+    "meta": {
+      "title": "Agentes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/agentes",
+    "name": "alquileres-agentes",
+    "meta": {
+      "title": "Agentes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/agentes/:id/editar",
+    "name": "alquileres-agentes-editar",
+    "meta": {
+      "title": "Editar Agente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/agentes/nuevo",
+    "name": "alquileres-agentes-nuevo",
+    "meta": {
+      "title": "Nuevo Agente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/clientes",
+    "name": "",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/clientes",
+    "name": "alquileres-clientes",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/clientes/:id/editar",
+    "name": "alquileres-clientes-editar",
+    "meta": {
+      "title": "Editar Cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/clientes/nuevo",
+    "name": "alquileres-clientes-nuevo",
+    "meta": {
+      "title": "Nuevo Cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/clientes/propietarios",
+    "name": "alquileres-clientes-propietarios",
+    "meta": {
+      "title": "Propietarios"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/cobranzas",
+    "name": "",
+    "meta": {
+      "title": "Cobranzas"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/cobranzas",
+    "name": "alquileres-cobranzas",
+    "meta": {
+      "title": "Pagos Pendientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/cobranzas/atrasos",
+    "name": "alquileres-cobranzas-atrasos",
+    "meta": {
+      "title": "Con Atraso"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/cobranzas/historial",
+    "name": "alquileres-cobranzas-historial",
+    "meta": {
+      "title": "Historial de Pagos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/configuracion",
+    "name": "",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/configuracion",
+    "name": "alquileres-configuracion",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/contratos",
+    "name": "",
+    "meta": {
+      "title": "Alquileres"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/contratos",
+    "name": "alquileres-contratos",
+    "meta": {
+      "title": "Alquileres"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/contratos/:id",
+    "name": "alquileres-contratos-detalle",
+    "meta": {
+      "title": "Detalle Alquiler"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/contratos/:id/distribucion-financiera",
+    "name": "alquileres-contratos-distribucion-financiera",
+    "meta": {
+      "title": "Distribución Financiera"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/contratos/:id/editar",
+    "name": "alquileres-contratos-editar",
+    "meta": {
+      "title": "Editar Alquiler"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/contratos/nuevo",
+    "name": "alquileres-contratos-nuevo",
+    "meta": {
+      "title": "Nuevo Alquiler"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/inquilinos",
+    "name": "",
+    "meta": {
+      "title": "Inquilinos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/inquilinos",
+    "name": "alquileres-inquilinos",
+    "meta": {
+      "title": "Inquilinos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/perfil",
+    "name": "alquileres-perfil",
+    "meta": {
+      "title": "Mi Perfil"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/propiedades",
+    "name": "",
+    "meta": {
+      "title": "Propiedades"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/propiedades",
+    "name": "alquileres-propiedades",
+    "meta": {
+      "title": "Propiedades"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/propiedades/:id/editar",
+    "name": "alquileres-propiedades-editar",
+    "meta": {
+      "title": "Editar Propiedad"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/propiedades/nueva",
+    "name": "alquileres-propiedades-nueva",
+    "meta": {
+      "title": "Nueva Propiedad"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/reportes",
+    "name": "",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/reportes",
+    "name": "alquileres-reportes",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/applications",
+    "name": "applications",
+    "meta": {
+      "requiresAuth": true,
+      "title": "Aplicaciones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura",
+    "name": "",
+    "meta": {
+      "requiresAuth": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura",
+    "name": "arquitectura-home",
+    "meta": {
+      "title": "Arquitectura"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/clientes",
+    "name": "",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/clientes",
+    "name": "arquitectura-clientes",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/clientes/:id",
+    "name": "arquitectura-clientes-detalle",
+    "meta": {
+      "title": "Cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/clientes/:id/editar",
+    "name": "arquitectura-clientes-editar",
+    "meta": {
+      "title": "Editar cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/clientes/nuevo",
+    "name": "arquitectura-clientes-nuevo",
+    "meta": {
+      "title": "Nuevo cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/configuracion",
+    "name": "",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/configuracion",
+    "name": "arquitectura-configuracion",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/cronograma",
+    "name": "arquitectura-cronograma",
+    "meta": {
+      "title": "Cronograma"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/documentos",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "arquitectura-documentos-contratos"
+    }
+  },
+  {
+    "path": "/arquitectura/documentos",
+    "name": "",
+    "meta": {
+      "title": "Documentos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/documentos/actas",
+    "name": "arquitectura-documentos-actas",
+    "meta": {
+      "title": "Actas",
+      "docType": "ACTA"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/documentos/contratos",
+    "name": "arquitectura-documentos-contratos",
+    "meta": {
+      "title": "Contratos",
+      "docType": "CONTRATO"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/documentos/facturas",
+    "name": "arquitectura-documentos-facturas",
+    "meta": {
+      "title": "Facturas",
+      "docType": "FACTURA"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/documentos/memoria-descriptiva",
+    "name": "arquitectura-documentos-memoria-descriptiva",
+    "meta": {
+      "title": "Memoria descriptiva",
+      "docType": "MEMORIA_DESCRIPTIVA"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/documentos/planos",
+    "name": "arquitectura-documentos-planos",
+    "meta": {
+      "title": "Planos",
+      "docType": "PLANO"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/documentos/renders",
+    "name": "arquitectura-documentos-renders",
+    "meta": {
+      "title": "Renders",
+      "docType": "RENDER"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/ejecucion",
+    "name": "",
+    "meta": {
+      "title": "Ejecución"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/ejecucion",
+    "name": "arquitectura-ejecucion",
+    "meta": {
+      "title": "Ejecución de obra"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/ejecucion/:projectId",
+    "name": "arquitectura-ejecucion-tablero",
+    "meta": {
+      "title": "Tablero de ejecución"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/materiales",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "arquitectura-materiales-catalogo"
+    }
+  },
+  {
+    "path": "/arquitectura/materiales",
+    "name": "",
+    "meta": {
+      "title": "Materiales"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/materiales/catalogo",
+    "name": "",
+    "meta": {
+      "title": "Catálogo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/materiales/catalogo",
+    "name": "arquitectura-materiales-catalogo",
+    "meta": {
+      "title": "Catálogo de materiales"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/materiales/catalogo/:id",
+    "name": "arquitectura-materiales-catalogo-detalle",
+    "meta": {
+      "title": "Material"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/materiales/catalogo/nuevo",
+    "name": "arquitectura-materiales-catalogo-nuevo",
+    "meta": {
+      "title": "Nuevo material"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/materiales/proveedores",
+    "name": "",
+    "meta": {
+      "title": "Proveedores"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/materiales/proveedores",
+    "name": "arquitectura-materiales-proveedores",
+    "meta": {
+      "title": "Proveedores"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/materiales/proveedores/:id",
+    "name": "arquitectura-materiales-proveedores-detalle",
+    "meta": {
+      "title": "Proveedor"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/materiales/proveedores/nuevo",
+    "name": "arquitectura-materiales-proveedores-nuevo",
+    "meta": {
+      "title": "Nuevo proveedor"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/perfil",
+    "name": "arquitectura-perfil",
+    "meta": {
+      "title": "Mi Perfil"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/presupuestos",
+    "name": "",
+    "meta": {
+      "title": "Presupuestos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/presupuestos",
+    "name": "arquitectura-presupuestos",
+    "meta": {
+      "title": "Listado de presupuestos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/presupuestos/nuevo",
+    "name": "arquitectura-presupuestos-nuevo",
+    "meta": {
+      "title": "Nuevo presupuesto"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/proyectos",
+    "name": "",
+    "meta": {
+      "title": "Proyectos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/proyectos",
+    "name": "arquitectura-proyectos",
+    "meta": {
+      "title": "Listado de proyectos",
+      "inProgressOnly": false
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/proyectos/:id",
+    "name": "arquitectura-proyectos-detalle",
+    "meta": {
+      "title": "Proyecto"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/proyectos/:id/editar",
+    "name": "arquitectura-proyectos-editar",
+    "meta": {
+      "title": "Editar proyecto"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/proyectos/en-ejecucion",
+    "name": "arquitectura-proyectos-en-ejecucion",
+    "meta": {
+      "title": "En ejecución",
+      "inProgressOnly": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/proyectos/nuevo",
+    "name": "arquitectura-proyectos-nuevo",
+    "meta": {
+      "title": "Nuevo proyecto"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/reportes",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "arquitectura-reportes"
+    }
+  },
+  {
+    "path": "/arquitectura/reportes",
+    "name": "",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/arquitectura/reportes",
+    "name": "arquitectura-reportes",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/auth",
+    "name": "",
+    "meta": {},
+    "redirect": "/auth/login"
+  },
+  {
+    "path": "/auth",
+    "name": "",
+    "meta": {
+      "requiresGuest": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/auth/forgot-password",
+    "name": "forgot-password",
+    "meta": {
+      "title": "Recuperar Contraseña"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/auth/login",
+    "name": "login",
+    "meta": {
+      "title": "Iniciar Sesión"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/auth/reset-password",
+    "name": "reset-password",
+    "meta": {
+      "title": "Restablecer Contraseña"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad",
+    "name": "",
+    "meta": {
+      "requiresAuth": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad",
+    "name": "contabilidad-home",
+    "meta": {
+      "title": "Sistema contable"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/asientos",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "contabilidad-asientos-libro-diario"
+    }
+  },
+  {
+    "path": "/contabilidad/asientos",
+    "name": "",
+    "meta": {
+      "title": "Asientos contables"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/asientos/:id",
+    "name": "contabilidad-asiento-detalle",
+    "meta": {
+      "title": "Detalle de asiento"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/asientos/:id/editar",
+    "name": "contabilidad-asiento-editar",
+    "meta": {
+      "title": "Editar asiento"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/asientos/libro-diario",
+    "name": "contabilidad-asientos-libro-diario",
+    "meta": {
+      "title": "Libro diario"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/asientos/nuevo",
+    "name": "contabilidad-asientos-nuevo",
+    "meta": {
+      "title": "Nuevo asiento"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/asientos/plantillas-asiento",
+    "name": "contabilidad-plantillas-asiento",
+    "meta": {
+      "title": "Plantillas de asiento"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/bancos/conciliacion",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/tesoreria/conciliaciones"
+  },
+  {
+    "path": "/contabilidad/bancos/cuentas",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/tesoreria/bancos"
+  },
+  {
+    "path": "/contabilidad/bancos/movimientos",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/tesoreria/movimientos"
+  },
+  {
+    "path": "/contabilidad/caja/chica",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/tesoreria/caja"
+  },
+  {
+    "path": "/contabilidad/caja/movimientos",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/tesoreria/movimientos"
+  },
+  {
+    "path": "/contabilidad/centros-costo",
+    "name": "",
+    "meta": {
+      "title": "Centros de costo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/centros-costo",
+    "name": "contabilidad-centros-costo",
+    "meta": {
+      "title": "Centros de costo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/cierre-mensual",
+    "name": "contabilidad-cierre-mensual",
+    "meta": {
+      "title": "Cierre mensual"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/compras",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "contabilidad-compras-facturas"
+    }
+  },
+  {
+    "path": "/contabilidad/compras",
+    "name": "",
+    "meta": {
+      "title": "Compras"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/compras/facturas",
+    "name": "contabilidad-compras-facturas",
+    "meta": {
+      "title": "Facturas de compra"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/compras/notas-credito",
+    "name": "contabilidad-compras-notas-credito",
+    "meta": {
+      "title": "Notas de crédito"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/compras/notas-debito",
+    "name": "contabilidad-compras-notas-debito",
+    "meta": {
+      "title": "Notas de débito"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/compras/pagos",
+    "name": "contabilidad-compras-pagos",
+    "meta": {
+      "title": "Pagos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/compras/proveedores",
+    "name": "contabilidad-compras-proveedores",
+    "meta": {
+      "title": "Proveedores"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/compras/registrar",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/compras/facturas"
+  },
+  {
+    "path": "/contabilidad/configuracion",
+    "name": "",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/configuracion",
+    "name": "contabilidad-configuracion",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/configuracion/auditoria",
+    "name": "contabilidad-auditoria",
+    "meta": {
+      "title": "Auditoría contable"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/configuracion/cpe-log",
+    "name": "contabilidad-cpe-log",
+    "meta": {
+      "title": "Trazabilidad CPE"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/configuracion/facturacion-electronica",
+    "name": "contabilidad-facturacion-electronica",
+    "meta": {
+      "title": "Facturación electrónica"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/configuracion/tipos-cambio",
+    "name": "contabilidad-tipos-cambio",
+    "meta": {
+      "title": "Tipos de cambio"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/impuestos/declaraciones",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/tributos/declaraciones-sol"
+  },
+  {
+    "path": "/contabilidad/impuestos/igv",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/tributos/igv"
+  },
+  {
+    "path": "/contabilidad/impuestos/renta",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/tributos/renta"
+  },
+  {
+    "path": "/contabilidad/inventario-permanente",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "contabilidad-inventario-items"
+    }
+  },
+  {
+    "path": "/contabilidad/inventario-permanente",
+    "name": "",
+    "meta": {
+      "title": "Inventario permanente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/inventario-permanente/items",
+    "name": "contabilidad-inventario-items",
+    "meta": {
+      "title": "Ítems de inventario"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/inventario-permanente/kardex",
+    "name": "contabilidad-inventario-kardex",
+    "meta": {
+      "title": "Kardex"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/inventario-permanente/movimientos",
+    "name": "contabilidad-inventario-movimientos",
+    "meta": {
+      "title": "Movimientos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/inventario-permanente/valorizado",
+    "name": "contabilidad-inventario-valorizado",
+    "meta": {
+      "title": "Saldo valorizado"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/libros-e",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "contabilidad-libros-ple"
+    }
+  },
+  {
+    "path": "/contabilidad/libros-e",
+    "name": "",
+    "meta": {
+      "title": "Libros electrónicos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/libros-e/libro-bancos",
+    "name": "contabilidad-libros-libro-bancos",
+    "meta": {
+      "title": "Libro bancos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/libros-e/libro-caja",
+    "name": "contabilidad-libros-libro-caja",
+    "meta": {
+      "title": "Libro caja"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/libros-e/libro-diario",
+    "name": "contabilidad-libros-libro-diario",
+    "meta": {},
+    "redirect": {
+      "name": "contabilidad-asientos-libro-diario"
+    }
+  },
+  {
+    "path": "/contabilidad/libros-e/libro-mayor",
+    "name": "contabilidad-libros-libro-mayor",
+    "meta": {
+      "title": "Libro mayor"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/libros-e/ple",
+    "name": "contabilidad-libros-ple",
+    "meta": {
+      "title": "Generación PLE"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/libros-e/registro-compras",
+    "name": "contabilidad-libros-registro-compras",
+    "meta": {
+      "title": "Registro de compras"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/libros-e/registro-ventas",
+    "name": "contabilidad-libros-registro-ventas",
+    "meta": {
+      "title": "Registro de ventas"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/perfil",
+    "name": "contabilidad-perfil",
+    "meta": {
+      "title": "Mi Perfil"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/periodos",
+    "name": "",
+    "meta": {
+      "title": "Periodos contables"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/periodos",
+    "name": "contabilidad-periodos",
+    "meta": {
+      "title": "Periodos contables"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/plan-cuentas",
+    "name": "",
+    "meta": {
+      "title": "Plan de cuentas"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/plan-cuentas",
+    "name": "contabilidad-plan-cuentas",
+    "meta": {
+      "title": "Plan de cuentas"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/plan-cuentas/nueva-cuenta",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/plan-cuentas"
+  },
+  {
+    "path": "/contabilidad/reportes",
+    "name": "",
+    "meta": {
+      "title": "Reportes financieros"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/reportes/analisis-financiero",
+    "name": "contabilidad-reportes-analisis-financiero",
+    "meta": {
+      "title": "Análisis financiero"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/reportes/balance-general",
+    "name": "contabilidad-reportes-balance-general",
+    "meta": {
+      "title": "Balance general"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/reportes/estado-resultados",
+    "name": "contabilidad-reportes-estado-resultados",
+    "meta": {
+      "title": "Estado de resultados"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/reportes/flujo-caja",
+    "name": "contabilidad-reportes-flujo-caja",
+    "meta": {
+      "title": "Flujo de caja"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/reportes/flujo-efectivo",
+    "name": "contabilidad-reportes-flujo-efectivo",
+    "meta": {
+      "title": "Flujo de efectivo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/reportes/kpis",
+    "name": "contabilidad-reportes-kpis",
+    "meta": {
+      "title": "KPIs"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/reportes/libro-mayor",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/libros-e/libro-mayor"
+  },
+  {
+    "path": "/contabilidad/tesoreria",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "contabilidad-tesoreria-caja"
+    }
+  },
+  {
+    "path": "/contabilidad/tesoreria",
+    "name": "",
+    "meta": {
+      "title": "Tesorería"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tesoreria/bancos",
+    "name": "contabilidad-tesoreria-bancos",
+    "meta": {
+      "title": "Bancos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tesoreria/caja",
+    "name": "contabilidad-tesoreria-caja",
+    "meta": {
+      "title": "Caja"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tesoreria/conciliaciones",
+    "name": "contabilidad-tesoreria-conciliaciones",
+    "meta": {
+      "title": "Conciliaciones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tesoreria/movimientos",
+    "name": "contabilidad-tesoreria-movimientos",
+    "meta": {
+      "title": "Movimientos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tesoreria/transferencias",
+    "name": "contabilidad-tesoreria-transferencias",
+    "meta": {
+      "title": "Transferencias"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tributos",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "contabilidad-tributos-igv"
+    }
+  },
+  {
+    "path": "/contabilidad/tributos",
+    "name": "",
+    "meta": {
+      "title": "Tributos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tributos/declaraciones-sol",
+    "name": "contabilidad-tributos-declaraciones-sol",
+    "meta": {
+      "title": "Declaraciones SOL"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tributos/detracciones",
+    "name": "contabilidad-tributos-detracciones",
+    "meta": {
+      "title": "Detracciones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tributos/igv",
+    "name": "contabilidad-tributos-igv",
+    "meta": {
+      "title": "IGV"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tributos/percepciones",
+    "name": "contabilidad-tributos-percepciones",
+    "meta": {
+      "title": "Percepciones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tributos/renta",
+    "name": "contabilidad-tributos-renta",
+    "meta": {
+      "title": "Impuesto a la renta"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/tributos/retenciones",
+    "name": "contabilidad-tributos-retenciones",
+    "meta": {
+      "title": "Retenciones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/ventas",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "contabilidad-ventas-facturas"
+    }
+  },
+  {
+    "path": "/contabilidad/ventas",
+    "name": "",
+    "meta": {
+      "title": "Ventas"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/ventas/boletas",
+    "name": "contabilidad-ventas-boletas",
+    "meta": {
+      "title": "Boletas de venta",
+      "documentType": "BOLETA"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/ventas/clientes",
+    "name": "contabilidad-ventas-clientes",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/ventas/cobros",
+    "name": "contabilidad-ventas-cobros",
+    "meta": {
+      "title": "Cobros"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/ventas/facturas",
+    "name": "contabilidad-ventas-facturas",
+    "meta": {
+      "title": "Facturas de venta",
+      "documentType": "FACTURA"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/ventas/notas-credito",
+    "name": "contabilidad-ventas-notas-credito",
+    "meta": {
+      "title": "Notas de crédito"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/ventas/notas-debito",
+    "name": "contabilidad-ventas-notas-debito",
+    "meta": {
+      "title": "Notas de débito"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/contabilidad/ventas/nueva-factura",
+    "name": "",
+    "meta": {},
+    "redirect": "/contabilidad/ventas/facturas"
+  },
+  {
+    "path": "/dashboard",
+    "name": "",
+    "meta": {
+      "requiresAuth": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/dashboard",
+    "name": "dashboard",
+    "meta": {
+      "title": "Dashboard"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo",
+    "name": "",
+    "meta": {
+      "requiresAuth": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo",
+    "name": "interiorismo-home",
+    "meta": {
+      "title": "Interiorismo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/calendario",
+    "name": "interiorismo-calendario",
+    "meta": {
+      "title": "Calendario"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/clientes",
+    "name": "",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/clientes",
+    "name": "interiorismo-clientes",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/clientes/:id",
+    "name": "interiorismo-clientes-detalle",
+    "meta": {
+      "title": "Cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/clientes/:id/editar",
+    "name": "interiorismo-clientes-editar",
+    "meta": {
+      "title": "Editar cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/clientes/nuevo",
+    "name": "interiorismo-clientes-nuevo",
+    "meta": {
+      "title": "Nuevo cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/configuracion",
+    "name": "",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/configuracion",
+    "name": "interiorismo-configuracion",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/documentos",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "interiorismo-documentos-contratos"
+    }
+  },
+  {
+    "path": "/interiorismo/documentos",
+    "name": "",
+    "meta": {
+      "title": "Documentos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/documentos/actas",
+    "name": "interiorismo-documentos-actas",
+    "meta": {
+      "title": "Actas",
+      "docType": "ACTA"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/documentos/contratos",
+    "name": "interiorismo-documentos-contratos",
+    "meta": {
+      "title": "Contratos",
+      "docType": "CONTRATO"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/documentos/facturas",
+    "name": "interiorismo-documentos-facturas",
+    "meta": {
+      "title": "Facturas",
+      "docType": "FACTURA"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/documentos/pdfs",
+    "name": "interiorismo-documentos-pdfs",
+    "meta": {
+      "title": "PDFs",
+      "docType": "PDF"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/documentos/planos",
+    "name": "interiorismo-documentos-planos",
+    "meta": {
+      "title": "Planos",
+      "docType": "PLANO"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/documentos/renderizados",
+    "name": "interiorismo-documentos-renderizados",
+    "meta": {
+      "title": "Renderizados",
+      "docType": "RENDERIZADO"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/ejecucion",
+    "name": "",
+    "meta": {
+      "title": "Ejecución"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/ejecucion",
+    "name": "interiorismo-ejecucion",
+    "meta": {
+      "title": "Ejecución de obra"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/ejecucion/:projectId",
+    "name": "interiorismo-ejecucion-tablero",
+    "meta": {
+      "title": "Tablero de ejecución"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/finanzas",
+    "name": "",
+    "meta": {},
+    "redirect": "/interiorismo/proyectos"
+  },
+  {
+    "path": "/interiorismo/finanzas/:projectId",
+    "name": "",
+    "meta": {},
+    "redirect": "(to) => ({\n          path: `${__vite_ssr_import_2__.INTERIORISMO_BASE_PATH}/proyectos/${String(to.params.projectId)}`,\n          query: { tab: \"liquidacion\" }\n        })"
+  },
+  {
+    "path": "/interiorismo/materiales",
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "interiorismo-materiales-catalogo"
+    }
+  },
+  {
+    "path": "/interiorismo/materiales",
+    "name": "",
+    "meta": {
+      "title": "Materiales"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/materiales/catalogo",
+    "name": "",
+    "meta": {
+      "title": "Catálogo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/materiales/catalogo",
+    "name": "interiorismo-materiales-catalogo",
+    "meta": {
+      "title": "Catálogo de materiales"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/materiales/catalogo/:id",
+    "name": "interiorismo-materiales-catalogo-detalle",
+    "meta": {
+      "title": "Material"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/materiales/catalogo/nuevo",
+    "name": "interiorismo-materiales-catalogo-nuevo",
+    "meta": {
+      "title": "Nuevo material"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/materiales/proveedores",
+    "name": "",
+    "meta": {
+      "title": "Proveedores"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/materiales/proveedores",
+    "name": "interiorismo-materiales-proveedores",
+    "meta": {
+      "title": "Proveedores"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/materiales/proveedores/:id",
+    "name": "interiorismo-materiales-proveedores-detalle",
+    "meta": {
+      "title": "Proveedor"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/materiales/proveedores/nuevo",
+    "name": "interiorismo-materiales-proveedores-nuevo",
+    "meta": {
+      "title": "Nuevo proveedor"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/perfil",
+    "name": "interiorismo-perfil",
+    "meta": {
+      "title": "Mi Perfil"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/presupuestos",
+    "name": "",
+    "meta": {},
+    "redirect": "/interiorismo/proyectos"
+  },
+  {
+    "path": "/interiorismo/presupuestos/:pathMatch(.*)*",
+    "name": "",
+    "meta": {},
+    "redirect": "/interiorismo/proyectos"
+  },
+  {
+    "path": "/interiorismo/proyectos",
+    "name": "",
+    "meta": {
+      "title": "Proyectos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/proyectos",
+    "name": "interiorismo-proyectos",
+    "meta": {
+      "title": "Listado de proyectos",
+      "inProgressOnly": false
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/proyectos/:id",
+    "name": "interiorismo-proyectos-detalle",
+    "meta": {
+      "title": "Proyecto"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/proyectos/:id/editar",
+    "name": "interiorismo-proyectos-editar",
+    "meta": {
+      "title": "Editar proyecto"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/proyectos/en-progreso",
+    "name": "interiorismo-proyectos-en-progreso",
+    "meta": {
+      "title": "En progreso",
+      "inProgressOnly": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/proyectos/nuevo",
+    "name": "interiorismo-proyectos-nuevo",
+    "meta": {
+      "title": "Nuevo proyecto"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/reportes",
+    "name": "",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/reportes",
+    "name": "interiorismo-reportes",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion",
+    "name": "",
+    "meta": {
+      "requiresAuth": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion",
+    "name": "produccion-home",
+    "meta": {
+      "title": "Producción de muebles"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/catalogo",
+    "name": "",
+    "meta": {
+      "title": "Catálogo de muebles"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/catalogo",
+    "name": "produccion-catalogo",
+    "meta": {
+      "title": "Catálogo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/catalogo/:id",
+    "name": "produccion-catalogo-detalle",
+    "meta": {
+      "title": "Mueble"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/catalogo/nuevo",
+    "name": "produccion-catalogo-nuevo",
+    "meta": {
+      "title": "Nuevo mueble"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/clientes",
+    "name": "",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/clientes",
+    "name": "produccion-clientes",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/clientes/:id",
+    "name": "produccion-clientes-detalle",
+    "meta": {
+      "title": "Cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/clientes/:id/editar",
+    "name": "produccion-clientes-editar",
+    "meta": {
+      "title": "Editar cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/clientes/nuevo",
+    "name": "produccion-clientes-nuevo",
+    "meta": {
+      "title": "Nuevo cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/compras",
+    "name": "",
+    "meta": {
+      "title": "Compras"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/compras/ordenes-compra",
+    "name": "produccion-compras-ordenes-compra",
+    "meta": {
+      "title": "Órdenes de compra"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/compras/ordenes-compra/:id",
+    "name": "produccion-compras-orden-detalle",
+    "meta": {
+      "title": "Detalle orden de compra"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/compras/ordenes-compra/nueva",
+    "name": "produccion-compras-orden-nueva",
+    "meta": {
+      "title": "Nueva orden de compra"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/compras/proveedores",
+    "name": "produccion-compras-proveedores",
+    "meta": {
+      "title": "Proveedores"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/compras/proveedores/:id",
+    "name": "produccion-compras-proveedor-detalle",
+    "meta": {
+      "title": "Detalle proveedor"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/configuracion",
+    "name": "",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/configuracion",
+    "name": "produccion-configuracion",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/costos",
+    "name": "",
+    "meta": {
+      "title": "Costos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/costos/costeo",
+    "name": "produccion-costos-costeo",
+    "meta": {
+      "title": "Costeo de muebles"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/costos/gastos",
+    "name": "produccion-costos-gastos",
+    "meta": {
+      "title": "Gastos adicionales"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/costos/mano-obra",
+    "name": "produccion-costos-mano-obra",
+    "meta": {
+      "title": "Mano de obra"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/etapas",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/produccion/etapas"
+  },
+  {
+    "path": "/produccion/etapas/:etapa",
+    "name": "",
+    "meta": {},
+    "redirect": "(to) => `/produccion/produccion/etapas?etapa=${to.params.etapa}`"
+  },
+  {
+    "path": "/produccion/inventario",
+    "name": "",
+    "meta": {
+      "title": "Inventario"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/inventario/insumos",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/inventario/stock"
+  },
+  {
+    "path": "/produccion/inventario/materiales",
+    "name": "produccion-inventario-materiales",
+    "meta": {
+      "title": "Materiales"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/inventario/movimientos",
+    "name": "produccion-inventario-movimientos",
+    "meta": {
+      "title": "Movimientos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/inventario/stock",
+    "name": "produccion-inventario-stock",
+    "meta": {
+      "title": "Stock"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ordenes-trabajo",
+    "name": "",
+    "meta": {
+      "title": "Órdenes de trabajo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ordenes-trabajo",
+    "name": "produccion-ordenes-trabajo",
+    "meta": {
+      "title": "Órdenes de trabajo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ordenes-trabajo/:id",
+    "name": "produccion-ot-detalle",
+    "meta": {
+      "title": "Detalle OT"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ordenes-trabajo/en-proceso",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/produccion/en-proceso"
+  },
+  {
+    "path": "/produccion/ordenes-trabajo/nueva",
+    "name": "produccion-ot-nueva",
+    "meta": {
+      "title": "Nueva OT"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/perfil",
+    "name": "produccion-perfil",
+    "meta": {
+      "title": "Mi Perfil"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/produccion",
+    "name": "",
+    "meta": {
+      "title": "Producción"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/produccion/en-proceso",
+    "name": "produccion-en-proceso",
+    "meta": {
+      "title": "Producción en proceso"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/produccion/etapas",
+    "name": "produccion-etapas",
+    "meta": {
+      "title": "Etapas de producción"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/produccion/terminados",
+    "name": "produccion-terminados",
+    "meta": {
+      "title": "Productos terminados"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/productos",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/catalogo"
+  },
+  {
+    "path": "/produccion/productos/nuevo",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/catalogo/nuevo"
+  },
+  {
+    "path": "/produccion/proveedores",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/compras/proveedores"
+  },
+  {
+    "path": "/produccion/proveedores/nuevo",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/compras/proveedores"
+  },
+  {
+    "path": "/produccion/proveedores/ordenes-compra",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/compras/ordenes-compra"
+  },
+  {
+    "path": "/produccion/reportes",
+    "name": "",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/reportes",
+    "name": "produccion-reportes",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ventas",
+    "name": "",
+    "meta": {
+      "title": "Ventas"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ventas/clientes",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/clientes"
+  },
+  {
+    "path": "/produccion/ventas/clientes/nuevo",
+    "name": "",
+    "meta": {},
+    "redirect": "/produccion/clientes/nuevo"
+  },
+  {
+    "path": "/produccion/ventas/cotizaciones",
+    "name": "produccion-ventas-cotizaciones",
+    "meta": {
+      "title": "Cotizaciones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ventas/cotizaciones/:id",
+    "name": "produccion-ventas-cotizacion-detalle",
+    "meta": {
+      "title": "Detalle cotización"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ventas/cotizaciones/nueva",
+    "name": "produccion-ventas-cotizacion-nueva",
+    "meta": {
+      "title": "Nueva cotización"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ventas/entregas",
+    "name": "produccion-ventas-entregas",
+    "meta": {
+      "title": "Entregas"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ventas/entregas/:id",
+    "name": "produccion-ventas-entrega-detalle",
+    "meta": {
+      "title": "Detalle entrega"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ventas/pedidos",
+    "name": "produccion-ventas-pedidos",
+    "meta": {
+      "title": "Pedidos"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/produccion/ventas/pedidos/:id",
+    "name": "produccion-ventas-pedido-detalle",
+    "meta": {
+      "title": "Detalle pedido"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/settings",
+    "name": "",
+    "meta": {},
+    "redirect": "/settings/profile"
+  },
+  {
+    "path": "/settings",
+    "name": "",
+    "meta": {
+      "requiresAuth": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/settings/profile",
+    "name": "settings-profile",
+    "meta": {
+      "title": "Mi Perfil"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/settings/role-applications",
+    "name": "settings-role-applications",
+    "meta": {
+      "title": "Roles y aplicaciones",
+      "requiresAdmin": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/settings/roles",
+    "name": "settings-roles",
+    "meta": {
+      "title": "Roles",
+      "requiresAdmin": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/settings/users",
+    "name": "settings-users",
+    "meta": {
+      "title": "Usuarios",
+      "requiresAdmin": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/unauthorized",
+    "name": "unauthorized",
+    "meta": {
+      "title": "Acceso Denegado"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas",
+    "name": "",
+    "meta": {
+      "requiresAuth": true
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas",
+    "name": "ventas-home",
+    "meta": {
+      "title": "Ventas"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/agentes",
+    "name": "",
+    "meta": {
+      "title": "Agentes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/agentes",
+    "name": "ventas-agentes",
+    "meta": {
+      "title": "Agentes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/agentes/:id/editar",
+    "name": "ventas-agentes-editar",
+    "meta": {
+      "title": "Editar Agente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/agentes/nuevo",
+    "name": "ventas-agentes-nuevo",
+    "meta": {
+      "title": "Nuevo Agente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/cierres",
+    "name": "",
+    "meta": {
+      "title": "Cierres"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/cierres",
+    "name": "ventas-cierres",
+    "meta": {
+      "title": "Cierres"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/cierres/:closingId/cumplimiento",
+    "name": "ventas-cierre-cumplimiento",
+    "meta": {
+      "title": "Cumplimiento legal del cierre"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/clientes",
+    "name": "",
+    "meta": {
+      "title": "Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/clientes",
+    "name": "ventas-clientes",
+    "meta": {
+      "title": "Listado de Clientes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/clientes/:id/editar",
+    "name": "ventas-clientes-editar",
+    "meta": {
+      "title": "Editar Cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/clientes/nuevo",
+    "name": "ventas-clientes-nuevo",
+    "meta": {
+      "title": "Nuevo Cliente"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/clientes/propietarios",
+    "name": "ventas-clientes-propietarios",
+    "meta": {
+      "title": "Propietarios"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/comisiones",
+    "name": "",
+    "meta": {
+      "title": "Comisiones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/comisiones",
+    "name": "ventas-comisiones",
+    "meta": {
+      "title": "Comisiones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/configuracion",
+    "name": "",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/configuracion",
+    "name": "ventas-configuracion",
+    "meta": {
+      "title": "Configuración"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/perfil",
+    "name": "ventas-perfil",
+    "meta": {
+      "title": "Mi Perfil"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/procesos",
+    "name": "",
+    "meta": {
+      "title": "Procesos de Venta"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/procesos",
+    "name": "ventas-procesos",
+    "meta": {
+      "title": "Procesos de Venta"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/procesos/:id",
+    "name": "ventas-proceso-detalle",
+    "meta": {
+      "title": "Detalle proceso"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/procesos/nuevo",
+    "name": "ventas-procesos-nuevo",
+    "meta": {
+      "title": "Nuevo proceso de venta"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/procesos/pipeline",
+    "name": "ventas-procesos-pipeline",
+    "meta": {
+      "title": "Pipeline de ventas"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/propiedades",
+    "name": "",
+    "meta": {
+      "title": "Propiedades"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/propiedades",
+    "name": "ventas-propiedades",
+    "meta": {
+      "title": "Listado de Propiedades"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/propiedades/:id/editar",
+    "name": "ventas-propiedades-editar",
+    "meta": {
+      "title": "Editar Propiedad"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/propiedades/nueva",
+    "name": "ventas-propiedades-nueva",
+    "meta": {
+      "title": "Nueva Propiedad"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/reportes",
+    "name": "",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/reportes",
+    "name": "ventas-reportes",
+    "meta": {
+      "title": "Reportes"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/separaciones",
+    "name": "",
+    "meta": {
+      "title": "Separaciones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/separaciones",
+    "name": "ventas-separaciones",
+    "meta": {
+      "title": "Separaciones"
+    },
+    "redirect": null
+  }
+]

@@ -1,43 +1,42 @@
 <script setup lang="ts">
+import { contabilidadCpeRepositoryKey } from '../../../facturacion-electronica/application/ports/contabilidad-cpe.port'
+import { useService } from '@shared/presentation/di/services'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  Badge,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-  SearchInput,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
-import { flattenMovementAccounts, formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { useContabilidadAccountsTree } from '../../../plan-cuentas/presentation/composables/useContabilidadAccounts'
+import { flattenMovementAccounts, formatPen } from '../../../asientos/domain/journal.utils'
 import {
   FUNCTIONAL_CURRENCY,
   formatMoney,
   isForeignCurrency,
   useContabilidadCurrencies,
-} from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
-import { useContabilidadExchangeRateLookup } from '@modules/contabilidad/presentation/composables/useContabilidadExchangeRateLookup'
+} from '../../../../presentation/composables/useContabilidadCurrencies'
+import { useContabilidadExchangeRateLookup } from '../../../../presentation/composables/useContabilidadExchangeRateLookup'
 import {
   useContabilidadCustomers,
   useContabilidadSalesInvoices,
   useContabilidadCreateSalesInvoice,
   useContabilidadCancelSalesInvoice,
-} from '../../application/useContabilidadSales'
+} from '../composables/useContabilidadSales'
+import { useContabilidadEmitSalesInvoice } from '../../../facturacion-electronica/presentation/composables/useContabilidadCpe'
 import {
-  useContabilidadEmitSalesInvoice,
   CPE_ELECTRONIC_STATUS,
   CPE_ELECTRONIC_STATUS_LABELS,
   cpeElectronicStatusVariant,
-  contabilidadCpeApiRepository,
-} from '@modules/contabilidad/features/facturacion-electronica'
+} from '../../../facturacion-electronica/domain/cpe.types'
 import {
   SALES_DOCUMENT_TYPE,
   SALES_STATUS_FILTER_OPTIONS,
@@ -46,12 +45,15 @@ import {
   salesStatusVariant,
   type ContabilidadSalesInvoiceDTO,
 } from '../../domain/sales.types'
+const contabilidadCpeApiRepository = useService(contabilidadCpeRepositoryKey)
 
 const route = useRoute()
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
 
-const documentType = computed(() => (route.meta.documentType as string) || SALES_DOCUMENT_TYPE.FACTURA)
+const documentType = computed(
+  () => (route.meta.documentType as string) || SALES_DOCUMENT_TYPE.FACTURA,
+)
 const pageTitle = computed(() =>
   documentType.value === SALES_DOCUMENT_TYPE.BOLETA ? 'Boletas de venta' : 'Facturas de venta',
 )
@@ -114,7 +116,10 @@ const form = ref({
 const formCurrency = computed(() => form.value.currencyCode)
 const formIssueDate = computed(() => form.value.issueDate)
 const { data: currenciesData } = useContabilidadCurrencies()
-const { sellRate, isLoading: loadingRate } = useContabilidadExchangeRateLookup(formCurrency, formIssueDate)
+const { sellRate, isLoading: loadingRate } = useContabilidadExchangeRateLookup(
+  formCurrency,
+  formIssueDate,
+)
 
 const currencyOptions = computed(() =>
   (currenciesData.value ?? []).map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` })),
@@ -122,9 +127,7 @@ const currencyOptions = computed(() =>
 
 const isForeignInvoice = computed(() => isForeignCurrency(form.value.currencyCode))
 const taxableBaseLabel = computed(() =>
-  isForeignInvoice.value
-    ? `Base imponible (${form.value.currencyCode})`
-    : 'Base imponible (S/)',
+  isForeignInvoice.value ? `Base imponible (${form.value.currencyCode})` : 'Base imponible (S/)',
 )
 
 watch(sellRate, (rate) => {
@@ -133,23 +136,38 @@ watch(sellRate, (rate) => {
   }
 })
 
-watch(() => form.value.currencyCode, (code) => {
-  if (code === FUNCTIONAL_CURRENCY) form.value.exchangeRate = ''
-})
+watch(
+  () => form.value.currencyCode,
+  (code) => {
+    if (code === FUNCTIONAL_CURRENCY) form.value.exchangeRate = ''
+  },
+)
 
-watch(activePeriod, (p) => {
-  if (!p) return
-  const now = new Date()
-  form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
-}, { immediate: true })
+watch(
+  activePeriod,
+  (p) => {
+    if (!p) return
+    const now = new Date()
+    form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
+  },
+  { immediate: true },
+)
 
-watch(incomeOptions, (opts) => {
-  if (!form.value.incomeAccountId && opts[0]) form.value.incomeAccountId = opts[0].value
-}, { immediate: true })
+watch(
+  incomeOptions,
+  (opts) => {
+    if (!form.value.incomeAccountId && opts[0]) form.value.incomeAccountId = opts[0].value
+  },
+  { immediate: true },
+)
 
-watch(customerOptions, (opts) => {
-  if (!form.value.customerId && opts[0]) form.value.customerId = opts[0].value
-}, { immediate: true })
+watch(
+  customerOptions,
+  (opts) => {
+    if (!form.value.customerId && opts[0]) form.value.customerId = opts[0].value
+  },
+  { immediate: true },
+)
 
 const columns = [
   { key: 'issueDate', label: 'Fecha', sortable: true },
@@ -197,7 +215,12 @@ function submitInvoice() {
       taxableBase: form.value.taxableBase,
       notes: form.value.notes.trim() || null,
     },
-    { onSuccess: () => { modalOpen.value = false; void refetch() } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    },
   )
 }
 

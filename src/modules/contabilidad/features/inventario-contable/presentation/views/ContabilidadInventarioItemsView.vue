@@ -1,27 +1,24 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  BaseButton,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  PageHeader,
-  SearchInput,
-} from '@shared/components'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
-import { flattenMovementAccounts } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { formatPen } from '../../../asientos/domain/journal.utils'
+import { useContabilidadAccountsTree } from '../../../plan-cuentas/presentation/composables/useContabilidadAccounts'
+import { flattenMovementAccounts } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadCreateInventoryItem,
   useContabilidadInventoryItems,
-} from '../../application/useContabilidadInventory'
+} from '../composables/useContabilidadInventory'
 import {
   INVENTORY_COST_METHOD_OPTIONS,
   type ContabilidadInventoryItemDTO,
 } from '../../domain/inventory.types'
-
 const searchInput = ref('')
 const debouncedSearch = useDebouncedRef(searchInput, 300)
 const listParams = computed(() => ({ search: debouncedSearch.value.trim() || undefined }))
@@ -61,7 +58,11 @@ function openModal() {
 }
 
 function submit() {
-  createItem(form.value, { onSuccess: () => { modalOpen.value = false } })
+  createItem(form.value, {
+    onSuccess: () => {
+      modalOpen.value = false
+    },
+  })
 }
 </script>
 

@@ -6,7 +6,6 @@ import type {
   RentalFinancialConfig,
   RentalStats,
 } from '../../domain/rental.types'
-
 /** Punto único para adaptar respuestas HTTP al modelo de dominio (evolución sin acoplar vistas). */
 export function mapListRentalsResponse(body: ListRentalsResponse): ListRentalsResponse {
   return body
@@ -29,12 +28,7 @@ function mapRentalAlertFields<T extends RentalAlertFields>(body: T): T {
 
 export function mapRentalDetail(body: RentalDetail): RentalDetail {
   const mapped = mapRentalAlertFields(body)
-  const tenants =
-    mapped.tenants?.length
-      ? mapped.tenants
-      : mapped.tenant
-        ? [mapped.tenant]
-        : []
+  const tenants = mapped.tenants?.length ? mapped.tenants : mapped.tenant ? [mapped.tenant] : []
   return { ...mapped, tenants }
 }
 
@@ -46,10 +40,14 @@ export function mapRentalCreated(body: RentalCreated): RentalCreated {
   return mapRentalAlertFields(body)
 }
 
-export function mapRentalFinancialConfig(body: RentalFinancialConfig | null): RentalFinancialConfig | null {
+export function mapRentalFinancialConfig(
+  body: RentalFinancialConfig | null,
+): RentalFinancialConfig | null {
   return body
 }
 
-export function mapRentalFinancialBreakdown(body: RentalFinancialBreakdown): RentalFinancialBreakdown {
+export function mapRentalFinancialBreakdown(
+  body: RentalFinancialBreakdown,
+): RentalFinancialBreakdown {
   return body
 }

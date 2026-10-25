@@ -1,13 +1,13 @@
-import { getContabilidadApiScope } from '@modules/contabilidad/config/api-scope'
-import { apiClient } from '@core/api/apiClient'
-import { downloadBlobFile } from '@modules/contabilidad/features/libros-e/domain/ple.types'
+import type { ContabilidadSolRepository } from '../../domain/repositories/contabilidad-sol.repository'
+import { getContabilidadApiScope } from '../../../../config/api-scope'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { downloadBlobFile } from '@shared/infrastructure/browser/download-file'
 import type {
   ContabilidadSolPdt621PackageDTO,
   ContabilidadSunatDeclarationLogDTO,
   ContabilidadSolCredentialsDTO,
   UpsertSolCredentialsBody,
 } from '../../domain/sol.types'
-
 function qs(extra?: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   Object.entries({ ...getContabilidadApiScope(), ...extra }).forEach(([k, v]) => {
@@ -16,7 +16,7 @@ function qs(extra?: Record<string, string | undefined>) {
   return u.toString()
 }
 
-export const contabilidadSolApiRepository = {
+export const contabilidadSolApiRepository: ContabilidadSolRepository = {
   getCredentials: () =>
     apiClient
       .get<{
@@ -52,19 +52,24 @@ export const contabilidadSolApiRepository = {
 
   submitPdt621: (logId: string, periodId: string) =>
     apiClient
-      .post<{ log: ContabilidadSunatDeclarationLogDTO; mode: string }>(
-        `/contabilidad-sol/pdt621/${logId}/submit?${qs({ periodId })}`,
-      )
+      .post<{
+        log: ContabilidadSunatDeclarationLogDTO
+        mode: string
+      }>(`/contabilidad-sol/pdt621/${logId}/submit?${qs({ periodId })}`)
       .then((r) => r.data),
 
   preparePlame: (periodId: string) =>
     apiClient.post(`/contabilidad-sol/plame/prepare?${qs({ periodId })}`).then((r) => r.data),
 
   async downloadPackage(logId: string) {
-    const response = await apiClient.get<Blob>(`/contabilidad-sol/declarations/${logId}/package?${qs()}`, {
-      responseType: 'blob',
-    })
-    const disposition = response.headers['content-disposition'] ?? response.headers['Content-Disposition']
+    const response = await apiClient.get<Blob>(
+      `/contabilidad-sol/declarations/${logId}/package?${qs()}`,
+      {
+        responseType: 'blob',
+      },
+    )
+    const disposition =
+      response.headers['content-disposition'] ?? response.headers['Content-Disposition']
     const match = typeof disposition === 'string' ? disposition.match(/filename="?([^"]+)"?/) : null
     downloadBlobFile(match?.[1] ?? `${logId}.json`, response.data)
   },

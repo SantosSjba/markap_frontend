@@ -1,24 +1,28 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
 import {
-  BaseButton,
-  BasePagination,
-  Badge,
-  BaseModal,
-  DataTable,
-  SearchInput,
-  FormSelect,
-  AppIcon,
-  ActionsDropdown,
-} from '@shared/components'
-import { useInteriorProjectsList, useUpdateInteriorProject } from '../../application/useInteriorProjects'
-import type { InteriorProjectListItem, InteriorProjectStatus, ListInteriorProjectsParams } from '../../domain/project.types'
+  useInteriorProjectsList,
+  useUpdateInteriorProject,
+} from '../composables/useInteriorProjects'
+import type {
+  InteriorProjectListItem,
+  InteriorProjectStatus,
+  ListInteriorProjectsParams,
+} from '../../domain/project.types'
 import { PROJECT_TYPE_LABELS, projectStatusLabel } from '../labels'
-import { useInteriorProjectStageOptions } from '../../application/useInteriorProjectStageOptions'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+import { useInteriorProjectStageOptions } from '../composables/useInteriorProjectStageOptions'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const router = useRouter()
 const route = useRoute()
 const ITEMS = 10
@@ -130,7 +134,9 @@ const executeCancel = async () => {
   }
 }
 
-const getActions = (r: InteriorProjectListItem): { label: string; icon: string; onClick: () => void }[] => {
+const getActions = (
+  r: InteriorProjectListItem,
+): { label: string; icon: string; onClick: () => void }[] => {
   const rows: { label: string; icon: string; onClick: () => void }[] = [
     { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(r) },
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => goEdit(r) },

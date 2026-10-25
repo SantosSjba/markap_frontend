@@ -1,32 +1,29 @@
 <script setup lang="ts">
-import { toCalendarDateString } from '@/shared/utils/formatters'
+import { toCalendarDateString } from '@shared/utils/formatters'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BaseModal,
-  Badge,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-} from '@shared/components'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadCreateInventoryMovement,
   useContabilidadInventoryCatalog,
   useContabilidadInventoryItems,
   useContabilidadInventoryMovements,
-} from '../../application/useContabilidadInventory'
+} from '../composables/useContabilidadInventory'
 import {
   INVENTORY_MOVEMENT_TYPE,
   INVENTORY_MOVEMENT_TYPE_OPTIONS,
   INVENTORY_OFFSET_TYPE_OPTIONS,
   type ContabilidadInventoryMovementDTO,
 } from '../../domain/inventory.types'
-
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
 
@@ -42,7 +39,10 @@ const rows = computed(() => data.value?.movements ?? [])
 const { data: catalog } = useContabilidadInventoryCatalog()
 const { data: itemsData } = useContabilidadInventoryItems(computed(() => ({ activeOnly: 'true' })))
 const itemOptions = computed(() =>
-  (itemsData.value?.items ?? []).map((i) => ({ value: i.id, label: `${i.code} — ${i.description}` })),
+  (itemsData.value?.items ?? []).map((i) => ({
+    value: i.id,
+    label: `${i.code} — ${i.description}`,
+  })),
 )
 
 const { mutate: createMovement, isPending: saving } = useContabilidadCreateInventoryMovement()
@@ -101,7 +101,11 @@ function submit() {
       quantity: form.value.quantity,
       unitCost: form.value.unitCost || undefined,
     },
-    { onSuccess: () => { modalOpen.value = false } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+      },
+    },
   )
 }
 

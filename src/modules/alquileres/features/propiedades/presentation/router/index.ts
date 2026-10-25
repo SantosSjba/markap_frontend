@@ -1,5 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-
 /**
  * Rutas del módulo Propiedades (se montan como children de /alquileres/propiedades)
  */

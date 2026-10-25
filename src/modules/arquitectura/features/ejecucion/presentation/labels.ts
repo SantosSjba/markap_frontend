@@ -1,4 +1,4 @@
-﻿export const PHASE_LABELS: Record<string, string> = {
+export const PHASE_LABELS: Record<string, string> = {
   DESIGN: 'Diseño',
   PURCHASES: 'Compras',
   PRODUCTION: 'Producción',

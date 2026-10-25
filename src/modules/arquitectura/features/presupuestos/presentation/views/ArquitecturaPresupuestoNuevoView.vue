@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormSelect, FormSectionCard, AppIcon } from '@shared/components'
-import { useArquitecturaProjectsList } from '@modules/arquitectura/features/proyectos/application/useArquitecturaProjects'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useArquitecturaProjectsList } from '../../../proyectos/presentation/composables/useArquitecturaProjects'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 const router = useRouter()
 const selectedProjectId = ref('')
 

@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, FormSelect, FormTextarea, AppIcon } from '@shared/components'
-import { useProduccionClientsList } from '../../../clientes/application/useClients'
-import { useProduccionCatalogList } from '../../../catalogo/application/useProduccionCatalog'
-import { useWorkOrderMutations } from '../../application/useProduccionWorkOrders'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useProduccionClientsList } from '../../../clientes/presentation/composables/useClients'
+import { useProduccionCatalogList } from '../../../catalogo/presentation/composables/useProduccionCatalog'
+import { useWorkOrderMutations } from '../composables/useProduccionWorkOrders'
 import { WO_PRIORITY_LABELS } from '../labels'
-
 const router = useRouter()
 const { create } = useWorkOrderMutations()
 
@@ -20,7 +23,10 @@ const clientOptions = computed(() => [
 const furnitureOptions = computed(() =>
   (catalogRes.value?.data ?? []).map((f) => ({ value: f.id, label: `${f.code} · ${f.name}` })),
 )
-const priorityOptions = Object.entries(WO_PRIORITY_LABELS).map(([value, label]) => ({ value, label }))
+const priorityOptions = Object.entries(WO_PRIORITY_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}))
 
 const clientId = ref('')
 const priority = ref('NORMAL')

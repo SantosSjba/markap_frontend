@@ -2,22 +2,23 @@
 import { ref, computed, watch } from 'vue'
 import * as yup from 'yup'
 import { Icon } from '@iconify/vue'
-import { 
-  useUsers, 
-  useRoles, 
-  useCreateUser, 
-  useUpdateUser, 
-  useToggleUserActive, 
-  useAssignRole, 
-  useRevokeRole 
-} from '../../application/useUsers'
-import { usePagination } from '@shared/composables'
-import { BaseButton, BaseModal, BasePagination } from '@shared/components'
-import FormInput from '@shared/components/forms/FormInput.vue'
-import { getApiErrorMessage } from '@/shared/utils'
-import { useForm, toTypedSchema } from '@shared/components/forms'
+import {
+  useUsers,
+  useRoles,
+  useCreateUser,
+  useUpdateUser,
+  useToggleUserActive,
+  useAssignRole,
+  useRevokeRole,
+} from '../composables/useUsers'
+import { usePagination } from '@shared/presentation/composables/usePagination'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import type { UserListItem } from '../../domain/settings.types'
-
 /**
  * UsersView
  * User management page with TanStack Query
@@ -100,19 +101,26 @@ const filteredUsers = computed(() => {
   const query = searchQuery.value.toLowerCase()
   return users.value.filter(
     (user) =>
-      user.fullName.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query)
+      user.fullName.toLowerCase().includes(query) || user.email.toLowerCase().includes(query),
   )
 })
 
 // Update total when filtered users change
-watch(filteredUsers, (list) => {
-  pagination.setTotal(list.length)
-  // Reset to page 1 if current page exceeds total pages
-  if (pagination.page.value > 1 && pagination.totalPages.value > 0 && pagination.page.value > pagination.totalPages.value) {
-    pagination.page.value = pagination.totalPages.value
-  }
-}, { immediate: true })
+watch(
+  filteredUsers,
+  (list) => {
+    pagination.setTotal(list.length)
+    // Reset to page 1 if current page exceeds total pages
+    if (
+      pagination.page.value > 1 &&
+      pagination.totalPages.value > 0 &&
+      pagination.page.value > pagination.totalPages.value
+    ) {
+      pagination.page.value = pagination.totalPages.value
+    }
+  },
+  { immediate: true },
+)
 
 // Paginated users (slice of filtered users)
 const paginatedUsers = computed(() => {

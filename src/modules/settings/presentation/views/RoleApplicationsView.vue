@@ -5,10 +5,9 @@ import {
   useRoleApplicationsPage,
   useAssignRoleApplication,
   useRevokeRoleApplication,
-} from '../../application/useRoleApplications'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils'
-
+} from '../composables/useRoleApplications'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 /**
  * Gestión de roles y aplicaciones
  * Controlar qué roles tienen acceso a cada aplicación (TanStack Query)
@@ -22,7 +21,10 @@ watch(
   () => pageQuery.error.value,
   (err) => {
     if (err != null) {
-      void markapAlert.toast.error('No se pudo cargar roles y aplicaciones', getApiErrorMessage(err))
+      void markapAlert.toast.error(
+        'No se pudo cargar roles y aplicaciones',
+        getApiErrorMessage(err),
+      )
     }
   },
 )
@@ -36,8 +38,14 @@ const hasAccess = (roleId: string, applicationId: string) =>
   (roleApplicationIds.value[roleId] ?? []).includes(applicationId)
 
 const isSaving = (roleId: string, applicationId: string) => {
-  const a = assignMutation.isPending.value && assignMutation.variables.value?.roleId === roleId && assignMutation.variables.value?.applicationId === applicationId
-  const r = revokeMutation.isPending.value && revokeMutation.variables.value?.roleId === roleId && revokeMutation.variables.value?.applicationId === applicationId
+  const a =
+    assignMutation.isPending.value &&
+    assignMutation.variables.value?.roleId === roleId &&
+    assignMutation.variables.value?.applicationId === applicationId
+  const r =
+    revokeMutation.isPending.value &&
+    revokeMutation.variables.value?.roleId === roleId &&
+    revokeMutation.variables.value?.applicationId === applicationId
   return a || r
 }
 

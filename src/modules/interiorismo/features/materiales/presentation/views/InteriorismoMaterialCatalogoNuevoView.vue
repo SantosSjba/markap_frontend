@@ -1,16 +1,20 @@
 <script setup lang="ts">
+import { useService } from '@shared/presentation/di/services'
+import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, FileDropzone, AppIcon } from '@shared/components'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
 import {
   useCreateInteriorCatalogMaterial,
   useUploadInteriorCatalogAsset,
-} from '../../application/useInteriorCatalogMaterials'
-import { apiClient } from '@core/api/apiClient'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+} from '../composables/useInteriorCatalogMaterials'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const fileAccess = useService(FILE_ACCESS)
 
 const router = useRouter()
 const createMut = useCreateInteriorCatalogMaterial()
@@ -71,10 +75,9 @@ function removeImage(idx: number) {
 async function openStored(path: string, archivoId?: string | null) {
   try {
     if (archivoId) {
-      const { data } = await apiClient.get<{ url: string }>(
-        `/gen-archivos/${encodeURIComponent(archivoId)}/url`,
-        { params: { applicationSlug: INTERIORISMO_APP_SLUG } },
-      )
+      const data = await fileAccess.getDownloadUrl(encodeURIComponent(archivoId), {
+        applicationSlug: 'interiorismo',
+      })
       if (data?.url) {
         window.open(data.url, '_blank', 'noopener,noreferrer')
         return
@@ -84,9 +87,7 @@ async function openStored(path: string, archivoId?: string | null) {
       window.open(path, '_blank', 'noopener,noreferrer')
       return
     }
-    const { data } = await apiClient.get<{ url: string }>('/gen-archivos/resolve-url', {
-      params: { objectKey: path, applicationSlug: INTERIORISMO_APP_SLUG },
-    })
+    const data = await fileAccess.resolveDownloadUrl(path, { applicationSlug: 'interiorismo' })
     if (data?.url) {
       window.open(data.url, '_blank', 'noopener,noreferrer')
       return
@@ -157,7 +158,8 @@ const goBack = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo`
         <FormInput v-model="brand" label="Marca" required />
       </div>
       <div class="grid sm:grid-cols-3 gap-4">
-        <FormInput v-model="unit" label="Unidad" required placeholder="m², gal, und" />
+        <FormInput v-model="unit" label="Unidad" required placeholder="m², gal, und
+" />
         <FormInput v-model="price" type="number" label="Precio ref." required />
         <FormInput v-model="stock" type="number" label="Stock" />
       </div>

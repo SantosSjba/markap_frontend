@@ -1,22 +1,24 @@
 <script setup lang="ts">
-import { formatDateTime } from '@/shared/utils/formatters'
+import { formatDateTime } from '@shared/utils/formatters'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, AppIcon, Badge, PageHeader } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
   useContabilidadJournalDetail,
   useContabilidadDeleteJournal,
   useContabilidadPostJournal,
   useContabilidadReverseJournal,
-} from '../../application/useContabilidadJournal'
+} from '../composables/useContabilidadJournal'
 import {
   CONTABILIDAD_JOURNAL_STATUS,
   CONTABILIDAD_JOURNAL_STATUS_LABELS,
 } from '../../domain/journal.types'
 import { formatPen, journalStatusVariant } from '../../domain/journal.utils'
-import { formatMoney } from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
-
+import { formatMoney } from '../../../../presentation/composables/useContabilidadCurrencies'
 const route = useRoute()
 const router = useRouter()
 
@@ -34,7 +36,10 @@ const { mutate: reverseJournal, isPending: reversing } = useContabilidadReverseJ
 
 const statusLabel = computed(() => {
   const status = entry.value?.status ?? ''
-  return CONTABILIDAD_JOURNAL_STATUS_LABELS[status as keyof typeof CONTABILIDAD_JOURNAL_STATUS_LABELS] ?? status
+  return (
+    CONTABILIDAD_JOURNAL_STATUS_LABELS[status as keyof typeof CONTABILIDAD_JOURNAL_STATUS_LABELS] ??
+    status
+  )
 })
 
 const isDraft = computed(() => entry.value?.status === CONTABILIDAD_JOURNAL_STATUS.DRAFT)

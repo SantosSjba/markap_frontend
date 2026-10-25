@@ -1,29 +1,26 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-  SearchInput,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadCustomers,
   useContabilidadSalesInvoices,
   useContabilidadSalesCreditNotes,
   useContabilidadCreateSalesCreditNote,
-} from '../../application/useContabilidadSales'
+} from '../composables/useContabilidadSales'
 import type { ContabilidadSalesCreditNoteDTO } from '../../domain/sales.types'
-
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
 
@@ -40,7 +37,10 @@ const rows = computed(() => data.value?.creditNotes ?? [])
 const customerParams = computed(() => ({ activeOnly: true }))
 const { data: customersData } = useContabilidadCustomers(customerParams)
 const customerOptions = computed(() =>
-  (customersData.value?.customers ?? []).map((c) => ({ value: c.id, label: `${c.ruc} — ${c.businessName}` })),
+  (customersData.value?.customers ?? []).map((c) => ({
+    value: c.id,
+    label: `${c.ruc} — ${c.businessName}`,
+  })),
 )
 
 const { mutate: createCreditNote, isPending: saving } = useContabilidadCreateSalesCreditNote()
@@ -65,15 +65,23 @@ const invoiceOptions = computed(() => {
     .map((inv) => ({ value: inv.id, label: `${inv.fullNumber} — ${formatPen(inv.totalAmount)}` }))
 })
 
-watch(activePeriod, (p) => {
-  if (!p) return
-  const now = new Date()
-  form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
-}, { immediate: true })
+watch(
+  activePeriod,
+  (p) => {
+    if (!p) return
+    const now = new Date()
+    form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
+  },
+  { immediate: true },
+)
 
-watch(customerOptions, (opts) => {
-  if (!form.value.customerId && opts[0]) form.value.customerId = opts[0].value
-}, { immediate: true })
+watch(
+  customerOptions,
+  (opts) => {
+    if (!form.value.customerId && opts[0]) form.value.customerId = opts[0].value
+  },
+  { immediate: true },
+)
 
 const columns = [
   { key: 'issueDate', label: 'Fecha', sortable: true },
@@ -109,7 +117,12 @@ function submit() {
       taxableBase: form.value.taxableBase,
       reason: form.value.reason.trim() || null,
     },
-    { onSuccess: () => { modalOpen.value = false; void refetch() } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    },
   )
 }
 

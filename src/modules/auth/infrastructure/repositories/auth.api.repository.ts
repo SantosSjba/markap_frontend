@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import type { LoginCredentials, LoginResponse, User } from '../../domain/auth.types'
 import type { AuthRepository } from '../../domain/repositories/auth.repository'
-
 const AUTH_ENDPOINT = '/auth'
 
 export const authApiRepository: AuthRepository = {

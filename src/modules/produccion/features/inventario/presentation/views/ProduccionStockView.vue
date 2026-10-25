@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { DataTable, FormSelect, SearchInput, StatsCard, AppIcon, BaseButton } from '@shared/components'
-import { useProduccionMaterialsList, useProduccionInventoryStats } from '../../application/useProduccionInventory'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import {
+  useProduccionMaterialsList,
+  useProduccionInventoryStats,
+} from '../composables/useProduccionInventory'
 import { formatSol, formatQty } from '../labels'
 import type { ProduccionMaterial } from '../../domain/inventory.types'
-
 const router = useRouter()
 const listParams = ref({ page: 1, limit: 50, lowStockOnly: false })
 const searchInput = ref('')

@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   CreateArquitecturaDocumentPayload,
   ArquitecturaDocumentRow,
   ListArquitecturaDocumentsParams,
@@ -6,7 +6,6 @@
   UpdateArquitecturaDocumentPayload,
   UploadArquitecturaDocumentPayload,
 } from '../document.types'
-
 export interface ArquitecturaDocumentsRepository {
   list(params: ListArquitecturaDocumentsParams): Promise<ListArquitecturaDocumentsResponse>
   create(payload: CreateArquitecturaDocumentPayload): Promise<ArquitecturaDocumentRow>

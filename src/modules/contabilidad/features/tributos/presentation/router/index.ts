@@ -1,5 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-
 export const contabilidadTributosRoutes: RouteRecordRaw[] = [
   {
     path: '',
@@ -38,7 +37,8 @@ export const contabilidadTributosRoutes: RouteRecordRaw[] = [
   {
     path: 'declaraciones-sol',
     name: 'contabilidad-tributos-declaraciones-sol',
-    component: () => import('@modules/contabilidad/features/declaraciones-sol/presentation/views/ContabilidadTributosDeclaracionesSolView.vue'),
+    component: () =>
+      import('../../../declaraciones-sol/presentation/views/ContabilidadTributosDeclaracionesSolView.vue'),
     meta: { title: 'Declaraciones SOL' },
   },
 ]

@@ -1,20 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, AppIcon, Badge, FormSectionCard } from '@shared/components'
-import { FormInput, FormSelect } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { markapAlert } from '@/shared/composables'
-import { navigateAfterVentasSave } from '@modules/ventas/application/navigateAfterVentasSave'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { navigateAfterVentasSave } from '../../../../presentation/navigation/navigateAfterVentasSave'
 import {
   useVentasAgent,
   useVentasUpdateAgent,
   useVentasDeleteAgent,
-} from '../../application/useAgents'
-import { useUsers } from '@modules/settings'
+} from '../composables/useAgents'
+import { useUsers } from '@modules/settings/presentation/composables/useUsers'
 import type { VentasAgentType } from '../../domain/agent.types'
-import { ventasAgentEditFormSchema } from '../../infrastructure/schemas/agentFormSchema'
-
+import { ventasAgentEditFormSchema } from '../validation/agentFormSchema'
 const route = useRoute()
 const router = useRouter()
 
@@ -70,28 +73,29 @@ const selectedUser = computed(() => {
 function fillFromUser(userId: string) {
   const u = usersList.value?.find((x) => x.id === userId)
   if (!u) return
-  setFieldValue(
-    'fullName',
-    u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email,
-  )
+  setFieldValue('fullName', u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email)
   setFieldValue('email', u.email ?? '')
 }
 
-watch(agent, (a) => {
-  if (!a) return
-  resetForm({
-    values: {
-      type: a.type,
-      userId: a.userId ?? '',
-      fullName: a.fullName ?? '',
-      email: a.email ?? '',
-      phone: a.phone ?? '',
-      documentTypeId: a.documentTypeId ?? '',
-      documentNumber: a.documentNumber ?? '',
-      isActive: a.isActive,
-    },
-  })
-}, { immediate: true })
+watch(
+  agent,
+  (a) => {
+    if (!a) return
+    resetForm({
+      values: {
+        type: a.type,
+        userId: a.userId ?? '',
+        fullName: a.fullName ?? '',
+        email: a.email ?? '',
+        phone: a.phone ?? '',
+        documentTypeId: a.documentTypeId ?? '',
+        documentNumber: a.documentNumber ?? '',
+        isActive: a.isActive,
+      },
+    })
+  },
+  { immediate: true },
+)
 
 watch(
   () => ({ err: agentError.value, loading: loadingAgent.value }),
@@ -129,29 +133,26 @@ function onInvalidSubmit() {
   )
 }
 
-const onSubmit = handleSubmit(
-  async (formValues) => {
-    try {
-      await updateMutation.mutateAsync({
-        id: id.value,
-        data: {
-          type: formValues.type,
-          userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
-          fullName: formValues.fullName.trim(),
-          email: formValues.email?.trim() || null,
-          phone: formValues.phone?.trim() || null,
-          documentTypeId: formValues.documentTypeId || null,
-          documentNumber: formValues.documentNumber?.trim() || null,
-          isActive: formValues.isActive,
-        },
-      })
-      await navigateAfterVentasSave(router, { listPath: '/ventas/agentes' })
-    } catch {
-      void 0
-    }
-  },
-  onInvalidSubmit,
-)
+const onSubmit = handleSubmit(async (formValues) => {
+  try {
+    await updateMutation.mutateAsync({
+      id: id.value,
+      data: {
+        type: formValues.type,
+        userId: formValues.type === 'INTERNAL' && formValues.userId ? formValues.userId : null,
+        fullName: formValues.fullName.trim(),
+        email: formValues.email?.trim() || null,
+        phone: formValues.phone?.trim() || null,
+        documentTypeId: formValues.documentTypeId || null,
+        documentNumber: formValues.documentNumber?.trim() || null,
+        isActive: formValues.isActive,
+      },
+    })
+    await navigateAfterVentasSave(router, { listPath: '/ventas/agentes' })
+  } catch {
+    void 0
+  }
+}, onInvalidSubmit)
 
 const handleDeactivate = async () => {
   showDeactivateConfirm.value = false

@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AppIcon, BaseButton, PageHeader } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadClosingPreview,
   useContabilidadClosePeriod,
-} from '../../application/useContabilidadClosing'
+} from '../composables/useContabilidadClosing'
 import type { ClosingCheckStatus } from '../../domain/closing.types'
-
 const { activePeriod, loadPeriods } = useContabilidadActivePeriod()
 const periodId = computed(() => activePeriod.value?.id)
 

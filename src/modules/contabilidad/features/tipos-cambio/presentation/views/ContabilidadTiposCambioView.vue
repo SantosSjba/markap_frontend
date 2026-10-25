@@ -1,25 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  PageHeader,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
   useContabilidadExchangeRates,
   useContabilidadUpsertExchangeRate,
-} from '../../application/useContabilidadExchangeRates'
+} from '../composables/useContabilidadExchangeRates'
 import {
   DEFAULT_CURRENCY_CODE,
   type ContabilidadExchangeRateDTO,
 } from '../../domain/exchange-rate.types'
-import { toCalendarDateString } from '@/shared/utils/formatters'
-
+import { toCalendarDateString } from '@shared/utils/formatters'
 const now = new Date()
 const fromDate = ref(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`)
 const toDate = ref(toCalendarDateString())
@@ -91,7 +88,12 @@ function submit() {
       sellRate: form.value.sellRate,
       source: 'MANUAL',
     },
-    { onSuccess: () => { modalOpen.value = false; void refetch() } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    },
   )
 }
 </script>

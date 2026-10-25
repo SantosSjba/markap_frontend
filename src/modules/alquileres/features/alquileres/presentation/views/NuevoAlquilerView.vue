@@ -2,19 +2,22 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, FormSectionCard } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { FormInput, FormSelect, FormTextarea, FileDropzone } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { usePropertiesList } from '@modules/alquileres/features/propiedades'
-import { useClientsList } from '@modules/alquileres/features/clientes'
-import { useCreateRental } from '../../application/useRentals'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { usePropertiesList } from '../../../propiedades/presentation/composables/useProperties'
+import { useClientsList } from '../../../clientes/presentation/composables/useClients'
+import { useCreateRental } from '../composables/useRentals'
 import RentalContractAlertSettings from '../components/RentalContractAlertSettings.vue'
 import RentalTenantsSection from '../components/RentalTenantsSection.vue'
-import type { PropertyListItem } from '@modules/alquileres/features/propiedades'
-import type { ClientListItem } from '@modules/alquileres/features/clientes'
-import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
-
+import type { PropertyListItem } from '../../../propiedades/domain/property.types'
+import type { ClientListItem } from '../../../clientes/domain/client.types'
+import { navigateAfterAlquileresSave } from '../../../../presentation/navigation/navigateAfterAlquileresSave'
 type NuevoRentalFormValues = {
   propertyId: string
   startDate: string
@@ -53,8 +56,16 @@ const schema = yup.object({
   startDate: yup.string().required('La fecha de inicio es requerida'),
   endDate: yup.string().required('La fecha de fin es requerida'),
   currency: yup.string().required(),
-  monthlyAmount: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).required('El monto mensual es requerido'),
-  securityDeposit: yup.number().transform((v) => (v === '' || isNaN(v) ? undefined : v)).min(0).nullable(),
+  monthlyAmount: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .required('El monto mensual es requerido'),
+  securityDeposit: yup
+    .number()
+    .transform((v) => (v === '' || isNaN(v) ? undefined : v))
+    .min(0)
+    .nullable(),
   paymentDueDay: yup
     .number()
     .transform((_v, originalValue) => {
@@ -69,21 +80,22 @@ const schema = yup.object({
   enableCollectionAlerts: yup.boolean().required(),
 })
 
-const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } = useForm<NuevoRentalFormValues>({
-  validationSchema: toTypedSchema(schema) as never,
-  initialValues: {
-    propertyId: '',
-    startDate: '',
-    endDate: '',
-    currency: 'PEN',
-    monthlyAmount: '',
-    securityDeposit: '',
-    paymentDueDay: 5,
-    notes: '',
-    enableExpirationAlerts: true,
-    enableCollectionAlerts: true,
-  },
-})
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue } =
+  useForm<NuevoRentalFormValues>({
+    validationSchema: toTypedSchema(schema) as never,
+    initialValues: {
+      propertyId: '',
+      startDate: '',
+      endDate: '',
+      currency: 'PEN',
+      monthlyAmount: '',
+      securityDeposit: '',
+      paymentDueDay: 5,
+      notes: '',
+      enableExpirationAlerts: true,
+      enableCollectionAlerts: true,
+    },
+  })
 
 const propertyIdBinds = defineComponentBinds('propertyId')
 const startDateBinds = defineComponentBinds('startDate')
@@ -100,9 +112,7 @@ const { data: propertiesData } = usePropertiesList(listPropertiesParams)
 const { data: tenantsData, refetch: refetchTenants } = useClientsList(listTenantsParams)
 const createRentalMutation = useCreateRental()
 
-const loading = computed(
-  () => !propertiesData.value || !tenantsData.value
-)
+const loading = computed(() => !propertiesData.value || !tenantsData.value)
 
 const properties = computed(() => propertiesData.value?.data ?? [])
 const tenants = computed(() => tenantsData.value?.data ?? [])
@@ -111,13 +121,13 @@ const propertyOptions = computed(() =>
   (properties.value as PropertyListItem[]).map((p) => ({
     value: p.id,
     label: `${p.code} - ${p.addressLine}`,
-  }))
+  })),
 )
 const tenantOptions = computed(() =>
   (tenants.value as ClientListItem[]).map((c) => ({
     value: c.id,
     label: c.fullName,
-  }))
+  })),
 )
 
 const currencyOptions = [
@@ -130,7 +140,7 @@ const paymentDueDayOptions = Array.from({ length: 28 }, (_, i) => ({
 }))
 
 const selectedProperty = computed(() =>
-  (properties.value as PropertyListItem[]).find((x) => x.id === values.propertyId)
+  (properties.value as PropertyListItem[]).find((x) => x.id === values.propertyId),
 )
 const selectedPropertyLabel = computed(() => {
   const p = selectedProperty.value
@@ -183,8 +193,7 @@ onMounted(async () => {
   if (typeof id !== 'string' || !id) return
   await refetchTenants()
   const indexRaw = route.query.tenantIndex
-  const index =
-    typeof indexRaw === 'string' && indexRaw !== '' ? Number.parseInt(indexRaw, 10) : 0
+  const index = typeof indexRaw === 'string' && indexRaw !== '' ? Number.parseInt(indexRaw, 10) : 0
   const next = [...tenantIds.value]
   const idx = Number.isFinite(index) && index >= 0 ? index : 0
   while (next.length <= idx) next.push('')

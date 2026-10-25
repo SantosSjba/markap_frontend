@@ -1,25 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  AppIcon,
-  Badge,
-  DataTable,
-  FormSelect,
-  PageHeader,
-  SearchInput,
-} from '@shared/components'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { useContabilidadJournalList } from '../../application/useContabilidadJournal'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { useContabilidadJournalList } from '../composables/useContabilidadJournal'
 import {
   CONTABILIDAD_JOURNAL_STATUS_FILTER_OPTIONS,
   CONTABILIDAD_JOURNAL_STATUS_LABELS,
   type ContabilidadJournalEntryListItemDTO,
 } from '../../domain/journal.types'
 import { formatPen, journalStatusVariant } from '../../domain/journal.utils'
-
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
 
@@ -47,9 +44,11 @@ const columns = [
 ]
 
 function statusLabel(status: string) {
-  return CONTABILIDAD_JOURNAL_STATUS_LABELS[status as keyof typeof CONTABILIDAD_JOURNAL_STATUS_LABELS]
-    ?? data.value?.statusLabels?.[status]
-    ?? status
+  return (
+    CONTABILIDAD_JOURNAL_STATUS_LABELS[status as keyof typeof CONTABILIDAD_JOURNAL_STATUS_LABELS] ??
+    data.value?.statusLabels?.[status] ??
+    status
+  )
 }
 
 function goNew() {

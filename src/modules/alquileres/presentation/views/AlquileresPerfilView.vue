@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ProfileCard } from '@shared/components'
-
+import ProfileCard from '@modules/settings/presentation/components/profile/ProfileCard.vue'
 /**
  * AlquileresPerfilView
  * Vista independiente de perfil dentro de la app Alquileres

@@ -1,11 +1,10 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   INTERIORISMO_CONFIG_APP_SLUG,
   type InteriorismoConfigBootstrap,
   type InteriorismoProjectStageDTO,
 } from '../../domain/config.types'
 import type { InteriorismoConfigRepository } from '../../domain/repositories/interiorismo-config.repository'
-
 const scope = { applicationSlug: INTERIORISMO_CONFIG_APP_SLUG } as const
 
 function qs(params: Record<string, string | undefined>) {
@@ -24,16 +23,18 @@ export const interiorismoConfigApiRepository: InteriorismoConfigRepository = {
 
   replaceProjectStages: (stages: InteriorismoProjectStageDTO[]) =>
     apiClient
-      .put<InteriorismoProjectStageDTO[]>(`/interiorismo-config/project-stages?${qs({ ...scope })}`, {
-        stages,
-      })
+      .put<InteriorismoProjectStageDTO[]>(
+        `/interiorismo-config/project-stages?${qs({ ...scope })}`,
+        {
+          stages,
+        },
+      )
       .then((r) => r.data),
 
   patchInteriorProjectNumbering: (body: { prefix?: string; lastNumber?: number }) =>
     apiClient
-      .patch<InteriorismoConfigBootstrap['numbering']>(
-        `/interiorismo-config/numbering/interior-project?${qs({ ...scope })}`,
-        body,
-      )
+      .patch<
+        InteriorismoConfigBootstrap['numbering']
+      >(`/interiorismo-config/numbering/interior-project?${qs({ ...scope })}`, body)
       .then((r) => r.data),
 }

@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_PURCHASES_APP_SLUG } from '../../domain/purchases.types'
 import type { ContabilidadPurchasesRepository } from '../../domain/repositories/contabilidad-purchases.repository'
-
 function qs(extra?: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   u.set('applicationSlug', CONTABILIDAD_PURCHASES_APP_SLUG)
@@ -41,7 +40,9 @@ export const contabilidadPurchasesApiRepository: ContabilidadPurchasesRepository
 
   listCreditNotes: (params) =>
     apiClient
-      .get(`/contabilidad-purchases/credit-notes?${qs(params as Record<string, string | undefined>)}`)
+      .get(
+        `/contabilidad-purchases/credit-notes?${qs(params as Record<string, string | undefined>)}`,
+      )
       .then((r) => r.data),
 
   createCreditNote: (body) =>
@@ -49,7 +50,9 @@ export const contabilidadPurchasesApiRepository: ContabilidadPurchasesRepository
 
   listDebitNotes: (params) =>
     apiClient
-      .get(`/contabilidad-purchases/debit-notes?${qs(params as Record<string, string | undefined>)}`)
+      .get(
+        `/contabilidad-purchases/debit-notes?${qs(params as Record<string, string | undefined>)}`,
+      )
       .then((r) => r.data),
 
   createDebitNote: (body) =>

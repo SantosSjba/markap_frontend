@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { formatDateTime } from '@/shared/utils/formatters'
+import { formatDateTime } from '@shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BasePagination,
-  Badge,
-  DataTable,
-  SearchInput,
-  FormSelect,
-  AppIcon,
-  ActionsDropdown,
-} from '@shared/components'
-import { useArquitecturaBudgetSummariesList } from '../../application/useArquitecturaBudgets'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import { useArquitecturaBudgetSummariesList } from '../composables/useArquitecturaBudgets'
 import type {
   ArquitecturaBudgetSummaryListItem,
   ListArquitecturaBudgetSummariesParams,
@@ -21,10 +19,9 @@ import {
   PROJECT_TYPE_LABELS,
   projectStatusLabel,
   formatSol,
-} from '@modules/arquitectura/features/proyectos/presentation/labels'
-import { useArquitecturaProjectStageOptions } from '@modules/arquitectura/features/proyectos/application/useArquitecturaProjectStageOptions'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-
+} from '../../../proyectos/presentation/labels'
+import { useArquitecturaProjectStageOptions } from '../../../proyectos/presentation/composables/useArquitecturaProjectStageOptions'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 const router = useRouter()
 const ITEMS = 10
 

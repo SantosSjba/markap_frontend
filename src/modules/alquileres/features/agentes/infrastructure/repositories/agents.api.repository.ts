@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import type {
   AgentListItem,
   CreateAgentPayload,
@@ -7,7 +7,6 @@ import type {
   UpdateAgentPayload,
 } from '../../domain/agent.types'
 import type { AgentsRepository } from '../../domain/repositories/agents.repository'
-
 const BASE = '/agents'
 
 export const agentsApiRepository: AgentsRepository = {

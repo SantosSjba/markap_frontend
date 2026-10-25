@@ -85,31 +85,6 @@ export interface ContabilidadLibroMayorAccountDTO {
   lines: ContabilidadLibroMayorLineDTO[]
 }
 
-export function downloadTextFile(fileName: string, content: string) {
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-export function downloadBlobFile(fileName: string, blob: Blob) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-export function downloadAllPleFiles(files: ContabilidadPleGeneratedFileDTO[]) {
-  for (const file of files) {
-    downloadTextFile(file.fileName, file.content)
-  }
-}
-
 export const PLE_EXPORT_STATUS_LABELS: Record<string, string> = {
   SUCCESS: 'Exitoso',
   WITH_WARNINGS: 'Con advertencias',

@@ -1,5 +1,4 @@
-import type { ContabilidadAccountDTO } from '../domain/account.types'
-
+import type { ContabilidadAccountDTO } from './account.types'
 export function flattenAccountTree(tree: ContabilidadAccountDTO[]): ContabilidadAccountDTO[] {
   const out: ContabilidadAccountDTO[] = []
   const walk = (nodes: ContabilidadAccountDTO[]) => {

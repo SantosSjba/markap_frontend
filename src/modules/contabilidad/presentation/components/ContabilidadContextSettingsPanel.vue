@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AppIcon, BaseButton, FormSelect } from '@shared/components'
-import { CONTABILIDAD_PERIOD_STATUS_LABELS } from '@modules/contabilidad/features/periodos/domain/period.types'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { CONTABILIDAD_PERIOD_STATUS_LABELS } from '../../features/periodos/domain/period.types'
 import { useContabilidadContext } from '../composables/useContabilidadContext'
-
 const {
   initializing,
   initError,

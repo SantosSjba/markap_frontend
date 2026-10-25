@@ -1,8 +1,7 @@
-import { apiClient } from '@core/api/apiClient'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { INTERIORISMO_APP_SLUG } from '../../../../config/app.constants'
 import type { InteriorReportsDashboard } from '../../domain/reportes.types'
 import type { InteriorReportesRepository } from '../../domain/repositories/reportes.repository'
-
 function qs(params: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   Object.entries(params).forEach(([k, v]) => {

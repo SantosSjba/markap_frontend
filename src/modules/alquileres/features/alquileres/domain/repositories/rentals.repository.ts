@@ -10,7 +10,6 @@ import type {
   UpdateRentalPayload,
   UpsertRentalFinancialConfigPayload,
 } from '../rental.types'
-
 /** Puerto de persistencia de contratos de alquiler (rentals / API `/rentals`). */
 export interface RentalsRepository {
   getById: (id: string) => Promise<RentalDetail>

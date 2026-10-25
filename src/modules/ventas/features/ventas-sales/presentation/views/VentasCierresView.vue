@@ -1,35 +1,38 @@
 <script setup lang="ts">
-import { formatShortDate } from '@/shared/utils/formatters'
+import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
+import { ventasPropertiesRepositoryKey } from '../../../propiedades/application/ports/ventas-properties.port'
+import { useService } from '@shared/presentation/di/services'
+import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
+import { formatShortDate } from '@shared/utils/formatters'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  DataTable,
-  BaseButton,
-  FormSelect,
-  FormCheckbox,
-  AppIcon,
-  BasePagination,
-  Badge,
-  PageHeader,
-  FileDropzone,
-} from '@shared/components'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import {
   useVentasClosingsList,
   useVentasCreateClosing,
   useVentasUploadClosingContract,
   useVentasCompliancePendingBoard,
   useVentasDispatchComplianceAlerts,
-} from '../../application/useVentasSales'
+} from '../composables/useVentasSales'
 import type { SaleClosingRow } from '../../domain/sales.types'
-import { ventasClientsRepository } from '@modules/ventas/features/clientes'
-import { ventasPropertiesRepository } from '@modules/ventas/features/propiedades'
-import { useVentasAgentsList } from '@modules/ventas/features/agentes'
+import { useVentasAgentsList } from '../../../agentes/presentation/composables/useAgents'
 import { PAYMENT_TYPE_OPTIONS } from '../../domain/pipeline.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { resolveFileDownloadUrl } from '@/shared/utils/archivo-url'
-import { apiClient } from '@core/api/apiClient'
-import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { resolveFileDownloadUrl } from '@shared/utils/archivo-url'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+const ventasClientsRepository = useService(ventasClientsRepositoryKey)
+const ventasPropertiesRepository = useService(ventasPropertiesRepositoryKey)
+
+const fileAccess = useService(FILE_ACCESS)
 
 const router = useRouter()
 const ITEMS = 10
@@ -60,11 +63,27 @@ const paginationProps = computed(() => {
 })
 
 const columns = [
-  { key: 'property', label: 'Inmueble', sortAccessor: (r: unknown) => (r as SaleClosingRow).property.code },
-  { key: 'buyer', label: 'Cliente', sortAccessor: (r: unknown) => (r as SaleClosingRow).buyer.fullName },
-  { key: 'price', label: 'Precio final', sortAccessor: (r: unknown) => (r as SaleClosingRow).finalPrice },
+  {
+    key: 'property',
+    label: 'Inmueble',
+    sortAccessor: (r: unknown) => (r as SaleClosingRow).property.code,
+  },
+  {
+    key: 'buyer',
+    label: 'Cliente',
+    sortAccessor: (r: unknown) => (r as SaleClosingRow).buyer.fullName,
+  },
+  {
+    key: 'price',
+    label: 'Precio final',
+    sortAccessor: (r: unknown) => (r as SaleClosingRow).finalPrice,
+  },
   { key: 'pay', label: 'Pago', sortAccessor: (r: unknown) => (r as SaleClosingRow).paymentType },
-  { key: 'comm', label: 'Comisión', sortAccessor: (r: unknown) => (r as SaleClosingRow).commission?.amount ?? 0 },
+  {
+    key: 'comm',
+    label: 'Comisión',
+    sortAccessor: (r: unknown) => (r as SaleClosingRow).commission?.amount ?? 0,
+  },
   { key: 'contract', label: 'Contrato' },
   { key: 'act', label: '' },
 ]
@@ -107,7 +126,8 @@ function resetClosingForm() {
 }
 
 const { mutateAsync: createClosing, isPending } = useVentasCreateClosing()
-const { mutateAsync: uploadContract, isPending: uploadingContract } = useVentasUploadClosingContract()
+const { mutateAsync: uploadContract, isPending: uploadingContract } =
+  useVentasUploadClosingContract()
 const saving = computed(() => isPending.value || uploadingContract.value)
 
 const showContractModal = ref(false)
@@ -220,10 +240,9 @@ async function openContract(row: SaleClosingRow) {
       return
     }
     if (row.contractArchivoId) {
-      const { data } = await apiClient.get<{ url: string }>(
-        `/gen-archivos/${encodeURIComponent(row.contractArchivoId)}/url`,
-        { params: { applicationSlug: 'ventas' } },
-      )
+      const data = await fileAccess.getDownloadUrl(encodeURIComponent(row.contractArchivoId), {
+        applicationSlug: 'ventas',
+      })
       if (data?.url) {
         window.open(data.url, '_blank', 'noopener,noreferrer')
         return

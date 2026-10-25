@@ -1,17 +1,19 @@
 import type { RouteRecordRaw } from 'vue-router'
 import ProduccionLayout from '../views/ProduccionLayout.vue'
-import { SectionLayout } from '@layouts'
+import SectionLayout from '@app/layouts/SectionLayout.vue'
 import { PRODUCCION_BASE_PATH } from '../../config/routes.constants'
-import { produccionClientesRoutes } from '../../features/clientes'
-import { produccionCatalogoRoutes } from '../../features/catalogo'
-import { produccionCostosRoutes } from '../../features/costos'
-import { produccionInventarioRoutes } from '../../features/inventario'
-import { produccionComprasRoutes } from '../../features/compras'
-import { produccionTallerRoutes, produccionSeguimientoRoutes } from '../../features/taller'
-import { produccionVentasRoutes } from '../../features/ventas'
-import { produccionReportesRoutes } from '../../features/reportes'
-import { produccionConfiguracionRoutes } from '../../features/configuracion'
-
+import { produccionClientesRoutes } from '../../features/clientes/presentation/router/index'
+import { produccionCatalogoRoutes } from '../../features/catalogo/presentation/router/index'
+import { produccionCostosRoutes } from '../../features/costos/presentation/router/index'
+import { produccionInventarioRoutes } from '../../features/inventario/presentation/router/index'
+import { produccionComprasRoutes } from '../../features/compras/presentation/router/index'
+import {
+  produccionTallerRoutes,
+  produccionSeguimientoRoutes,
+} from '../../features/taller/presentation/router/index'
+import { produccionVentasRoutes } from '../../features/ventas/presentation/router/index'
+import { produccionReportesRoutes } from '../../features/reportes/presentation/router/index'
+import { produccionConfiguracionRoutes } from '../../features/configuracion/presentation/router/index'
 export const produccionRoutes: RouteRecordRaw[] = [
   {
     path: PRODUCCION_BASE_PATH,

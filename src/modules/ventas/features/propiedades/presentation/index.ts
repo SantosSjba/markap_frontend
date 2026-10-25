@@ -1,1 +1,0 @@
-export { ventasPropiedadesRoutes } from './router'

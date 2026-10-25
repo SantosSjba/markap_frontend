@@ -1,16 +1,22 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import BaseButton from '@shared/components/ui/BaseButton.vue'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import ConfigToggleRow from '@shared/components/ui/ConfigToggleRow.vue'
-import { useAlertConfig } from '../../application/useAlertConfig'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ConfigToggleRow from '@shared/presentation/components/ui/ConfigToggleRow.vue'
+import { useAlertConfig } from '../composables/useAlertConfig'
 const APPLICATION_SLUG = 'alquileres'
 
 const activeTab = ref<'alertas' | 'notificaciones'>('alertas')
 
-const { data: config, isLoading, save, isSaving, saveError, saveSuccess } = useAlertConfig(APPLICATION_SLUG)
+const {
+  data: config,
+  isLoading,
+  save,
+  isSaving,
+  saveError,
+  saveSuccess,
+} = useAlertConfig(APPLICATION_SLUG)
 
 const form = ref({
   alert30Days: true,
@@ -23,19 +29,23 @@ const form = ref({
   channelWhatsapp: false,
 })
 
-watch(config, (val) => {
-  if (!val) return
-  form.value = {
-    alert30Days: val.alert30Days,
-    alert60Days: val.alert60Days,
-    alert90Days: val.alert90Days,
-    alertPendingPayment: val.alertPendingPayment,
-    alertOverduePayment: val.alertOverduePayment,
-    channelInApp: val.channelInApp,
-    channelEmail: val.channelEmail,
-    channelWhatsapp: val.channelWhatsapp,
-  }
-}, { immediate: true })
+watch(
+  config,
+  (val) => {
+    if (!val) return
+    form.value = {
+      alert30Days: val.alert30Days,
+      alert60Days: val.alert60Days,
+      alert90Days: val.alert90Days,
+      alertPendingPayment: val.alertPendingPayment,
+      alertOverduePayment: val.alertOverduePayment,
+      channelInApp: val.channelInApp,
+      channelEmail: val.channelEmail,
+      channelWhatsapp: val.channelWhatsapp,
+    }
+  },
+  { immediate: true },
+)
 
 async function handleSave() {
   await save({ ...form.value })

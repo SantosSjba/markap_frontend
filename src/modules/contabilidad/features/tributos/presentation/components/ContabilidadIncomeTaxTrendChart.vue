@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AppIcon } from '@shared/components'
-
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 export interface IncomeTaxTrendBarItem {
   label: string
   value: number

@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import type { RentalsByMonthItem } from '../../features/reportes/domain/reportes.types'
 /**
  * DashboardBarChart
  * Gráfico de barras SVG puro (sin dependencias externas) para contratos por mes.
  * Muestra nuevos contratos, vencidos y activos al fin de mes.
  */
-import { computed } from 'vue'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import type { RentalsByMonthItem } from '@modules/alquileres/features/reportes'
 
 interface Props {
   data: RentalsByMonthItem[]

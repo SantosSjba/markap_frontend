@@ -1,4 +1,4 @@
-﻿export interface ArquitecturaExecutionMilestoneDto {
+export interface ArquitecturaExecutionMilestoneDto {
   id: string
   title: string
   plannedDate: string

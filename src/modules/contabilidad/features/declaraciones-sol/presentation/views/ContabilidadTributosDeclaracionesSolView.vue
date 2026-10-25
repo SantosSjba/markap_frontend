@@ -1,17 +1,17 @@
 <script setup lang="ts">
+import { contabilidadSolRepositoryKey } from '../../application/ports/contabilidad-sol.port'
+import { useService } from '@shared/presentation/di/services'
 import { computed, ref, watch } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  Badge,
-  DataTable,
-  FormCheckbox,
-  FormInput,
-  FormSectionCard,
-  PageHeader,
-} from '@shared/components'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { useContabilidadActiveLegalEntity } from '@modules/contabilidad/presentation/composables/useContabilidadActiveLegalEntity'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { useContabilidadActiveLegalEntity } from '../../../../presentation/composables/useContabilidadActiveLegalEntity'
 import {
   useContabilidadSolCredentials,
   useContabilidadSaveSolCredentials,
@@ -19,14 +19,14 @@ import {
   useContabilidadPreparePdt621,
   useContabilidadSubmitPdt621,
   useContabilidadMarkPdt621Manual,
-  contabilidadSolApiRepository,
-} from '../../application/useContabilidadSol'
+} from '../composables/useContabilidadSol'
 import {
   SOL_DECLARATION_STATUS,
   solStatusVariant,
   type ContabilidadSunatDeclarationLogDTO,
 } from '../../domain/sol.types'
-import { markapAlert } from '@/shared/composables'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+const contabilidadSolApiRepository = useService(contabilidadSolRepositoryKey)
 
 const { activePeriod } = useContabilidadActivePeriod()
 const { activeLegalEntityId, entities } = useContabilidadActiveLegalEntity()

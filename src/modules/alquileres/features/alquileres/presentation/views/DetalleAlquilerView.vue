@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, Badge, AppIcon, FormSectionCard } from '@shared/components'
-import { useRental, useRentalFinancialBreakdown } from '../../application/useRentals'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import { useRental, useRentalFinancialBreakdown } from '../composables/useRentals'
 import type { RentalDetail } from '../../domain/rental.types'
-import { getAttachmentUrl } from '../../infrastructure/http/rental-attachment-url'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { formatShortDate } from '@/shared/utils/formatters'
+import { getAttachmentUrl } from '../downloads/rental-attachment-url'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { formatShortDate } from '@shared/utils/formatters'
 import { RENTAL_UTILITY_NET_LABEL } from '../../domain/rental-financial.labels'
-
 const route = useRoute()
 const router = useRouter()
 
@@ -44,7 +46,11 @@ function formatAmount(amount: number, currency: string): string {
 }
 
 function statusLabel(s: string): string {
-  const map: Record<string, string> = { ACTIVE: 'Vigente', EXPIRED: 'Vencido', CANCELLED: 'Cancelado' }
+  const map: Record<string, string> = {
+    ACTIVE: 'Vigente',
+    EXPIRED: 'Vencido',
+    CANCELLED: 'Cancelado',
+  }
   return map[s] ?? s
 }
 
@@ -57,7 +63,8 @@ function statusVariant(s: string): 'success' | 'error' | 'warning' | 'neutral' {
 
 const goBack = () => router.push('/alquileres/contratos')
 const goToEdit = () => router.push(`/alquileres/contratos/${id.value}/editar`)
-const goToFinancialConfig = () => router.push(`/alquileres/contratos/${id.value}/distribucion-financiera`)
+const goToFinancialConfig = () =>
+  router.push(`/alquileres/contratos/${id.value}/distribucion-financiera`)
 </script>
 
 <template>

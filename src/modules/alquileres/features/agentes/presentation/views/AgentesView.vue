@@ -1,26 +1,26 @@
 <script setup lang="ts">
-import { toCalendarDateString } from '@/shared/utils/formatters'
+import { agentsRepositoryKey } from '../../application/ports/agents.port'
+import { useService } from '@shared/presentation/di/services'
+import { toCalendarDateString } from '@shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
-import {
-  BaseButton,
-  BasePagination,
-  Badge,
-  DataTable,
-  ActionsDropdown,
-  FormSelect,
-  SearchInput,
-  AppIcon,
-  ExcelIcon,
-} from '@shared/components'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
-import { useExcelExport } from '@shared/composables'
-import { useAgentsList, useUpdateAgent, useDeleteAgent } from '../../application/useAgents'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { useAgentsList, useUpdateAgent, useDeleteAgent } from '../composables/useAgents'
 import type { AgentListItem, ListAgentsParams } from '../../domain/agent.types'
-import { agentsRepository } from '@modules/alquileres/features/agentes'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const agentsRepository = useService(agentsRepositoryKey)
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -56,17 +56,18 @@ watch(
       page: 1,
       search: debouncedSearch.value.trim() || undefined,
       type: filterType.value === 'ALL' ? undefined : filterType.value,
-      isActive:
-        filterStatus.value === 'ALL'
-          ? undefined
-          : filterStatus.value === 'active',
+      isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
-const onPageChange = (page: number) => { listParams.value = { ...listParams.value, page } }
-const onPageSizeChange = (size: number) => { listParams.value = { ...listParams.value, limit: size, page: 1 } }
+const onPageChange = (page: number) => {
+  listParams.value = { ...listParams.value, page }
+}
+const onPageSizeChange = (size: number) => {
+  listParams.value = { ...listParams.value, limit: size, page: 1 }
+}
 
 const goToNew = () => router.push('/alquileres/agentes/nuevo')
 const goToEdit = (agent: AgentListItem) => router.push(`/alquileres/agentes/${agent.id}/editar`)
@@ -82,7 +83,7 @@ const updateMutation = useUpdateAgent()
 const deleteMutation = useDeleteAgent()
 
 const confirmActionPending = computed(
-  () => updateMutation.isPending.value || deleteMutation.isPending.value
+  () => updateMutation.isPending.value || deleteMutation.isPending.value,
 )
 
 function openConfirm(type: 'deactivate' | 'activate' | 'delete', agent: AgentListItem) {
@@ -112,9 +113,17 @@ async function executeConfirm() {
   }
 }
 
-const getActions = (agent: AgentListItem): { label: string; icon: string; onClick: () => void }[] => {
+const getActions = (
+  agent: AgentListItem,
+): { label: string; icon: string; onClick: () => void }[] => {
   const actions: { label: string; icon: string; onClick: () => void }[] = [
-    { label: 'Editar', icon: 'lucide:pencil', onClick: () => { goToEdit(agent) } },
+    {
+      label: 'Editar',
+      icon: 'lucide:pencil',
+      onClick: () => {
+        goToEdit(agent)
+      },
+    },
   ]
   if (agent.isActive) {
     actions.push({

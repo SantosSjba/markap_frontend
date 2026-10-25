@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { toCalendarDateString } from '@/shared/utils/formatters'
+import { useService } from '@shared/presentation/di/services'
+import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
+import { toCalendarDateString } from '@shared/utils/formatters'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  BaseButton,
-  FormSelect,
-  FormCheckbox,
-  FileDropzone,
-  AppIcon,
-  PageHeader,
-  FormSectionCard,
-} from '@shared/components'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import {
   useVentasClosingReadiness,
   useVentasComplianceChecklist,
@@ -19,12 +19,12 @@ import {
   useVentasUploadComplianceDocument,
   useVentasUploadPaymentEvidence,
   useVentasTaxPreview,
-} from '../../application/useVentasSales'
+} from '../composables/useVentasSales'
 import type { SaleComplianceChecklist } from '../../domain/sales.types'
 import { resolveFileDownloadUrl } from '@shared/utils/archivo-url'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { apiClient } from '@core/api/apiClient'
-import { markapAlert } from '@/shared/composables'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+const fileAccess = useService(FILE_ACCESS)
 
 const route = useRoute()
 const router = useRouter()
@@ -261,9 +261,9 @@ async function openPaymentEvidence() {
       return
     }
     if (paymentEvidenceMeta.value.archivoId) {
-      const { data } = await apiClient.get<{ url: string }>(
-        `/gen-archivos/${encodeURIComponent(paymentEvidenceMeta.value.archivoId)}/url`,
-        { params: { applicationSlug: 'ventas' } },
+      const data = await fileAccess.getDownloadUrl(
+        encodeURIComponent(paymentEvidenceMeta.value.archivoId),
+        { applicationSlug: 'ventas' },
       )
       if (data?.url) {
         window.open(data.url, '_blank', 'noopener,noreferrer')

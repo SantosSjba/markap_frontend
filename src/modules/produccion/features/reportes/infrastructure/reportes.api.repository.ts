@@ -1,10 +1,13 @@
-import { apiClient } from '@core/api/apiClient'
-import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
-import type { ProduccionReportesRangeParams, ProduccionReportsDashboard } from '../domain/reportes.types'
-
+import type { ProduccionReportesRepository } from '../domain/repositories/reportes.repository'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { PRODUCCION_APP_SLUG } from '../../../config/app.constants'
+import type {
+  ProduccionReportesRangeParams,
+  ProduccionReportsDashboard,
+} from '../domain/reportes.types'
 const BASE = '/produccion-reports'
 
-export const produccionReportesApi = {
+export const produccionReportesApi: ProduccionReportesRepository = {
   getDashboard: (params: ProduccionReportesRangeParams) =>
     apiClient
       .get<ProduccionReportsDashboard>(`${BASE}/dashboard`, {

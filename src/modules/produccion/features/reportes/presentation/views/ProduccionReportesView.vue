@@ -1,27 +1,24 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import * as yup from 'yup'
-import {
-  StatsCard,
-  BaseTabs,
-  BaseButton,
-  AppIcon,
-  ExcelIcon,
-  DataTable,
-  FormInput,
-  FormSelect,
-} from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { useExcelExport } from '@shared/composables'
-import { markapAlert } from '@/shared/composables'
-import { toCalendarDateString } from '@/shared/utils/formatters'
-import { useProduccionReportsDashboard } from '../../application/useProduccionReportes'
-import { useProduccionClientsList } from '../../../clientes/application/useClients'
-import { useProduccionFurnitureCategoryOptions } from '@modules/produccion/features/configuracion'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { toCalendarDateString } from '@shared/utils/formatters'
+import { useProduccionReportsDashboard } from '../composables/useProduccionReportes'
+import { useProduccionClientsList } from '../../../clientes/presentation/composables/useClients'
+import { useProduccionFurnitureCategoryOptions } from '../../../configuracion/presentation/composables/useProduccionConfigOptions'
 import ProduccionSimpleBarChart from '../components/ProduccionSimpleBarChart.vue'
 import { WO_STATUS_LABELS } from '../../../taller/presentation/labels'
 import type { ProduccionReportsRentabilidadRow } from '../../domain/reportes.types'
-
 function defaultRange() {
   const end = new Date()
   const start = new Date()
@@ -145,20 +142,56 @@ const woStatusColumns = [
 ]
 
 const invCatColumns = [
-  { key: 'cat', label: 'Categoría', sortAccessor: (r: unknown) => (r as { category: string }).category },
-  { key: 'items', label: 'Materiales', sortAccessor: (r: unknown) => (r as { itemCount: number }).itemCount },
-  { key: 'val', label: 'Valor', sortAccessor: (r: unknown) => (r as { totalValue: number }).totalValue },
+  {
+    key: 'cat',
+    label: 'Categoría',
+    sortAccessor: (r: unknown) => (r as { category: string }).category,
+  },
+  {
+    key: 'items',
+    label: 'Materiales',
+    sortAccessor: (r: unknown) => (r as { itemCount: number }).itemCount,
+  },
+  {
+    key: 'val',
+    label: 'Valor',
+    sortAccessor: (r: unknown) => (r as { totalValue: number }).totalValue,
+  },
 ]
 
 const rentRows = computed(() => d.value?.rentabilidad.rows ?? [])
 
 const rentColumns = [
-  { key: 'code', label: 'Código', sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).furnitureCode },
-  { key: 'name', label: 'Mueble', sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).furnitureName },
-  { key: 'ref', label: 'P. ref.', sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).referencePrice },
-  { key: 'cost', label: 'Costo est.', sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).estimatedCost },
-  { key: 'margin', label: 'Margen %', sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).marginPercent ?? 0 },
-  { key: 'sold', label: 'Uds. vendidas', sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).unitsSoldPeriod },
+  {
+    key: 'code',
+    label: 'Código',
+    sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).furnitureCode,
+  },
+  {
+    key: 'name',
+    label: 'Mueble',
+    sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).furnitureName,
+  },
+  {
+    key: 'ref',
+    label: 'P. ref.',
+    sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).referencePrice,
+  },
+  {
+    key: 'cost',
+    label: 'Costo est.',
+    sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).estimatedCost,
+  },
+  {
+    key: 'margin',
+    label: 'Margen %',
+    sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).marginPercent ?? 0,
+  },
+  {
+    key: 'sold',
+    label: 'Uds. vendidas',
+    sortAccessor: (r: unknown) => (r as ProduccionReportsRentabilidadRow).unitsSoldPeriod,
+  },
 ]
 
 const { isExporting, exportToExcel } = useExcelExport()
@@ -179,20 +212,60 @@ async function exportDashboardExcel() {
       { header: 'Valor', key: 'valor' },
     ],
     rows: [
-      { seccion: 'Producción', indicador: 'OT creadas período', valor: row.produccion.workOrdersCreated },
-      { seccion: 'Producción', indicador: 'OT completadas período', valor: row.produccion.workOrdersCompleted },
-      { seccion: 'Producción', indicador: 'OT en proceso (snapshot)', valor: row.produccion.workOrdersInProgressSnapshot },
-      { seccion: 'Producción', indicador: 'Consumo materiales (uds)', valor: row.produccion.materialConsumptionQty },
+      {
+        seccion: 'Producción',
+        indicador: 'OT creadas período',
+        valor: row.produccion.workOrdersCreated,
+      },
+      {
+        seccion: 'Producción',
+        indicador: 'OT completadas período',
+        valor: row.produccion.workOrdersCompleted,
+      },
+      {
+        seccion: 'Producción',
+        indicador: 'OT en proceso (snapshot)',
+        valor: row.produccion.workOrdersInProgressSnapshot,
+      },
+      {
+        seccion: 'Producción',
+        indicador: 'Consumo materiales (uds)',
+        valor: row.produccion.materialConsumptionQty,
+      },
       { seccion: 'Ventas', indicador: 'Cotizaciones enviadas', valor: row.ventas.quotationsSent },
-      { seccion: 'Ventas', indicador: 'Cotizaciones aceptadas', valor: row.ventas.quotationsAccepted },
+      {
+        seccion: 'Ventas',
+        indicador: 'Cotizaciones aceptadas',
+        valor: row.ventas.quotationsAccepted,
+      },
       { seccion: 'Ventas', indicador: 'Pedidos creados', valor: row.ventas.ordersCreated },
       { seccion: 'Ventas', indicador: 'Pedidos entregados', valor: row.ventas.ordersDelivered },
       { seccion: 'Ventas', indicador: 'Ingresos período', valor: row.ventas.salesRevenuePeriod },
-      { seccion: 'Ventas', indicador: 'Pipeline (pedidos abiertos)', valor: row.ventas.pipelineValue },
-      { seccion: 'Inventario', indicador: 'Valor stock total', valor: row.inventario.totalStockValue },
-      { seccion: 'Inventario', indicador: 'Materiales bajo mínimo', valor: row.inventario.lowStockCount },
-      { seccion: 'Inventario', indicador: 'Ingresos stock período', valor: row.inventario.stockInValuePeriod },
-      { seccion: 'Rentabilidad', indicador: 'Margen promedio %', valor: row.rentabilidad.avgMarginPercent ?? '' },
+      {
+        seccion: 'Ventas',
+        indicador: 'Pipeline (pedidos abiertos)',
+        valor: row.ventas.pipelineValue,
+      },
+      {
+        seccion: 'Inventario',
+        indicador: 'Valor stock total',
+        valor: row.inventario.totalStockValue,
+      },
+      {
+        seccion: 'Inventario',
+        indicador: 'Materiales bajo mínimo',
+        valor: row.inventario.lowStockCount,
+      },
+      {
+        seccion: 'Inventario',
+        indicador: 'Ingresos stock período',
+        valor: row.inventario.stockInValuePeriod,
+      },
+      {
+        seccion: 'Rentabilidad',
+        indicador: 'Margen promedio %',
+        valor: row.rentabilidad.avgMarginPercent ?? '',
+      },
       { seccion: 'KPIs', indicador: 'Cotizaciones abiertas', valor: row.kpis.openQuotations },
       { seccion: 'KPIs', indicador: 'Pedidos pendientes', valor: row.kpis.pendingOrders },
       { seccion: 'KPIs', indicador: 'OT activas', valor: row.kpis.activeWorkOrders },

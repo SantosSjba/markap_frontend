@@ -1,8 +1,4 @@
-export type InteriorProjectType =
-  | 'REMODELING'
-  | 'INTERIOR_DESIGN'
-  | 'IMPLEMENTATION'
-  | 'FURNITURE'
+export type InteriorProjectType = 'REMODELING' | 'INTERIOR_DESIGN' | 'IMPLEMENTATION' | 'FURNITURE'
 
 export type InteriorProjectLifecycleStatus =
   | 'DESIGN'

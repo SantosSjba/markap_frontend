@@ -2,10 +2,12 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { FormInput, FormSelect, FormTextarea } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import {
   useArquitecturaClient,
   useDocumentTypes,
@@ -13,10 +15,9 @@ import {
   useProvinces,
   useDistricts,
   useUpdateArquitecturaClient,
-} from '../../application/useClients'
+} from '../composables/useClients'
 import type { DocumentType, UpdateArquitecturaClientPayload } from '../../domain/client.types'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 const route = useRoute()
 const router = useRouter()
 const appColor = 'var(--color-primary)'

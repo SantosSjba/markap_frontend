@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataTable, FormSelect, SearchInput } from '@shared/components'
-import { useProduccionOrdersList } from '../../application/useProduccionSales'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { useProduccionOrdersList } from '../composables/useProduccionSales'
 import {
   formatSol,
   formatDate,
@@ -11,7 +13,6 @@ import {
   orderStatusClass,
 } from '../labels'
 import type { ProduccionOrderListItem } from '../../domain/sales.types'
-
 const route = useRoute()
 const router = useRouter()
 

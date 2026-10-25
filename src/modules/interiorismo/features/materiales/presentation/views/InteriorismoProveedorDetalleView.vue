@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { formatDateTime } from '@/shared/utils/formatters'
+import { formatDateTime } from '@shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BaseTabs,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  AppIcon,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
 import type { InteriorSupplierCatalogLinkDto } from '../../domain/suppliers.types'
 import type { ListInteriorCatalogMaterialsParams } from '../../domain/catalog.types'
 import {
@@ -23,10 +21,9 @@ import {
   useLinkInteriorSupplierCatalog,
   useUnlinkInteriorSupplierCatalog,
   useRecordInteriorMaterialPurchase,
-} from '../../application/useInteriorMaterialSuppliers'
-import { useInteriorCatalogMaterialsList } from '../../application/useInteriorCatalogMaterials'
+} from '../composables/useInteriorMaterialSuppliers'
+import { useInteriorCatalogMaterialsList } from '../composables/useInteriorCatalogMaterials'
 import { formatSol, formatQty } from '../labels'
-
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))

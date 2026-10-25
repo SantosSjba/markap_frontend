@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { BaseButton, AppIcon, BaseTabs } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import {
   useProduccionConfigBootstrap,
   useProduccionSaveSettings,
@@ -11,7 +13,7 @@ import {
   useProduccionSaveProductionStages,
   useProduccionSaveUnits,
   useProduccionPatchNumbering,
-} from '../../application/useProduccionConfig'
+} from '../composables/useProduccionConfig'
 import type {
   ProduccionFurnitureCategoryDTO,
   ProduccionMaterialCategoryDTO,
@@ -19,7 +21,6 @@ import type {
   ProduccionUnitDTO,
 } from '../../domain/config.types'
 import { PRODUCCION_NUMBERING_LABELS } from '../../domain/config.types'
-
 const activeTab = ref('parametros')
 
 const tabs = [
@@ -35,8 +36,10 @@ const { data: boot, isLoading, isError, error, refetch } = useProduccionConfigBo
 const configLoadError = computed(() => (isError.value ? getApiErrorMessage(error.value) : ''))
 
 const { mutate: saveSettings, isPending: savingSettings } = useProduccionSaveSettings()
-const { mutate: saveCategories, isPending: savingCategories } = useProduccionSaveFurnitureCategories()
-const { mutate: saveMaterialCategories, isPending: savingMaterialCategories } = useProduccionSaveMaterialCategories()
+const { mutate: saveCategories, isPending: savingCategories } =
+  useProduccionSaveFurnitureCategories()
+const { mutate: saveMaterialCategories, isPending: savingMaterialCategories } =
+  useProduccionSaveMaterialCategories()
 const { mutate: saveStages, isPending: savingStages } = useProduccionSaveProductionStages()
 const { mutate: saveUnits, isPending: savingUnits } = useProduccionSaveUnits()
 const { mutate: patchNumbering, isPending: savingNumbering } = useProduccionPatchNumbering()
@@ -46,7 +49,9 @@ const categoriesDraft = ref<ProduccionFurnitureCategoryDTO[]>([])
 const materialCategoriesDraft = ref<ProduccionMaterialCategoryDTO[]>([])
 const stagesDraft = ref<ProduccionProductionStageDTO[]>([])
 const unitsDraft = ref<ProduccionUnitDTO[]>([])
-const numberingDraft = ref<Record<string, { prefix: string; lastNumber: number; padLength: number; includeYear: boolean }>>({})
+const numberingDraft = ref<
+  Record<string, { prefix: string; lastNumber: number; padLength: number; includeYear: boolean }>
+>({})
 
 watch(
   () => boot.value?.settings,
@@ -145,7 +150,9 @@ function submitMaterialCategories() {
 
 function submitStages() {
   saveStages(
-    [...stagesDraft.value].sort((a, b) => a.sortOrder - b.sortOrder).map((s, i) => ({ ...s, sortOrder: i })),
+    [...stagesDraft.value]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((s, i) => ({ ...s, sortOrder: i })),
     { onSuccess: () => void refetch() },
   )
 }
@@ -191,10 +198,7 @@ function addUnit() {
 function saveNumberingSeries(seriesKey: string) {
   const draft = numberingDraft.value[seriesKey]
   if (!draft) return
-  patchNumbering(
-    { seriesKey, body: { ...draft } },
-    { onSuccess: () => void refetch() },
-  )
+  patchNumbering({ seriesKey, body: { ...draft } }, { onSuccess: () => void refetch() })
 }
 
 const numberingRows = computed(() => boot.value?.numbering ?? [])

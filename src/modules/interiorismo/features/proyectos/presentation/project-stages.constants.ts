@@ -1,5 +1,4 @@
 import type { InteriorProjectLifecycleStatus, InteriorProjectStatus } from '../domain/project.types'
-
 /** Etiquetas por defecto del ciclo de 5 estados (si la config aún no cargó). */
 export const INTERIOR_PROJECT_LIFECYCLE_LABELS: Record<InteriorProjectLifecycleStatus, string> = {
   DESIGN: 'Diseño',

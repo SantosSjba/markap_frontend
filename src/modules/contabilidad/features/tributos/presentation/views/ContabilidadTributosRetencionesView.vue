@@ -1,29 +1,26 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  PageHeader,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useContabilidadSuppliers } from '@modules/contabilidad/features/compras/application/useContabilidadPurchases'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
+import { useContabilidadSuppliers } from '../../../compras/presentation/composables/useContabilidadPurchases'
 import {
   useContabilidadRetentions,
   useContabilidadCreateRetention,
-} from '../../application/useContabilidadTaxes'
+} from '../composables/useContabilidadTaxes'
 import {
   RETENTION_TYPE,
   RETENTION_TYPE_OPTIONS,
   type ContabilidadRetentionDTO,
 } from '../../domain/taxes.types'
-
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
 
@@ -62,28 +59,35 @@ const form = ref({
   amount: '',
 })
 
-watch(activePeriod, (p) => {
-  if (!p) return
-  const now = new Date()
-  form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
-}, { immediate: true })
-
 watch(
-  () => form.value.retentionType,
-  (t) => {
-    form.value.ratePercent = String(t === RETENTION_TYPE.IGV ? defaultRates.value.IGV : defaultRates.value.RENTA)
+  activePeriod,
+  (p) => {
+    if (!p) return
+    const now = new Date()
+    form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
   },
   { immediate: true },
 )
 
-watch(supplierOptions, (opts) => {
-  if (!form.value.supplierId && opts[0]) form.value.supplierId = opts[0].value
-}, { immediate: true })
+watch(
+  () => form.value.retentionType,
+  (t) => {
+    form.value.ratePercent = String(
+      t === RETENTION_TYPE.IGV ? defaultRates.value.IGV : defaultRates.value.RENTA,
+    )
+  },
+  { immediate: true },
+)
 
-const typeFilterOptions = [
-  { value: '', label: 'Todos los tipos' },
-  ...RETENTION_TYPE_OPTIONS,
-]
+watch(
+  supplierOptions,
+  (opts) => {
+    if (!form.value.supplierId && opts[0]) form.value.supplierId = opts[0].value
+  },
+  { immediate: true },
+)
+
+const typeFilterOptions = [{ value: '', label: 'Todos los tipos' }, ...RETENTION_TYPE_OPTIONS]
 
 const columns = [
   { key: 'issueDate', label: 'Fecha', sortable: true },
@@ -127,7 +131,12 @@ function submit() {
       ratePercent: form.value.ratePercent || undefined,
       amount: form.value.amount || undefined,
     },
-    { onSuccess: () => { modalOpen.value = false; void refetch() } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    },
   )
 }
 

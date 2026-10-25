@@ -2,14 +2,17 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
-import { BaseButton, AppIcon, Badge, FormSectionCard } from '@shared/components'
-import { FormInput, FormSelect } from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { useAgent, useUpdateAgent, useDeleteAgent } from '../../application/useAgents'
-import { navigateAfterAlquileresSave } from '@modules/alquileres/application'
-import { useUsers } from '@modules/settings'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { useAgent, useUpdateAgent, useDeleteAgent } from '../composables/useAgents'
+import { navigateAfterAlquileresSave } from '../../../../presentation/navigation/navigateAfterAlquileresSave'
+import { useUsers } from '@modules/settings/presentation/composables/useUsers'
 import type { AgentType } from '../../domain/agent.types'
-
 const route = useRoute()
 const router = useRouter()
 
@@ -75,28 +78,29 @@ const selectedUser = computed(() => {
 function fillFromUser(userId: string) {
   const u = usersList.value?.find((x) => x.id === userId)
   if (!u) return
-  setFieldValue(
-    'fullName',
-    u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email,
-  )
+  setFieldValue('fullName', u.fullName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email)
   setFieldValue('email', u.email ?? '')
 }
 
-watch(agent, (a) => {
-  if (!a) return
-  resetForm({
-    values: {
-      type: a.type,
-      userId: a.userId ?? '',
-      fullName: a.fullName ?? '',
-      email: a.email ?? '',
-      phone: a.phone ?? '',
-      documentTypeId: a.documentTypeId ?? '',
-      documentNumber: a.documentNumber ?? '',
-      isActive: a.isActive,
-    },
-  })
-}, { immediate: true })
+watch(
+  agent,
+  (a) => {
+    if (!a) return
+    resetForm({
+      values: {
+        type: a.type,
+        userId: a.userId ?? '',
+        fullName: a.fullName ?? '',
+        email: a.email ?? '',
+        phone: a.phone ?? '',
+        documentTypeId: a.documentTypeId ?? '',
+        documentNumber: a.documentNumber ?? '',
+        isActive: a.isActive,
+      },
+    })
+  },
+  { immediate: true },
+)
 
 watch(
   () => values.type,

@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import type { ContractExpiringItem } from '../../features/reportes/domain/reportes.types'
+import { useRouter } from 'vue-router'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { formatShortDate } from '@shared/utils/formatters'
 /**
  * DashboardAlertasList
  * Lista de contratos próximos a vencer con semáforo visual de urgencia.
  */
-import type { ContractExpiringItem } from '@modules/alquileres/features/reportes'
-import { useRouter } from 'vue-router'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { formatShortDate } from '@/shared/utils/formatters'
 
 interface Props {
   items: ContractExpiringItem[]

@@ -1,29 +1,30 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  BaseButton,
-  AppIcon,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
-import { useContabilidadCostCentersList } from '@modules/contabilidad/features/centros-costo/application/useContabilidadCostCenters'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { useContabilidadAccountsTree } from '../../../plan-cuentas/presentation/composables/useContabilidadAccounts'
+import { useContabilidadCostCentersList } from '../../../centros-costo/presentation/composables/useContabilidadCostCenters'
 import {
   useContabilidadJournalTemplates,
   useContabilidadApplyJournalTemplate,
-} from '@modules/contabilidad/features/plantillas-asiento/application/useContabilidadJournalTemplates'
+} from '../../../plantillas-asiento/presentation/composables/useContabilidadJournalTemplates'
 import {
   useContabilidadCreateJournal,
   useContabilidadUpdateJournal,
   useContabilidadJournalDetail,
   useContabilidadPostJournal,
-} from '../../application/useContabilidadJournal'
-import type { ContabilidadJournalEntryDetailDTO, JournalLineFormRow } from '../../domain/journal.types'
+} from '../composables/useContabilidadJournal'
+import type {
+  ContabilidadJournalEntryDetailDTO,
+  JournalLineFormRow,
+} from '../../domain/journal.types'
 import {
   flattenMovementAccounts,
   formatPen,
@@ -37,9 +38,8 @@ import {
 import {
   FUNCTIONAL_CURRENCY,
   useContabilidadCurrencies,
-} from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
-import { toCalendarDateString } from '@/shared/utils/formatters'
-
+} from '../../../../presentation/composables/useContabilidadCurrencies'
+import { toCalendarDateString } from '@shared/utils/formatters'
 const route = useRoute()
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
@@ -93,7 +93,9 @@ const costCenterOptions = computed(() => [
 ])
 
 const totals = computed(() => sumLineAmounts(lines.value))
-const balanced = computed(() => isJournalBalanced(totals.value.totalDebit, totals.value.totalCredit))
+const balanced = computed(() =>
+  isJournalBalanced(totals.value.totalDebit, totals.value.totalCredit),
+)
 const difference = computed(() =>
   Math.abs(totals.value.totalDebit - totals.value.totalCredit).toFixed(2),
 )
@@ -218,7 +220,9 @@ function saveAndPost() {
     return
   }
 
-  createJournal(body, { onSuccess: (entry: ContabilidadJournalEntryDetailDTO) => publish(entry.id) })
+  createJournal(body, {
+    onSuccess: (entry: ContabilidadJournalEntryDetailDTO) => publish(entry.id),
+  })
 }
 
 function goBack() {

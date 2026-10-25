@@ -1,11 +1,7 @@
-import { apiClient } from '@core/api/apiClient'
-import { getContabilidadApiScope } from '@modules/contabilidad/config/api-scope'
-import type {
-  ContabilidadPeriodDTO,
-  ContabilidadPeriodsResponse,
-} from '../../domain/period.types'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { getContabilidadApiScope } from '../../../../config/api-scope'
+import type { ContabilidadPeriodDTO, ContabilidadPeriodsResponse } from '../../domain/period.types'
 import type { ContabilidadPeriodsRepository } from '../../domain/repositories/contabilidad-periods.repository'
-
 function qs(params: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   Object.entries({ ...getContabilidadApiScope(), ...params }).forEach(([k, v]) => {

@@ -1,35 +1,33 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  Badge,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-  SearchInput,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
-import { flattenMovementAccounts, formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { useContabilidadAccountsTree } from '../../../plan-cuentas/presentation/composables/useContabilidadAccounts'
+import { flattenMovementAccounts, formatPen } from '../../../asientos/domain/journal.utils'
 import {
   FUNCTIONAL_CURRENCY,
   isForeignCurrency,
   useContabilidadCurrencies,
-} from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
-import { useContabilidadExchangeRateLookup } from '@modules/contabilidad/presentation/composables/useContabilidadExchangeRateLookup'
+} from '../../../../presentation/composables/useContabilidadCurrencies'
+import { useContabilidadExchangeRateLookup } from '../../../../presentation/composables/useContabilidadExchangeRateLookup'
 import {
   useContabilidadSuppliers,
   useContabilidadPurchaseInvoices,
   useContabilidadCreatePurchaseInvoice,
   useContabilidadCancelPurchaseInvoice,
-} from '../../application/useContabilidadPurchases'
+} from '../composables/useContabilidadPurchases'
 import {
   PURCHASE_DOCUMENT_TYPE_OPTIONS,
   PURCHASE_STATUS_FILTER_OPTIONS,
@@ -38,7 +36,6 @@ import {
   purchaseStatusVariant,
   type ContabilidadPurchaseInvoiceDTO,
 } from '../../domain/purchases.types'
-
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
 
@@ -68,7 +65,11 @@ const emptySearch = ref('')
 const { data: accountsData } = useContabilidadAccountsTree(emptySearch)
 const expenseOptions = computed(() =>
   flattenMovementAccounts(accountsData.value?.tree ?? []).filter(
-    (o) => o.label.startsWith('601') || o.label.startsWith('631') || o.label.startsWith('636') || o.label.startsWith('637'),
+    (o) =>
+      o.label.startsWith('601') ||
+      o.label.startsWith('631') ||
+      o.label.startsWith('636') ||
+      o.label.startsWith('637'),
   ),
 )
 
@@ -95,7 +96,10 @@ const form = ref({
 const formCurrency = computed(() => form.value.currencyCode)
 const formIssueDate = computed(() => form.value.issueDate)
 const { data: currenciesData } = useContabilidadCurrencies()
-const { sellRate, isLoading: loadingRate } = useContabilidadExchangeRateLookup(formCurrency, formIssueDate)
+const { sellRate, isLoading: loadingRate } = useContabilidadExchangeRateLookup(
+  formCurrency,
+  formIssueDate,
+)
 const currencyOptions = computed(() =>
   (currenciesData.value ?? []).map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` })),
 )
@@ -107,23 +111,38 @@ const taxableBaseLabel = computed(() =>
 watch(sellRate, (rate) => {
   if (rate && isForeignInvoice.value && !form.value.exchangeRate) form.value.exchangeRate = rate
 })
-watch(() => form.value.currencyCode, (code) => {
-  if (code === FUNCTIONAL_CURRENCY) form.value.exchangeRate = ''
-})
+watch(
+  () => form.value.currencyCode,
+  (code) => {
+    if (code === FUNCTIONAL_CURRENCY) form.value.exchangeRate = ''
+  },
+)
 
-watch(activePeriod, (p) => {
-  if (!p) return
-  const now = new Date()
-  form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
-}, { immediate: true })
+watch(
+  activePeriod,
+  (p) => {
+    if (!p) return
+    const now = new Date()
+    form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
+  },
+  { immediate: true },
+)
 
-watch(expenseOptions, (opts) => {
-  if (!form.value.expenseAccountId && opts[0]) form.value.expenseAccountId = opts[0].value
-}, { immediate: true })
+watch(
+  expenseOptions,
+  (opts) => {
+    if (!form.value.expenseAccountId && opts[0]) form.value.expenseAccountId = opts[0].value
+  },
+  { immediate: true },
+)
 
-watch(supplierOptions, (opts) => {
-  if (!form.value.supplierId && opts[0]) form.value.supplierId = opts[0].value
-}, { immediate: true })
+watch(
+  supplierOptions,
+  (opts) => {
+    if (!form.value.supplierId && opts[0]) form.value.supplierId = opts[0].value
+  },
+  { immediate: true },
+)
 
 const columns = [
   { key: 'issueDate', label: 'Fecha', sortable: true },
@@ -176,7 +195,12 @@ function submitInvoice() {
       detraccionAmount: form.value.detraccionAmount || 0,
       notes: form.value.notes.trim() || null,
     },
-    { onSuccess: () => { modalOpen.value = false; void refetch() } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    },
   )
 }
 

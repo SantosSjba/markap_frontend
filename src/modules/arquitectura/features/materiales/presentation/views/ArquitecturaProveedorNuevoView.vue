@@ -1,10 +1,11 @@
 ﻿<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormInput, AppIcon } from '@shared/components'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-import { useCreateArquitecturaMaterialSupplier } from '../../application/useArquitecturaMaterialSuppliers'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
+import { useCreateArquitecturaMaterialSupplier } from '../composables/useArquitecturaMaterialSuppliers'
 const router = useRouter()
 const createMut = useCreateArquitecturaMaterialSupplier()
 

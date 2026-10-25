@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { BaseButton } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 /**
  * UnauthorizedView
  * 403 access denied page

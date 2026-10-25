@@ -3,7 +3,6 @@ import type {
   CreateContabilidadCostCenterBody,
   UpdateContabilidadCostCenterBody,
 } from '../cost-center.types'
-
 export interface ContabilidadCostCentersRepository {
   list(search?: string): Promise<ContabilidadCostCenterDTO[]>
   create(body: CreateContabilidadCostCenterBody): Promise<ContabilidadCostCenterDTO>

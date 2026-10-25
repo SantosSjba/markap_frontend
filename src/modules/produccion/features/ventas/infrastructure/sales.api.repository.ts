@@ -1,5 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
-import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
+import type { ProduccionSalesRepository } from '../domain/repositories/sales.repository'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { PRODUCCION_APP_SLUG } from '../../../config/app.constants'
 import type {
   CreateDeliveryPayload,
   CreateQuotationPayload,
@@ -14,7 +15,6 @@ import type {
   ProduccionQuotationListItem,
   SalesLinePayload,
 } from '../domain/sales.types'
-
 const QUOTATIONS_BASE = '/produccion-quotations'
 const ORDERS_BASE = '/produccion-orders'
 const DELIVERIES_BASE = '/produccion-deliveries'
@@ -23,7 +23,7 @@ function slugParams() {
   return { applicationSlug: PRODUCCION_APP_SLUG }
 }
 
-export const produccionSalesApi = {
+export const produccionSalesApi: ProduccionSalesRepository = {
   listQuotations: (params: ListQuotationsParams = {}) => {
     const sp = new URLSearchParams()
     sp.set('applicationSlug', PRODUCCION_APP_SLUG)
@@ -49,27 +49,45 @@ export const produccionSalesApi = {
 
   updateQuotation: (id: string, payload: Partial<CreateQuotationPayload>) =>
     apiClient
-      .patch<ProduccionQuotationDetail>(`${QUOTATIONS_BASE}/${id}`, payload, { params: slugParams() })
+      .patch<ProduccionQuotationDetail>(`${QUOTATIONS_BASE}/${id}`, payload, {
+        params: slugParams(),
+      })
       .then((r) => r.data),
 
   sendQuotation: (id: string) =>
     apiClient
-      .post<ProduccionQuotationDetail>(`${QUOTATIONS_BASE}/${id}/send`, {}, { params: slugParams() })
+      .post<ProduccionQuotationDetail>(
+        `${QUOTATIONS_BASE}/${id}/send`,
+        {},
+        { params: slugParams() },
+      )
       .then((r) => r.data),
 
   acceptQuotation: (id: string) =>
     apiClient
-      .post<ProduccionQuotationDetail>(`${QUOTATIONS_BASE}/${id}/accept`, {}, { params: slugParams() })
+      .post<ProduccionQuotationDetail>(
+        `${QUOTATIONS_BASE}/${id}/accept`,
+        {},
+        { params: slugParams() },
+      )
       .then((r) => r.data),
 
   rejectQuotation: (id: string) =>
     apiClient
-      .post<ProduccionQuotationDetail>(`${QUOTATIONS_BASE}/${id}/reject`, {}, { params: slugParams() })
+      .post<ProduccionQuotationDetail>(
+        `${QUOTATIONS_BASE}/${id}/reject`,
+        {},
+        { params: slugParams() },
+      )
       .then((r) => r.data),
 
   convertQuotationToOrder: (id: string) =>
     apiClient
-      .post<ProduccionOrderDetail>(`${QUOTATIONS_BASE}/${id}/convert-to-order`, {}, { params: slugParams() })
+      .post<ProduccionOrderDetail>(
+        `${QUOTATIONS_BASE}/${id}/convert-to-order`,
+        {},
+        { params: slugParams() },
+      )
       .then((r) => r.data),
 
   deleteQuotation: (id: string) =>
@@ -97,7 +115,9 @@ export const produccionSalesApi = {
   },
 
   getOrder: (id: string) =>
-    apiClient.get<ProduccionOrderDetail>(`${ORDERS_BASE}/${id}`, { params: slugParams() }).then((r) => r.data),
+    apiClient
+      .get<ProduccionOrderDetail>(`${ORDERS_BASE}/${id}`, { params: slugParams() })
+      .then((r) => r.data),
 
   confirmOrder: (id: string) =>
     apiClient
@@ -106,7 +126,11 @@ export const produccionSalesApi = {
 
   createWorkOrderFromOrder: (id: string) =>
     apiClient
-      .post<ProduccionOrderDetail>(`${ORDERS_BASE}/${id}/create-work-order`, {}, { params: slugParams() })
+      .post<ProduccionOrderDetail>(
+        `${ORDERS_BASE}/${id}/create-work-order`,
+        {},
+        { params: slugParams() },
+      )
       .then((r) => r.data),
 
   markOrderReady: (id: string) =>
@@ -147,17 +171,27 @@ export const produccionSalesApi = {
 
   updateDelivery: (id: string, payload: Partial<CreateDeliveryPayload>) =>
     apiClient
-      .patch<ProduccionDeliveryDetail>(`${DELIVERIES_BASE}/${id}`, payload, { params: slugParams() })
+      .patch<ProduccionDeliveryDetail>(`${DELIVERIES_BASE}/${id}`, payload, {
+        params: slugParams(),
+      })
       .then((r) => r.data),
 
   completeDelivery: (id: string) =>
     apiClient
-      .post<ProduccionDeliveryDetail>(`${DELIVERIES_BASE}/${id}/complete`, {}, { params: slugParams() })
+      .post<ProduccionDeliveryDetail>(
+        `${DELIVERIES_BASE}/${id}/complete`,
+        {},
+        { params: slugParams() },
+      )
       .then((r) => r.data),
 
   cancelDelivery: (id: string) =>
     apiClient
-      .post<ProduccionDeliveryDetail>(`${DELIVERIES_BASE}/${id}/cancel`, {}, { params: slugParams() })
+      .post<ProduccionDeliveryDetail>(
+        `${DELIVERIES_BASE}/${id}/cancel`,
+        {},
+        { params: slugParams() },
+      )
       .then((r) => r.data),
 
   deleteDelivery: (id: string) =>

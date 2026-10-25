@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { Icon } from '@iconify/vue'
 /**
  * DashboardAccionesRapidas
  * Grid de botones de acceso rápido a las acciones más frecuentes.
  * Usa @iconify/vue para iconos vectoriales de alta calidad.
  */
-import { useRouter } from 'vue-router'
-import { Icon } from '@iconify/vue'
 
 interface Action {
   id: string
@@ -14,7 +14,7 @@ interface Action {
   route: { name: string }
   accent: string
   accentLight: string
-  icon: string  // nombre de icono Iconify: "colección:nombre"
+  icon: string // nombre de icono Iconify: "colección:nombre"
 }
 
 const router = useRouter()

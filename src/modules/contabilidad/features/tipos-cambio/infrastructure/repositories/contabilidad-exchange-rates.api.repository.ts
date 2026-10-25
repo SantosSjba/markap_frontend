@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_EXCHANGE_RATES_APP_SLUG } from '../../domain/exchange-rate.types'
 import type { ContabilidadExchangeRatesRepository } from '../../domain/repositories/contabilidad-exchange-rates.repository'
-
 function qs(extra?: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   u.set('applicationSlug', CONTABILIDAD_EXCHANGE_RATES_APP_SLUG)

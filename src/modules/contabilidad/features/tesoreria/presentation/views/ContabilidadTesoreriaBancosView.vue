@@ -1,35 +1,30 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  FormInput,
-  FormSelect,
-  PageHeader,
-  StatsCard,
-} from '@shared/components'
-import { useContabilidadAccountsTree } from '@modules/contabilidad/features/plan-cuentas/application/useContabilidadAccounts'
-import { flattenMovementAccounts } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { useContabilidadCurrencies } from '@modules/contabilidad/presentation/composables/useContabilidadCurrencies'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import { useContabilidadAccountsTree } from '../../../plan-cuentas/presentation/composables/useContabilidadAccounts'
+import { flattenMovementAccounts } from '../../../asientos/domain/journal.utils'
+import { formatPen } from '../../../asientos/domain/journal.utils'
+import { useContabilidadCurrencies } from '../../../../presentation/composables/useContabilidadCurrencies'
 import {
   useContabilidadBankAccounts,
   useContabilidadCreateBankAccount,
-} from '../../application/useContabilidadTreasury'
+} from '../composables/useContabilidadTreasury'
 import type { ContabilidadBankAccountDTO } from '../../domain/treasury.types'
-
 const { data, isLoading, refetch } = useContabilidadBankAccounts()
 const banks = computed(() => data.value?.bankAccounts ?? [])
-const totalBalance = computed(() =>
-  banks.value.reduce((sum, b) => sum + Number(b.balance), 0),
-)
+const totalBalance = computed(() => banks.value.reduce((sum, b) => sum + Number(b.balance), 0))
 
 const emptySearch = ref('')
 const { data: accountsData } = useContabilidadAccountsTree(emptySearch)
 const ledgerOptions = computed(() => {
-  const bankLedgers = flattenMovementAccounts(accountsData.value?.tree ?? []).filter((o) =>
-    o.label.startsWith('1071') || o.label.includes('Depósitos'),
+  const bankLedgers = flattenMovementAccounts(accountsData.value?.tree ?? []).filter(
+    (o) => o.label.startsWith('1071') || o.label.includes('Depósitos'),
   )
   return bankLedgers.length ? bankLedgers : flattenMovementAccounts(accountsData.value?.tree ?? [])
 })
@@ -54,12 +49,24 @@ const currencyOptions = computed(() =>
 )
 
 function openNew() {
-  form.value = { code: '', bankName: '', accountNumber: '', cci: '', currency: 'PEN', accountId: '' }
+  form.value = {
+    code: '',
+    bankName: '',
+    accountNumber: '',
+    cci: '',
+    currency: 'PEN',
+    accountId: '',
+  }
   modalOpen.value = true
 }
 
 function submit() {
-  if (!form.value.code.trim() || !form.value.bankName.trim() || !form.value.accountNumber.trim() || !form.value.accountId) {
+  if (
+    !form.value.code.trim() ||
+    !form.value.bankName.trim() ||
+    !form.value.accountNumber.trim() ||
+    !form.value.accountId
+  ) {
     return
   }
   createBank(
@@ -71,7 +78,12 @@ function submit() {
       currency: form.value.currency,
       accountId: form.value.accountId,
     },
-    { onSuccess: () => { modalOpen.value = false; void refetch() } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    },
   )
 }
 </script>

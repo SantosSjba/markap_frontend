@@ -1,19 +1,17 @@
 ﻿<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BaseTabs,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  AppIcon,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { formatDateTime } from '@/shared/utils/formatters'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { formatDateTime } from '@shared/utils/formatters'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 import type { ArquitecturaSupplierCatalogLinkDto } from '../../domain/suppliers.types'
 import type { ListArquitecturaCatalogMaterialsParams } from '../../domain/catalog.types'
 import {
@@ -23,10 +21,9 @@ import {
   useLinkArquitecturaSupplierCatalog,
   useUnlinkArquitecturaSupplierCatalog,
   useRecordArquitecturaMaterialPurchase,
-} from '../../application/useArquitecturaMaterialSuppliers'
-import { useArquitecturaCatalogMaterialsList } from '../../application/useArquitecturaCatalogMaterials'
+} from '../composables/useArquitecturaMaterialSuppliers'
+import { useArquitecturaCatalogMaterialsList } from '../composables/useArquitecturaCatalogMaterials'
 import { formatSol, formatQty } from '../labels'
-
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))

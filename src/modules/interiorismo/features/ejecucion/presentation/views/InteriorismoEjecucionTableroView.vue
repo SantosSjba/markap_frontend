@@ -1,25 +1,23 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  BaseButton,
-  BaseTabs,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  FileDropzone,
-  StatsCard,
-  Badge,
-  AppIcon,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { parseCalendarDate, toCalendarDateString, formatDateTime } from '@/shared/utils/formatters'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
-import { useInteriorCatalogMaterialsList } from '@modules/interiorismo/features/materiales/application/useInteriorCatalogMaterials'
-import type { ListInteriorCatalogMaterialsParams } from '@modules/interiorismo/features/materiales/domain/catalog.types'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { parseCalendarDate, toCalendarDateString, formatDateTime } from '@shared/utils/formatters'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
+import { useInteriorCatalogMaterialsList } from '../../../materiales/presentation/composables/useInteriorCatalogMaterials'
+import type { ListInteriorCatalogMaterialsParams } from '../../../materiales/domain/catalog.types'
 import type { InteriorExecutionTaskDto } from '../../domain/execution.types'
 import {
   useInteriorExecutionOverview,
@@ -29,12 +27,12 @@ import {
   useDeleteExecutionTask,
   useUploadExecutionEvidence,
   useDeleteExecutionEvidence,
-  openExecutionEvidenceFile,
+  useOpenExecutionEvidenceFile,
   useCreateExecutionIncident,
   useUpdateExecutionIncident,
   useCreateExecutionActualCost,
   useDeleteExecutionActualCost,
-} from '../../application/useInteriorExecution'
+} from '../composables/useInteriorExecution'
 import {
   PHASE_LABELS,
   KANBAN_LABELS,
@@ -44,6 +42,7 @@ import {
   COST_CATEGORY_LABELS,
   formatSol,
 } from '../labels'
+const openExecutionEvidenceFile = useOpenExecutionEvidenceFile()
 
 const route = useRoute()
 const router = useRouter()
@@ -61,7 +60,13 @@ const tabs = [
   { id: 'comparativo', label: 'Presup. vs real', icon: 'lucide:scale' },
 ]
 
-const { data: ov, isLoading, isError, error: overviewError, refetch: refetchOverview } = useInteriorExecutionOverview(projectId)
+const {
+  data: ov,
+  isLoading,
+  isError,
+  error: overviewError,
+  refetch: refetchOverview,
+} = useInteriorExecutionOverview(projectId)
 const patchProgress = usePatchExecutionProgress(projectId)
 const createTask = useCreateExecutionTask(projectId)
 const updateTask = useUpdateExecutionTask(projectId)
@@ -399,10 +404,16 @@ async function removeCost(id: string) {
 
 const taskOptionsForEvidence = computed(() => [
   { value: '', label: 'Sin tarea asociada' },
-  ...(ov.value?.tasks ?? []).map((t) => ({ value: t.id, label: `${PHASE_LABELS[t.phase] ?? t.phase}: ${t.title}` })),
+  ...(ov.value?.tasks ?? []).map((t) => ({
+    value: t.id,
+    label: `${PHASE_LABELS[t.phase] ?? t.phase}: ${t.title}`,
+  })),
 ])
 
-const phaseOptionsTaskModal = Object.entries(PHASE_LABELS).map(([value, label]) => ({ value, label }))
+const phaseOptionsTaskModal = Object.entries(PHASE_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}))
 const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) => ({ value, label }))
 </script>
 

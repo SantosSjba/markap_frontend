@@ -12,9 +12,11 @@ import type {
   ListSalesInvoicesParams,
   UpdateCustomerBody,
 } from '../sales.types'
-
 export interface ContabilidadSalesRepository {
-  listCustomers(params?: { search?: string; activeOnly?: boolean }): Promise<{ customers: ContabilidadCustomerDTO[] }>
+  listCustomers(params?: {
+    search?: string
+    activeOnly?: boolean
+  }): Promise<{ customers: ContabilidadCustomerDTO[] }>
   createCustomer(body: CreateCustomerBody): Promise<ContabilidadCustomerDTO>
   updateCustomer(id: string, body: UpdateCustomerBody): Promise<ContabilidadCustomerDTO>
 
@@ -37,7 +39,11 @@ export interface ContabilidadSalesRepository {
   }>
   createDebitNote(body: CreateSalesDebitNoteBody): Promise<ContabilidadSalesDebitNoteDTO>
 
-  listCollections(params?: { periodId?: string; customerId?: string; invoiceId?: string }): Promise<{
+  listCollections(params?: {
+    periodId?: string
+    customerId?: string
+    invoiceId?: string
+  }): Promise<{
     collections: ContabilidadSalesCollectionDTO[]
   }>
   createCollection(body: CreateSalesCollectionBody): Promise<ContabilidadSalesCollectionDTO>

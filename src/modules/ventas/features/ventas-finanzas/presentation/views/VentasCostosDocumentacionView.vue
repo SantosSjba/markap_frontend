@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
+import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
+import { useService } from '@shared/presentation/di/services'
+import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
 import { computed, ref } from 'vue'
 import * as yup from 'yup'
-import {
-  DataTable,
-  BaseButton,
-  FormSelect,
-  FormInput,
-  FormTextarea,
-  AppIcon,
-  BasePagination,
-  Badge,
-} from '@shared/components'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { ventasClientsRepository } from '@modules/ventas/features/clientes'
-import { useVentasClosingsList } from '@ventas/sales'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { useVentasClosingsList } from '../../../ventas-sales/presentation/composables/useVentasSales'
 import type { DocumentationCostRow } from '../../domain/finanzas.types'
 import {
   useVentasDocumentationCostsList,
   useVentasCreateDocumentationCost,
   useVentasClosingProfitability,
-} from '../../application/useVentasFinanzas'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+} from '../composables/useVentasFinanzas'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const ventasClientsRepository = useService(ventasClientsRepositoryKey)
 
 const ITEMS = 12
 const listParams = ref({
@@ -60,7 +60,9 @@ const paginationProps = computed(() => {
   }
 })
 
-const buyerOptions = ref<{ value: string; label: string }[]>([{ value: '', label: 'Todos los clientes' }])
+const buyerOptions = ref<{ value: string; label: string }[]>([
+  { value: '', label: 'Todos los clientes' },
+])
 async function loadBuyers() {
   const res = await ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 500 })
   buyerOptions.value = [
@@ -71,12 +73,32 @@ async function loadBuyers() {
 void loadBuyers()
 
 const columns = [
-  { key: 'prop', label: 'Inmueble', sortAccessor: (r: unknown) => (r as DocumentationCostRow).closing.property.code },
-  { key: 'buyer', label: 'Cliente', sortAccessor: (r: unknown) => (r as DocumentationCostRow).closing.buyer.fullName },
-  { key: 'type', label: 'Tipo', sortAccessor: (r: unknown) => (r as DocumentationCostRow).costType },
-  { key: 'desc', label: 'Detalle', sortAccessor: (r: unknown) => (r as DocumentationCostRow).description ?? '' },
+  {
+    key: 'prop',
+    label: 'Inmueble',
+    sortAccessor: (r: unknown) => (r as DocumentationCostRow).closing.property.code,
+  },
+  {
+    key: 'buyer',
+    label: 'Cliente',
+    sortAccessor: (r: unknown) => (r as DocumentationCostRow).closing.buyer.fullName,
+  },
+  {
+    key: 'type',
+    label: 'Tipo',
+    sortAccessor: (r: unknown) => (r as DocumentationCostRow).costType,
+  },
+  {
+    key: 'desc',
+    label: 'Detalle',
+    sortAccessor: (r: unknown) => (r as DocumentationCostRow).description ?? '',
+  },
   { key: 'amt', label: 'Monto', sortAccessor: (r: unknown) => (r as DocumentationCostRow).amount },
-  { key: 'dt', label: 'Fecha gasto', sortAccessor: (r: unknown) => (r as DocumentationCostRow).expenseDate },
+  {
+    key: 'dt',
+    label: 'Fecha gasto',
+    sortAccessor: (r: unknown) => (r as DocumentationCostRow).expenseDate,
+  },
 ]
 
 function costTypeLabel(t: string) {
@@ -169,7 +191,6 @@ const {
   error: profitFetchError,
   refetch: refetchProfit,
 } = useVentasClosingProfitability(profitabilityClosingId)
-
 </script>
 
 <template>

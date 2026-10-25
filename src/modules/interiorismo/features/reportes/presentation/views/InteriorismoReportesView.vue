@@ -1,24 +1,21 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import * as yup from 'yup'
-import {
-  StatsCard,
-  BaseTabs,
-  BaseButton,
-  AppIcon,
-  ExcelIcon,
-  DataTable,
-  FormInput,
-} from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { useExcelExport } from '@shared/composables'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { toCalendarDateString } from '@/shared/utils/formatters'
-import { useInteriorReportsDashboard } from '../../application/useInteriorReportes'
-import { projectStatusLabel } from '@modules/interiorismo/features/proyectos/presentation/labels'
-import { useInteriorProjectStageOptions } from '@modules/interiorismo/features/proyectos/application/useInteriorProjectStageOptions'
-
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { toCalendarDateString } from '@shared/utils/formatters'
+import { useInteriorReportsDashboard } from '../composables/useInteriorReportes'
+import { projectStatusLabel } from '../../../proyectos/presentation/labels'
+import { useInteriorProjectStageOptions } from '../../../proyectos/presentation/composables/useInteriorProjectStageOptions'
 const { stageLabelMap } = useInteriorProjectStageOptions()
 
 const COST_CAT_LABEL: Record<string, string> = {
@@ -135,14 +132,26 @@ async function exportDashboardExcel() {
     ],
     rows: [
       { seccion: 'Ventas', indicador: 'Cobranzas período', valor: row.ventas.cobranzasPeriodo },
-      { seccion: 'Ventas', indicador: 'Pagos registrados', valor: row.ventas.pagosRegistradosPeriodo },
+      {
+        seccion: 'Ventas',
+        indicador: 'Pagos registrados',
+        valor: row.ventas.pagosRegistradosPeriodo,
+      },
       {
         seccion: 'Ventas',
         indicador: 'Proyectos con cobro en período',
         valor: row.ventas.proyectosConCobroEnPeriodo,
       },
-      { seccion: 'Ventas', indicador: 'Cartera pendiente (cuotas)', valor: row.ventas.carteraPendienteCuotas },
-      { seccion: 'Conversión', indicador: 'Proyectos nuevos', valor: row.conversion.proyectosNuevosPeriodo },
+      {
+        seccion: 'Ventas',
+        indicador: 'Cartera pendiente (cuotas)',
+        valor: row.ventas.carteraPendienteCuotas,
+      },
+      {
+        seccion: 'Conversión',
+        indicador: 'Proyectos nuevos',
+        valor: row.conversion.proyectosNuevosPeriodo,
+      },
       {
         seccion: 'Conversión',
         indicador: 'Proyectos finalizados',
@@ -188,7 +197,11 @@ async function exportDashboardExcel() {
         indicador: 'Margen bruto %',
         valor: row.rentabilidad.margenBrutoPct ?? '',
       },
-      { seccion: 'Productividad', indicador: 'Tareas totales', valor: row.productividad.tareasTotales },
+      {
+        seccion: 'Productividad',
+        indicador: 'Tareas totales',
+        valor: row.productividad.tareasTotales,
+      },
       {
         seccion: 'Productividad',
         indicador: 'Tareas completadas',

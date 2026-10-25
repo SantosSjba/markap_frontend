@@ -1,19 +1,23 @@
 ﻿<script setup lang="ts">
+import { useService } from '@shared/presentation/di/services'
+import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
 import { ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, FormInput, FileDropzone, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 import {
   useArquitecturaCatalogMaterialDetail,
   useUpdateArquitecturaCatalogMaterial,
   useDeleteArquitecturaCatalogMaterial,
   useUploadArquitecturaCatalogAsset,
-} from '../../application/useArquitecturaCatalogMaterials'
+} from '../composables/useArquitecturaCatalogMaterials'
 import { formatSol, formatQty } from '../labels'
-import { apiClient } from '@core/api/apiClient'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const fileAccess = useService(FILE_ACCESS)
 
 const route = useRoute()
 const router = useRouter()
@@ -48,9 +52,7 @@ watch(
     price.value = d.price
     stock.value = d.stock
     technicalSheetUrl.value = d.technicalSheetUrl ?? ''
-    imageUrls.value = [...d.images]
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((i) => i.url)
+    imageUrls.value = [...d.images].sort((a, b) => a.sortOrder - b.sortOrder).map((i) => i.url)
   },
   { immediate: true },
 )
@@ -61,9 +63,7 @@ async function openPath(path: string) {
       window.open(path, '_blank', 'noopener,noreferrer')
       return
     }
-    const { data } = await apiClient.get<{ url: string }>('/gen-archivos/resolve-url', {
-      params: { objectKey: path, applicationSlug: ARQUITECTURA_APP_SLUG },
-    })
+    const data = await fileAccess.resolveDownloadUrl(path, { applicationSlug: 'arquitectura' })
     if (data?.url) {
       window.open(data.url, '_blank', 'noopener,noreferrer')
       return

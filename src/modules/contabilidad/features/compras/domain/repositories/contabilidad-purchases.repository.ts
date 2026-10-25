@@ -13,7 +13,6 @@ import type {
   ListSuppliersParams,
   UpdateSupplierBody,
 } from '../purchases.types'
-
 export interface ContabilidadPurchasesRepository {
   listSuppliers(params?: ListSuppliersParams): Promise<{ suppliers: ContabilidadSupplierDTO[] }>
   createSupplier(body: CreateSupplierBody): Promise<ContabilidadSupplierDTO>

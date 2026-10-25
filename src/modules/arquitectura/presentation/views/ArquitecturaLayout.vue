@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { AppLayoutSidebar, AppHeader } from '@layouts/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { useArquitecturaAppLayout } from '../composables'
-
+import AppLayoutSidebar from '@app/layouts/components/AppLayoutSidebar.vue'
+import AppHeader from '@app/layouts/components/AppHeader.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useArquitecturaAppLayout } from '../composables/useArquitecturaAppLayout'
 const { application, menus, menusLoading } = useArquitecturaAppLayout()
 
 const isSidebarCollapsed = ref(false)

@@ -1,4 +1,4 @@
-﻿export interface ArquitecturaFinanceBudgetRefDto {
+export interface ArquitecturaFinanceBudgetRefDto {
   id: string
   code: string
   version: number

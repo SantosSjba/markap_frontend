@@ -1,33 +1,33 @@
 <script setup lang="ts">
+import { propertiesRepositoryKey } from '../../application/ports/properties.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
-import {
-  BaseButton,
-  BasePagination,
-  StatsCard,
-  Badge,
-  DataTable,
-  ActionsDropdown,
-  FormSelect,
-  SearchInput,
-  BaseModal,
-  AppIcon,
-  ExcelIcon,
-} from '@shared/components'
-import { useExcelExport } from '@shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import {
   usePropertiesList,
   usePropertyStats,
   usePropertyTypes,
   useUpdatePropertyListingStatus,
   useDeleteProperty,
-} from '../../application/useProperties'
+} from '../composables/useProperties'
 import type { PropertyListItem, ListPropertiesParams } from '../../domain/property.types'
-import { propertiesRepository } from '@modules/alquileres/features/propiedades'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { formatShortDate, toCalendarDateString } from '@/shared/utils/formatters'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
+const propertiesRepository = useService(propertiesRepositoryKey)
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -79,7 +79,7 @@ watch(
       propertyTypeId: filterPropertyTypeId.value || undefined,
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const onPageChange = (page: number) => {
@@ -145,8 +145,7 @@ const tableColumns = [
 ]
 
 const goToNew = () => router.push('/alquileres/propiedades/nueva')
-const goToEdit = (row: PropertyListItem) =>
-  router.push(`/alquileres/propiedades/${row.id}/editar`)
+const goToEdit = (row: PropertyListItem) => router.push(`/alquileres/propiedades/${row.id}/editar`)
 
 const showStatusModal = ref(false)
 const propertyForStatus = ref<PropertyListItem | null>(null)
@@ -156,9 +155,12 @@ const updateListingStatusMutation = useUpdatePropertyListingStatus()
 
 const openChangeStatusModal = (row: PropertyListItem) => {
   propertyForStatus.value = row
-  newListingStatus.value = (row.listingStatus === 'RENTED' || row.listingStatus === 'EXPIRING' || row.listingStatus === 'MAINTENANCE')
-    ? row.listingStatus
-    : 'RENTED'
+  newListingStatus.value =
+    row.listingStatus === 'RENTED' ||
+    row.listingStatus === 'EXPIRING' ||
+    row.listingStatus === 'MAINTENANCE'
+      ? row.listingStatus
+      : 'RENTED'
   statusModalError.value = ''
   showStatusModal.value = true
 }
@@ -185,7 +187,7 @@ const saveListingStatus = () => {
       onError: (err: unknown) => {
         statusModalError.value = getApiErrorMessage(err, 'No se pudo cambiar el estado')
       },
-    }
+    },
   )
 }
 
@@ -252,25 +254,37 @@ const typeOptions = computed(() => {
   return [...base, ...types.map((t) => ({ value: t.id, label: t.name }))]
 })
 
-function listingStatusVariant(status: string | null): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
+function listingStatusVariant(
+  status: string | null,
+): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
   if (!status) return 'neutral'
   switch (status) {
-    case 'RENTED': return 'success'
-    case 'AVAILABLE': return 'info'
-    case 'EXPIRING': return 'error'
-    case 'MAINTENANCE': return 'warning'
-    default: return 'neutral'
+    case 'RENTED':
+      return 'success'
+    case 'AVAILABLE':
+      return 'info'
+    case 'EXPIRING':
+      return 'error'
+    case 'MAINTENANCE':
+      return 'warning'
+    default:
+      return 'neutral'
   }
 }
 
 function listingStatusLabel(status: string | null): string {
   if (!status) return '—'
   switch (status) {
-    case 'RENTED': return 'Alquilada'
-    case 'AVAILABLE': return 'Disponible'
-    case 'EXPIRING': return 'Por Vencer'
-    case 'MAINTENANCE': return 'En Mantenimiento'
-    default: return status
+    case 'RENTED':
+      return 'Alquilada'
+    case 'AVAILABLE':
+      return 'Disponible'
+    case 'EXPIRING':
+      return 'Por Vencer'
+    case 'MAINTENANCE':
+      return 'En Mantenimiento'
+    default:
+      return status
   }
 }
 
@@ -324,7 +338,8 @@ async function handleExport() {
       ownerFullName: p.ownerFullName,
       activeRentalTenantName: p.activeRentalTenantName ?? 'Sin inquilino',
       listingStatus: listingStatusLabel(p.listingStatus),
-      activeRentalEndDate: p.hasActiveRental && p.activeRentalEndDate ? formatDate(p.activeRentalEndDate) : '—',
+      activeRentalEndDate:
+        p.hasActiveRental && p.activeRentalEndDate ? formatDate(p.activeRentalEndDate) : '—',
       monthlyRent: p.monthlyRent ?? '—',
     })),
   })

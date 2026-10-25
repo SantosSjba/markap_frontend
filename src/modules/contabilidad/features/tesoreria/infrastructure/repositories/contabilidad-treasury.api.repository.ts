@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_TREASURY_APP_SLUG } from '../../domain/treasury.types'
 import type {
   ContabilidadBankAccountDTO,
@@ -7,7 +7,6 @@ import type {
   ContabilidadTreasuryMovementDTO,
 } from '../../domain/treasury.types'
 import type { ContabilidadTreasuryRepository } from '../../domain/repositories/contabilidad-treasury.repository'
-
 function qs(extra?: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   u.set('applicationSlug', CONTABILIDAD_TREASURY_APP_SLUG)
@@ -21,11 +20,15 @@ function qs(extra?: Record<string, string | undefined>) {
 
 export const contabilidadTreasuryApiRepository: ContabilidadTreasuryRepository = {
   listCashBoxes: () =>
-    apiClient.get<{ cashBoxes: ContabilidadCashBoxDTO[] }>(`/contabilidad-treasury/cash-boxes?${qs()}`).then((r) => r.data),
+    apiClient
+      .get<{ cashBoxes: ContabilidadCashBoxDTO[] }>(`/contabilidad-treasury/cash-boxes?${qs()}`)
+      .then((r) => r.data),
 
   listBankAccounts: () =>
     apiClient
-      .get<{ bankAccounts: ContabilidadBankAccountDTO[] }>(`/contabilidad-treasury/bank-accounts?${qs()}`)
+      .get<{
+        bankAccounts: ContabilidadBankAccountDTO[]
+      }>(`/contabilidad-treasury/bank-accounts?${qs()}`)
       .then((r) => r.data),
 
   createBankAccount: (body) =>
@@ -40,9 +43,10 @@ export const contabilidadTreasuryApiRepository: ContabilidadTreasuryRepository =
 
   listMovements: (params) =>
     apiClient
-      .get<{ movements: ContabilidadTreasuryMovementDTO[]; movementTypeLabels: Record<string, string> }>(
-        `/contabilidad-treasury/movements?${qs(params as Record<string, string | undefined>)}`,
-      )
+      .get<{
+        movements: ContabilidadTreasuryMovementDTO[]
+        movementTypeLabels: Record<string, string>
+      }>(`/contabilidad-treasury/movements?${qs(params as Record<string, string | undefined>)}`)
       .then((r) => r.data),
 
   createMovement: (body) =>
@@ -52,7 +56,9 @@ export const contabilidadTreasuryApiRepository: ContabilidadTreasuryRepository =
 
   createTransfer: (body) =>
     apiClient
-      .post<{ movements: ContabilidadTreasuryMovementDTO[] }>(`/contabilidad-treasury/transfers?${qs()}`, body)
+      .post<{
+        movements: ContabilidadTreasuryMovementDTO[]
+      }>(`/contabilidad-treasury/transfers?${qs()}`, body)
       .then((r) => r.data),
 
   getReconciliation: (bankAccountId, periodId) =>
@@ -65,7 +71,10 @@ export const contabilidadTreasuryApiRepository: ContabilidadTreasuryRepository =
 
   upsertReconciliation: (body) =>
     apiClient
-      .put<ContabilidadBankReconciliationDTO>(`/contabilidad-treasury/reconciliations?${qs()}`, body)
+      .put<ContabilidadBankReconciliationDTO>(
+        `/contabilidad-treasury/reconciliations?${qs()}`,
+        body,
+      )
       .then((r) => r.data),
 
   toggleMovementReconciled: (reconciliationId, movementId, reconciled) =>
@@ -78,6 +87,8 @@ export const contabilidadTreasuryApiRepository: ContabilidadTreasuryRepository =
 
   closeReconciliation: (id) =>
     apiClient
-      .patch<ContabilidadBankReconciliationDTO>(`/contabilidad-treasury/reconciliations/${id}/close?${qs()}`)
+      .patch<ContabilidadBankReconciliationDTO>(
+        `/contabilidad-treasury/reconciliations/${id}/close?${qs()}`,
+      )
       .then((r) => r.data),
 }

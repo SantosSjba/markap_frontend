@@ -1,14 +1,15 @@
 ﻿<script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { StatsCard, BaseButton, AppIcon } from '@shared/components'
-import { useAuthStore } from '@modules/auth'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-import { useArquitecturaReportsDashboard } from '@modules/arquitectura/features/reportes/application/useArquitecturaReportes'
-import type { ArquitecturaReportesRangeParams } from '@modules/arquitectura/features/reportes/domain/reportes.types'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { parseCalendarDate, toCalendarDateString, formatDate } from '@/shared/utils/formatters'
-
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
+import { ARQUITECTURA_BASE_PATH } from '../../config/routes.constants'
+import { useArquitecturaReportsDashboard } from '../../features/reportes/presentation/composables/useArquitecturaReportes'
+import type { ArquitecturaReportesRangeParams } from '../../features/reportes/domain/reportes.types'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { parseCalendarDate, toCalendarDateString, formatDate } from '@shared/utils/formatters'
 const router = useRouter()
 const authStore = useAuthStore()
 

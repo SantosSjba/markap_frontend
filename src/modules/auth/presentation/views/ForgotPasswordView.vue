@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import * as yup from 'yup'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import FormInput from '@shared/components/forms/FormInput.vue'
-import { markapAlert } from '@/shared/composables'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { useForgotPassword } from '../../application/useAuthMutations'
-import { isAxiosError } from 'axios'
-
+import { getApiErrorMessage, getApiErrorStatus } from '@shared/utils/apiErrorMessage'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { useForgotPassword } from '../composables/useAuthMutations'
 /**
  * ForgotPasswordView
  * Solicita un código de recuperación enviado por correo (TanStack Query)
@@ -45,7 +43,7 @@ const onSubmit = handleSubmit((formValues) => {
       )
     },
     onError: (err: unknown) => {
-      if (isAxiosError(err) && err.response?.status === 404) {
+      if (getApiErrorStatus(err) === 404) {
         void markapAlert.error(
           'No existe un usuario registrado con ese correo electrónico',
           'Error',

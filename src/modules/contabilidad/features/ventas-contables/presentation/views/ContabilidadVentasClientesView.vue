@@ -1,24 +1,21 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  Badge,
-  FormInput,
-  FormCheckbox,
-  SearchInput,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadCustomers,
   useContabilidadCreateCustomer,
   useContabilidadUpdateCustomer,
-} from '../../application/useContabilidadSales'
+} from '../composables/useContabilidadSales'
 import type { ContabilidadCustomerDTO } from '../../domain/sales.types'
-
 const searchInput = ref('')
 const debouncedSearch = useDebouncedRef(searchInput)
 const listParams = computed(() => ({
@@ -46,7 +43,15 @@ const form = ref({
 
 function openNew() {
   editing.value = null
-  form.value = { ruc: '', businessName: '', tradeName: '', address: '', email: '', phone: '', isActive: true }
+  form.value = {
+    ruc: '',
+    businessName: '',
+    tradeName: '',
+    address: '',
+    email: '',
+    phone: '',
+    isActive: true,
+  }
   modalOpen.value = true
 }
 
@@ -82,7 +87,12 @@ function submitForm() {
           isActive: form.value.isActive,
         },
       },
-      { onSuccess: () => { modalOpen.value = false; void refetch() } },
+      {
+        onSuccess: () => {
+          modalOpen.value = false
+          void refetch()
+        },
+      },
     )
   } else {
     if (!/^\d{11}$/.test(form.value.ruc.trim())) {
@@ -98,7 +108,12 @@ function submitForm() {
         email: form.value.email.trim() || null,
         phone: form.value.phone.trim() || null,
       },
-      { onSuccess: () => { modalOpen.value = false; void refetch() } },
+      {
+        onSuccess: () => {
+          modalOpen.value = false
+          void refetch()
+        },
+      },
     )
   }
 }

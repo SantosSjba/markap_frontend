@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, DataTable, FormSelect, SearchInput, AppIcon } from '@shared/components'
-import { useProduccionQuotationsList } from '../../application/useProduccionSales'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useProduccionQuotationsList } from '../composables/useProduccionSales'
 import {
   formatSol,
   formatDate,
@@ -11,7 +15,6 @@ import {
   quotationStatusClass,
 } from '../labels'
 import type { ProduccionQuotationListItem } from '../../domain/sales.types'
-
 const route = useRoute()
 const router = useRouter()
 

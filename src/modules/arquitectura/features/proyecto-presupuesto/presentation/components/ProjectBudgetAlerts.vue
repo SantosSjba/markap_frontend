@@ -1,9 +1,11 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue'
-import { AppIcon } from '@shared/components'
-import type { ProjectBudgetDetailDto, ProjectSettlementDto } from '../../domain/project-budget.types'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import type {
+  ProjectBudgetDetailDto,
+  ProjectSettlementDto,
+} from '../../domain/project-budget.types'
 import { formatSol } from '../labels'
-
 const props = defineProps<{
   budget?: ProjectBudgetDetailDto | null
   settlement?: ProjectSettlementDto | null
@@ -14,9 +16,7 @@ const allItems = computed(() => props.budget?.sections.flatMap((s) => s.lineItem
 const pendingClientCollect = computed(() => (props.settlement?.pendingToCollect ?? 0) > 0.01)
 
 const supplierBalanceItems = computed(() =>
-  allItems.value.filter(
-    (i) => (i.supplierBalance ?? 0) > 0.01 && (i.actualPurchaseCost ?? 0) > 0,
-  ),
+  allItems.value.filter((i) => (i.supplierBalance ?? 0) > 0.01 && (i.actualPurchaseCost ?? 0) > 0),
 )
 
 const totalSupplierPending = computed(() =>

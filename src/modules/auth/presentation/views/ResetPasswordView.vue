@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import * as yup from 'yup'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import FormInput from '@shared/components/forms/FormInput.vue'
+import { getApiErrorMessage, getApiErrorStatus } from '@shared/utils/apiErrorMessage'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import { useRoute, useRouter } from 'vue-router'
-import { markapAlert } from '@/shared/composables'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { useResetPassword } from '../../application/useAuthMutations'
-import { isAxiosError } from 'axios'
-
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { useResetPassword } from '../composables/useAuthMutations'
 /**
  * ResetPasswordView
  * Restablece la contraseña usando el código recibido por correo (TanStack Query)
@@ -25,13 +23,22 @@ const emailFromQuery = computed(() => {
 })
 
 const resetSchema = yup.object({
-  email: yup.string().required('El correo electrónico es requerido').email('Ingrese un correo electrónico válido').trim(),
+  email: yup
+    .string()
+    .required('El correo electrónico es requerido')
+    .email('Ingrese un correo electrónico válido')
+    .trim(),
   code: yup
     .string()
     .required('El código es requerido')
     .length(6, 'El código debe tener exactamente 6 dígitos')
     .matches(/^\d+$/, 'El código solo debe contener números'),
-  newPassword: yup.string().required('La contraseña es requerida').min(8, 'La contraseña debe tener al menos 8 caracteres').max(50).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Incluye mayúscula, minúscula y número'),
+  newPassword: yup
+    .string()
+    .required('La contraseña es requerida')
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .max(50)
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Incluye mayúscula, minúscula y número'),
   confirmPassword: yup
     .string()
     .required('Confirma la contraseña')
@@ -77,13 +84,13 @@ const onSubmit = handleSubmit((formValues) => {
         )
       },
       onError: (err: unknown) => {
-        const res = isAxiosError(err) ? err.response : undefined
-        if (res?.status === 400) {
+        const status = getApiErrorStatus(err)
+        if (status === 400) {
           void markapAlert.error(
             getApiErrorMessage(err, 'El código es inválido o ha expirado'),
             'Error',
           )
-        } else if (res?.status === 404) {
+        } else if (status === 404) {
           void markapAlert.error('No existe un usuario con ese correo electrónico', 'Error')
         } else {
           void markapAlert.error(

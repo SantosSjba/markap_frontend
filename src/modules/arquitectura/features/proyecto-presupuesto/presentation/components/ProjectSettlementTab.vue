@@ -3,29 +3,26 @@ import { computed, ref, toRef, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
 import * as yup from 'yup'
-import {
-  Badge,
-  BaseButton,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSectionCard,
-  FormSelect,
-  StatsCard,
-  AppIcon,
-  ActionsDropdown,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import type { ArquitecturaProjectPaymentDto } from '@modules/arquitectura/features/proyectos/domain/project.types'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import type { ArquitecturaProjectPaymentDto } from '../../../proyectos/domain/project.types'
 import {
   useCreateFinancePayment,
   useDeleteFinancePayment,
   useUpdateFinancePayment,
-} from '@modules/arquitectura/features/finanzas/application/useArquitecturaFinance'
-import { useProjectBudget, useProjectSettlement } from '../../application/useProjectBudget'
+} from '../../../finanzas/presentation/composables/useArquitecturaFinance'
+import { useProjectBudget, useProjectSettlement } from '../composables/useProjectBudget'
 import { formatSol, PAYMENT_TYPE_LABELS, PAYMENT_TYPE_OPTIONS } from '../labels'
-import { formatDateTime } from '@/shared/utils/formatters'
-
+import { formatDateTime } from '@shared/utils/formatters'
 const PAYMENT_FORM_ID = 'project-settlement-payment-form'
 
 const props = defineProps<{

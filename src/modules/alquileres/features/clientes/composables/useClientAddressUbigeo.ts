@@ -5,7 +5,6 @@ import {
   UBIGEO_OTHER_PROVINCE_ID,
   isUbigeoOtherDepartment,
 } from '../constants/ubigeo-other'
-
 type AddressFormValues = {
   departmentId?: string
   provinceId?: string

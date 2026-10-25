@@ -1,5 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-
 /**
  * Rutas bajo `/interiorismo/clientes` (SectionLayout).
  */

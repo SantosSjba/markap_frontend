@@ -1,1 +1,0 @@
-export { interiorismoProyectosRoutes } from './router'

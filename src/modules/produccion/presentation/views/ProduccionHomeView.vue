@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { StatsCard, BaseButton, AppIcon } from '@shared/components'
-import { useAuthStore } from '@modules/auth'
-import {
-  useProduccionReportsDashboard,
-  type ProduccionReportesRangeParams,
-} from '@modules/produccion/features/reportes'
-import type { ProduccionReportsActivityItem } from '@modules/produccion/features/reportes/domain/reportes.types'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { parseCalendarDate, toCalendarDateString, formatDate } from '@/shared/utils/formatters'
-
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
+import { useProduccionReportsDashboard } from '../../features/reportes/presentation/composables/useProduccionReportes'
+import { type ProduccionReportesRangeParams } from '../../features/reportes/domain/reportes.types'
+import type { ProduccionReportsActivityItem } from '../../features/reportes/domain/reportes.types'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { parseCalendarDate, toCalendarDateString, formatDate } from '@shared/utils/formatters'
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -97,8 +96,10 @@ function formatRelativeTime(iso: string) {
 
 function activityTone(item: ProduccionReportsActivityItem): 'primary' | 'success' | 'muted' {
   if (item.type === 'DELIVERY' && item.title.toLowerCase().includes('realizada')) return 'success'
-  if (item.type === 'WORK_ORDER' && item.title.toLowerCase().includes('producción')) return 'primary'
-  if (item.type === 'STOCK_MOVEMENT' && item.title.toLowerCase().includes('ingreso')) return 'success'
+  if (item.type === 'WORK_ORDER' && item.title.toLowerCase().includes('producción'))
+    return 'primary'
+  if (item.type === 'STOCK_MOVEMENT' && item.title.toLowerCase().includes('ingreso'))
+    return 'success'
   return 'muted'
 }
 

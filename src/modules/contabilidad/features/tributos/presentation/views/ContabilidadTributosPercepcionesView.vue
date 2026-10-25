@@ -1,30 +1,30 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  BaseButton,
-  AppIcon,
-  BaseModal,
-  DataTable,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PageHeader,
-} from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadCashBoxes,
   useContabilidadBankAccounts,
-} from '@modules/contabilidad/features/tesoreria/application/useContabilidadTreasury'
-import { useContabilidadCustomers, useContabilidadSalesInvoices } from '@modules/contabilidad/features/ventas-contables/application/useContabilidadSales'
+} from '../../../tesoreria/presentation/composables/useContabilidadTreasury'
+import {
+  useContabilidadCustomers,
+  useContabilidadSalesInvoices,
+} from '../../../ventas-contables/presentation/composables/useContabilidadSales'
 import {
   useContabilidadPerceptions,
   useContabilidadCreatePerception,
-} from '../../application/useContabilidadTaxes'
+} from '../composables/useContabilidadTaxes'
 import { PERCEPTION_TYPE, type ContabilidadPerceptionDTO } from '../../domain/taxes.types'
-
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
 
@@ -58,10 +58,14 @@ const invoiceOptions = computed(() =>
 const { data: cashData } = useContabilidadCashBoxes()
 const { data: bankData } = useContabilidadBankAccounts()
 const cashOptions = computed(() =>
-  (cashData.value?.cashBoxes ?? []).filter((c) => c.isActive).map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
+  (cashData.value?.cashBoxes ?? [])
+    .filter((c) => c.isActive)
+    .map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
 )
 const bankOptions = computed(() =>
-  (bankData.value?.bankAccounts ?? []).filter((b) => b.isActive).map((b) => ({ value: b.id, label: `${b.code} — ${b.bankName}` })),
+  (bankData.value?.bankAccounts ?? [])
+    .filter((b) => b.isActive)
+    .map((b) => ({ value: b.id, label: `${b.code} — ${b.bankName}` })),
 )
 
 const sourceTypeOptions = [
@@ -85,15 +89,23 @@ const form = ref({
   description: '',
 })
 
-watch(activePeriod, (p) => {
-  if (!p) return
-  const now = new Date()
-  form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
-}, { immediate: true })
+watch(
+  activePeriod,
+  (p) => {
+    if (!p) return
+    const now = new Date()
+    form.value.issueDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(Math.min(now.getDate(), 28)).padStart(2, '0')}`
+  },
+  { immediate: true },
+)
 
-watch(defaultRate, (r) => {
-  if (!form.value.ratePercent) form.value.ratePercent = String(r)
-}, { immediate: true })
+watch(
+  defaultRate,
+  (r) => {
+    if (!form.value.ratePercent) form.value.ratePercent = String(r)
+  },
+  { immediate: true },
+)
 
 watch(
   () => form.value.salesInvoiceId,
@@ -107,15 +119,27 @@ watch(
   },
 )
 
-watch(customerOptions, (opts) => {
-  if (!form.value.customerId && opts[0]) form.value.customerId = opts[0].value
-}, { immediate: true })
-watch(cashOptions, (opts) => {
-  if (!form.value.cashBoxId && opts[0]) form.value.cashBoxId = opts[0].value
-}, { immediate: true })
-watch(bankOptions, (opts) => {
-  if (!form.value.bankAccountId && opts[0]) form.value.bankAccountId = opts[0].value
-}, { immediate: true })
+watch(
+  customerOptions,
+  (opts) => {
+    if (!form.value.customerId && opts[0]) form.value.customerId = opts[0].value
+  },
+  { immediate: true },
+)
+watch(
+  cashOptions,
+  (opts) => {
+    if (!form.value.cashBoxId && opts[0]) form.value.cashBoxId = opts[0].value
+  },
+  { immediate: true },
+)
+watch(
+  bankOptions,
+  (opts) => {
+    if (!form.value.bankAccountId && opts[0]) form.value.bankAccountId = opts[0].value
+  },
+  { immediate: true },
+)
 
 const columns = [
   { key: 'issueDate', label: 'Fecha', sortable: true },
@@ -156,7 +180,12 @@ function submit() {
       bankAccountId: form.value.sourceType === 'BANK' ? form.value.bankAccountId : null,
       description: form.value.description.trim(),
     },
-    { onSuccess: () => { modalOpen.value = false; void refetch() } },
+    {
+      onSuccess: () => {
+        modalOpen.value = false
+        void refetch()
+      },
+    },
   )
 }
 

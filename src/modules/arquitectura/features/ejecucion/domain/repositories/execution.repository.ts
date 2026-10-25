@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   CreateExecutionActualCostPayload,
   CreateExecutionEvidencePayload,
   CreateExecutionIncidentPayload,
@@ -11,21 +11,32 @@
   UpdateExecutionTaskPayload,
   UploadExecutionEvidencePayload,
 } from '../execution.types'
-
 export interface ArquitecturaExecutionRepository {
   getOverview(projectId: string): Promise<ArquitecturaExecutionOverviewDto>
   patchProgress(projectId: string, progressPct: number): Promise<unknown>
-  createTask(projectId: string, payload: CreateExecutionTaskPayload): Promise<ArquitecturaExecutionTaskDto>
+  createTask(
+    projectId: string,
+    payload: CreateExecutionTaskPayload,
+  ): Promise<ArquitecturaExecutionTaskDto>
   updateTask(
     projectId: string,
     taskId: string,
     payload: UpdateExecutionTaskPayload,
   ): Promise<ArquitecturaExecutionTaskDto>
   deleteTask(projectId: string, taskId: string): Promise<void>
-  createEvidence(projectId: string, payload: CreateExecutionEvidencePayload): Promise<ArquitecturaExecutionEvidenceDto>
-  uploadEvidence(projectId: string, payload: UploadExecutionEvidencePayload): Promise<ArquitecturaExecutionEvidenceDto>
+  createEvidence(
+    projectId: string,
+    payload: CreateExecutionEvidencePayload,
+  ): Promise<ArquitecturaExecutionEvidenceDto>
+  uploadEvidence(
+    projectId: string,
+    payload: UploadExecutionEvidencePayload,
+  ): Promise<ArquitecturaExecutionEvidenceDto>
   deleteEvidence(projectId: string, evidenceId: string): Promise<void>
-  createIncident(projectId: string, payload: CreateExecutionIncidentPayload): Promise<ArquitecturaExecutionIncidentDto>
+  createIncident(
+    projectId: string,
+    payload: CreateExecutionIncidentPayload,
+  ): Promise<ArquitecturaExecutionIncidentDto>
   updateIncident(
     projectId: string,
     incidentId: string,

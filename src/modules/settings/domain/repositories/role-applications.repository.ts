@@ -1,5 +1,4 @@
 import type { ApplicationItem, RoleInfo } from '../settings.types'
-
 export interface RoleApplicationsRepository {
   getRoles(): Promise<RoleInfo[]>
   getAllApplications(): Promise<ApplicationItem[]>

@@ -1,21 +1,25 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, BaseTabs, Badge, StatsCard, AppIcon, DataTable } from '@shared/components'
-import { useArquitecturaProjectDetail } from '../../application/useArquitecturaProjects'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import { useArquitecturaProjectDetail } from '../composables/useArquitecturaProjects'
+import ProjectBudgetTab from '../../../proyecto-presupuesto/presentation/components/ProjectBudgetTab.vue'
+import ProjectPurchasesTab from '../../../proyecto-presupuesto/presentation/components/ProjectPurchasesTab.vue'
+import ProjectSettlementTab from '../../../proyecto-presupuesto/presentation/components/ProjectSettlementTab.vue'
+import ProjectBudgetAlerts from '../../../proyecto-presupuesto/presentation/components/ProjectBudgetAlerts.vue'
 import {
-  ProjectBudgetTab,
-  ProjectPurchasesTab,
-  ProjectSettlementTab,
-  ProjectBudgetAlerts,
   useProjectBudget,
   useProjectSettlement,
-} from '@modules/arquitectura/features/proyecto-presupuesto'
-import { ArquitecturaFinanzasTableroView } from '@modules/arquitectura/features/finanzas'
+} from '../../../proyecto-presupuesto/presentation/composables/useProjectBudget'
+import ArquitecturaFinanzasTableroView from '../../../finanzas/presentation/views/ArquitecturaFinanzasTableroView.vue'
 import { PROJECT_TYPE_LABELS, projectStatusLabel, formatSol } from '../labels'
-import { useArquitecturaProjectStageOptions } from '../../application/useArquitecturaProjectStageOptions'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-
+import { useArquitecturaProjectStageOptions } from '../composables/useArquitecturaProjectStageOptions'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))

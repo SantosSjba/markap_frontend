@@ -1,5 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-
 /**
  * Rutas del módulo Clientes (se montan como children de /alquileres/clientes)
  */

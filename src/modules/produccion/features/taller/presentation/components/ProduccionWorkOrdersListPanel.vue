@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { DataTable, SearchInput, AppIcon } from '@shared/components'
-import { useProduccionWorkOrdersList } from '../../application/useProduccionWorkOrders'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { useProduccionWorkOrdersList } from '../composables/useProduccionWorkOrders'
 import { WO_STATUS_LABELS, WO_PRIORITY_LABELS, woStatusClass, priorityClass } from '../labels'
 import type { ProduccionWorkOrderListItem } from '../../domain/work-orders.types'
-
 const props = defineProps<{
   status?: ProduccionWorkOrderListItem['status']
   stageKey?: string

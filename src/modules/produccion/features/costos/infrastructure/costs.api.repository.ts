@@ -1,5 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
-import { PRODUCCION_APP_SLUG } from '@modules/produccion/config/app.constants'
+import type { ProduccionCostsRepository } from '../domain/repositories/costs.repository'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { PRODUCCION_APP_SLUG } from '../../../config/app.constants'
 import type {
   FurnitureCostingDetail,
   ListExtraCostsParams,
@@ -9,12 +10,11 @@ import type {
   UpdateFurnitureCostingPayload,
   CostingSnapshot,
 } from '../domain/costs.types'
-
 const LABOR_BASE = '/produccion-labor-rates'
 const EXTRA_BASE = '/produccion-extra-costs'
 const COSTING_BASE = '/produccion-furniture-costing'
 
-export const produccionCostsApi = {
+export const produccionCostsApi: ProduccionCostsRepository = {
   listLaborRates: (params: ListLaborRatesParams = {}) => {
     const sp = new URLSearchParams()
     sp.set('applicationSlug', PRODUCCION_APP_SLUG)
@@ -98,8 +98,12 @@ export const produccionCostsApi = {
 
   createSnapshot: (furnitureId: string, label?: string) =>
     apiClient
-      .post<CostingSnapshot>(`${COSTING_BASE}/${furnitureId}/snapshots`, { label }, {
-        params: { applicationSlug: PRODUCCION_APP_SLUG },
-      })
+      .post<CostingSnapshot>(
+        `${COSTING_BASE}/${furnitureId}/snapshots`,
+        { label },
+        {
+          params: { applicationSlug: PRODUCCION_APP_SLUG },
+        },
+      )
       .then((r) => r.data),
 }

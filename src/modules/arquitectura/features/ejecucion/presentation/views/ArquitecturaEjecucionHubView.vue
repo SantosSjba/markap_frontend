@@ -1,23 +1,26 @@
 ﻿<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
 import {
-  BaseButton,
-  BasePagination,
-  BaseModal,
-  DataTable,
-  SearchInput,
-  Badge,
-  AppIcon,
-  ActionsDropdown,
-} from '@shared/components'
-import { useArquitecturaProjectsList, useUpdateArquitecturaProject } from '@modules/arquitectura/features/proyectos/application/useArquitecturaProjects'
-import type { ArquitecturaProjectListItem, ListArquitecturaProjectsParams } from '@modules/arquitectura/features/proyectos/domain/project.types'
-import { projectStatusLabel } from '@modules/arquitectura/features/proyectos/presentation/labels'
-import { useArquitecturaProjectStageOptions } from '@modules/arquitectura/features/proyectos/application/useArquitecturaProjectStageOptions'
-import { ARQUITECTURA_BASE_PATH } from '@modules/arquitectura/config/routes.constants'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-
+  useArquitecturaProjectsList,
+  useUpdateArquitecturaProject,
+} from '../../../proyectos/presentation/composables/useArquitecturaProjects'
+import type {
+  ArquitecturaProjectListItem,
+  ListArquitecturaProjectsParams,
+} from '../../../proyectos/domain/project.types'
+import { projectStatusLabel } from '../../../proyectos/presentation/labels'
+import { useArquitecturaProjectStageOptions } from '../../../proyectos/presentation/composables/useArquitecturaProjectStageOptions'
+import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const router = useRouter()
 const { stageLabelMap } = useArquitecturaProjectStageOptions()
 const ITEMS = 12
@@ -116,7 +119,9 @@ const executeCancel = async () => {
   }
 }
 
-const getActions = (r: ArquitecturaProjectListItem): { label: string; icon: string; onClick: () => void }[] => {
+const getActions = (
+  r: ArquitecturaProjectListItem,
+): { label: string; icon: string; onClick: () => void }[] => {
   const items: { label: string; icon: string; onClick: () => void }[] = [
     { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(r) },
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => goEdit(r) },

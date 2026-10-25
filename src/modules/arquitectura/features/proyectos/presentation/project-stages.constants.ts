@@ -1,6 +1,11 @@
-import type { ArquitecturaProjectLifecycleStatus, ArquitecturaProjectStatus } from '../domain/project.types'
-
-export const ARQUITECTURA_PROJECT_LIFECYCLE_LABELS: Record<ArquitecturaProjectLifecycleStatus, string> = {
+import type {
+  ArquitecturaProjectLifecycleStatus,
+  ArquitecturaProjectStatus,
+} from '../domain/project.types'
+export const ARQUITECTURA_PROJECT_LIFECYCLE_LABELS: Record<
+  ArquitecturaProjectLifecycleStatus,
+  string
+> = {
   DESIGN: 'Anteproyecto',
   QUOTE: 'Cotización',
   APPROVED: 'Aprobación',

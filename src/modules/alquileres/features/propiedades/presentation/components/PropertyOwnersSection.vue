@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton, FormSectionCard } from '@shared/components'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import { FormSelect } from '@shared/components'
-
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 export type OwnerOption = { value: string; label: string }
 
 const props = defineProps<{

@@ -1,4 +1,4 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   VENTAS_CLIENTS_APPLICATION_SLUG,
   type CreateVentasClientPayload,
@@ -13,7 +13,6 @@ import {
   type VentasProvince,
 } from '../../domain/client.types'
 import type { VentasClientsRepository } from '../../domain/repositories/ventas-clients.repository'
-
 const ventasScope = { applicationSlug: VENTAS_CLIENTS_APPLICATION_SLUG }
 
 export const ventasClientsApiRepository: VentasClientsRepository = {
@@ -30,9 +29,7 @@ export const ventasClientsApiRepository: VentasClientsRepository = {
 
   getDistricts: (provinceId?: string) => {
     const params = provinceId ? { provinceId } : {}
-    return apiClient
-      .get<VentasDistrict[]>('/clients/districts', { params })
-      .then((r) => r.data)
+    return apiClient.get<VentasDistrict[]>('/clients/districts', { params }).then((r) => r.data)
   },
 
   getList: (params: ListVentasClientsParams) => {
@@ -50,19 +47,10 @@ export const ventasClientsApiRepository: VentasClientsRepository = {
   },
 
   getStats: () =>
-    apiClient
-      .get<VentasClientStats>(`/clients/stats`, { params: ventasScope })
-      .then((r) => r.data),
+    apiClient.get<VentasClientStats>(`/clients/stats`, { params: ventasScope }).then((r) => r.data),
 
   create: (data: CreateVentasClientPayload) => {
-    const {
-      clientType,
-      address,
-      salesStatus,
-      leadOrigin,
-      assignedAgentId,
-      ...rest
-    } = data
+    const { clientType, address, salesStatus, leadOrigin, assignedAgentId, ...rest } = data
     const body: Record<string, unknown> = {
       ...rest,
       ...ventasScope,

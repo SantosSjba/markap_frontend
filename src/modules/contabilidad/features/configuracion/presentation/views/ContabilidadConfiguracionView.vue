@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { BaseButton, AppIcon, BaseTabs, FormInput, FormCheckbox, FormSelect } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import ContabilidadContextSettingsPanel from '@modules/contabilidad/presentation/components/ContabilidadContextSettingsPanel.vue'
-import { CONTABILIDAD_PAGE_CLASS } from '@modules/contabilidad/config/layout.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import ContabilidadContextSettingsPanel from '../../../../presentation/components/ContabilidadContextSettingsPanel.vue'
+import { CONTABILIDAD_PAGE_CLASS } from '../../../../config/layout.constants'
 import {
   useContabilidadConfigBootstrap,
   useContabilidadSaveCompany,
   useContabilidadSaveSettings,
   useContabilidadPatchDocumentSeries,
-} from '../../application/useContabilidadConfig'
+} from '../composables/useContabilidadConfig'
 import {
   CONTABILIDAD_DOCUMENT_SERIES_LABELS,
   CONTABILIDAD_FISCAL_MONTH_OPTIONS,
@@ -19,7 +24,6 @@ import {
 } from '../../domain/config.types'
 import { isValidPeruvianRuc, normalizeRuc } from '../../domain/ruc-validator'
 import type { ContabilidadDocumentSeriesDTO } from '../../domain/config.types'
-
 const route = useRoute()
 const activeTab = ref('contexto')
 
@@ -157,7 +161,10 @@ function saveSeriesRow(row: ContabilidadDocumentSeriesDTO) {
   const draft = seriesDraft.value[row.seriesKey]
   if (!draft) return
   patchSeries(
-    { seriesKey: row.seriesKey, body: { sunatSeries: draft.sunatSeries, isActive: draft.isActive } },
+    {
+      seriesKey: row.seriesKey,
+      body: { sunatSeries: draft.sunatSeries, isActive: draft.isActive },
+    },
     { onSuccess: () => void refetch() },
   )
 }
@@ -166,7 +173,10 @@ function saveNumberingRow(row: ContabilidadDocumentSeriesDTO) {
   const draft = numberingDraft.value[row.seriesKey]
   if (!draft) return
   patchSeries(
-    { seriesKey: row.seriesKey, body: { lastNumber: draft.lastNumber, padLength: draft.padLength } },
+    {
+      seriesKey: row.seriesKey,
+      body: { lastNumber: draft.lastNumber, padLength: draft.padLength },
+    },
     { onSuccess: () => void refetch() },
   )
 }
@@ -175,8 +185,14 @@ function seriesLabel(seriesKey: string) {
   return CONTABILIDAD_DOCUMENT_SERIES_LABELS[seriesKey] ?? seriesKey
 }
 
-const taxRegimeOptions = CONTABILIDAD_TAX_REGIME_OPTIONS.map((o) => ({ value: o.value, label: o.label }))
-const fiscalMonthOptions = CONTABILIDAD_FISCAL_MONTH_OPTIONS.map((o) => ({ value: o.value, label: o.label }))
+const taxRegimeOptions = CONTABILIDAD_TAX_REGIME_OPTIONS.map((o) => ({
+  value: o.value,
+  label: o.label,
+}))
+const fiscalMonthOptions = CONTABILIDAD_FISCAL_MONTH_OPTIONS.map((o) => ({
+  value: o.value,
+  label: o.label,
+}))
 
 const fiscalYearStartMonthModel = computed({
   get: () => settingsDraft.value.fiscalYearStartMonth,

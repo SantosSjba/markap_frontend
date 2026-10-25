@@ -13,7 +13,6 @@ import type {
   VentasProvince,
   VentasUpdatePropertyPayload,
 } from '../property.types'
-
 export interface VentasPropertiesRepository {
   getPropertyTypes: () => Promise<VentasPropertyType[]>
   getCurrencies: () => Promise<VentasCurrency[]>

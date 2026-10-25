@@ -1,13 +1,18 @@
 <script setup lang="ts">
+import { projectBudgetRepositoryKey as repoKey } from '../../application/ports/project-budget.port'
+import { useService } from '@shared/presentation/di/services'
 import { ref, toRef } from 'vue'
-import { BaseButton, FileDropzone, FormSectionCard, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
   useDeleteBudgetAttachment,
   useProjectBudgetAttachments,
   useUploadBudgetAttachment,
-} from '../../application/useProjectBudget'
-import { projectBudgetApiRepository as repo } from '../../infrastructure/project-budget.api.repository'
+} from '../composables/useProjectBudget'
+const repo = useService(repoKey)
 
 const props = defineProps<{
   projectId: string

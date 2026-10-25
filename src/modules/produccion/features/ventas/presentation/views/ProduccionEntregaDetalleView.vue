@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { useProduccionDeliveryDetail, useDeliveryMutations } from '../../application/useProduccionSales'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import {
+  useProduccionDeliveryDetail,
+  useDeliveryMutations,
+} from '../composables/useProduccionSales'
 import { formatDate, DELIVERY_STATUS_LABELS, deliveryStatusClass } from '../labels'
-
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
@@ -28,14 +31,20 @@ async function doComplete() {
 }
 
 async function doCancel() {
-  const ok = await markapAlert.confirmDanger({ title: '¿Cancelar entrega?', confirmText: 'Cancelar' })
+  const ok = await markapAlert.confirmDanger({
+    title: '¿Cancelar entrega?',
+    confirmText: 'Cancelar',
+  })
   if (!ok) return
   await cancel.mutateAsync(id.value)
   void refetch()
 }
 
 async function doDelete() {
-  const ok = await markapAlert.confirmDanger({ title: '¿Eliminar entrega?', confirmText: 'Eliminar' })
+  const ok = await markapAlert.confirmDanger({
+    title: '¿Eliminar entrega?',
+    confirmText: 'Eliminar',
+  })
   if (!ok) return
   await remove.mutateAsync(id.value)
   void router.push({ name: 'produccion-ventas-entregas' })

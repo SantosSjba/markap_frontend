@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import * as yup from 'yup'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
-import FormInput from '@shared/components/forms/FormInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import { useRouter } from 'vue-router'
-import { markapAlert } from '@/shared/composables'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { useAuthStore } from '@modules/auth'
-
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { useAuthStore } from '../stores/auth.store'
 /**
  * LoginView
  * User login page
@@ -48,7 +47,6 @@ const onSubmit = handleSubmit(async (values) => {
     void markapAlert.error(result.error || 'Credenciales inválidas', 'Error')
   }
 })
-
 </script>
 
 <template>

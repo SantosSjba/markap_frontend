@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import { toCalendarDateString } from '@/shared/utils/formatters'
+import { ventasAgentsRepositoryKey } from '../../application/ports/ventas-agents.port'
+import { useService } from '@shared/presentation/di/services'
+import { toCalendarDateString } from '@shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RowSelectionState } from '@tanstack/vue-table'
-import {
-  BaseButton,
-  BasePagination,
-  Badge,
-  DataTable,
-  ActionsDropdown,
-  FormSelect,
-  SearchInput,
-  AppIcon,
-  ExcelIcon,
-  PageHeader,
-} from '@shared/components'
-import BaseModal from '@shared/components/ui/BaseModal.vue'
-import { useExcelExport } from '@shared/composables'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import {
   useVentasAgentsList,
   useVentasUpdateAgent,
   useVentasDeleteAgent,
-} from '../../application/useAgents'
+} from '../composables/useAgents'
 import type { VentasAgentListItem, ListVentasAgentsParams } from '../../domain/agent.types'
-import { ventasAgentsRepository } from '@modules/ventas/features/agentes'
+const ventasAgentsRepository = useService(ventasAgentsRepositoryKey)
 
 const router = useRouter()
 const ITEMS_PER_PAGE = 10
@@ -59,10 +59,7 @@ watch(
       page: 1,
       search: searchInput.value.trim() || undefined,
       type: filterType.value === 'ALL' ? undefined : filterType.value,
-      isActive:
-        filterStatus.value === 'ALL'
-          ? undefined
-          : filterStatus.value === 'active',
+      isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
     }
   },
   { immediate: true },
@@ -118,7 +115,9 @@ async function executeConfirm() {
   }
 }
 
-const getActions = (agent: VentasAgentListItem): { label: string; icon: string; onClick: () => void }[] => {
+const getActions = (
+  agent: VentasAgentListItem,
+): { label: string; icon: string; onClick: () => void }[] => {
   const actions: { label: string; icon: string; onClick: () => void }[] = [
     { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(agent) },
   ]
@@ -249,10 +248,7 @@ async function handleExport() {
       `Se exportaron ${result.data.length} registro(s) a Excel.`,
     )
   } catch (err) {
-    void markapAlert.toast.error(
-      'No se pudo exportar',
-      getApiErrorMessage(err),
-    )
+    void markapAlert.toast.error('No se pudo exportar', getApiErrorMessage(err))
   }
 }
 </script>

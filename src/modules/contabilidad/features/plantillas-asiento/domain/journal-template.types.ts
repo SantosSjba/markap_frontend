@@ -66,7 +66,9 @@ export function newJournalTemplateLineRow(): JournalTemplateLineFormRow {
   }
 }
 
-export function linesFromTemplate(template: ContabilidadJournalTemplateDTO): JournalTemplateLineFormRow[] {
+export function linesFromTemplate(
+  template: ContabilidadJournalTemplateDTO,
+): JournalTemplateLineFormRow[] {
   if (!template.lines.length) return [newJournalTemplateLineRow(), newJournalTemplateLineRow()]
   return template.lines.map((line) => ({
     key: line.id,

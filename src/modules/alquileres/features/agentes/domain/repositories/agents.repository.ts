@@ -5,7 +5,6 @@ import type {
   ListAgentsResult,
   UpdateAgentPayload,
 } from '../agent.types'
-
 export interface AgentsRepository {
   list(params: ListAgentsParams): Promise<ListAgentsResult>
   getById(id: string): Promise<AgentListItem>

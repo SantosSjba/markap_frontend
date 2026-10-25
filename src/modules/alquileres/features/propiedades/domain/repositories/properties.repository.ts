@@ -11,7 +11,6 @@ import type {
   Province,
   UpdatePropertyPayload,
 } from '../property.types'
-
 export interface PropertiesRepository {
   getPropertyTypes: () => Promise<PropertyType[]>
   getDepartments: () => Promise<Department[]>

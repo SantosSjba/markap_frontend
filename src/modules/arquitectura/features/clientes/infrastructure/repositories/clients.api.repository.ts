@@ -1,5 +1,5 @@
-﻿import { apiClient } from '@core/api/apiClient'
-import { ARQUITECTURA_APP_SLUG } from '@modules/arquitectura/config/app.constants'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { ARQUITECTURA_APP_SLUG } from '../../../../config/app.constants'
 import type {
   ClientDetail,
   ClientStats,
@@ -13,13 +13,11 @@ import type {
   UpdateArquitecturaClientPayload,
 } from '../../domain/client.types'
 import type { ArquitecturaClientsRepository } from '../../domain/repositories/clients.repository'
-
 const clientsApi: ArquitecturaClientsRepository = {
   getDocumentTypes: () =>
     apiClient.get<DocumentType[]>('/clients/document-types').then((r) => r.data),
 
-  getDepartments: () =>
-    apiClient.get<Department[]>('/clients/departments').then((r) => r.data),
+  getDepartments: () => apiClient.get<Department[]>('/clients/departments').then((r) => r.data),
 
   getProvinces: (departmentId?: string) => {
     const params = departmentId ? { departmentId } : {}

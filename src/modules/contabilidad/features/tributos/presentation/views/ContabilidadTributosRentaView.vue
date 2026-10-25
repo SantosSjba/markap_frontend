@@ -1,26 +1,25 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { formatPen, parsePenInput } from '../../../asientos/domain/journal.utils'
+import { formatDate as formatCalendarDate } from '@shared/utils/formatters'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
-  AppIcon,
-  BaseButton,
-  BaseTabs,
-  FormInput,
-  FormTextarea,
-  PageHeader,
-  StatsCard,
-} from '@shared/components'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { formatPen, parsePenInput } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import { formatDate as formatCalendarDate } from '@/shared/utils/formatters'
-import { useExcelExport } from '@/shared/composables/useExcelExport'
-import { markapAlert } from '@/shared/composables'
-import {
-  fetchContabilidadIncomeTaxExport,
+  useContabilidadIncomeTaxExport,
   useContabilidadIncomeTaxDetail,
   useContabilidadUpsertIncomeTaxPeriod,
-} from '../../application/useContabilidadIncomeTax'
+} from '../composables/useContabilidadIncomeTax'
 import ContabilidadIncomeTaxTrendChart from '../components/ContabilidadIncomeTaxTrendChart.vue'
+const fetchContabilidadIncomeTaxExport = useContabilidadIncomeTaxExport()
 
 const router = useRouter()
 const { activePeriod } = useContabilidadActivePeriod()
@@ -75,9 +74,12 @@ watch(
     if (!adj) return
     adjustmentsDraft.value = {
       deductibleAdjustments: adj.deductibleAdjustments === '0.00' ? '' : adj.deductibleAdjustments,
-      nonDeductibleAdjustments: adj.nonDeductibleAdjustments === '0.00' ? '' : adj.nonDeductibleAdjustments,
-      otherIncomeAdjustments: adj.otherIncomeAdjustments === '0.00' ? '' : adj.otherIncomeAdjustments,
-      otherExpenseAdjustments: adj.otherExpenseAdjustments === '0.00' ? '' : adj.otherExpenseAdjustments,
+      nonDeductibleAdjustments:
+        adj.nonDeductibleAdjustments === '0.00' ? '' : adj.nonDeductibleAdjustments,
+      otherIncomeAdjustments:
+        adj.otherIncomeAdjustments === '0.00' ? '' : adj.otherIncomeAdjustments,
+      otherExpenseAdjustments:
+        adj.otherExpenseAdjustments === '0.00' ? '' : adj.otherExpenseAdjustments,
       advancePaymentAmount: adj.advancePaymentAmount === '0.00' ? '' : adj.advancePaymentAmount,
       notes: adj.notes ?? '',
     }

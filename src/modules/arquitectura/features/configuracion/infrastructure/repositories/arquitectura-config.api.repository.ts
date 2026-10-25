@@ -1,11 +1,10 @@
-﻿import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   ARQUITECTURA_CONFIG_APP_SLUG,
   type ArquitecturaConfigBootstrap,
   type ArquitecturaProjectStageDTO,
 } from '../../domain/config.types'
 import type { ArquitecturaConfigRepository } from '../../domain/repositories/arquitectura-config.repository'
-
 const scope = { applicationSlug: ARQUITECTURA_CONFIG_APP_SLUG } as const
 
 function qs(params: Record<string, string | undefined>) {
@@ -24,16 +23,18 @@ export const arquitecturaConfigApiRepository: ArquitecturaConfigRepository = {
 
   replaceProjectStages: (stages: ArquitecturaProjectStageDTO[]) =>
     apiClient
-      .put<ArquitecturaProjectStageDTO[]>(`/arquitectura-config/project-stages?${qs({ ...scope })}`, {
-        stages,
-      })
+      .put<ArquitecturaProjectStageDTO[]>(
+        `/arquitectura-config/project-stages?${qs({ ...scope })}`,
+        {
+          stages,
+        },
+      )
       .then((r) => r.data),
 
   patchArquitecturaProjectNumbering: (body: { prefix?: string; lastNumber?: number }) =>
     apiClient
-      .patch<ArquitecturaConfigBootstrap['numbering']>(
-        `/arquitectura-config/numbering/arquitectura-project?${qs({ ...scope })}`,
-        body,
-      )
+      .patch<
+        ArquitecturaConfigBootstrap['numbering']
+      >(`/arquitectura-config/numbering/arquitectura-project?${qs({ ...scope })}`, body)
       .then((r) => r.data),
 }

@@ -4,7 +4,6 @@ import type {
   FinancialAnalysisDTO,
   TrialBalanceDTO,
 } from '../reports.types'
-
 export interface ContabilidadReportsRepository {
   getDashboard(periodId: string): Promise<ContabilidadDashboardDTO>
   getTrialBalance(periodId: string, costCenterId?: string): Promise<TrialBalanceDTO>

@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_REPORTS_APP_SLUG } from '../../domain/reports.types'
 import type { ContabilidadReportsRepository } from '../../domain/repositories/contabilidad-reports.repository'
-
 function qs(periodId: string, extra?: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   u.set('applicationSlug', CONTABILIDAD_REPORTS_APP_SLUG)

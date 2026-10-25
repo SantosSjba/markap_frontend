@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AppIcon, BaseButton, PageHeader } from '@shared/components'
-import { useExcelExport } from '@shared/composables/useExcelExport'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { useContabilidadFinancialAnalysis } from '../../application/useContabilidadReports'
-
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { useContabilidadFinancialAnalysis } from '../composables/useContabilidadReports'
 const { activePeriod } = useContabilidadActivePeriod()
 const periodId = computed(() => activePeriod.value?.id)
 

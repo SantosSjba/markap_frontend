@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { MainLayout } from '@layouts'
-
+import MainLayout from '@app/layouts/MainLayout.vue'
 export const dashboardRoutes: RouteRecordRaw[] = [
   {
     path: '/dashboard',

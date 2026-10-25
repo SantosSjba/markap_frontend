@@ -10,7 +10,6 @@ import type {
   VentasDocumentType,
   VentasProvince,
 } from '../client.types'
-
 export interface VentasClientsRepository {
   getDocumentTypes: () => Promise<VentasDocumentType[]>
   getDepartments: () => Promise<VentasDepartment[]>

@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_SALES_APP_SLUG } from '../../domain/sales.types'
 import type { ContabilidadSalesRepository } from '../../domain/repositories/contabilidad-sales.repository'
-
 function qs(extra?: Record<string, string | undefined>) {
   const u = new URLSearchParams()
   u.set('applicationSlug', CONTABILIDAD_SALES_APP_SLUG)
@@ -15,7 +14,9 @@ function qs(extra?: Record<string, string | undefined>) {
 
 export const contabilidadSalesApiRepository: ContabilidadSalesRepository = {
   listCustomers: (params) =>
-    apiClient.get(`/contabilidad-sales/customers?${qs(params as Record<string, string | undefined>)}`).then((r) => r.data),
+    apiClient
+      .get(`/contabilidad-sales/customers?${qs(params as Record<string, string | undefined>)}`)
+      .then((r) => r.data),
 
   createCustomer: (body) =>
     apiClient.post(`/contabilidad-sales/customers?${qs()}`, body).then((r) => r.data),
@@ -24,7 +25,9 @@ export const contabilidadSalesApiRepository: ContabilidadSalesRepository = {
     apiClient.patch(`/contabilidad-sales/customers/${id}?${qs()}`, body).then((r) => r.data),
 
   listInvoices: (params) =>
-    apiClient.get(`/contabilidad-sales/invoices?${qs(params as Record<string, string | undefined>)}`).then((r) => r.data),
+    apiClient
+      .get(`/contabilidad-sales/invoices?${qs(params as Record<string, string | undefined>)}`)
+      .then((r) => r.data),
 
   createInvoice: (body) =>
     apiClient.post(`/contabilidad-sales/invoices?${qs()}`, body).then((r) => r.data),
@@ -33,7 +36,9 @@ export const contabilidadSalesApiRepository: ContabilidadSalesRepository = {
     apiClient.post(`/contabilidad-sales/invoices/${id}/cancel?${qs()}`).then((r) => r.data),
 
   listCreditNotes: (params) =>
-    apiClient.get(`/contabilidad-sales/credit-notes?${qs(params as Record<string, string | undefined>)}`).then((r) => r.data),
+    apiClient
+      .get(`/contabilidad-sales/credit-notes?${qs(params as Record<string, string | undefined>)}`)
+      .then((r) => r.data),
 
   createCreditNote: (body) =>
     apiClient.post(`/contabilidad-sales/credit-notes?${qs()}`, body).then((r) => r.data),
@@ -47,7 +52,9 @@ export const contabilidadSalesApiRepository: ContabilidadSalesRepository = {
     apiClient.post(`/contabilidad-sales/debit-notes?${qs()}`, body).then((r) => r.data),
 
   listCollections: (params) =>
-    apiClient.get(`/contabilidad-sales/collections?${qs(params as Record<string, string | undefined>)}`).then((r) => r.data),
+    apiClient
+      .get(`/contabilidad-sales/collections?${qs(params as Record<string, string | undefined>)}`)
+      .then((r) => r.data),
 
   createCollection: (body) =>
     apiClient.post(`/contabilidad-sales/collections?${qs()}`, body).then((r) => r.data),

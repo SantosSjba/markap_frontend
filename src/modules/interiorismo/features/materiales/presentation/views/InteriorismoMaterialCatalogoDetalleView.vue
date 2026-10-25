@@ -1,19 +1,23 @@
 <script setup lang="ts">
+import { useService } from '@shared/presentation/di/services'
+import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
 import { ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, FormInput, FileDropzone, AppIcon } from '@shared/components'
-import { markapAlert } from '@/shared/composables'
-import { INTERIORISMO_BASE_PATH } from '@modules/interiorismo/config/routes.constants'
-import { INTERIORISMO_APP_SLUG } from '@modules/interiorismo/config/app.constants'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
 import {
   useInteriorCatalogMaterialDetail,
   useUpdateInteriorCatalogMaterial,
   useDeleteInteriorCatalogMaterial,
   useUploadInteriorCatalogAsset,
-} from '../../application/useInteriorCatalogMaterials'
+} from '../composables/useInteriorCatalogMaterials'
 import { formatSol, formatQty } from '../labels'
-import { apiClient } from '@core/api/apiClient'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+const fileAccess = useService(FILE_ACCESS)
 
 const route = useRoute()
 const router = useRouter()
@@ -48,9 +52,7 @@ watch(
     price.value = d.price
     stock.value = d.stock
     technicalSheetUrl.value = d.technicalSheetUrl ?? ''
-    imageUrls.value = [...d.images]
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((i) => i.url)
+    imageUrls.value = [...d.images].sort((a, b) => a.sortOrder - b.sortOrder).map((i) => i.url)
   },
   { immediate: true },
 )
@@ -61,9 +63,7 @@ async function openPath(path: string) {
       window.open(path, '_blank', 'noopener,noreferrer')
       return
     }
-    const { data } = await apiClient.get<{ url: string }>('/gen-archivos/resolve-url', {
-      params: { objectKey: path, applicationSlug: INTERIORISMO_APP_SLUG },
-    })
+    const data = await fileAccess.resolveDownloadUrl(path, { applicationSlug: 'interiorismo' })
     if (data?.url) {
       window.open(data.url, '_blank', 'noopener,noreferrer')
       return
@@ -152,7 +152,7 @@ const sortedImages = computed(() =>
           Catálogo
         </p>
         <h1 class="text-xl font-bold mt-0.5" :style="{ color: 'var(--color-text-primary)' }">
-          {{ detail?.code ?? '' }} · {{ detail?.name ?? 'Cargando' }}
+          {{ detail?.code ?? '…' }} · {{ detail?.name ?? 'Cargando…' }}
         </h1>
         <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
           Precio ref. {{ formatSol(detail?.price) }} · Stock {{ formatQty(detail?.stock) }}
@@ -172,7 +172,7 @@ const sortedImages = computed(() =>
       </div>
     </div>
 
-    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando</div>
+    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando…</div>
 
     <template v-else-if="detail">
       <div

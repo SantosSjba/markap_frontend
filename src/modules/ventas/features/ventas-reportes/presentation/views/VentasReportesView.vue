@@ -1,30 +1,27 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import * as yup from 'yup'
-import {
-  StatsCard,
-  BaseTabs,
-  BaseButton,
-  AppIcon,
-  ExcelIcon,
-  DataTable,
-  FormInput,
-  FormSelect,
-  PageHeader,
-} from '@shared/components'
-import { useForm, toTypedSchema } from '@shared/components/forms'
-import { useExcelExport } from '@shared/composables'
-import { markapAlert } from '@/shared/composables'
-import { getApiErrorMessage } from '@/shared/utils/apiErrorMessage'
-import { toCalendarDateString } from '@/shared/utils/formatters'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { toCalendarDateString } from '@shared/utils/formatters'
 import {
   useVentasSalesByPeriodReport,
   useVentasAgentPerformanceReport,
   useVentasConversionReport,
   useVentasFinancialFlowReport,
-} from '../../application/useVentasReportes'
+} from '../composables/useVentasReportes'
 import type { VentasSalesByPeriodRow, VentasAgentPerformanceRow } from '../../domain/reportes.types'
-
 const PIPELINE_LABEL: Record<string, string> = {
   SEPARATION: 'Separación',
   ARRAS: 'Contrato de arras',
@@ -111,15 +108,39 @@ const conversion = computed(() => conversionQuery.data.value)
 const financial = computed(() => financialQuery.data.value)
 
 const salesColumns = [
-  { key: 'p', label: 'Periodo', sortAccessor: (r: unknown) => (r as VentasSalesByPeriodRow).period },
-  { key: 'n', label: 'Cierres', sortAccessor: (r: unknown) => (r as VentasSalesByPeriodRow).closingsCount },
-  { key: 't', label: 'Monto total (S/)', sortAccessor: (r: unknown) => (r as VentasSalesByPeriodRow).totalAmount },
+  {
+    key: 'p',
+    label: 'Periodo',
+    sortAccessor: (r: unknown) => (r as VentasSalesByPeriodRow).period,
+  },
+  {
+    key: 'n',
+    label: 'Cierres',
+    sortAccessor: (r: unknown) => (r as VentasSalesByPeriodRow).closingsCount,
+  },
+  {
+    key: 't',
+    label: 'Monto total (S/)',
+    sortAccessor: (r: unknown) => (r as VentasSalesByPeriodRow).totalAmount,
+  },
 ]
 
 const agentColumns = [
-  { key: 'a', label: 'Asesor', sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).agentName },
-  { key: 'c', label: 'Cierres', sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).closingsCount },
-  { key: 's', label: 'Volumen (S/)', sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).totalSales },
+  {
+    key: 'a',
+    label: 'Asesor',
+    sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).agentName,
+  },
+  {
+    key: 'c',
+    label: 'Cierres',
+    sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).closingsCount,
+  },
+  {
+    key: 's',
+    label: 'Volumen (S/)',
+    sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).totalSales,
+  },
   {
     key: 'm',
     label: 'Comisiones (S/)',
@@ -158,20 +179,23 @@ async function exportSalesExcel() {
     void markapAlert.toast.warning('No hay filas para exportar')
     return
   }
-  await exportToExcel({
-    fileName: `ventas_por_periodo_${rangeLabel.value}.xlsx`,
-    sheetName: 'Ventas',
-    columns: [
-      { header: 'Periodo', key: 'period' },
-      { header: 'Cierres', key: 'closingsCount' },
-      { header: 'Monto total', key: 'totalAmount' },
-    ],
-    rows: data.map((r) => ({
-      period: r.period,
-      closingsCount: r.closingsCount,
-      totalAmount: r.totalAmount,
-    })),
-  }, EXPORT_KEYS.sales)
+  await exportToExcel(
+    {
+      fileName: `ventas_por_periodo_${rangeLabel.value}.xlsx`,
+      sheetName: 'Ventas',
+      columns: [
+        { header: 'Periodo', key: 'period' },
+        { header: 'Cierres', key: 'closingsCount' },
+        { header: 'Monto total', key: 'totalAmount' },
+      ],
+      rows: data.map((r) => ({
+        period: r.period,
+        closingsCount: r.closingsCount,
+        totalAmount: r.totalAmount,
+      })),
+    },
+    EXPORT_KEYS.sales,
+  )
   void markapAlert.toast.success('Excel generado')
 }
 
@@ -181,22 +205,25 @@ async function exportAgentsExcel() {
     void markapAlert.toast.warning('No hay filas para exportar')
     return
   }
-  await exportToExcel({
-    fileName: `rendimiento_asesores_${rangeLabel.value}.xlsx`,
-    sheetName: 'Asesores',
-    columns: [
-      { header: 'Asesor', key: 'agentName' },
-      { header: 'Cierres', key: 'closingsCount' },
-      { header: 'Volumen', key: 'totalSales' },
-      { header: 'Comisiones', key: 'totalCommissionAmount' },
-    ],
-    rows: data.map((r) => ({
-      agentName: r.agentName,
-      closingsCount: r.closingsCount,
-      totalSales: r.totalSales,
-      totalCommissionAmount: r.totalCommissionAmount,
-    })),
-  }, EXPORT_KEYS.agents)
+  await exportToExcel(
+    {
+      fileName: `rendimiento_asesores_${rangeLabel.value}.xlsx`,
+      sheetName: 'Asesores',
+      columns: [
+        { header: 'Asesor', key: 'agentName' },
+        { header: 'Cierres', key: 'closingsCount' },
+        { header: 'Volumen', key: 'totalSales' },
+        { header: 'Comisiones', key: 'totalCommissionAmount' },
+      ],
+      rows: data.map((r) => ({
+        agentName: r.agentName,
+        closingsCount: r.closingsCount,
+        totalSales: r.totalSales,
+        totalCommissionAmount: r.totalCommissionAmount,
+      })),
+    },
+    EXPORT_KEYS.agents,
+  )
   void markapAlert.toast.success('Excel generado')
 }
 
@@ -219,26 +246,32 @@ async function exportConversionExcel() {
     { tipo: 'Resumen', clave: 'Cierres', valor: c.closingsCount },
     { tipo: 'Resumen', clave: 'Tasa conversión %', valor: c.conversionRatePercent },
   ]
-  await exportToExcel({
-    fileName: `conversion_leads_${rangeLabel.value}.xlsx`,
-    sheetName: 'Resumen',
-    columns: [
-      { header: 'Tipo', key: 'tipo' },
-      { header: 'Indicador', key: 'clave' },
-      { header: 'Valor', key: 'valor' },
-    ],
-    rows: [...summaryRows, ...funnelRows] as Record<string, string | number>[],
-    additionalSheets: [
-      {
-        sheetName: 'Embudo detalle',
-        columns: [
-          { header: 'Etapa', key: 'label' },
-          { header: 'Procesos activos', key: 'count' },
-        ],
-        rows: pipelineTableRows.value as unknown as Record<string, string | number | null | undefined>[],
-      },
-    ],
-  }, EXPORT_KEYS.conversion)
+  await exportToExcel(
+    {
+      fileName: `conversion_leads_${rangeLabel.value}.xlsx`,
+      sheetName: 'Resumen',
+      columns: [
+        { header: 'Tipo', key: 'tipo' },
+        { header: 'Indicador', key: 'clave' },
+        { header: 'Valor', key: 'valor' },
+      ],
+      rows: [...summaryRows, ...funnelRows] as Record<string, string | number>[],
+      additionalSheets: [
+        {
+          sheetName: 'Embudo detalle',
+          columns: [
+            { header: 'Etapa', key: 'label' },
+            { header: 'Procesos activos', key: 'count' },
+          ],
+          rows: pipelineTableRows.value as unknown as Record<
+            string,
+            string | number | null | undefined
+          >[],
+        },
+      ],
+    },
+    EXPORT_KEYS.conversion,
+  )
   void markapAlert.toast.success('Excel generado')
 }
 
@@ -248,22 +281,37 @@ async function exportFinancialExcel() {
     void markapAlert.toast.warning('Sin datos financieros')
     return
   }
-  await exportToExcel({
-    fileName: `flujo_financiero_${rangeLabel.value}.xlsx`,
-    sheetName: 'Flujo',
-    columns: [
-      { header: 'Concepto', key: 'concepto' },
-      { header: 'Monto (S/)', key: 'monto' },
-    ],
-    rows: [
-      { concepto: 'Cobranza comprador (pagos marcados pagados en periodo)', monto: f.buyerPaymentsCollected },
-      { concepto: 'Pendiente de cobro (cuotas/inicial aún PENDING)', monto: f.buyerPaymentsPending },
-      { concepto: 'Costos documentación (gastos en periodo)', monto: f.documentationCostsTotal },
-      { concepto: 'Comisiones pagadas (cierres en periodo)', monto: f.commissionsPaidAmount },
-      { concepto: 'Comisiones pendientes (cierres en periodo)', monto: f.commissionsPendingAmount },
-      { concepto: 'Neto estimado (cobranza − docs − com. pagadas)', monto: f.estimatedNetAfterCosts },
-    ],
-  }, EXPORT_KEYS.financial)
+  await exportToExcel(
+    {
+      fileName: `flujo_financiero_${rangeLabel.value}.xlsx`,
+      sheetName: 'Flujo',
+      columns: [
+        { header: 'Concepto', key: 'concepto' },
+        { header: 'Monto (S/)', key: 'monto' },
+      ],
+      rows: [
+        {
+          concepto: 'Cobranza comprador (pagos marcados pagados en periodo)',
+          monto: f.buyerPaymentsCollected,
+        },
+        {
+          concepto: 'Pendiente de cobro (cuotas/inicial aún PENDING)',
+          monto: f.buyerPaymentsPending,
+        },
+        { concepto: 'Costos documentación (gastos en periodo)', monto: f.documentationCostsTotal },
+        { concepto: 'Comisiones pagadas (cierres en periodo)', monto: f.commissionsPaidAmount },
+        {
+          concepto: 'Comisiones pendientes (cierres en periodo)',
+          monto: f.commissionsPendingAmount,
+        },
+        {
+          concepto: 'Neto estimado (cobranza − docs − com. pagadas)',
+          monto: f.estimatedNetAfterCosts,
+        },
+      ],
+    },
+    EXPORT_KEYS.financial,
+  )
   void markapAlert.toast.success('Excel generado')
 }
 

@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { AppIcon, BaseButton, FormSelect, PageHeader } from '@shared/components'
-import { useContabilidadActivePeriod } from '@modules/contabilidad/presentation/composables/useContabilidadActivePeriod'
-import { useContabilidadCostCentersList } from '@modules/contabilidad/features/centros-costo/application/useContabilidadCostCenters'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
+import { useContabilidadCostCentersList } from '../../../centros-costo/presentation/composables/useContabilidadCostCenters'
+import { formatPen } from '../../../asientos/domain/journal.utils'
 import {
   useContabilidadReportsDashboard,
   useContabilidadTrialBalance,
-} from '../../application/useContabilidadReports'
-import { useContabilidadFinancialExport } from '../../application/useContabilidadFinancialExport'
+} from '../composables/useContabilidadReports'
+import { useContabilidadFinancialExport } from '../composables/useContabilidadFinancialExport'
 import type { ContabilidadDashboardKpiDTO } from '../../domain/reports.types'
-
 const { activePeriod } = useContabilidadActivePeriod()
 const periodId = computed(() => activePeriod.value?.id)
 const costCenterId = ref('')
@@ -23,7 +25,10 @@ const costCenterOptions = computed(() => [
 
 const { data: dashboard, isLoading: loadingDash } = useContabilidadReportsDashboard(periodId)
 const costCenterParam = computed(() => costCenterId.value || undefined)
-const { data: trial, isLoading: loadingTrial } = useContabilidadTrialBalance(periodId, costCenterParam)
+const { data: trial, isLoading: loadingTrial } = useContabilidadTrialBalance(
+  periodId,
+  costCenterParam,
+)
 const { exportFinancialStatement, isExporting } = useContabilidadFinancialExport()
 
 function exportTrialExcel() {

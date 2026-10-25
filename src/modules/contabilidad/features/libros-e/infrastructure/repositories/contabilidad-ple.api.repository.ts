@@ -1,7 +1,6 @@
-import { apiClient } from '@core/api/apiClient'
+import { apiClient } from '@shared/infrastructure/http/api-client'
 import { CONTABILIDAD_PLE_APP_SLUG } from '../../domain/ple.types'
 import type { ContabilidadPleRepository } from '../../domain/repositories/contabilidad-ple.repository'
-
 function qs(extra?: Record<string, string | number | undefined>) {
   const u = new URLSearchParams()
   u.set('applicationSlug', CONTABILIDAD_PLE_APP_SLUG)
@@ -20,9 +19,7 @@ export const contabilidadPleApiRepository: ContabilidadPleRepository = {
     apiClient.get(`/contabilidad-ple/mandatory-profile?${qs()}`).then((r) => r.data),
 
   listExportLogs: (periodId, limit) =>
-    apiClient
-      .get(`/contabilidad-ple/export-logs?${qs({ periodId, limit })}`)
-      .then((r) => r.data),
+    apiClient.get(`/contabilidad-ple/export-logs?${qs({ periodId, limit })}`).then((r) => r.data),
 
   generateBooks: (periodId, bookCodes) =>
     apiClient

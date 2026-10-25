@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@modules/auth'
-import AppIcon from '@shared/components/ui/AppIcon.vue'
+import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { useContabilidadActivePeriod } from '../composables/useContabilidadActivePeriod'
-import { useContabilidadReportsDashboard } from '@modules/contabilidad/features/reportes-financieros/application/useContabilidadReports'
-import { formatPen } from '@modules/contabilidad/features/asientos/domain/journal.utils'
-import type { ContabilidadDashboardKpiDTO } from '@modules/contabilidad/features/reportes-financieros/domain/reports.types'
-import { formatDate } from '@/shared/utils/formatters'
-
+import { useContabilidadReportsDashboard } from '../../features/reportes-financieros/presentation/composables/useContabilidadReports'
+import { formatPen } from '../../features/asientos/domain/journal.utils'
+import type { ContabilidadDashboardKpiDTO } from '../../features/reportes-financieros/domain/reports.types'
+import { formatDate } from '@shared/utils/formatters'
 const router = useRouter()
 const authStore = useAuthStore()
 const { activePeriod } = useContabilidadActivePeriod()
@@ -35,7 +34,9 @@ const kpiIcons: Record<string, string> = {
 const displayKpis = computed(() => {
   const all = dashboard.value?.kpis ?? []
   const keys = ['posted_entries', 'net_income', 'cxc', 'igv_balance']
-  return keys.map((key) => all.find((k) => k.key === key)).filter(Boolean) as ContabilidadDashboardKpiDTO[]
+  return keys
+    .map((key) => all.find((k) => k.key === key))
+    .filter(Boolean) as ContabilidadDashboardKpiDTO[]
 })
 
 function formatKpi(kpi: ContabilidadDashboardKpiDTO) {
@@ -53,10 +54,30 @@ function formatActivityTime(iso: string) {
 }
 
 const acciones = [
-  { label: 'Nuevo asiento', sub: 'Contabilidad', to: '/contabilidad/asientos/libro-diario', icon: 'lucide:plus-circle' as const },
-  { label: 'Facturas de compra', sub: 'Compras', to: '/contabilidad/compras/facturas', icon: 'lucide:shopping-cart' as const },
-  { label: 'Balance general', sub: 'Reportes', to: '/contabilidad/reportes/balance-general', icon: 'lucide:pie-chart' as const },
-  { label: 'Tesorería', sub: 'Caja y bancos', to: '/contabilidad/tesoreria/caja', icon: 'lucide:landmark' as const },
+  {
+    label: 'Nuevo asiento',
+    sub: 'Contabilidad',
+    to: '/contabilidad/asientos/libro-diario',
+    icon: 'lucide:plus-circle' as const,
+  },
+  {
+    label: 'Facturas de compra',
+    sub: 'Compras',
+    to: '/contabilidad/compras/facturas',
+    icon: 'lucide:shopping-cart' as const,
+  },
+  {
+    label: 'Balance general',
+    sub: 'Reportes',
+    to: '/contabilidad/reportes/balance-general',
+    icon: 'lucide:pie-chart' as const,
+  },
+  {
+    label: 'Tesorería',
+    sub: 'Caja y bancos',
+    to: '/contabilidad/tesoreria/caja',
+    icon: 'lucide:landmark' as const,
+  },
 ]
 
 const toneBorder = (tone: string) => {

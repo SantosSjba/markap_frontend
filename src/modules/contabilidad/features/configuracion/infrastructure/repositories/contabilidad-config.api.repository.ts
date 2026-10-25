@@ -1,5 +1,5 @@
-import { apiClient } from '@core/api/apiClient'
-import { getContabilidadApiScope } from '@modules/contabilidad/config/api-scope'
+import { apiClient } from '@shared/infrastructure/http/api-client'
+import { getContabilidadApiScope } from '../../../../config/api-scope'
 import { CONTABILIDAD_CONFIG_APP_SLUG } from '../../domain/config.types'
 import type {
   ContabilidadAppSettingsDTO,
@@ -8,7 +8,6 @@ import type {
   ContabilidadDocumentSeriesDTO,
 } from '../../domain/config.types'
 import type { ContabilidadConfigRepository } from '../../domain/repositories/contabilidad-config.repository'
-
 const scope = { applicationSlug: CONTABILIDAD_CONFIG_APP_SLUG } as const
 
 function qs(params: Record<string, string | undefined>) {
