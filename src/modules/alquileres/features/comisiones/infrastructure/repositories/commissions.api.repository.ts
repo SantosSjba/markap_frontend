@@ -11,6 +11,8 @@ export const commissionsApiRepository: CommissionsRepository = {
     p.set('applicationSlug', params.applicationSlug ?? 'alquileres')
     if (params.status) p.set('status', params.status)
     if (params.search) p.set('search', params.search)
+    p.set('page', String(params.page ?? 1))
+    p.set('limit', String(params.limit ?? 10))
     return apiClient
       .get<RentalCommissionsList>(`/rental-commissions?${p.toString()}`)
       .then((r) => r.data)

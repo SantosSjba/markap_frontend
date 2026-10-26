@@ -28,14 +28,21 @@ export interface RentalCommissionCurrencyTotals {
 }
 
 export interface RentalCommissionsList {
+  /** Página pedida */
   items: RentalCommissionItem[]
+  /** Totales de todas las comisiones del filtro (no solo la página) */
   totalsByCurrency: RentalCommissionCurrencyTotals[]
+  total: number
+  page: number
+  limit: number
 }
 
 export interface ListCommissionsParams {
   applicationSlug?: string
   status?: CommissionStatus
   search?: string
+  page?: number
+  limit?: number
 }
 
 /** PATCH /rental-commissions/:rentalId — fechas AAAA-MM-DD; null borra la fecha. */

@@ -205,6 +205,15 @@ const statusOptions = [
 
 const selectedProperty = computed(() => properties.value.find((x) => x.id === values.propertyId))
 
+/** Moneda de alquiler de la propiedad: el contrato se pacta en esa misma moneda */
+const propertyCurrency = computed(() =>
+  isEditing.value ? props.initial?.property?.rentCurrency : selectedProperty.value?.rentCurrency,
+)
+/** Contratos antiguos en otra moneda pueden corregirse; si ya coincide, queda fija */
+const currencyLocked = computed(
+  () => !!propertyCurrency.value && values.currency === propertyCurrency.value,
+)
+
 // Alta: al elegir la propiedad se heredan su monto y su moneda (el usuario puede cambiarlos)
 watch(
   () => values.propertyId,
@@ -405,6 +414,7 @@ const onSubmit = handleSubmit(
             v-bind="currencyBinds"
             label="Moneda"
             :options="currencyOptions"
+            :disabled="currencyLocked"
             :error="errors.currency"
             required
           />
@@ -429,10 +439,10 @@ const onSubmit = handleSubmit(
           />
         </div>
         <p
-          v-if="!isEditing && selectedProperty && selectedProperty.rentCurrency && selectedProperty.rentCurrency !== values.currency"
-          class="mt-2 text-theme-xs text-warning-600 dark:text-orange-400"
+          v-if="propertyCurrency && propertyCurrency !== values.currency"
+          class="mt-2 text-theme-xs text-error-500 dark:text-error-400"
         >
-          La propiedad tiene su alquiler en {{ currencySymbol(selectedProperty.rentCurrency) }}.
+          La propiedad tiene su alquiler en {{ currencySymbol(propertyCurrency) }}: el contrato debe estar en la misma moneda.
         </p>
       </FormSectionCard>
 

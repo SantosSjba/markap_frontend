@@ -8,7 +8,7 @@ import Badge from '@shared/presentation/components/ui/Badge.vue'
 import Avatar from '@shared/presentation/components/ui/Avatar.vue'
 import { paymentsRepositoryKey } from '../../application/ports/payments.port'
 import { useService } from '@shared/presentation/di/services'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
@@ -23,8 +23,8 @@ import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRe
 import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import { usePaymentHistory } from '../composables/usePayments'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
-import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
-import type { PaymentHistoryItem } from '../../domain/payment.types'
+import { formatCurrency as formatMoneyAmount, formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
+import type { PaymentCurrencyAmount, PaymentHistoryItem } from '../../domain/payment.types'
 const paymentsRepository = useService(paymentsRepositoryKey)
 
 const router = useRouter()
@@ -35,7 +35,7 @@ const filterYear = ref<string>('')
 const filterMonth = ref<string>('')
 const filterMethod = ref<string>('')
 const currentPage = ref(1)
-const pageSize = 20
+const pageSize = ref(20)
 
 const params = computed(() => ({
   search: debouncedSearch.value.trim() || undefined,
@@ -43,8 +43,13 @@ const params = computed(() => ({
   periodMonth: filterMonth.value ? parseInt(filterMonth.value) : undefined,
   paymentMethod: filterMethod.value || undefined,
   page: currentPage.value,
-  limit: pageSize,
+  limit: pageSize.value,
 }))
+
+// Un filtro nuevo vuelve a la primera página
+watch([debouncedSearch, filterYear, filterMonth, filterMethod], () => {
+  currentPage.value = 1
+})
 
 const {
   data: historyData,
@@ -54,7 +59,28 @@ const {
   refetch: refetchHistory,
 } = usePaymentHistory(params)
 
-const totalPages = computed(() => Math.ceil((historyData.value?.total ?? 0) / pageSize))
+const totalItems = computed(() => historyData.value?.total ?? 0)
+const paginationProps = computed(() => {
+  const totalPages = Math.max(1, Math.ceil(totalItems.value / pageSize.value))
+  return {
+    currentPage: currentPage.value,
+    totalPages,
+    totalItems: totalItems.value,
+    pageSize: pageSize.value,
+    hasPrevPage: currentPage.value > 1,
+    hasNextPage: currentPage.value < totalPages,
+  }
+})
+function onPageSizeChange(size: number) {
+  pageSize.value = size
+  currentPage.value = 1
+}
+
+const totalsByCurrency = computed(() => historyData.value?.totalsByCurrency ?? [])
+/** Promedio por pago en cada moneda */
+const averageByCurrency = computed<PaymentCurrencyAmount[]>(() =>
+  totalsByCurrency.value.map((t) => ({ ...t, amount: t.count ? t.amount / t.count : 0 })),
+)
 
 const currentYear = new Date().getFullYear()
 const yearOptions = Array.from({ length: 4 }, (_, i) => ({
@@ -98,7 +124,12 @@ const methodLabels: Record<string, string> = {
 }
 
 function formatCurrency(amount: number, currency = 'PEN') {
-  return `${currency === 'PEN' ? 'S/' : '$'} ${amount.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
+  return formatMoneyAmount(amount, currency)
+}
+
+/** Soles y dólares por separado («S/ 1,200.00 · $ 300.00») */
+function formatAmounts(rows: PaymentCurrencyAmount[]) {
+  return rows.length ? rows.map((r) => formatCurrency(r.amount, r.currency)).join(' · ') : formatCurrency(0)
 }
 
 function formatDate(dateStr: string) {
@@ -133,7 +164,7 @@ async function handleExport() {
     applicationSlug: 'alquileres',
     page: 1,
     limit: 10000,
-    search: search.value || undefined,
+    search: debouncedSearch.value.trim() || undefined,
     periodYear: filterYear.value ? parseInt(filterYear.value) : undefined,
     periodMonth: filterMonth.value ? parseInt(filterMonth.value) : undefined,
     paymentMethod: filterMethod.value || undefined,
@@ -196,31 +227,22 @@ async function handleExport() {
     </PageHeader>
 
     <!-- KPIs -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <StatsCard :value="isFetching ? '...' : formatCurrency(historyData?.totalAmount ?? 0)" title="Total filtrado">
-        <template #icon>
-          <AppIcon icon="lucide:circle-dollar-sign" :size="20" color="#10b981" />
-        </template>
+    <div v-if="!historyIsError" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <StatsCard compact title="Total cobrado" :value="formatAmounts(totalsByCurrency)" :loading="isFetching && !historyData">
+        <template #icon><AppIcon icon="lucide:circle-dollar-sign" :size="20" /></template>
       </StatsCard>
-      <StatsCard :value="isFetching ? '...' : String(historyData?.total ?? 0)" title="Pagos registrados">
-        <template #icon>
-          <AppIcon icon="lucide:circle-check" :size="20" color="#6366f1" />
-        </template>
+      <StatsCard compact title="Pagos registrados" :value="String(totalItems)" :loading="isFetching && !historyData">
+        <template #icon><AppIcon icon="lucide:circle-check" :size="20" /></template>
       </StatsCard>
-      <StatsCard
-        :value="isFetching || !historyData?.total ? '...' : formatCurrency((historyData?.totalAmount ?? 0) / (historyData?.total ?? 1))"
-        title="Promedio por pago"
-      >
-        <template #icon>
-          <AppIcon icon="lucide:trending-up" :size="20" color="#f59e0b" />
-        </template>
+      <StatsCard compact title="Promedio por pago" :value="formatAmounts(averageByCurrency)" :loading="isFetching && !historyData">
+        <template #icon><AppIcon icon="lucide:trending-up" :size="20" /></template>
       </StatsCard>
     </div>
 
     <!-- Filtros -->
     <div class="flex flex-col sm:flex-row gap-3">
       <div class="flex-1">
-        <SearchInput v-model="search" placeholder="Buscar por inquilino, propiedad o referencia..." />
+        <SearchInput v-model="search" placeholder="Buscar por código, inquilino, propiedad, propietario o referencia..." />
       </div>
       <div class="w-full sm:w-40">
         <FormSelect v-model="filterYear" :options="yearOptions" placeholder="Todos los años" />
@@ -330,15 +352,15 @@ async function handleExport() {
             <ActionsDropdown :items="filterActions(getHistoryActions(item))" />
           </div>
         </div>
+        <div class="border-t border-gray-200 dark:border-gray-800">
+          <BasePagination
+            v-bind="paginationProps"
+            :show-page-size="true"
+            @update:current-page="currentPage = $event"
+            @update:page-size="onPageSizeChange"
+          />
+        </div>
       </template>
     </BaseCard>
-
-    <!-- Paginación -->
-    <BasePagination
-      v-if="!historyIsError && totalPages > 1"
-      :current-page="currentPage"
-      :total-pages="totalPages"
-      @update:current-page="currentPage = $event"
-    />
   </div>
 </template>

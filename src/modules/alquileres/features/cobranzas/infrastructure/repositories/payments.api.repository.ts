@@ -1,11 +1,12 @@
 import { apiClient } from '@shared/infrastructure/http/api-client'
 import type {
   ListHistoryParams,
+  ListOverdueParams,
+  ListOverdueResponse,
   ListPaymentHistoryResponse,
   ListPendingParams,
-  OverduePaymentItem,
+  ListPendingResponse,
   PaymentStats,
-  PendingPaymentItem,
   RegisterPaymentPayload,
 } from '../../domain/payment.types'
 import type { PaymentsRepository } from '../../domain/repositories/payments.repository'
@@ -20,8 +21,11 @@ export const paymentsApiRepository: PaymentsRepository = {
     p.set('applicationSlug', params.applicationSlug ?? 'alquileres')
     if (params.search) p.set('search', params.search)
     if (params.status && params.status !== 'ALL') p.set('status', params.status)
+    if (params.rentalId) p.set('rentalId', params.rentalId)
+    p.set('page', String(params.page ?? 1))
+    p.set('limit', String(params.limit ?? 20))
     return apiClient
-      .get<PendingPaymentItem[]>(`/payments/pending?${p.toString()}`)
+      .get<ListPendingResponse>(`/payments/pending?${p.toString()}`)
       .then((r) => r.data)
   },
 
@@ -42,12 +46,14 @@ export const paymentsApiRepository: PaymentsRepository = {
       .then((r) => r.data)
   },
 
-  listOverdue: (applicationSlug = 'alquileres', search?: string) => {
+  listOverdue: (params: ListOverdueParams = {}) => {
     const p = new URLSearchParams()
-    p.set('applicationSlug', applicationSlug)
-    if (search) p.set('search', search)
+    p.set('applicationSlug', params.applicationSlug ?? 'alquileres')
+    if (params.search) p.set('search', params.search)
+    p.set('page', String(params.page ?? 1))
+    p.set('limit', String(params.limit ?? 10))
     return apiClient
-      .get<OverduePaymentItem[]>(`/payments/overdue?${p.toString()}`)
+      .get<ListOverdueResponse>(`/payments/overdue?${p.toString()}`)
       .then((r) => r.data)
   },
 

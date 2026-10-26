@@ -62,7 +62,7 @@ const rows = computed(() => {
       <div>
         <h3 class="font-semibold text-sm text-gray-800 dark:text-white/90">Finanzas de la Cartera</h3>
         <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
-          {{ monthItem?.monthName ?? 'Mes actual' }} · comisiones cobradas<template v-if="hasOtherCurrencies"> · en {{ currency }}</template>
+          {{ monthItem?.monthName ?? 'Mes actual' }} · comisiones cobradas{{ hasOtherCurrencies ? ` · en ${currency}` : '' }}
         </p>
       </div>
       <router-link

@@ -3,7 +3,8 @@ import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed } from 'vue'
 import { formatCurrency } from '@shared/utils/formatters'
 import type {
-  OverduePaymentItem,
+  ListOverdueResponse,
+  PaymentCurrencyAmount,
   PaymentStats,
 } from '../../features/cobranzas/domain/payment.types'
 /**
@@ -13,11 +14,16 @@ import type {
 
 interface Props {
   stats?: PaymentStats
-  overdue: OverduePaymentItem[]
+  /** Total y resumen de contratos con atraso */
+  overdue?: ListOverdueResponse
   loading?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), { stats: undefined, loading: false })
+const props = withDefaults(defineProps<Props>(), {
+  stats: undefined,
+  overdue: undefined,
+  loading: false,
+})
 
 const currency = computed(() => props.stats?.currency ?? 'PEN')
 const collected = computed(() => props.stats?.totalCollected ?? 0)
@@ -26,8 +32,12 @@ const rate = computed(() => {
   const expected = collected.value + pending.value
   return expected > 0 ? Math.round((collected.value / expected) * 100) : 0
 })
-const totalOwed = computed(() => props.overdue.reduce((acc, o) => acc + o.totalOwed, 0))
-const criticalCount = computed(() => props.overdue.filter((o) => o.overdueLevel === 'critical').length)
+const owed = computed(() => props.overdue?.summary.owedByCurrency ?? [])
+const overdueTotal = computed(() => props.overdue?.total ?? 0)
+const criticalCount = computed(() => props.overdue?.summary.criticalCount ?? 0)
+/** Soles y dólares por separado («S/ 1,200.00 · $ 300.00») */
+const formatAmounts = (rows: PaymentCurrencyAmount[]) =>
+  rows.length ? rows.map((r) => formatCurrency(r.amount, r.currency)).join(' · ') : formatCurrency(0, currency.value)
 
 const rows = computed(() => [
   { label: 'Pagos pendientes', value: String(props.stats?.pendingCount ?? 0), tone: '' },
@@ -38,13 +48,13 @@ const rows = computed(() => [
   },
   {
     label: 'Inquilinos morosos',
-    value: criticalCount.value > 0 ? `${props.overdue.length} (${criticalCount.value} críticos)` : String(props.overdue.length),
+    value: criticalCount.value > 0 ? `${overdueTotal.value} (${criticalCount.value} críticos)` : String(overdueTotal.value),
     tone: criticalCount.value > 0 ? 'text-error-500 dark:text-error-400' : '',
   },
   {
     label: 'Deuda acumulada',
-    value: formatCurrency(totalOwed.value, currency.value),
-    tone: totalOwed.value > 0 ? 'text-error-500 dark:text-error-400' : '',
+    value: formatAmounts(owed.value),
+    tone: owed.value.some((r) => r.amount > 0) ? 'text-error-500 dark:text-error-400' : '',
   },
 ])
 </script>

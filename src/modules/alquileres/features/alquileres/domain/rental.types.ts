@@ -122,6 +122,8 @@ export interface RentalDetail {
     code: string
     addressLine: string
     ownerId: string
+    /** Moneda de alquiler de la propiedad (el contrato debe coincidir) */
+    rentCurrency: string
     owner: { id: string; fullName: string }
   }
   tenant: { id: string; fullName: string }

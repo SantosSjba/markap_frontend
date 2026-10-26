@@ -19,6 +19,8 @@ export const commissionKeys = {
       sk(params.applicationSlug ?? 'alquileres'),
       sk(params.status ?? ''),
       sk(params.search ?? ''),
+      sk(params.page ?? 1),
+      sk(params.limit ?? 10),
     ] as const,
 }
 

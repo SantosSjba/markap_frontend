@@ -9,7 +9,7 @@ import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { RadioGroup, RadioGroupItem } from '@shared/presentation/ui/radio-group'
 import { paymentsRepositoryKey } from '../../application/ports/payments.port'
 import { useService } from '@shared/presentation/di/services'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as yup from 'yup'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
@@ -24,6 +24,7 @@ import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
 import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
 import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
 import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
@@ -34,8 +35,14 @@ import {
   useSaveCommunicationNote,
 } from '../composables/usePayments'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
-import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
-import type { OverduePaymentItem, PaymentMethod } from '../../domain/payment.types'
+import { formatCurrency as formatMoneyAmount, formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
+import type {
+  ListOverdueParams,
+  ListPendingParams,
+  OverduePaymentItem,
+  PaymentCurrencyAmount,
+  PaymentMethod,
+} from '../../domain/payment.types'
 const paymentsRepository = useService(paymentsRepositoryKey)
 
 const router = useRouter()
@@ -43,19 +50,45 @@ const router = useRouter()
 const search = ref('')
 const debouncedSearch = useDebouncedRef(search)
 
+const currentPage = ref(1)
+const pageSize = ref(10)
+const overdueParams = computed<ListOverdueParams>(() => ({
+  search: debouncedSearch.value.trim() || undefined,
+  page: currentPage.value,
+  limit: pageSize.value,
+}))
+// Una búsqueda nueva vuelve a la primera página
+watch(debouncedSearch, () => {
+  currentPage.value = 1
+})
+
 const {
-  data: overdueList,
+  data: overdueResult,
   isFetching,
   isError: overdueIsError,
   error: overdueFetchError,
   refetch: refetchOverdue,
-} = useOverduePayments('alquileres', debouncedSearch)
+} = useOverduePayments(overdueParams)
 
-// KPI stats derivados
-const totalOwed = computed(() => overdueList.value?.reduce((s, i) => s + i.totalOwed, 0) ?? 0)
-const criticalCount = computed(
-  () => overdueList.value?.filter((i) => i.overdueLevel === 'critical').length ?? 0,
-)
+const overdueList = computed(() => overdueResult.value?.data ?? [])
+const totalItems = computed(() => overdueResult.value?.total ?? 0)
+// KPIs de todos los contratos con atraso (no solo la página)
+const summary = computed(() => overdueResult.value?.summary)
+const paginationProps = computed(() => {
+  const totalPages = Math.max(1, Math.ceil(totalItems.value / pageSize.value))
+  return {
+    currentPage: currentPage.value,
+    totalPages,
+    totalItems: totalItems.value,
+    pageSize: pageSize.value,
+    hasPrevPage: currentPage.value > 1,
+    hasNextPage: currentPage.value < totalPages,
+  }
+})
+function onPageSizeChange(size: number) {
+  pageSize.value = size
+  currentPage.value = 1
+}
 
 // Modal de cobro rápido
 const showModal = ref(false)
@@ -69,9 +102,12 @@ function onSelectPending(paymentId: string) {
 }
 const modalError = ref('')
 
-const pendingParams = computed(() => ({
-  search: selectedOverdue.value?.tenantName,
-  status: 'ALL' as const,
+// Cuotas del contrato elegido (por contrato, no por nombre de inquilino)
+const pendingParams = computed<ListPendingParams>(() => ({
+  rentalId: selectedOverdue.value?.rentalId,
+  status: 'ALL',
+  page: 1,
+  limit: 100,
 }))
 
 const {
@@ -80,17 +116,20 @@ const {
   isError: tenantPendError,
   error: tenantPendFetchError,
   refetch: refetchTenantPend,
-} = usePendingPayments(pendingParams)
+} = usePendingPayments(pendingParams, () => showModal.value && !!selectedOverdue.value)
 
 const selectedRentalPendingList = computed(
-  () =>
-    tenantPendingPayments.value?.filter(
-      (p) => p.rentalId === selectedOverdue.value?.rentalId && p.daysOverdue > 0,
-    ) ?? [],
+  () => tenantPendingPayments.value?.data.filter((p) => p.daysOverdue > 0) ?? [],
+)
+const selectedPending = computed(() =>
+  selectedRentalPendingList.value.find((p) => p.paymentId === selectedPaymentId.value),
 )
 
 const paymentSchema = yup.object({
-  paidDate: yup.string().required('La fecha de pago es requerida'),
+  paidDate: yup
+    .string()
+    .required('La fecha de pago es requerida')
+    .test('not-future', 'La fecha de pago no puede ser futura', (v) => !v || v <= toCalendarDateString()),
   paidAmount: yup
     .number()
     .transform((_v, originalValue) => {
@@ -99,6 +138,9 @@ const paymentSchema = yup.object({
       return Number.isNaN(n) ? NaN : n
     })
     .min(0.01, 'El monto debe ser mayor a 0')
+    .test('max-balance', 'El monto no puede superar el saldo de la cuota', (v) =>
+      v == null || !selectedPending.value || v <= selectedPending.value.amount,
+    )
     .required('El monto es requerido'),
   paymentMethod: yup
     .string()
@@ -255,7 +297,12 @@ function getBorderClass(level: string) {
 }
 
 function formatCurrency(amount: number, currency = 'PEN') {
-  return `${currency === 'PEN' ? 'S/' : '$'} ${amount.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
+  return formatMoneyAmount(amount, currency)
+}
+
+/** Soles y dólares por separado («S/ 1,200.00 · $ 300.00») */
+function formatAmounts(rows: PaymentCurrencyAmount[] | undefined) {
+  return rows?.length ? rows.map((r) => formatCurrency(r.amount, r.currency)).join(' · ') : formatCurrency(0)
 }
 
 function formatDate(dateStr: string | null) {
@@ -283,7 +330,11 @@ function getOverdueActions(item: OverduePaymentItem) {
 }
 
 async function handleExport() {
-  const data = await paymentsRepository.listOverdue('alquileres', search.value || undefined)
+  const { data } = await paymentsRepository.listOverdue({
+    search: debouncedSearch.value.trim() || undefined,
+    page: 1,
+    limit: 10000,
+  })
   const now = toCalendarDateString()
   await exportToExcel({
     fileName: `cobranzas_atrasos_${now}`,
@@ -340,32 +391,24 @@ async function handleExport() {
     </PageHeader>
 
     <!-- KPIs -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatsCard :value="isFetching ? '...' : String(overdueList?.length ?? 0)" title="Con atraso">
-        <template #icon>
-          <AppIcon icon="lucide:triangle-alert" :size="20" color="#ef4444" />
-        </template>
+    <div v-if="!overdueIsError" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <StatsCard compact title="Con atraso" :value="String(totalItems)" :loading="isFetching && !overdueResult">
+        <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" /></template>
       </StatsCard>
-      <StatsCard :value="isFetching ? '...' : formatCurrency(totalOwed)" title="Total adeudado">
-        <template #icon>
-          <AppIcon icon="lucide:circle-dollar-sign" :size="20" color="#f59e0b" />
-        </template>
+      <StatsCard compact title="Total adeudado" :value="formatAmounts(summary?.owedByCurrency)" :loading="isFetching && !overdueResult">
+        <template #icon><AppIcon icon="lucide:circle-dollar-sign" :size="20" /></template>
       </StatsCard>
-      <StatsCard :value="isFetching ? '...' : String(criticalCount)" title="Estado crítico">
-        <template #icon>
-          <AppIcon icon="lucide:clock-alert" :size="20" color="#ef4444" />
-        </template>
+      <StatsCard compact title="Estado crítico" :value="String(summary?.criticalCount ?? 0)" subtitle="+30 días" :loading="isFetching && !overdueResult">
+        <template #icon><AppIcon icon="lucide:clock-alert" :size="20" /></template>
       </StatsCard>
-      <StatsCard value="0" title="Comunicaciones">
-        <template #icon>
-          <AppIcon icon="lucide:message-circle" :size="20" color="#6366f1" />
-        </template>
+      <StatsCard compact title="Con nota de contacto" :value="String(summary?.withCommunicationCount ?? 0)" :loading="isFetching && !overdueResult">
+        <template #icon><AppIcon icon="lucide:message-circle" :size="20" /></template>
       </StatsCard>
     </div>
 
     <!-- Búsqueda -->
     <div>
-      <SearchInput v-model="search" placeholder="Buscar por inquilino o propiedad..." />
+      <SearchInput v-model="search" placeholder="Buscar por código, inquilino, propiedad o propietario..." />
     </div>
 
     <template v-if="overdueIsError">
@@ -376,7 +419,7 @@ async function handleExport() {
       </BaseCard>
     </template>
 
-    <div v-if="isFetching" class="flex flex-col gap-4">
+    <div v-else-if="isFetching" class="flex flex-col gap-4">
       <div
         v-for="n in 5"
         :key="n"
@@ -432,7 +475,7 @@ async function handleExport() {
 
               <BaseButton @click="openNoteModal(item)" variant="secondary" size="sm" icon="lucide:pencil-line">{{ item.lastCommunicationDate ? 'Ver nota' : 'Nota' }}</BaseButton>
               <div class="flex items-center gap-1">
-                <BaseButton @click="openModal(item)" size="sm" icon="lucide:circle-dollar-sign" class="flex-1">Cobrar</BaseButton>
+                <BaseButton v-if="canWrite" @click="openModal(item)" size="sm" icon="lucide:circle-dollar-sign" class="flex-1">Cobrar</BaseButton>
                 <ActionsDropdown :items="filterActions(getOverdueActions(item))" />
               </div>
             </div>
@@ -460,6 +503,16 @@ async function handleExport() {
         </div>
       </div>
     </div>
+
+    <BaseCard v-if="!overdueIsError && totalItems > 0" padding="none" class="block overflow-hidden">
+      <BasePagination
+        v-bind="paginationProps"
+        :show-page-size="true"
+        :page-size-options="[5, 10, 20, 50]"
+        @update:current-page="currentPage = $event"
+        @update:page-size="onPageSizeChange"
+      />
+    </BaseCard>
 
     <!-- Modal cobro -->
     <BaseModal v-model="showModal" size="md" @close="closeModal">
@@ -556,7 +609,7 @@ async function handleExport() {
           <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Datos del pago</p>
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <FormInput v-bind="paidDateBinds" type="date" label="Fecha de pago" :error="paymentErrors.paidDate" required />
+          <FormInput v-bind="paidDateBinds" type="date" label="Fecha de pago" :max="toCalendarDateString()" :error="paymentErrors.paidDate" required />
           <FormInput v-bind="paidAmountBinds" type="number" label="Monto pagado" :error="paymentErrors.paidAmount" required />
         </div>
         <FormSelect v-bind="paymentMethodBinds" :options="paymentMethodOptions" label="Método de pago" :error="paymentErrors.paymentMethod" required class="mb-4" />

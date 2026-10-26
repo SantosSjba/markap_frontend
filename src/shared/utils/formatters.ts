@@ -85,18 +85,23 @@ export function formatDateTime(date: Date | string | number): string {
   }).format(new Date(date))
 }
 
+/** Símbolos del catálogo de monedas (S/ 1,200.00 · US$ 800.00 · € 50.00). */
+const CURRENCY_SYMBOLS: Record<string, string> = { PEN: 'S/', USD: 'US$', EUR: '€' }
+
 /**
- * Format number to currency
+ * Format number to currency with the catalog symbol (not the ISO code Intl shows for USD).
  */
 export function formatCurrency(
   amount: number,
   currency: string = 'PEN',
   locale: string = PERU_LOCALE,
 ): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
+  const code = currency || 'PEN'
+  const number = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount)
+  return `${CURRENCY_SYMBOLS[code] ?? code} ${number}`
 }
 
 /**

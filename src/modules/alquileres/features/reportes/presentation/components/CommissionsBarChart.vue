@@ -14,6 +14,8 @@ interface Props {
   data: RentalsByMonthItem[]
   loading?: boolean
   formatAmount: (value: number, currency: string) => string
+  /** Monedas que se pueden graficar (las elegidas en la vista); por defecto, todas */
+  currencies?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), { loading: false })
@@ -25,6 +27,7 @@ const PADDING_BOTTOM = 28
 const TOTAL_WIDTH = 560
 
 const currencies = computed(() => {
+  if (props.currencies?.length) return props.currencies
   const set = new Set<string>()
   for (const m of props.data) for (const t of m.totalsByCurrency) set.add(t.currency)
   return [...set].sort()
@@ -102,7 +105,7 @@ const bars = computed(() => {
         <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
           <template v-if="!loading">
             Total {{ formatAmount(total, currency) }}
-            <template v-if="bestIndex >= 0"> · Mejor mes: {{ data[bestIndex]?.monthName }}</template>
+            {{ bestIndex >= 0 ? ` · Mejor mes: ${data[bestIndex]?.monthName}` : '' }}
           </template>
         </p>
       </div>

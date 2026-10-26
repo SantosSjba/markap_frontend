@@ -6,7 +6,7 @@ import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { commissionsRepositoryKey } from '../../application/ports/commissions.port'
 import { useService } from '@shared/presentation/di/services'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
@@ -15,6 +15,7 @@ import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
 import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
@@ -40,11 +41,22 @@ const { format: formatAmount } = useCurrencyCatalog()
 const searchInput = ref('')
 const debouncedSearch = useDebouncedRef(searchInput)
 const statusFilter = ref<'ALL' | CommissionStatus>('PENDING')
+const currentPage = ref(1)
+const pageSize = ref(10)
 
-const params = computed<ListCommissionsParams>(() => ({
+const filterParams = computed<ListCommissionsParams>(() => ({
   search: debouncedSearch.value.trim() || undefined,
   status: statusFilter.value === 'ALL' ? undefined : statusFilter.value,
 }))
+const params = computed<ListCommissionsParams>(() => ({
+  ...filterParams.value,
+  page: currentPage.value,
+  limit: pageSize.value,
+}))
+// Un filtro nuevo vuelve a la primera página
+watch(filterParams, () => {
+  currentPage.value = 1
+})
 
 const {
   data: result,
@@ -56,6 +68,22 @@ const {
 
 const commissions = computed(() => result.value?.items ?? [])
 const totalsByCurrency = computed(() => result.value?.totalsByCurrency ?? [])
+const totalItems = computed(() => result.value?.total ?? 0)
+const paginationProps = computed(() => {
+  const totalPages = Math.max(1, Math.ceil(totalItems.value / pageSize.value))
+  return {
+    currentPage: currentPage.value,
+    totalPages,
+    totalItems: totalItems.value,
+    pageSize: pageSize.value,
+    hasPrevPage: currentPage.value > 1,
+    hasNextPage: currentPage.value < totalPages,
+  }
+})
+function onPageSizeChange(size: number) {
+  pageSize.value = size
+  currentPage.value = 1
+}
 
 const statusOptions = [
   { value: 'PENDING', label: 'Pendientes de pago' },
@@ -217,7 +245,7 @@ function getActions(item: RentalCommissionItem) {
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const data = await commissionsRepository.list(params.value)
+  const data = await commissionsRepository.list({ ...filterParams.value, page: 1, limit: 10000 })
   await exportToExcel({
     fileName: `comisiones_alquileres_${toCalendarDateString()}`,
     sheetName: 'Comisiones',
@@ -365,6 +393,14 @@ async function handleExport() {
             </td>
           </template>
         </DataTable>
+        <div v-if="!listQueryError" class="border-t border-gray-200 dark:border-gray-800">
+          <BasePagination
+            v-bind="paginationProps"
+            :show-page-size="true"
+            @update:current-page="currentPage = $event"
+            @update:page-size="onPageSizeChange"
+          />
+        </div>
       </div>
     </BaseCard>
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useApplicationAccess} from '@modules/applications/presentation/composables/useApplicationAccess'
-const { filterActions } = useApplicationAccess('alquileres')
+const { canWrite, filterActions } = useApplicationAccess('alquileres')
 
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
@@ -8,7 +8,7 @@ import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
 import Avatar from '@shared/presentation/components/ui/Avatar.vue'
 import { paymentsRepositoryKey } from '../../application/ports/payments.port'
 import { useService } from '@shared/presentation/di/services'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as yup from 'yup'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
@@ -22,14 +22,20 @@ import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
 import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
 import ListRowsSkeleton from '@shared/presentation/components/ui/ListRowsSkeleton.vue'
 import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
 import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import { usePendingPayments, usePaymentStats, useRegisterPayment } from '../composables/usePayments'
-import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
+import { formatCurrency as formatMoneyAmount, formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
-import type { PendingPaymentItem, PaymentMethod } from '../../domain/payment.types'
+import type {
+  ListPendingParams,
+  PaymentCurrencyAmount,
+  PendingPaymentItem,
+  PaymentMethod,
+} from '../../domain/payment.types'
 const paymentsRepository = useService(paymentsRepositoryKey)
 
 const router = useRouter()
@@ -37,19 +43,45 @@ const router = useRouter()
 const search = ref('')
 const debouncedSearch = useDebouncedRef(search)
 const statusFilter = ref<string>('ALL')
+const currentPage = ref(1)
+const pageSize = ref(10)
 
-const params = computed(() => ({
+const params = computed<ListPendingParams>(() => ({
   search: debouncedSearch.value.trim() || undefined,
-  status: statusFilter.value as any,
+  status: statusFilter.value as ListPendingParams['status'],
+  page: currentPage.value,
+  limit: pageSize.value,
 }))
 
+// Un filtro nuevo vuelve a la primera página
+watch([debouncedSearch, statusFilter], () => {
+  currentPage.value = 1
+})
+
 const {
-  data: payments,
+  data: pendingResult,
   isFetching,
   isError: listQueryError,
   error: listFetchError,
   refetch: refetchList,
 } = usePendingPayments(params)
+const payments = computed(() => pendingResult.value?.data ?? [])
+const totalItems = computed(() => pendingResult.value?.total ?? 0)
+const paginationProps = computed(() => {
+  const totalPages = Math.max(1, Math.ceil(totalItems.value / pageSize.value))
+  return {
+    currentPage: currentPage.value,
+    totalPages,
+    totalItems: totalItems.value,
+    pageSize: pageSize.value,
+    hasPrevPage: currentPage.value > 1,
+    hasNextPage: currentPage.value < totalPages,
+  }
+})
+function onPageSizeChange(size: number) {
+  pageSize.value = size
+  currentPage.value = 1
+}
 const {
   data: stats,
   isLoading: statsLoading,
@@ -65,7 +97,10 @@ const selectedPayment = ref<PendingPaymentItem | null>(null)
 const modalError = ref('')
 
 const paymentSchema = yup.object({
-  paidDate: yup.string().required('La fecha de pago es requerida'),
+  paidDate: yup
+    .string()
+    .required('La fecha de pago es requerida')
+    .test('not-future', 'La fecha de pago no puede ser futura', (v) => !v || v <= toCalendarDateString()),
   paidAmount: yup
     .number()
     .transform((_v, originalValue) => {
@@ -74,6 +109,9 @@ const paymentSchema = yup.object({
       return Number.isNaN(n) ? NaN : n
     })
     .min(0.01, 'El monto debe ser mayor a 0')
+    .test('max-balance', 'El monto no puede superar el saldo de la cuota', (v) =>
+      v == null || !selectedPayment.value || v <= selectedPayment.value.amount,
+    )
     .required('El monto es requerido'),
   paymentMethod: yup
     .string()
@@ -188,7 +226,12 @@ function getStatusBadgeLabel(item: PendingPaymentItem) {
 }
 
 function formatCurrency(amount: number, currency = 'PEN') {
-  return `${currency === 'PEN' ? 'S/' : '$'} ${amount.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
+  return formatMoneyAmount(amount, currency)
+}
+
+/** Soles y dólares por separado («S/ 1,200.00 · $ 300.00») */
+function formatAmounts(rows: PaymentCurrencyAmount[] | undefined) {
+  return rows?.length ? rows.map((r) => formatCurrency(r.amount, r.currency)).join(' · ') : formatCurrency(0)
 }
 
 function formatDate(dateStr: string) {
@@ -201,7 +244,7 @@ function formatDate(dateStr: string) {
 
 function getPaymentActions(item: PendingPaymentItem) {
   const actions = []
-  if (item.status !== 'PAID') {
+  if (canWrite.value && item.status !== 'PAID') {
     actions.push({
       label: 'Registrar pago',
       icon: 'lucide:credit-card',
@@ -219,10 +262,12 @@ function getPaymentActions(item: PendingPaymentItem) {
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const data = await paymentsRepository.listPending({
+  const { data } = await paymentsRepository.listPending({
     applicationSlug: 'alquileres',
-    search: search.value || undefined,
-    status: statusFilter.value !== 'ALL' ? (statusFilter.value as any) : undefined,
+    search: debouncedSearch.value.trim() || undefined,
+    status: statusFilter.value as ListPendingParams['status'],
+    page: 1,
+    limit: 10000,
   })
   const now = toCalendarDateString()
   await exportToExcel({
@@ -289,39 +334,25 @@ async function handleExport() {
     </div>
 
     <!-- KPIs -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatsCard
-        :value="statsQueryError ? '—' : statsLoading ? '...' : formatCurrency(stats?.totalPending ?? 0)"
-        title="Por Cobrar"
-      >
-        <template #icon>
-          <AppIcon icon="lucide:clock" :size="20" color="#f59e0b" />
-        </template>
+    <div v-if="!statsQueryError" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <StatsCard compact title="Por cobrar (mes)" :value="formatAmounts(stats?.pendingByCurrency)" :loading="statsLoading">
+        <template #icon><AppIcon icon="lucide:clock" :size="20" color="#d97706" /></template>
       </StatsCard>
-      <StatsCard
-        :value="statsQueryError ? '—' : statsLoading ? '...' : formatCurrency(stats?.totalCollected ?? 0)"
-        title="Cobrado (mes)"
-      >
-        <template #icon>
-          <AppIcon icon="lucide:circle-check" :size="20" color="#10b981" />
-        </template>
+      <StatsCard compact title="Cobrado (mes)" :value="formatAmounts(stats?.collectedByCurrency)" :loading="statsLoading">
+        <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="#16a34a" /></template>
       </StatsCard>
-      <StatsCard :value="statsQueryError ? '—' : statsLoading ? '...' : String(stats?.pendingCount ?? 0)" title="Pendientes">
-        <template #icon>
-          <AppIcon icon="lucide:wallet" :size="20" color="#3b82f6" />
-        </template>
+      <StatsCard compact title="Pendientes" :value="String(stats?.pendingCount ?? 0)" :loading="statsLoading">
+        <template #icon><AppIcon icon="lucide:wallet" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :value="statsQueryError ? '—' : statsLoading ? '...' : String(stats?.overdueCount ?? 0)" title="Con Atraso">
-        <template #icon>
-          <AppIcon icon="lucide:triangle-alert" :size="20" color="#ef4444" />
-        </template>
+      <StatsCard compact title="Con atraso" :value="String(stats?.overdueCount ?? 0)" :loading="statsLoading">
+        <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" color="#dc2626" /></template>
       </StatsCard>
     </div>
 
     <!-- Filtros -->
     <div class="flex flex-col sm:flex-row gap-3">
       <div class="flex-1">
-        <SearchInput v-model="search" placeholder="Buscar por inquilino, propiedad o propietario..." />
+        <SearchInput v-model="search" placeholder="Buscar por código, inquilino, propiedad o propietario..." />
       </div>
       <div class="w-full sm:w-40">
         <FormSelect v-model="statusFilter" :options="statusOptions" placeholder="Estado" />
@@ -407,9 +438,17 @@ async function handleExport() {
 
           <!-- Acciones -->
           <div class="flex items-center gap-2 justify-end">
-            <BaseButton v-if="item.status !== 'PAID'" @click="openModal(item)" size="sm" icon="lucide:credit-card">Pagar</BaseButton>
+            <BaseButton v-if="canWrite && item.status !== 'PAID'" @click="openModal(item)" size="sm" icon="lucide:credit-card">Pagar</BaseButton>
             <ActionsDropdown :items="filterActions(getPaymentActions(item))" />
           </div>
+        </div>
+        <div class="border-t border-gray-200 dark:border-gray-800">
+          <BasePagination
+            v-bind="paginationProps"
+            :show-page-size="true"
+            @update:current-page="currentPage = $event"
+            @update:page-size="onPageSizeChange"
+          />
         </div>
       </template>
     </BaseCard>
@@ -457,7 +496,7 @@ async function handleExport() {
           <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Datos del pago</p>
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <FormInput v-bind="paidDateBinds" type="date" label="Fecha de pago" :error="paymentErrors.paidDate" required />
+          <FormInput v-bind="paidDateBinds" type="date" label="Fecha de pago" :max="toCalendarDateString()" :error="paymentErrors.paidDate" required />
           <FormInput v-bind="paidAmountBinds" type="number" label="Monto pagado" :error="paymentErrors.paidAmount" required />
         </div>
 

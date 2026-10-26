@@ -33,7 +33,8 @@ const expiringQuery = useContractsExpiring('alquileres', 30)
 const contractStatusQuery = useContractStatusSummary()
 const monthlyMetricsQuery = useMonthlyMetrics()
 const paymentStatsQuery = usePaymentStats()
-const overdueQuery = useOverduePayments()
+// Solo se usan el total y el resumen de atrasos
+const overdueQuery = useOverduePayments({ limit: 1 })
 const rentalsByMonthQuery = useRentalsByMonth(
   'alquileres',
   computed(() => ({ year: currentYear.value })),
@@ -69,7 +70,6 @@ const metrics = computed(
 )
 const expiringItems = computed(() => expiringQuery.data.value ?? [])
 const rentalsByMonth = computed(() => rentalsByMonthQuery.data.value ?? [])
-const overdueItems = computed(() => overdueQuery.data.value ?? [])
 
 const greetingHour = new Date().getHours()
 const greeting =
@@ -206,7 +206,7 @@ function formatPercent(val: number) {
       />
       <DashboardCobranzaMes
         :stats="paymentStatsQuery.data.value"
-        :overdue="overdueItems"
+        :overdue="overdueQuery.data.value"
         :loading="paymentStatsQuery.isPending.value || overdueQuery.isPending.value"
       />
       <DashboardFinanzasCartera
