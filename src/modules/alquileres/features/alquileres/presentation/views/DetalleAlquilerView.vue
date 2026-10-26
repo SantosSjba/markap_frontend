@@ -259,6 +259,43 @@ const goToFinancialConfig = () =>
             </BaseButton>
           </FormSectionCard>
 
+          <FormSectionCard title="Comisión (ingreso)">
+            <ul class="space-y-2 text-sm">
+              <li class="flex items-center justify-between gap-2">
+                <span class="text-gray-600 dark:text-gray-400">Estado</span>
+                <Badge :variant="rental.commissionStatus === 'PAID' ? 'success' : 'warning'">
+                  {{ rental.commissionStatus === 'PAID' ? 'Pagada' : 'Pendiente de pago' }}
+                </Badge>
+              </li>
+              <li v-if="breakdown" class="flex items-center justify-between gap-2">
+                <span class="text-gray-600 dark:text-gray-400">Monto</span>
+                <span class="font-semibold text-gray-800 dark:text-white/90">
+                  {{ formatMoney(breakdown.baseAmount, breakdown.currency) }}
+                </span>
+              </li>
+              <li class="flex items-center justify-between gap-2">
+                <span class="text-gray-600 dark:text-gray-400">Fecha estimada</span>
+                <span class="text-gray-800 dark:text-white/90">
+                  {{ rental.commissionDueDate ? formatShortDate(rental.commissionDueDate) : '—' }}
+                </span>
+              </li>
+              <li v-if="rental.commissionPaidDate" class="flex items-center justify-between gap-2">
+                <span class="text-gray-600 dark:text-gray-400">Cobrada el</span>
+                <span class="text-gray-800 dark:text-white/90">{{ formatShortDate(rental.commissionPaidDate) }}</span>
+              </li>
+            </ul>
+            <BaseButton
+              variant="outline"
+              size="sm"
+              icon="lucide:percent"
+              block
+              class="mt-3"
+              @click="router.push({ name: 'alquileres-comisiones' })"
+            >
+              Ver comisiones
+            </BaseButton>
+          </FormSectionCard>
+
           <FormSectionCard title="Alertas del contrato">
             <ul class="space-y-2 text-sm">
               <li class="flex items-center justify-between gap-2">

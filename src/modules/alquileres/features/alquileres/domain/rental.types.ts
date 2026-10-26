@@ -1,9 +1,19 @@
+/** Cobro de la comisión (ingreso de la distribución financiera): un solo pago */
+export type RentalCommissionStatus = 'PENDING' | 'PAID'
+
+/** Fechas AAAA-MM-DD; null las borra. La fecha de cobro es obligatoria si está pagada. */
+export interface RentalCommissionFields {
+  commissionStatus?: RentalCommissionStatus
+  commissionDueDate?: string | null
+  commissionPaidDate?: string | null
+}
+
 export interface RentalTenantRef {
   id: string
   fullName: string
 }
 
-export interface CreateRentalPayload {
+export interface CreateRentalPayload extends RentalCommissionFields {
   applicationSlug?: string
   propertyId: string
   tenantIds: string[]
@@ -33,6 +43,9 @@ export interface RentalCreated {
   status: string
   enableExpirationAlerts: boolean
   enableCollectionAlerts: boolean
+  commissionStatus: RentalCommissionStatus
+  commissionDueDate: string | null
+  commissionPaidDate: string | null
 }
 
 export interface RentalListItem {
@@ -100,6 +113,9 @@ export interface RentalDetail {
   status: string
   enableExpirationAlerts: boolean
   enableCollectionAlerts: boolean
+  commissionStatus: RentalCommissionStatus
+  commissionDueDate: string | null
+  commissionPaidDate: string | null
   code: string
   property: {
     id: string
@@ -115,7 +131,7 @@ export interface RentalDetail {
   attachments?: RentalAttachment[]
 }
 
-export interface UpdateRentalPayload {
+export interface UpdateRentalPayload extends RentalCommissionFields {
   startDate?: string
   endDate?: string
   currency?: string
@@ -217,7 +233,7 @@ export interface UpsertRentalFinancialConfigPayload {
 }
 
 /** Datos que produce el formulario de contrato (alta y edición); los adjuntos los maneja cada vista */
-export interface RentalFormPayload {
+export interface RentalFormPayload extends RentalCommissionFields {
   /** Solo en alta: en edición la propiedad no cambia */
   propertyId?: string
   tenantIds: string[]

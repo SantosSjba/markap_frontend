@@ -6,7 +6,8 @@ import { RENTAL_UTILITY_NET_SHORT_LABEL } from '../../features/alquileres/domain
 import type { RentalsByMonthItem } from '../../features/reportes/domain/reportes.types'
 /**
  * DashboardFinanzasCartera
- * Resumen financiero del mes actual (renta, descuentos, utilidad) y acumulado del año.
+ * Comisiones cobradas en el mes actual (ingreso, descuentos, utilidad) y acumulado del año,
+ * en una moneda (la principal); las demás monedas no se suman.
  */
 
 interface Props {
@@ -18,10 +19,22 @@ const props = withDefaults(defineProps<Props>(), { loading: false })
 
 const currentMonth = new Date().getMonth() + 1
 
-const month = computed(() => props.data.find((d) => d.month === currentMonth))
-const currency = computed(() => month.value?.currency ?? props.data[0]?.currency ?? 'PEN')
+const monthItem = computed(() => props.data.find((d) => d.month === currentMonth))
+/** Moneda mostrada: soles si hubo cobros en soles; si no, la primera con cobros en el año */
+const currency = computed(() => {
+  const all = new Set(props.data.flatMap((d) => d.totalsByCurrency.map((t) => t.currency)))
+  return all.has('PEN') || all.size === 0 ? 'PEN' : [...all].sort()[0]!
+})
+const hasOtherCurrencies = computed(() =>
+  props.data.some((d) => d.totalsByCurrency.some((t) => t.currency !== currency.value)),
+)
+const totalsIn = (d: RentalsByMonthItem | undefined) =>
+  d?.totalsByCurrency.find((t) => t.currency === currency.value)
+const month = computed(() => totalsIn(monthItem.value))
 const ytdUtility = computed(() =>
-  props.data.filter((d) => d.month <= currentMonth).reduce((acc, d) => acc + d.totalUtility, 0),
+  props.data
+    .filter((d) => d.month <= currentMonth)
+    .reduce((acc, d) => acc + (totalsIn(d)?.totalUtility ?? 0), 0),
 )
 const margin = computed(() => {
   const base = month.value?.companyRevenue ?? 0
@@ -31,8 +44,8 @@ const margin = computed(() => {
 const rows = computed(() => {
   const m = month.value
   return [
-    { label: 'Renta mensual de la cartera', value: m?.totalRevenue ?? 0, negative: false },
-    { label: 'Ingreso (monto base)', value: m?.companyRevenue ?? 0, negative: false },
+    { label: 'Comisiones cobradas', value: m?.collectedCommissions ?? 0, negative: false, count: true },
+    { label: 'Ingreso', value: m?.companyRevenue ?? 0, negative: false },
     { label: 'Gastos e impuestos', value: (m?.totalExpense ?? 0) + (m?.totalTax ?? 0), negative: true },
     {
       label: 'Comisiones de agentes',
@@ -49,7 +62,7 @@ const rows = computed(() => {
       <div>
         <h3 class="font-semibold text-sm text-gray-800 dark:text-white/90">Finanzas de la Cartera</h3>
         <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
-          {{ month?.monthName ?? 'Mes actual' }} · contratos activos
+          {{ monthItem?.monthName ?? 'Mes actual' }} · comisiones cobradas<template v-if="hasOtherCurrencies"> · en {{ currency }}</template>
         </p>
       </div>
       <router-link
@@ -83,7 +96,8 @@ const rows = computed(() => {
           <li v-for="r in rows" :key="r.label" class="flex items-center justify-between py-2">
             <span class="text-sm text-gray-600 dark:text-gray-400">{{ r.label }}</span>
             <span class="text-sm font-semibold tabular-nums text-gray-800 dark:text-white/90">
-              {{ r.negative && r.value > 0 ? '−' : '' }}{{ formatCurrency(r.value, currency) }}
+              <template v-if="'count' in r">{{ r.value }}</template>
+              <template v-else>{{ r.negative && r.value > 0 ? '−' : '' }}{{ formatCurrency(r.value, currency) }}</template>
             </span>
           </li>
           <li class="flex items-center justify-between py-2">

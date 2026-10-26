@@ -10,6 +10,8 @@ import { clientsRepositoryKey as alquileresClientesKey } from '@modules/alquiler
 import { clientsApiRepository as alquileresClientesAdapter } from '@modules/alquileres/features/clientes/infrastructure/repositories/clients.api.repository'
 import { paymentsRepositoryKey as alquileresCobranzasKey } from '@modules/alquileres/features/cobranzas/application/ports/payments.port'
 import { paymentsApiRepository as alquileresCobranzasAdapter } from '@modules/alquileres/features/cobranzas/infrastructure/repositories/payments.api.repository'
+import { commissionsRepositoryKey as alquileresComisionesKey } from '@modules/alquileres/features/comisiones/application/ports/commissions.port'
+import { commissionsApiRepository as alquileresComisionesAdapter } from '@modules/alquileres/features/comisiones/infrastructure/repositories/commissions.api.repository'
 import { alertConfigRepositoryKey as alquileresConfiguracionKey } from '@modules/alquileres/features/configuracion/application/ports/alert-config.port'
 import { alertConfigApiRepository as alquileresConfiguracionAdapter } from '@modules/alquileres/features/configuracion/infrastructure/repositories/alert-config.api.repository'
 import { propertiesRepositoryKey as alquileresPropiedadesKey } from '@modules/alquileres/features/propiedades/application/ports/properties.port'
@@ -149,6 +151,7 @@ export function installRepositories(app: App): void {
   provideService(app, alquileresAlquileresKey, alquileresAlquileresAdapter)
   provideService(app, alquileresClientesKey, alquileresClientesAdapter)
   provideService(app, alquileresCobranzasKey, alquileresCobranzasAdapter)
+  provideService(app, alquileresComisionesKey, alquileresComisionesAdapter)
   provideService(app, alquileresConfiguracionKey, alquileresConfiguracionAdapter)
   provideService(app, alquileresPropiedadesKey, alquileresPropiedadesAdapter)
   provideService(app, alquileresReportesKey, alquileresReportesAdapter)

@@ -4,6 +4,7 @@ import type {
   CreateRentalPayload,
   ListRentalsParams,
   ListRentalsResponse,
+  RentalCommissionFields,
   RentalCreated,
   RentalDetail,
   RentalFinancialBreakdown,
@@ -21,6 +22,17 @@ import {
   mapRentalFinancialConfig,
   mapRentalStats,
 } from '../mappers/rental.mapper'
+/** En form-data una fecha vacía viaja como '' y el backend la borra. */
+function appendCommissionFields(form: FormData, data: RentalCommissionFields) {
+  if (data.commissionStatus) form.append('commissionStatus', data.commissionStatus)
+  if (data.commissionDueDate !== undefined) {
+    form.append('commissionDueDate', data.commissionDueDate ?? '')
+  }
+  if (data.commissionPaidDate !== undefined) {
+    form.append('commissionPaidDate', data.commissionPaidDate ?? '')
+  }
+}
+
 export const rentalsApiRepository: RentalsRepository = {
   getById: (id: string) =>
     apiClient.get<RentalDetail>(`/rentals/${id}`).then((r) => mapRentalDetail(r.data)),
@@ -49,6 +61,7 @@ export const rentalsApiRepository: RentalsRepository = {
       if (data.tenantIds?.length) {
         form.append('tenantIds', JSON.stringify(data.tenantIds.filter(Boolean)))
       }
+      appendCommissionFields(form, data)
       if (files.contractFile) form.append('contractFile', files.contractFile)
       if (files.deliveryActFile) form.append('deliveryActFile', files.deliveryActFile)
       return apiClient
@@ -111,6 +124,7 @@ export const rentalsApiRepository: RentalsRepository = {
     if (data.notes != null) form.append('notes', data.notes)
     form.append('enableExpirationAlerts', String(data.enableExpirationAlerts ?? true))
     form.append('enableCollectionAlerts', String(data.enableCollectionAlerts ?? true))
+    appendCommissionFields(form, data)
     if (files?.contractFile) form.append('contractFile', files.contractFile)
     if (files?.deliveryActFile) form.append('deliveryActFile', files.deliveryActFile)
     return apiClient

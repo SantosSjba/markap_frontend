@@ -44,6 +44,22 @@ export interface MonthlyMetrics {
   clientesNuevos: number
 }
 
+/** Comisiones cobradas en el mes, en una sola moneda (soles y dólares no se suman). */
+export interface RentalsByMonthCurrencyTotals {
+  currency: string
+  /** Comisiones cobradas en el período cuyo contrato está en esta moneda */
+  collectedCommissions: number
+  /** Renta mensual de esos contratos */
+  totalRevenue: number
+  /** Ingreso de la distribución financiera (comisión de la inmobiliaria) */
+  companyRevenue: number
+  totalExpense: number
+  totalTax: number
+  totalExternalCommission: number
+  totalInternalCommission: number
+  totalUtility: number
+}
+
 export interface RentalsByMonthItem {
   month: number
   year: number
@@ -51,14 +67,8 @@ export interface RentalsByMonthItem {
   newContracts: number
   expiredContracts: number
   activeAtEndOfMonth: number
-  totalRevenue: number
-  companyRevenue: number
-  totalExpense: number
-  totalTax: number
-  totalExternalCommission: number
-  totalInternalCommission: number
-  totalUtility: number
-  currency: string
+  /** Según la fecha efectiva de cobro de cada comisión */
+  totalsByCurrency: RentalsByMonthCurrencyTotals[]
 }
 
 export interface FinancialDistributionReportItem {
@@ -79,6 +89,8 @@ export interface FinancialDistributionReportItem {
   internalAgentName: string | null
   status: string
   contractStartDate?: string
+  commissionStatus: 'PENDING' | 'PAID'
+  commissionPaidDate: string | null
 }
 
 export interface RentalsByMonthParams {
@@ -88,8 +100,12 @@ export interface RentalsByMonthParams {
   endDate?: string
 }
 
+/** Fecha que filtra el rango: inicio del contrato o cobro de la comisión */
+export type FinancialDistributionDateField = 'startDate' | 'commissionPaidDate'
+
 export interface FinancialDistributionParams {
   status?: string
   startDate?: string
   endDate?: string
+  dateField?: FinancialDistributionDateField
 }

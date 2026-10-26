@@ -5,6 +5,7 @@ import { clientesRoutes } from '../../features/clientes/presentation/router/inde
 import { propiedadesRoutes } from '../../features/propiedades/presentation/router/index'
 import { agentesRoutes } from '../../features/agentes/presentation/router/index'
 import { cobranzasRoutes } from '../../features/cobranzas/presentation/router/index'
+import { comisionesRoutes } from '../../features/comisiones/presentation/router/index'
 import { configuracionRoutes } from '../../features/configuracion/presentation/router/index'
 import { alquileresReportesRoutes } from '../../features/reportes/presentation/router/index'
 import { ALQUILERES_BASE_PATH } from '../../config/routes.constants'
@@ -104,6 +105,12 @@ export const alquileresRoutes: RouteRecordRaw[] = [
         component: SectionLayout,
         meta: { title: 'Cobranzas' },
         children: cobranzasRoutes,
+      },
+      {
+        path: 'comisiones',
+        component: SectionLayout,
+        meta: { title: 'Comisiones' },
+        children: comisionesRoutes,
       },
       {
         path: 'reportes',

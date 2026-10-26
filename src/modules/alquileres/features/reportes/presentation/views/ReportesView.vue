@@ -36,8 +36,10 @@ import type {
   PropertyWithoutContractItem,
   ActiveClientReportItem,
   RentalsByMonthItem,
+  RentalsByMonthCurrencyTotals,
   FinancialDistributionReportItem,
 } from '../../domain/reportes.types'
+import CommissionsBarChart from '../components/CommissionsBarChart.vue'
 const reportesRepository = useService(reportesRepositoryKey)
 
 const router = useRouter()
@@ -47,7 +49,7 @@ const APPLICATION_SLUG = 'alquileres'
 const periodFilter = ref(30)
 const activeTab = ref('contratos-por-vencer')
 
-// --- Filtros para "Alquiler por mes" ---
+// --- Filtros para "Comisiones de alquileres" ---
 type FilterMode = 'year' | 'month' | 'range'
 const filterMode = ref<FilterMode>('year')
 const yearFilter = ref(new Date().getFullYear())
@@ -126,7 +128,7 @@ const reportTabs = [
   { id: 'contratos-por-vencer', label: 'Contratos por Vencer', icon: 'lucide:calendar-clock' },
   { id: 'sin-contrato', label: 'Sin Contrato', icon: 'lucide:building-2' },
   { id: 'clientes-activos', label: 'Clientes Activos', icon: 'lucide:users' },
-  { id: 'alquiler-por-mes', label: 'Alquiler por mes', icon: 'lucide:bar-chart-2' },
+  { id: 'alquiler-por-mes', label: 'Comisiones de alquileres', icon: 'lucide:bar-chart-2' },
 ]
 
 const days = computed(() => Math.min(365, Math.max(1, periodFilter.value)))
@@ -255,16 +257,77 @@ const detailDateRange = computed(() => {
   }
 })
 
-const financialDistributionParams = computed<FinancialDistributionParams>(
-  () => detailDateRange.value ?? {},
-)
+// El detalle de cada mes lista las comisiones cobradas en él (no los contratos iniciados)
+const financialDistributionParams = computed<FinancialDistributionParams>(() => ({
+  ...(detailDateRange.value ?? {}),
+  dateField: 'commissionPaidDate',
+}))
 
 const shouldLoadDetail = computed(
   () => activeTab.value === 'alquiler-por-mes' && detailDateRange.value != null,
 )
 
+/** Fila de la tabla: un mes en una moneda (soles y dólares van en filas separadas). */
+interface MonthCurrencyRow extends RentalsByMonthCurrencyTotals {
+  key: string
+  month: RentalsByMonthItem
+  /** Primera fila del mes: lleva el nombre del mes y los contratos */
+  first: boolean
+}
+
+const EMPTY_TOTALS = {
+  collectedCommissions: 0,
+  totalRevenue: 0,
+  companyRevenue: 0,
+  totalExpense: 0,
+  totalTax: 0,
+  totalExternalCommission: 0,
+  totalInternalCommission: 0,
+  totalUtility: 0,
+}
+
+const monthCurrencyRows = computed<MonthCurrencyRow[]>(() =>
+  rentalsByMonthRows.value.flatMap((m) => {
+    const totals = m.totalsByCurrency.length
+      ? m.totalsByCurrency
+      : [{ currency: 'PEN', ...EMPTY_TOTALS }]
+    return totals.map((t, i) => ({ ...t, key: `${m.year}-${m.month}-${t.currency}`, month: m, first: i === 0 }))
+  }),
+)
+
+/** Totales del período por moneda */
+const periodTotals = computed<RentalsByMonthCurrencyTotals[]>(() => {
+  const byCurrency = new Map<string, RentalsByMonthCurrencyTotals>()
+  for (const m of rentalsByMonthRows.value) {
+    for (const t of m.totalsByCurrency) {
+      const acc = byCurrency.get(t.currency) ?? { currency: t.currency, ...EMPTY_TOTALS }
+      byCurrency.set(t.currency, {
+        currency: t.currency,
+        collectedCommissions: acc.collectedCommissions + t.collectedCommissions,
+        totalRevenue: acc.totalRevenue + t.totalRevenue,
+        companyRevenue: acc.companyRevenue + t.companyRevenue,
+        totalExpense: acc.totalExpense + t.totalExpense,
+        totalTax: acc.totalTax + t.totalTax,
+        totalExternalCommission: acc.totalExternalCommission + t.totalExternalCommission,
+        totalInternalCommission: acc.totalInternalCommission + t.totalInternalCommission,
+        totalUtility: acc.totalUtility + t.totalUtility,
+      })
+    }
+  }
+  const list = [...byCurrency.values()].sort((a, b) => a.currency.localeCompare(b.currency))
+  return list.length ? list : [{ currency: 'PEN', ...EMPTY_TOTALS }]
+})
+
+const periodSummaryCards = (t: RentalsByMonthCurrencyTotals) => [
+  { label: 'Ingreso', icon: 'lucide:circle-plus', value: t.companyRevenue, negative: false },
+  { label: 'Gastos', icon: 'lucide:minus-circle', value: t.totalExpense, negative: true },
+  { label: 'Impuestos', icon: 'lucide:receipt', value: t.totalTax, negative: true },
+  { label: 'Com. externo', icon: 'lucide:user-round-cog', value: t.totalExternalCommission, negative: true },
+  { label: 'Com. interno', icon: 'lucide:user-check', value: t.totalInternalCommission, negative: true },
+]
+
 function canExpandMonth(row: RentalsByMonthItem) {
-  return row.newContracts > 0 || row.companyRevenue > 0
+  return row.totalsByCurrency.some((t) => t.collectedCommissions > 0)
 }
 
 function toggleMonthDetail(row: RentalsByMonthItem) {
@@ -291,8 +354,8 @@ const allRentalDetails = computed(() => financialDistributionQuery.data.value ??
 
 function getRentalsForMonth(row: RentalsByMonthItem): FinancialDistributionReportItem[] {
   return allRentalDetails.value.filter((item) => {
-    if (!item.contractStartDate) return false
-    const d = parseCalendarDate(item.contractStartDate)
+    if (!item.commissionPaidDate) return false
+    const d = parseCalendarDate(item.commissionPaidDate)
     return d.getFullYear() === row.year && d.getMonth() + 1 === row.month
   })
 }
@@ -375,11 +438,13 @@ async function handleExportTab() {
           : String(p.year ?? yearFilter.value)
 
     await exportToExcel({
-      fileName: `alquiler_por_mes_${fileLabel}_${now}`,
-      sheetName: 'Alquiler por Mes',
+      fileName: `comisiones_alquileres_${fileLabel}_${now}`,
+      sheetName: 'Comisiones de alquileres',
       columns: [
         { header: 'Mes', key: 'monthName', width: 16 },
-        { header: 'Ingreso (monto base)', key: 'companyRevenue', width: 22 },
+        { header: 'Moneda', key: 'currency', width: 10 },
+        { header: 'Comisiones cobradas', key: 'collectedCommissions', width: 20 },
+        { header: 'Ingreso', key: 'companyRevenue', width: 18 },
         { header: 'Gastos', key: 'totalExpense', width: 16 },
         { header: 'Impuestos', key: 'totalTax', width: 16 },
         { header: 'Comisión ag. externo', key: 'totalExternalCommission', width: 22 },
@@ -387,20 +452,24 @@ async function handleExportTab() {
         { header: RENTAL_UTILITY_NET_SHORT_LABEL, key: 'totalUtility', width: 22 },
         { header: 'Contratos nuevos', key: 'newContracts', width: 18 },
         { header: 'Activos al cierre', key: 'activeAtEndOfMonth', width: 18 },
-        { header: 'Moneda', key: 'currency', width: 10 },
       ],
-      rows: data.map((r: RentalsByMonthItem) => ({
-        monthName: r.monthName,
-        companyRevenue: r.companyRevenue,
-        totalExpense: r.totalExpense,
-        totalTax: r.totalTax,
-        totalExternalCommission: r.totalExternalCommission,
-        totalInternalCommission: r.totalInternalCommission,
-        totalUtility: r.totalUtility,
-        newContracts: r.newContracts,
-        activeAtEndOfMonth: r.activeAtEndOfMonth,
-        currency: r.currency,
-      })),
+      rows: data.flatMap((r: RentalsByMonthItem) =>
+        (r.totalsByCurrency.length ? r.totalsByCurrency : [{ currency: 'PEN', ...EMPTY_TOTALS }]).map(
+          (t) => ({
+            monthName: r.monthName,
+            currency: t.currency,
+            collectedCommissions: t.collectedCommissions,
+            companyRevenue: t.companyRevenue,
+            totalExpense: t.totalExpense,
+            totalTax: t.totalTax,
+            totalExternalCommission: t.totalExternalCommission,
+            totalInternalCommission: t.totalInternalCommission,
+            totalUtility: t.totalUtility,
+            newContracts: r.newContracts,
+            activeAtEndOfMonth: r.activeAtEndOfMonth,
+          }),
+        ),
+      ),
     })
   }
 }
@@ -636,7 +705,7 @@ async function handleExportTab() {
           </template>
         </template>
 
-        <!-- Alquiler por mes -->
+        <!-- Comisiones de alquileres (ingreso por intermediación) -->
         <template v-else-if="activeTab === 'alquiler-por-mes'">
           <!-- Header -->
           <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
@@ -648,10 +717,10 @@ async function handleExportTab() {
               </div>
               <div>
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">
-                  Ingresos por alquileres por mes
+                  Comisiones de alquileres
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                  Contratos nuevos, vencidos, activos y el ingreso único que la empresa recibe al concretar cada alquiler
+                  Ingreso por intermediación en el mes en que se cobró cada comisión. Soles y dólares se muestran por separado.
                 </p>
               </div>
             </div>
@@ -721,83 +790,61 @@ async function handleExportTab() {
           </div>
 
           <template v-else>
-          <!-- Totales rápidos -->
-          <div
-            v-if="rentalsByMonthRows.length > 0"
-            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5"
-          >
+          <!-- Totales del período por moneda (sin conversión) -->
+          <div v-if="rentalsByMonthRows.length > 0" class="space-y-3 mb-5">
             <div
-              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
+              v-for="t in periodTotals"
+              :key="t.currency"
+              class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
             >
-              <div class="flex items-center gap-1.5 mb-1">
-                <AppIcon icon="lucide:circle-plus" :size="14" color="var(--color-primary)" />
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Ingreso</p>
+              <div
+                v-for="card in periodSummaryCards(t)"
+                :key="card.label"
+                class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
+              >
+                <div class="flex items-center gap-1.5 mb-1">
+                  <AppIcon :icon="card.icon" :size="14" :color="card.negative ? 'var(--color-text-muted)' : 'var(--color-primary)'" />
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    {{ card.label }}<template v-if="periodTotals.length > 1"> · {{ t.currency }}</template>
+                  </p>
+                </div>
+                <p
+                  class="text-base font-bold"
+                  :class="card.negative ? 'text-gray-800 dark:text-white/90' : 'text-brand-500 dark:text-brand-400'"
+                >
+                  <template v-if="card.negative">− </template>{{ formatCurrency(card.value, t.currency) }}
+                </p>
+                <p v-if="!card.negative" class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
+                  {{ t.collectedCommissions }} {{ t.collectedCommissions === 1 ? 'comisión cobrada' : 'comisiones cobradas' }}
+                </p>
               </div>
-              <p class="text-base font-bold text-brand-500 dark:text-brand-400">
-                {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.companyRevenue, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-              </p>
-            </div>
-            <div
-              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
-            >
-              <div class="flex items-center gap-1.5 mb-1">
-                <AppIcon icon="lucide:minus-circle" :size="14" color="var(--color-text-muted)" />
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Gastos</p>
+              <div class="rounded-xl p-3 bg-brand-50 dark:bg-brand-500/12 border border-brand-500">
+                <div class="flex items-center gap-1.5 mb-1">
+                  <AppIcon icon="lucide:circle-check" :size="14" color="var(--color-primary)" />
+                  <p class="text-xs font-medium text-brand-500 dark:text-brand-400">
+                    {{ RENTAL_UTILITY_NET_SHORT_LABEL }}<template v-if="periodTotals.length > 1"> · {{ t.currency }}</template>
+                  </p>
+                </div>
+                <p class="text-base font-bold text-brand-500 dark:text-brand-400">
+                  {{ formatCurrency(t.totalUtility, t.currency) }}
+                </p>
               </div>
-              <p class="text-base font-bold text-gray-800 dark:text-white/90">
-                − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExpense, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-              </p>
-            </div>
-            <div
-              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
-            >
-              <div class="flex items-center gap-1.5 mb-1">
-                <AppIcon icon="lucide:receipt" :size="14" color="var(--color-text-muted)" />
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Impuestos</p>
-              </div>
-              <p class="text-base font-bold text-gray-800 dark:text-white/90">
-                − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalTax, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-              </p>
-            </div>
-            <div
-              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
-            >
-              <div class="flex items-center gap-1.5 mb-1">
-                <AppIcon icon="lucide:user-round-cog" :size="14" color="var(--color-text-muted)" />
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Com. externo</p>
-              </div>
-              <p class="text-base font-bold text-gray-800 dark:text-white/90">
-                − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-              </p>
-            </div>
-            <div
-              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
-            >
-              <div class="flex items-center gap-1.5 mb-1">
-                <AppIcon icon="lucide:user-check" :size="14" color="var(--color-text-muted)" />
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Com. interno</p>
-              </div>
-              <p class="text-base font-bold text-gray-800 dark:text-white/90">
-                − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalInternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-              </p>
-            </div>
-            <div
-              class="rounded-xl p-3 bg-brand-50 dark:bg-brand-500/12 border border-brand-500"
-            >
-              <div class="flex items-center gap-1.5 mb-1">
-                <AppIcon icon="lucide:circle-check" :size="14" color="var(--color-primary)" />
-                <p class="text-xs font-medium text-brand-500 dark:text-brand-400">{{ RENTAL_UTILITY_NET_SHORT_LABEL }}</p>
-              </div>
-              <p class="text-base font-bold text-brand-500 dark:text-brand-400">
-                {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalUtility, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-              </p>
             </div>
           </div>
 
-          <p
-            class="text-xs mb-3 text-gray-400 dark:text-gray-500"
-          >
-            Haz clic en un mes con ingresos para desplegar el detalle de cada alquiler (mismas columnas).
+          <!-- Comparación mes a mes -->
+          <CommissionsBarChart
+            v-if="filterMode !== 'month'"
+            class="mb-5"
+            :data="rentalsByMonthRows"
+            :loading="rentalsByMonthQuery.isPending.value"
+            :format-amount="formatCurrency"
+          />
+
+          <p class="text-xs mb-3 text-gray-400 dark:text-gray-500">
+            Cada ingreso se ubica en el mes de su fecha de cobro (no en el inicio del contrato); las comisiones pendientes no cuentan hasta marcarlas como pagadas en
+            <router-link :to="{ name: 'alquileres-comisiones' }" class="text-brand-500 dark:text-brand-400">Comisiones</router-link>.
+            Haz clic en un mes con cobros para ver el detalle de cada alquiler.
           </p>
 
           <div class="overflow-x-auto">
@@ -807,7 +854,7 @@ async function handleExportTab() {
                   <TableCell is-header class="text-left py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Período</TableCell>
                   <TableCell is-header class="text-right py-3 px-4 font-semibold text-brand-500 dark:text-brand-400">
                     Ingreso
-                    <span class="block text-xs font-normal text-gray-400 dark:text-gray-500">(monto base)</span>
+                    <span class="block text-xs font-normal text-gray-400 dark:text-gray-500">(comisiones cobradas)</span>
                   </TableCell>
                   <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Gastos</TableCell>
                   <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Impuestos</TableCell>
@@ -835,48 +882,59 @@ async function handleExportTab() {
                 :columns="8"
               />
               <TableBody v-else>
-                <template v-for="row in rentalsByMonthRows" :key="`${row.year}-${row.month}`">
+                <template v-for="(row, idx) in monthCurrencyRows" :key="row.key">
                   <TableRow
                     class="transition-opacity"
-                    :class="[canExpandMonth(row) ? 'cursor-pointer hover:opacity-90' : '', (isMonthExpanded(row) ? '' : 'border-b border-gray-200 dark:border-gray-800'), (isMonthExpanded(row) ? 'bg-brand-50 dark:bg-brand-500/12' : '')]"
-                    @click="toggleMonthDetail(row)"
+                    :class="[
+                      canExpandMonth(row.month) ? 'cursor-pointer hover:opacity-90' : '',
+                      isMonthExpanded(row.month) || monthCurrencyRows[idx + 1]?.month === row.month ? '' : 'border-b border-gray-200 dark:border-gray-800',
+                      isMonthExpanded(row.month) ? 'bg-brand-50 dark:bg-brand-500/12' : '',
+                    ]"
+                    @click="toggleMonthDetail(row.month)"
                   >
                     <TableCell class="py-3 px-4 font-medium text-gray-800 dark:text-white/90">
                       <span class="inline-flex items-center gap-2">
                         <AppIcon
-                          v-if="canExpandMonth(row)"
-                          :icon="isMonthExpanded(row) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
+                          v-if="row.first && canExpandMonth(row.month)"
+                          :icon="isMonthExpanded(row.month) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
                           :size="14"
                           color="var(--color-text-muted)"
                         />
                         <span v-else class="w-3.5 shrink-0" />
-                        {{ row.monthName }}
+                        <template v-if="row.first">{{ row.month.monthName }}</template>
+                        <span
+                          v-if="row.month.totalsByCurrency.length > 1"
+                          class="text-xs font-normal text-gray-400 dark:text-gray-500"
+                        >{{ row.currency }}</span>
                       </span>
                     </TableCell>
                     <TableCell class="py-3 px-4 text-right font-semibold text-brand-500 dark:text-brand-400">
                       {{ formatCurrency(row.companyRevenue, row.currency) }}
+                      <span v-if="row.collectedCommissions" class="block text-xs font-normal text-gray-400 dark:text-gray-500">
+                        {{ row.collectedCommissions }} cobrada{{ row.collectedCommissions === 1 ? '' : 's' }}
+                      </span>
                     </TableCell>
                     <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
-                      {{ row.totalExpense > 0 ? `− ${formatCurrency(row.totalExpense, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                      − {{ formatCurrency(row.totalExpense, row.currency) }}
                     </TableCell>
                     <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
-                      {{ row.totalTax > 0 ? `− ${formatCurrency(row.totalTax, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                      − {{ formatCurrency(row.totalTax, row.currency) }}
                     </TableCell>
                     <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
-                      {{ row.totalExternalCommission > 0 ? `− ${formatCurrency(row.totalExternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                      − {{ formatCurrency(row.totalExternalCommission, row.currency) }}
                     </TableCell>
                     <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
-                      {{ row.totalInternalCommission > 0 ? `− ${formatCurrency(row.totalInternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
+                      − {{ formatCurrency(row.totalInternalCommission, row.currency) }}
                     </TableCell>
                     <TableCell :class="(row.totalUtility >= 0) ? 'text-brand-500 dark:text-brand-400' : 'text-error-500 dark:text-error-400'" class="py-3 px-4 text-right font-bold">
                       {{ formatCurrency(row.totalUtility, row.currency) }}
                     </TableCell>
                     <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
-                      {{ row.newContracts }} / {{ row.activeAtEndOfMonth }}
+                      <template v-if="row.first">{{ row.month.newContracts }} / {{ row.month.activeAtEndOfMonth }}</template>
                     </TableCell>
                   </TableRow>
 
-                  <template v-if="isMonthExpanded(row)">
+                  <template v-if="isMonthExpanded(row.month) && monthCurrencyRows[idx + 1]?.month !== row.month">
                     <TableRow class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
                       v-if="financialDistributionQuery.isFetching.value"
                     >
@@ -897,15 +955,15 @@ async function handleExportTab() {
                       </TableCell>
                     </TableRow>
                     <TableRow class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
-                      v-else-if="!getRentalsForMonth(row).length"
+                      v-else-if="!getRentalsForMonth(row.month).length"
                     >
                       <TableCell colspan="8" class="py-3 px-4 pl-10 text-sm text-gray-400 dark:text-gray-500">
-                        No hay alquileres concretados en este mes.
+                        No hay comisiones cobradas en este mes.
                       </TableCell>
                     </TableRow>
                     <template v-else>
                       <TableRow
-                        v-for="item in getRentalsForMonth(row)"
+                        v-for="item in getRentalsForMonth(row.month)"
                         :key="item.rentalId"
                         class="cursor-pointer hover:opacity-90 transition-opacity border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
                         @click.stop="goToRentalDetail(item.rentalId)"
@@ -915,7 +973,8 @@ async function handleExportTab() {
                           <p class="text-xs mt-0.5 line-clamp-2 text-gray-800 dark:text-white/90">{{ item.propertyAddress }}</p>
                           <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
                             {{ item.tenantName }}
-                            <span v-if="item.contractStartDate"> · {{ formatDate(item.contractStartDate) }}</span>
+                            <span v-if="item.commissionPaidDate"> · cobrada {{ formatDate(item.commissionPaidDate) }}</span>
+                            <span v-if="item.contractStartDate"> · inicio {{ formatDate(item.contractStartDate) }}</span>
                           </p>
                         </TableCell>
                         <TableCell class="py-2.5 px-4 text-right font-medium text-brand-500 dark:text-brand-400">
@@ -943,28 +1002,34 @@ async function handleExportTab() {
                 </template>
               </TableBody>
               <tfoot v-if="rentalsByMonthRows.length > 1">
-                <TableRow class="border-t-2 border-gray-200 dark:border-gray-800">
-                  <TableCell class="py-3 px-4 font-semibold text-gray-800 dark:text-white/90">Total</TableCell>
-                  <TableCell class="py-3 px-4 text-right font-bold text-brand-500 dark:text-brand-400">
-                    {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.companyRevenue, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </TableCell>
-                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
-                    − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExpense, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </TableCell>
-                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
-                    − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalTax, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </TableCell>
-                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
-                    − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </TableCell>
-                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
-                    − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalInternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+                <TableRow
+                  v-for="(t, i) in periodTotals"
+                  :key="t.currency"
+                  :class="i === 0 ? 'border-t-2 border-gray-200 dark:border-gray-800' : ''"
+                >
+                  <TableCell class="py-3 px-4 font-semibold text-gray-800 dark:text-white/90">
+                    Total<template v-if="periodTotals.length > 1"> {{ t.currency }}</template>
                   </TableCell>
                   <TableCell class="py-3 px-4 text-right font-bold text-brand-500 dark:text-brand-400">
-                    {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalUtility, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
+                    {{ formatCurrency(t.companyRevenue, t.currency) }}
                   </TableCell>
                   <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
-                    {{ rentalsByMonthRows.reduce((s, r) => s + r.newContracts, 0) }} / —
+                    − {{ formatCurrency(t.totalExpense, t.currency) }}
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
+                    − {{ formatCurrency(t.totalTax, t.currency) }}
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
+                    − {{ formatCurrency(t.totalExternalCommission, t.currency) }}
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
+                    − {{ formatCurrency(t.totalInternalCommission, t.currency) }}
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-bold text-brand-500 dark:text-brand-400">
+                    {{ formatCurrency(t.totalUtility, t.currency) }}
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
+                    <template v-if="i === 0">{{ rentalsByMonthRows.reduce((s, r) => s + r.newContracts, 0) }} / —</template>
                   </TableCell>
                 </TableRow>
               </tfoot>

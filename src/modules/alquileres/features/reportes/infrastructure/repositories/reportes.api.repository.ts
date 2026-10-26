@@ -4,6 +4,7 @@ import {
   type ActiveClientReportItem,
   type ContractExpiringItem,
   type ContractStatusSummary,
+  type FinancialDistributionDateField,
   type FinancialDistributionReportItem,
   type MonthlyMetrics,
   type PropertyWithoutContractItem,
@@ -83,6 +84,7 @@ export const reportesApiRepository: ReportesRepository = {
     status?: string,
     startDate?: string,
     endDate?: string,
+    dateField?: FinancialDistributionDateField,
   ) {
     return apiClient
       .get<FinancialDistributionReportItem[]>('/reports/financial-distribution', {
@@ -91,6 +93,7 @@ export const reportesApiRepository: ReportesRepository = {
           ...(status ? { status } : {}),
           ...(startDate ? { startDate } : {}),
           ...(endDate ? { endDate } : {}),
+          ...(dateField ? { dateField } : {}),
         },
       })
       .then((r) => r.data)

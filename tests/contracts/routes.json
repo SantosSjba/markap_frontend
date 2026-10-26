@@ -138,6 +138,22 @@
     "redirect": null
   },
   {
+    "path": "/alquileres/comisiones",
+    "name": "",
+    "meta": {
+      "title": "Comisiones"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/alquileres/comisiones",
+    "name": "alquileres-comisiones",
+    "meta": {
+      "title": "Comisiones"
+    },
+    "redirect": null
+  },
+  {
     "path": "/alquileres/configuracion",
     "name": "",
     "meta": {

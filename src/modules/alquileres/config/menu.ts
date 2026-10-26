@@ -134,17 +134,24 @@ export const ALQUILERES_MENUS: MenuItem[] = [
     ],
   },
   {
+    id: 'alquileres-comisiones',
+    label: 'Comisiones',
+    icon: 'percent',
+    path: '/alquileres/comisiones',
+    order: 6,
+  },
+  {
     id: 'alquileres-reportes',
     label: 'Reportes',
     icon: 'bar-chart',
     path: '/alquileres/reportes',
-    order: 6,
+    order: 7,
   },
   {
     id: 'alquileres-configuracion',
     label: 'Configuración',
     icon: 'settings',
     path: '/alquileres/configuracion',
-    order: 7,
+    order: 8,
   },
 ]

@@ -28,7 +28,7 @@ const {
 const form = ref({
   alert30Days: true,
   alert60Days: true,
-  alert90Days: false,
+  alert90Days: true,
   alertPendingPayment: true,
   alertOverduePayment: true,
   channelInApp: true,
@@ -98,9 +98,9 @@ const tabs = [
               <p class="text-xs text-gray-400 dark:text-gray-500">Configura cuándo recibir alertas sobre contratos</p>
             </div>
           </div>
-          <ConfigToggleRow no-border v-model="form.alert30Days" title="Alerta a 30 días" description="Notificar cuando un contrato vence en 30 días" />
-          <ConfigToggleRow v-model="form.alert60Days" title="Alerta a 60 días" description="Notificar cuando un contrato vence en 60 días" />
-          <ConfigToggleRow v-model="form.alert90Days" title="Alerta a 90 días" description="Notificar cuando un contrato vence en 90 días" />
+          <ConfigToggleRow no-border v-model="form.alert30Days" title="Aviso a 1 mes" description="Notificar cuando al contrato le quedan 30 días o menos" />
+          <ConfigToggleRow v-model="form.alert60Days" title="Aviso a 2 meses" description="Notificar cuando al contrato le quedan entre 31 y 60 días" />
+          <ConfigToggleRow v-model="form.alert90Days" title="Aviso a 3 meses" description="Notificar cuando al contrato le quedan entre 61 y 90 días" />
         </BaseCard>
 
         <!-- Alertas de Cobranza -->

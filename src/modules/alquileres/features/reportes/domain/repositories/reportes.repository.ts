@@ -2,6 +2,7 @@ import type {
   ActiveClientReportItem,
   ContractExpiringItem,
   ContractStatusSummary,
+  FinancialDistributionDateField,
   FinancialDistributionReportItem,
   MonthlyMetrics,
   PropertyWithoutContractItem,
@@ -27,5 +28,6 @@ export interface ReportesRepository {
     status?: string,
     startDate?: string,
     endDate?: string,
+    dateField?: FinancialDistributionDateField,
   ) => Promise<FinancialDistributionReportItem[]>
 }

@@ -8,6 +8,7 @@ import FormSectionCard from '@shared/presentation/components/forms/FormSectionCa
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import OptionCardGroup from '@shared/presentation/components/forms/OptionCardGroup.vue'
 import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
 import { usePropertiesList } from '../../../propiedades/presentation/composables/useProperties'
@@ -56,6 +57,9 @@ type RentalFormValues = {
   status: string
   enableExpirationAlerts: boolean
   enableCollectionAlerts: boolean
+  commissionStatus: 'PENDING' | 'PAID'
+  commissionDueDate: string
+  commissionPaidDate: string
 }
 
 const isEditing = computed(() => !!props.initial)
@@ -95,6 +99,17 @@ const schema = yup.object({
   status: yup.string().oneOf(['ACTIVE', 'EXPIRED', 'CANCELLED']).required(),
   enableExpirationAlerts: yup.boolean().required(),
   enableCollectionAlerts: yup.boolean().required(),
+  commissionStatus: yup.string().oneOf(['PENDING', 'PAID']).required(),
+  commissionDueDate: yup.string(),
+  commissionPaidDate: yup
+    .string()
+    .test(
+      'paid-needs-date',
+      'Indique la fecha en que se cobró la comisión',
+      function (value) {
+        return this.parent.commissionStatus !== 'PAID' || !!value
+      },
+    ),
 })
 
 const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } =
@@ -113,6 +128,9 @@ const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, reset
       status: 'ACTIVE',
       enableExpirationAlerts: true,
       enableCollectionAlerts: true,
+      commissionStatus: 'PENDING',
+      commissionDueDate: '',
+      commissionPaidDate: '',
     },
   })
 
@@ -125,6 +143,23 @@ const securityDepositBinds = defineComponentBinds('securityDeposit')
 const paymentDueDayBinds = defineComponentBinds('paymentDueDay')
 const notesBinds = defineComponentBinds('notes')
 const statusBinds = defineComponentBinds('status')
+const commissionDueDateBinds = defineComponentBinds('commissionDueDate')
+const commissionPaidDateBinds = defineComponentBinds('commissionPaidDate')
+
+const commissionStatusOptions = [
+  {
+    value: 'PENDING',
+    label: 'Pendiente de pago',
+    description: 'Se cobrará más adelante; puede indicar la fecha estimada',
+    icon: 'lucide:clock',
+  },
+  {
+    value: 'PAID',
+    label: 'Pagada',
+    description: 'Ya se recibió; el ingreso cuenta en el mes de la fecha de cobro',
+    icon: 'lucide:circle-check',
+  },
+]
 
 const tenantIds = ref<string[]>([''])
 const tenantIdsError = ref<string | undefined>()
@@ -200,6 +235,9 @@ watch(
         status: r.status ?? 'ACTIVE',
         enableExpirationAlerts: r.enableExpirationAlerts ?? true,
         enableCollectionAlerts: r.enableCollectionAlerts ?? true,
+        commissionStatus: r.commissionStatus ?? 'PENDING',
+        commissionDueDate: r.commissionDueDate ? toCalendarDateString(r.commissionDueDate) : '',
+        commissionPaidDate: r.commissionPaidDate ? toCalendarDateString(r.commissionPaidDate) : '',
       },
     })
     const ids = r.tenants?.length ? r.tenants.map((t) => t.id) : r.tenant?.id ? [r.tenant.id] : []
@@ -280,6 +318,9 @@ const onSubmit = handleSubmit(
       notes: v.notes?.trim() || null,
       enableExpirationAlerts: v.enableExpirationAlerts,
       enableCollectionAlerts: v.enableCollectionAlerts,
+      commissionStatus: v.commissionStatus,
+      commissionDueDate: v.commissionDueDate || null,
+      commissionPaidDate: v.commissionStatus === 'PAID' ? v.commissionPaidDate || null : null,
     })
   },
   // Con errores en el resto del formulario, mostrar también los de inquilinos
@@ -395,6 +436,35 @@ const onSubmit = handleSubmit(
         </p>
       </FormSectionCard>
 
+      <FormSectionCard
+        title="Comisión (ingreso)"
+        subtitle="Cobro del ingreso de la distribución financiera; se registra una sola vez"
+      >
+        <OptionCardGroup
+          :model-value="values.commissionStatus"
+          :options="commissionStatusOptions"
+          @update:model-value="setFieldValue('commissionStatus', $event as RentalFormValues['commissionStatus'])"
+        />
+        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormInput
+            v-bind="commissionDueDateBinds"
+            type="date"
+            label="Fecha estimada de cobro"
+            hint="Para el seguimiento en Comisiones"
+            :error="errors.commissionDueDate"
+          />
+          <FormInput
+            v-if="values.commissionStatus === 'PAID'"
+            v-bind="commissionPaidDateBinds"
+            type="date"
+            label="Fecha de cobro"
+            hint="Define el mes del ingreso en los reportes"
+            :error="errors.commissionPaidDate"
+            required
+          />
+        </div>
+      </FormSectionCard>
+
       <slot name="attachments" />
 
       <RentalContractAlertSettings
@@ -442,6 +512,14 @@ const onSubmit = handleSubmit(
                 {{ formatMoney(toNum(values.securityDeposit), values.currency) }}
               </dd>
             </div>
+          </div>
+          <div>
+            <dt class="text-theme-xs text-gray-400 dark:text-gray-500">Comisión</dt>
+            <dd class="mt-1">
+              <Badge :variant="values.commissionStatus === 'PAID' ? 'success' : 'warning'">
+                {{ values.commissionStatus === 'PAID' ? 'Pagada' : 'Pendiente de pago' }}
+              </Badge>
+            </dd>
           </div>
           <div>
             <dt class="text-theme-xs text-gray-400 dark:text-gray-500">Alertas</dt>
