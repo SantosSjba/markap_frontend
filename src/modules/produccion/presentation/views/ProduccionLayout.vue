@@ -17,7 +17,7 @@ const applicationInfo = computed(() =>
         icon: application.value.icon,
         color: application.value.color,
       }
-    : { name: 'Producción de Muebles', slug: 'produccion', icon: 'package', color: '#F4B740' },
+    : { name: 'MOCZ · Muebles Orgánicos CZ', slug: 'produccion', icon: 'package', color: '#F4B740' },
 )
 </script>
 

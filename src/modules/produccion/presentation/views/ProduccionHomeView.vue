@@ -141,7 +141,7 @@ const dashboardErrorDetail = computed(() =>
 <template>
   <div class="space-y-6 w-full">
     <PageHeader
-      title="Producción de muebles"
+      title="MOCZ · Muebles Orgánicos CZ"
     >
       <template #subtitle>
         Control de órdenes, inventario y planta

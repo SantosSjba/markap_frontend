@@ -24,7 +24,7 @@ export const produccionRoutes: RouteRecordRaw[] = [
         path: '',
         name: 'produccion-home',
         component: () => import('../views/ProduccionHomeView.vue'),
-        meta: { title: 'Producción de muebles' },
+        meta: { title: 'MOCZ · Muebles Orgánicos CZ' },
       },
       {
         path: 'perfil',
