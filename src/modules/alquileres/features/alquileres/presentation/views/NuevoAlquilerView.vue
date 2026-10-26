@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
@@ -33,7 +35,6 @@ type NuevoRentalFormValues = {
 
 const route = useRoute()
 const router = useRouter()
-const appColor = 'var(--color-primary)'
 
 const listPropertiesParams = ref({
   applicationSlug: 'alquileres' as const,
@@ -245,29 +246,16 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
-    <div class="flex items-center gap-4 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" color="currentColor" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Alquiler
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Registrar un nuevo alquiler
-        </p>
-      </div>
-    </div>
+  <div >
+    <PageHeader
+      title="Alquiler"
+      subtitle="Registrar un nuevo alquiler"
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <AppIcon icon="line-md:loading-loop" :size="32" :color="appColor" />
-    </div>
+    <LoadingState v-if="loading" class="py-12" />
 
     <form v-else @submit.prevent="onSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2 space-y-6">
@@ -391,29 +379,26 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
 
       <!-- Resumen -->
       <div class="lg:col-span-1">
-        <div
-          class="p-5 rounded-xl border sticky top-4"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        <FormSectionCard
+          title="Resumen del Contrato"
+          dense
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
-            Resumen del Contrato
-          </h2>
           <dl class="space-y-3 text-sm">
             <div>
-              <dt class="font-medium" :style="{ color: 'var(--color-text-muted)' }">Propiedad</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ selectedPropertyLabel }}</dd>
+              <dt class="font-medium text-gray-400 dark:text-gray-500">Propiedad</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ selectedPropertyLabel }}</dd>
             </div>
             <div>
-              <dt class="font-medium" :style="{ color: 'var(--color-text-muted)' }">Inquilino</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ selectedTenantsLabel }}</dd>
+              <dt class="font-medium text-gray-400 dark:text-gray-500">Inquilino</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ selectedTenantsLabel }}</dd>
             </div>
             <div>
-              <dt class="font-medium" :style="{ color: 'var(--color-text-muted)' }">Vigencia</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ vigenciaLabel }}</dd>
+              <dt class="font-medium text-gray-400 dark:text-gray-500">Vigencia</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ vigenciaLabel }}</dd>
             </div>
             <div>
-              <dt class="font-medium" :style="{ color: 'var(--color-text-muted)' }">Monto Mensual</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ montoLabel }}</dd>
+              <dt class="font-medium text-gray-400 dark:text-gray-500">Monto Mensual</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ montoLabel }}</dd>
             </div>
           </dl>
           <div class="mt-6 flex flex-col gap-3">
@@ -430,7 +415,7 @@ const onSubmit = handleSubmit(async (formValues: NuevoRentalFormValues) => {
               Cancelar
             </BaseButton>
           </div>
-        </div>
+        </FormSectionCard>
       </div>
     </form>
   </div>

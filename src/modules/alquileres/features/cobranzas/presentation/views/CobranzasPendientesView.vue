@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
+import Avatar from '@shared/presentation/components/ui/Avatar.vue'
 import { paymentsRepositoryKey } from '../../application/ports/payments.port'
 import { useService } from '@shared/presentation/di/services'
 import { ref, computed } from 'vue'
@@ -189,31 +193,8 @@ function formatDate(dateStr: string) {
   return formatShortDate(dateStr)
 }
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-}
 
-const avatarColors = [
-  '#6366f1',
-  '#8b5cf6',
-  '#ec4899',
-  '#f59e0b',
-  '#10b981',
-  '#14b8a6',
-  '#3b82f6',
-  '#f97316',
-]
 
-function getAvatarColor(name: string) {
-  let hash = 0
-  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % avatarColors.length
-  return avatarColors[Math.abs(hash)]
-}
 
 function getPaymentActions(item: PendingPaymentItem) {
   const actions = []
@@ -275,12 +256,12 @@ async function handleExport() {
 <template>
   <div class="flex flex-col gap-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Cobranzas</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">Seguimiento de pagos de alquiler</p>
-      </div>
-      <div class="flex items-center gap-2">
+    <PageHeader
+      title="Cobranzas"
+      subtitle="Seguimiento de pagos de alquiler"
+    >
+      <template #actions>
+        <div class="flex items-center gap-2">
         <BaseButton
           variant="outline"
           class="flex items-center gap-2"
@@ -291,23 +272,16 @@ async function handleExport() {
           <ExcelIcon class="w-5 h-5" />
           Exportar
         </BaseButton>
-        <button
-          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover-surface"
-          :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }"
-          @click="router.push({ name: 'alquileres-cobranzas-historial' })"
-        >
-          <AppIcon icon="lucide:history" :size="16" />
-          Ver Historial
-        </button>
+        <BaseButton @click="router.push({ name: 'alquileres-cobranzas-historial' })" variant="secondary" size="sm" icon="lucide:history">Ver Historial</BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div
       v-if="statsQueryError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
       <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
     </div>
 
@@ -352,19 +326,18 @@ async function handleExport() {
     </div>
 
     <!-- Tabla -->
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <template v-if="listQueryError">
         <div class="flex flex-col items-center justify-center py-16 gap-3 px-4 text-center">
           <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-          <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <p class="text-sm font-medium max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
           <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
       </template>
 
       <template v-else>
         <div
-          class="hidden lg:grid grid-cols-[2fr_2fr_1.5fr_1fr_1fr_auto] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b"
-          :style="{ color: 'var(--color-text-muted)', borderColor: 'var(--color-border)' }"
+          class="hidden lg:grid grid-cols-[2fr_2fr_1.5fr_1fr_1fr_auto] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-800"
         >
           <span>Inquilino</span>
           <span>Propiedad</span>
@@ -386,42 +359,36 @@ async function handleExport() {
           class="flex flex-col items-center justify-center py-16 gap-3"
         >
           <AppIcon icon="lucide:circle-check-big" :size="48" color="var(--color-text-muted)" />
-          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No hay pagos pendientes</p>
+          <p class="text-sm text-gray-400 dark:text-gray-500">No hay pagos pendientes</p>
         </div>
 
         <div
           v-else
           v-for="item in payments"
           :key="item.paymentId"
-          class="grid grid-cols-1 lg:grid-cols-[2fr_2fr_1.5fr_1fr_1fr_auto] gap-4 px-5 py-4 border-b transition-colors hover-surface items-center"
-          :style="{ borderColor: 'var(--color-border)' }"
+          class="grid grid-cols-1 lg:grid-cols-[2fr_2fr_1.5fr_1fr_1fr_auto] gap-4 px-5 py-4 border-b transition-colors hover-surface items-center border-gray-200 dark:border-gray-800"
         >
           <!-- Inquilino -->
           <div class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-              :style="{ backgroundColor: getAvatarColor(item.tenantName) }"
-            >
-              {{ getInitials(item.tenantName) }}
-            </div>
+            <Avatar :name="item.tenantName" />
             <div>
-              <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ item.tenantName }}</p>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ item.tenantHistoryNote ?? 'Sin historial' }}</p>
+              <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ item.tenantName }}</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500">{{ item.tenantHistoryNote ?? 'Sin historial' }}</p>
             </div>
           </div>
 
           <!-- Propiedad -->
           <div>
-            <p class="text-sm" :style="{ color: 'var(--color-text-primary)' }">{{ item.propertyAddress }}</p>
-            <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Prop. {{ item.ownerName }}</p>
+            <p class="text-sm text-gray-800 dark:text-white/90">{{ item.propertyAddress }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">Prop. {{ item.ownerName }}</p>
           </div>
 
           <!-- Período -->
           <div class="flex items-center gap-2">
             <AppIcon icon="lucide:calendar" :size="16" color="var(--color-text-muted)" class="flex-shrink-0" />
             <div>
-              <p class="text-sm" :style="{ color: 'var(--color-text-primary)' }">{{ item.periodLabel }}</p>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Vence: {{ formatDate(item.dueDate) }}</p>
+              <p class="text-sm text-gray-800 dark:text-white/90">{{ item.periodLabel }}</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500">Vence: {{ formatDate(item.dueDate) }}</p>
             </div>
           </div>
 
@@ -432,25 +399,17 @@ async function handleExport() {
 
           <!-- Monto -->
           <div class="text-right">
-            <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">{{ formatCurrency(item.amount, item.currency) }}</p>
+            <p class="text-sm font-semibold text-gray-800 dark:text-white/90">{{ formatCurrency(item.amount, item.currency) }}</p>
           </div>
 
           <!-- Acciones -->
           <div class="flex items-center gap-2 justify-end">
-            <button
-              v-if="item.status !== 'PAID'"
-              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white transition-colors"
-              :style="{ backgroundColor: 'var(--color-primary)' }"
-              @click="openModal(item)"
-            >
-              <AppIcon icon="lucide:credit-card" :size="16" />
-              Pagar
-            </button>
+            <BaseButton v-if="item.status !== 'PAID'" @click="openModal(item)" size="sm" icon="lucide:credit-card">Pagar</BaseButton>
             <ActionsDropdown :items="getPaymentActions(item)" />
           </div>
         </div>
       </template>
-    </div>
+    </BaseCard>
 
     <!-- Modal Registrar Pago -->
     <BaseModal v-model="showModal" size="md" @close="closeModal">
@@ -465,31 +424,25 @@ async function handleExport() {
         <form id="cobranzas-pendientes-register-payment" @submit.prevent="onPaymentSubmit">
         <!-- Resumen del cobro -->
         <div
-          class="flex items-center gap-4 p-4 rounded-xl mb-5"
-          :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+          class="flex items-center gap-4 p-4 rounded-xl mb-5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
         >
-          <div
-            class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-            :style="{ backgroundColor: getAvatarColor(selectedPayment.tenantName) }"
-          >
-            {{ getInitials(selectedPayment.tenantName) }}
-          </div>
+          <Avatar :name="selectedPayment.tenantName" size="lg" />
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">
+            <p class="text-sm font-semibold truncate text-gray-800 dark:text-white/90">
               {{ selectedPayment.tenantName }}
             </p>
             <div class="flex items-center gap-1.5 mt-0.5">
               <AppIcon icon="lucide:map-pin" :size="12" color="var(--color-text-muted)" />
-              <p class="text-xs truncate" :style="{ color: 'var(--color-text-muted)' }">{{ selectedPayment.propertyAddress }}</p>
+              <p class="text-xs truncate text-gray-400 dark:text-gray-500">{{ selectedPayment.propertyAddress }}</p>
             </div>
             <div class="flex items-center gap-1.5 mt-0.5">
               <AppIcon icon="lucide:calendar" :size="12" color="var(--color-text-muted)" />
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ selectedPayment.periodLabel }}</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500">{{ selectedPayment.periodLabel }}</p>
             </div>
           </div>
           <div class="text-right shrink-0">
-            <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto</p>
-            <p class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
+            <p class="text-xs font-medium mb-0.5 text-gray-400 dark:text-gray-500">Monto</p>
+            <p class="text-xl font-bold text-gray-800 dark:text-white/90">
               {{ formatCurrency(selectedPayment.amount, selectedPayment.currency) }}
             </p>
           </div>
@@ -498,7 +451,7 @@ async function handleExport() {
         <!-- Sección: Datos del pago -->
         <div class="flex items-center gap-2 mb-3">
           <AppIcon icon="lucide:banknote" :size="15" color="var(--color-primary)" />
-          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Datos del pago</p>
+          <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Datos del pago</p>
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
           <FormInput v-bind="paidDateBinds" type="date" label="Fecha de pago" :error="paymentErrors.paidDate" required />
@@ -508,14 +461,14 @@ async function handleExport() {
         <!-- Método de pago -->
         <div class="flex items-center gap-2 mb-3">
           <AppIcon icon="lucide:wallet" :size="15" color="var(--color-primary)" />
-          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Método de pago</p>
+          <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Método de pago</p>
         </div>
         <FormSelect v-bind="paymentMethodBinds" :options="paymentMethodOptions" label="" :error="paymentErrors.paymentMethod" required class="mb-4" />
 
         <!-- Sección: Referencia y notas -->
         <div class="flex items-center gap-2 mb-3">
           <AppIcon icon="lucide:notebook-pen" :size="15" color="var(--color-primary)" />
-          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Referencia y notas</p>
+          <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Referencia y notas</p>
         </div>
         <FormInput
           v-bind="referenceNumberBinds"
@@ -533,14 +486,9 @@ async function handleExport() {
           :rows="2"
         />
 
-        <div
-          v-if="modalError"
-          class="mt-3 flex items-center gap-2 text-sm rounded-lg px-3 py-2"
-          :style="{ color: 'var(--color-error)', backgroundColor: 'rgba(239,68,68,0.1)' }"
-        >
-          <AppIcon icon="lucide:alert-circle" :size="14" />
+        <BaseAlert v-if="modalError" type="error" class="mt-3">
           {{ modalError }}
-        </div>
+        </BaseAlert>
         </form>
       </template>
 

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import { produccionCatalogRepositoryKey } from '../../../catalogo/application/ports/catalog.port'
 import { useService } from '@shared/presentation/di/services'
 import { formatDateTime } from '@shared/utils/formatters'
@@ -198,15 +201,13 @@ async function saveSnapshot() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Costeo de muebles</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          BOM × precio unitario + mano de obra + gastos adicionales.
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="space-y-6">
+    <PageHeader
+      title="Costeo de muebles"
+      subtitle="BOM × precio unitario + mano de obra + gastos adicionales."
+    >
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton variant="outline" :disabled="!furnitureId" :loading="snapshotMut.isPending.value" @click="saveSnapshot">
           Guardar snapshot
         </BaseButton>
@@ -214,25 +215,23 @@ async function saveSnapshot() {
           Guardar costeo
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div class="max-w-md">
-      <label class="block text-sm font-medium mb-1.5">Mueble</label>
-      <select
-        v-model="selectedId"
-        class="w-full px-3 py-2 rounded-lg border text-sm"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
-        <option value="">Seleccione un mueble…</option>
-        <option v-for="opt in furnitureOptions" :key="opt.id" :value="opt.id">{{ opt.label }}</option>
-      </select>
+      <FormSelect
+        :model-value="selectedId"
+        @update:model-value="selectedId = ($event as string | null) ?? ''"
+        :options="[{ value: '', label: 'Seleccione un mueble…' }, ...(furnitureOptions).map((x) => ({ value: x.id, label: x.label }))]"
+        label="Mueble"
+      />
     </div>
 
-    <div v-if="!furnitureId" class="text-sm py-8 text-center" :style="{ color: 'var(--color-text-secondary)' }">
+    <div v-if="!furnitureId" class="text-sm py-8 text-center text-gray-500 dark:text-gray-400">
       Seleccione un mueble para ver y editar su costeo.
     </div>
 
-    <div v-else-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando costeo…</div>
+    <div v-else-if="isLoading" class="text-sm text-gray-500 dark:text-gray-400">Cargando costeo…</div>
 
     <template v-else-if="costing">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -242,19 +241,16 @@ async function saveSnapshot() {
         <StatsCard title="Costo total" :value="formatSol(previewTotals?.totalCost ?? costing.totals.totalCost)" />
       </div>
 
-      <div
-        class="p-4 rounded-xl border flex flex-wrap gap-4 justify-between items-center"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
+      <BaseCard padding="sm" class="flex flex-wrap gap-4 justify-between items-center flex-row">
         <div>
           <p class="text-sm font-semibold">{{ costing.furnitureCode }} · {{ costing.furnitureName }}</p>
-          <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+          <p class="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
             Precio ref. {{ formatSol(costing.referencePrice) }}
           </p>
         </div>
         <div class="text-right">
           <p class="text-sm">Margen estimado</p>
-          <p class="text-lg font-bold" :style="{ color: (previewTotals?.marginAmount ?? 0) >= 0 ? 'var(--color-success)' : 'var(--color-error)' }">
+          <p :class="((previewTotals?.marginAmount ?? 0) >= 0) ? 'text-success-600 dark:text-success-500' : 'text-error-500 dark:text-error-400'" class="text-lg font-bold">
             {{ formatSol(previewTotals?.marginAmount ?? costing.totals.marginAmount) }}
             ({{ formatPercent(previewTotals?.marginPercent ?? costing.totals.marginPercent) }})
           </p>
@@ -266,18 +262,18 @@ async function saveSnapshot() {
         >
           Ver ficha del mueble
         </BaseButton>
-      </div>
+      </BaseCard>
 
       <!-- Materiales -->
-      <section class="rounded-xl border p-4 space-y-3" :style="{ borderColor: 'var(--color-border)' }">
+      <section class="rounded-xl border p-4 space-y-3 border-gray-200 dark:border-gray-800">
         <p class="text-sm font-semibold">Materiales (BOM)</p>
-        <div v-if="!costing.materials.length" class="text-sm text-center py-4" :style="{ color: 'var(--color-text-secondary)' }">
+        <div v-if="!costing.materials.length" class="text-sm text-center py-4 text-gray-500 dark:text-gray-400">
           Sin líneas BOM. Defínalas en la ficha del mueble.
         </div>
-        <div v-for="(m, idx) in costing.materials" :key="m.id" class="grid sm:grid-cols-12 gap-2 items-end text-sm border-b pb-3" :style="{ borderColor: 'var(--color-border)' }">
+        <div v-for="(m, idx) in costing.materials" :key="m.id" class="grid sm:grid-cols-12 gap-2 items-end text-sm border-b pb-3 border-gray-200 dark:border-gray-800">
           <div class="sm:col-span-5">
             <span class="font-medium">{{ m.materialName }}</span>
-            <span class="ml-2" :style="{ color: 'var(--color-text-secondary)' }">{{ m.quantity }} {{ m.unit }}</span>
+            <span class="ml-2 text-gray-500 dark:text-gray-400">{{ m.quantity }} {{ m.unit }}</span>
           </div>
           <div v-if="materialDrafts[idx]" class="sm:col-span-3">
             <FormInput v-model="materialDrafts[idx]!.unitCost" type="number" label="Costo unit. (S/)" />
@@ -295,7 +291,7 @@ async function saveSnapshot() {
       </section>
 
       <!-- Mano de obra -->
-      <section class="rounded-xl border p-4 space-y-3" :style="{ borderColor: 'var(--color-border)' }">
+      <section class="rounded-xl border p-4 space-y-3 border-gray-200 dark:border-gray-800">
         <div class="flex justify-between items-center">
           <p class="text-sm font-semibold">Mano de obra</p>
           <BaseButton variant="outline" size="sm" @click="addLabor">
@@ -304,16 +300,14 @@ async function saveSnapshot() {
         </div>
         <div v-for="line in laborLines" :key="line.key" class="grid sm:grid-cols-12 gap-2 items-end">
           <div class="sm:col-span-3">
-            <label class="text-xs font-medium">Tarifa</label>
-            <select
-              v-model="line.laborRateId"
-              class="w-full px-2 py-2 rounded-lg border text-sm mt-1"
-              :style="{ borderColor: 'var(--color-border)' }"
+            <FormSelect
+              :model-value="line.laborRateId"
+              @update:model-value="line.laborRateId = ($event as string | null) ?? ''"
+              :options="[{ value: '', label: 'Manual' }, ...(laborRates?.data ?? []).map((x) => ({ value: x.id, label: x.name }))]"
               @change="onLaborRateChange(line)"
-            >
-              <option value="">Manual</option>
-              <option v-for="r in laborRates?.data ?? []" :key="r.id" :value="r.id">{{ r.name }}</option>
-            </select>
+              size="sm"
+              label="Tarifa"
+            />
           </div>
           <div class="sm:col-span-3"><FormInput v-model="line.description" label="Descripción" /></div>
           <div class="sm:col-span-2"><FormInput v-model="line.hours" type="number" label="Horas" /></div>
@@ -325,7 +319,7 @@ async function saveSnapshot() {
       </section>
 
       <!-- Gastos -->
-      <section class="rounded-xl border p-4 space-y-3" :style="{ borderColor: 'var(--color-border)' }">
+      <section class="rounded-xl border p-4 space-y-3 border-gray-200 dark:border-gray-800">
         <div class="flex justify-between items-center">
           <p class="text-sm font-semibold">Gastos adicionales</p>
           <BaseButton variant="outline" size="sm" @click="addExtra">
@@ -334,30 +328,27 @@ async function saveSnapshot() {
         </div>
         <div v-for="line in extraLines" :key="line.key" class="grid sm:grid-cols-12 gap-2 items-end">
           <div class="sm:col-span-4">
-            <label class="text-xs font-medium">Del catálogo</label>
-            <select
-              v-model="line.catalogItemId"
-              class="w-full px-2 py-2 rounded-lg border text-sm mt-1"
-              :style="{ borderColor: 'var(--color-border)' }"
+            <FormSelect
+              :model-value="line.catalogItemId"
+              @update:model-value="line.catalogItemId = ($event as string | null) ?? ''"
+              :options="[{ value: '', label: 'Manual' }, ...(extraCatalog?.data ?? []).map((x) => ({ value: x.id, label: x.name }))]"
               @change="onExtraCatalogChange(line)"
-            >
-              <option value="">Manual</option>
-              <option v-for="e in extraCatalog?.data ?? []" :key="e.id" :value="e.id">{{ e.name }}</option>
-            </select>
+              size="sm"
+              label="Del catálogo"
+            />
           </div>
           <div class="sm:col-span-5"><FormInput v-model="line.description" label="Descripción" /></div>
           <div class="sm:col-span-3"><FormInput v-model="line.amount" type="number" label="Monto (S/)" /></div>
         </div>
       </section>
 
-      <section v-if="costing.recentSnapshots.length" class="rounded-xl border p-4" :style="{ borderColor: 'var(--color-border)' }">
+      <section v-if="costing.recentSnapshots.length" class="rounded-xl border p-4 border-gray-200 dark:border-gray-800">
         <p class="text-sm font-semibold mb-3">Snapshots recientes</p>
         <div class="space-y-2">
           <div
             v-for="sn in costing.recentSnapshots"
             :key="sn.id"
-            class="flex justify-between text-sm py-2 border-b"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="flex justify-between text-sm py-2 border-b border-gray-200 dark:border-gray-800"
           >
             <span>{{ sn.label || formatDateTime(sn.createdAt) }}</span>
             <span class="font-medium">{{ formatSol(sn.totalCost) }} · margen {{ formatPercent(sn.marginPercent) }}</span>

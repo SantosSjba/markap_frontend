@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed } from 'vue'
 import * as yup from 'yup'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
@@ -337,27 +339,25 @@ function printToPdf() {
     </PageHeader>
 
     <form
-      class="rounded-xl border p-4 space-y-4"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+      class="rounded-2xl border p-4 space-y-4 bg-white dark:bg-gray-dark border-gray-200 dark:border-gray-800"
       @submit.prevent="applyFilters"
     >
       <div class="flex items-center gap-2">
         <div
-          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)' }"
+          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-brand-500/12"
         >
           <AppIcon icon="lucide:calendar-range" :size="16" color="var(--color-primary)" />
         </div>
-        <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Período y agrupación</p>
+        <p class="text-sm font-medium text-gray-800 dark:text-white/90">Período y agrupación</p>
       </div>
       <div class="flex flex-wrap gap-4 items-end">
       <div class="min-w-[140px]">
         <FormInput label="Desde" type="date" v-bind="filterBinds.startDate" />
-        <p v-if="errors.startDate" class="text-xs text-red-600 mt-1">{{ errors.startDate }}</p>
+        <p v-if="errors.startDate" class="text-xs text-error-600 dark:text-error-500 mt-1">{{ errors.startDate }}</p>
       </div>
       <div class="min-w-[140px]">
         <FormInput label="Hasta" type="date" v-bind="filterBinds.endDate" />
-        <p v-if="errors.endDate" class="text-xs text-red-600 mt-1">{{ errors.endDate }}</p>
+        <p v-if="errors.endDate" class="text-xs text-error-600 dark:text-error-500 mt-1">{{ errors.endDate }}</p>
       </div>
       <div class="min-w-[180px]">
         <FormSelect
@@ -372,10 +372,7 @@ function printToPdf() {
 
     <BaseTabs v-model="activeTab" :tabs="reportTabs" />
 
-    <div
-      class="rounded-xl border p-6"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
+    <BaseCard class="block">
       <template v-if="activeTab === 'ventas-periodo'">
         <div class="space-y-4">
           <div class="flex flex-wrap gap-2 justify-end">
@@ -390,15 +387,12 @@ function printToPdf() {
               Excel
             </BaseButton>
           </div>
-          <div v-if="salesQuery.isLoading.value" class="flex justify-center py-12">
-            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-          </div>
+          <LoadingState v-if="salesQuery.isLoading.value" class="py-12" />
           <div
             v-else-if="salesQuery.isError.value"
-            class="rounded-lg border p-6 text-center space-y-3"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="rounded-lg border p-6 text-center space-y-3 border-gray-200 dark:border-gray-800"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(salesQuery.error.value) }}
             </p>
             <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => salesQuery.refetch()">Reintentar</BaseButton>
@@ -429,15 +423,12 @@ function printToPdf() {
               Excel
             </BaseButton>
           </div>
-          <div v-if="agentsQuery.isLoading.value" class="flex justify-center py-12">
-            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-          </div>
+          <LoadingState v-if="agentsQuery.isLoading.value" class="py-12" />
           <div
             v-else-if="agentsQuery.isError.value"
-            class="rounded-lg border p-6 text-center space-y-3"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="rounded-lg border p-6 text-center space-y-3 border-gray-200 dark:border-gray-800"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(agentsQuery.error.value) }}
             </p>
             <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => agentsQuery.refetch()">Reintentar</BaseButton>
@@ -471,15 +462,12 @@ function printToPdf() {
               Excel
             </BaseButton>
           </div>
-          <div v-if="conversionQuery.isLoading.value" class="flex justify-center py-12">
-            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-          </div>
+          <LoadingState v-if="conversionQuery.isLoading.value" class="py-12" />
           <div
             v-else-if="conversionQuery.isError.value"
-            class="rounded-lg border p-6 text-center space-y-3"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="rounded-lg border p-6 text-center space-y-3 border-gray-200 dark:border-gray-800"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(conversionQuery.error.value) }}
             </p>
             <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => conversionQuery.refetch()">Reintentar</BaseButton>
@@ -505,7 +493,7 @@ function printToPdf() {
                 <template #icon><AppIcon icon="lucide:x-circle" :size="20" color="var(--color-error)" /></template>
               </StatsCard>
             </div>
-            <h3 class="text-sm font-semibold pt-2" :style="{ color: 'var(--color-text-primary)' }">
+            <h3 class="text-sm font-semibold pt-2 text-gray-800 dark:text-white/90">
               Embudo actual (procesos ACTIVE por etapa)
             </h3>
             <DataTable
@@ -537,15 +525,12 @@ function printToPdf() {
               Excel
             </BaseButton>
           </div>
-          <div v-if="financialQuery.isLoading.value" class="flex justify-center py-12">
-            <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-          </div>
+          <LoadingState v-if="financialQuery.isLoading.value" class="py-12" />
           <div
             v-else-if="financialQuery.isError.value"
-            class="rounded-lg border p-6 text-center space-y-3"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="rounded-lg border p-6 text-center space-y-3 border-gray-200 dark:border-gray-800"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(financialQuery.error.value) }}
             </p>
             <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => financialQuery.refetch()">Reintentar</BaseButton>
@@ -590,7 +575,7 @@ function printToPdf() {
           </div>
         </div>
       </template>
-    </div>
+    </BaseCard>
   </div>
 </template>
 

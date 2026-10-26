@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { arquitecturaClientsRepositoryKey } from '../../application/ports/clients.port'
 import { useService } from '@shared/presentation/di/services'
 import { ref, computed, watch } from 'vue'
@@ -229,20 +232,13 @@ async function handleExport() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1
-          class="text-xl sm:text-2xl font-bold"
-          :style="{ color: 'var(--color-text-primary)' }"
-        >
-          Clientes
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Clientes residenciales y corporativos del estudio (DNI / RUC y contacto)
-        </p>
-      </div>
-      <div class="flex gap-2 w-full sm:w-auto">
+  <div class="space-y-6">
+    <PageHeader
+      title="Clientes"
+      subtitle="Clientes residenciales y corporativos del estudio (DNI / RUC y contacto)"
+    >
+      <template #actions>
+        <div class="flex gap-2 w-full sm:w-auto">
         <BaseButton
           variant="outline"
           class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
@@ -258,15 +254,15 @@ async function handleExport() {
           Nuevo cliente
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div v-if="loadingStats" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20" />
     <div
       v-else-if="statsQueryError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
       <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
     </div>
     <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -284,22 +280,14 @@ async function handleExport() {
       </StatsCard>
     </div>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-      }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <div class="overflow-x-auto">
-        <div v-if="loadingList" class="flex justify-center py-16 px-4">
-          <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-        </div>
+        <LoadingState v-if="loadingList" class="px-4" />
         <div
           v-else-if="listQueryError"
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
-          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
           <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
@@ -334,10 +322,10 @@ async function handleExport() {
                   <div class="flex items-center gap-3">
                     <Avatar :name="(row as ClientListItem).fullName" size="md" />
                     <div>
-                      <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                      <p class="font-medium text-gray-800 dark:text-white/90">
                         {{ (row as ClientListItem).fullName }}
                       </p>
-                      <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+                      <p class="text-xs text-gray-400 dark:text-gray-500">
                         {{ (row as ClientListItem).documentTypeCode }}: {{ (row as ClientListItem).documentNumber }}
                       </p>
                     </div>
@@ -346,11 +334,11 @@ async function handleExport() {
               </td>
               <td class="py-3 px-4">
                 <div class="flex flex-col gap-0.5 text-sm">
-                  <span class="flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
+                  <span class="flex items-center gap-1.5 text-gray-800 dark:text-white/90">
                     <AppIcon icon="lucide:phone" :size="16" color="var(--color-text-muted)" />
                     {{ (row as ClientListItem).primaryPhone }}
                   </span>
-                  <span class="flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
+                  <span class="flex items-center gap-1.5 text-gray-800 dark:text-white/90">
                     <AppIcon icon="lucide:mail" :size="16" color="var(--color-text-muted)" />
                     {{ (row as ClientListItem).primaryEmail }}
                   </span>
@@ -361,13 +349,13 @@ async function handleExport() {
                   {{ typeLabel((row as ClientListItem).clientType) }}
                 </Badge>
               </td>
-              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+              <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
                 <span class="inline-flex items-center gap-1">
                   <AppIcon icon="lucide:folder-kanban" :size="16" />
                   —
                 </span>
               </td>
-              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+              <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
                 <span class="inline-flex items-center gap-1">
                   <AppIcon icon="lucide:file-text" :size="16" />
                   —
@@ -383,7 +371,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!loadingList && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"
@@ -393,28 +381,28 @@ async function handleExport() {
           </div>
         </template>
       </div>
-    </div>
+    </BaseCard>
   </div>
 
   <BaseModal v-model="showConfirmModal" :closable="true" size="sm" @close="closeConfirm">
     <template #title>
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
-          <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error);" />
+        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15">
+          <AppIcon class="text-error-500 dark:text-error-400" icon="lucide:trash-2" :size="16" />
         </div>
-        <span class="text-base font-semibold" style="color: var(--color-text-primary);">Eliminar cliente</span>
+        <span class="text-base font-semibold text-gray-800 dark:text-white/90">Eliminar cliente</span>
       </div>
     </template>
     <div class="p-4 space-y-3">
-      <p class="text-sm" style="color: var(--color-text-secondary);">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
         ¿Eliminar al cliente
-        <span class="font-semibold" style="color: var(--color-text-primary);">{{ confirmClient?.fullName }}</span>?
+        <span class="font-semibold text-gray-800 dark:text-white/90">{{ confirmClient?.fullName }}</span>?
       </p>
-      <p class="text-xs px-3 py-2 rounded-lg" style="background: var(--color-warning-subtle); color: var(--color-warning);">
+      <p class="text-xs px-3 py-2 rounded-lg bg-warning-50 dark:bg-warning-500/15 text-warning-600 dark:text-orange-400">
         Se desactivará el cliente en esta aplicación.
       </p>
     </div>
-    <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
       <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
       <BaseButton variant="danger" :loading="isDeletingClient" @click="executeDelete">
         <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />

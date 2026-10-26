@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { useService } from '@shared/presentation/di/services'
 import { DIRECTORY } from '@shared/application/ports/directory.port'
 import { ref, computed } from 'vue'
@@ -6,7 +9,6 @@ import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import * as yup from 'yup'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
@@ -199,36 +201,21 @@ const onSubmit = handleSubmit(async (v) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1100px] mx-auto space-y-8">
-    <div class="flex items-center gap-4">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Nuevo proyecto</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Información general, técnica, responsables y finanzas
-        </p>
-      </div>
-    </div>
+  <div class="max-w-[1100px] mx-auto space-y-6">
+    <PageHeader
+      title="Nuevo proyecto"
+      subtitle="Información general, técnica, responsables y finanzas"
+      back
+      @back="goBack"
+    />
 
-    <div v-if="loading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="loading" />
 
     <form v-else class="space-y-8" @submit.prevent="onSubmit">
-      <section
-        class="p-5 rounded-xl space-y-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Información general"
+        dense
       >
-        <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-          Información general
-        </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput v-bind="codeB" label="Código de proyecto" placeholder="INT-PRY-001" required :error="errors.code" />
           <FormInput v-bind="nameB" label="Nombre" required :error="errors.name" />
@@ -256,18 +243,13 @@ const onSubmit = handleSubmit(async (v) => {
             class="md:col-span-2"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl space-y-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Presupuesto / cotización"
+        subtitle="Cabecera del modelo Excel (ciudad, nivel, plazo y parámetros de cálculo)."
+        dense
       >
-        <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-          Presupuesto / cotización
-        </h2>
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-          Cabecera del modelo Excel (ciudad, nivel, plazo y parámetros de cálculo).
-        </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput v-bind="cityB" label="Ciudad" placeholder="TRUJILLO" :error="errors.city" />
           <FormSelect
@@ -304,15 +286,12 @@ const onSubmit = handleSubmit(async (v) => {
             :error="errors.defaultIgvPct"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl space-y-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Información técnica"
+        dense
       >
-        <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-          Información técnica
-        </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput v-bind="addressLineB" class="md:col-span-2" label="Dirección" :error="errors.addressLine" />
           <FormInput
@@ -342,15 +321,12 @@ const onSubmit = handleSubmit(async (v) => {
             :error="errors.estimatedEndDate"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl space-y-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Responsables"
+        dense
       >
-        <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-          Responsables
-        </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormSelect
             v-bind="designerB"
@@ -386,15 +362,12 @@ const onSubmit = handleSubmit(async (v) => {
             placeholder="Opcional"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl space-y-4"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Información financiera"
+        dense
       >
-        <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-          Información financiera
-        </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormInput
             v-bind="estimatedBudgetB"
@@ -418,7 +391,7 @@ const onSubmit = handleSubmit(async (v) => {
             :error="errors.expectedMargin"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
       <div class="flex justify-end gap-3">
         <BaseButton type="button" variant="outline" @click="goBack">Cancelar</BaseButton>

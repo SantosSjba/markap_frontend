@@ -1,6 +1,9 @@
 ﻿<script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
@@ -221,52 +224,37 @@ function getDocActions(
   ]
 }
 
-const navActiveClass =
-  'border-[color:var(--color-primary)] text-[color:var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)]'
-const navIdleClass =
-  'border-transparent text-[color:var(--color-text-secondary)] hover:bg-[color-mix(in_srgb,var(--color-text-secondary)_8%,transparent)]'
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1400px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <p class="text-xs font-medium uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">
-          Documentos
-        </p>
-        <h1 class="text-xl font-bold mt-0.5" :style="{ color: 'var(--color-text-primary)' }">{{ sectionTitle }}</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Registro por proyecto: sube archivos (contratos, planos, renders, memoria descriptiva, facturas y actas).
-        </p>
-      </div>
-      <BaseButton type="button" @click="openCreate">
+  <div class="space-y-6">
+    <PageHeader
+      :title="sectionTitle"
+      subtitle="Registro por proyecto: sube archivos (contratos, planos, renders, memoria descriptiva, facturas y actas)."
+      eyebrow="Documentos"
+    >
+      <template #actions>
+        <BaseButton type="button" @click="openCreate">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo registro
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      class="flex flex-wrap gap-2 p-1 rounded-xl border"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-muted)' }"
-    >
-      <RouterLink
+    <div class="inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-900">
+      <BaseButton
         v-for="item in ARQUITECTURA_DOCUMENT_NAV"
         :key="item.segment"
         :to="`${ARQUITECTURA_BASE_PATH}/documentos/${item.segment}`"
-        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors"
-        :class="route.path.endsWith(`/documentos/${item.segment}`) ? navActiveClass : navIdleClass"
+        size="sm"
+        :variant="route.path.endsWith(`/documentos/${item.segment}`) ? 'primary' : 'ghost'"
       >
         {{ item.label }}
-      </RouterLink>
+      </BaseButton>
     </div>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <template v-else>
         <DataTable
           empty-text="No hay documentos en esta categoría. Añade uno o cambia los filtros."
@@ -304,36 +292,20 @@ const navIdleClass =
           </template>
           <template #row="{ row }">
             <td class="py-3 px-4">
-              <button
-                type="button"
-                class="text-sm font-medium hover:underline text-left"
-                :style="{ color: 'var(--color-primary)' }"
-                @click="goProject((row as ArquitecturaDocumentRow).projectId)"
-              >
-                {{ (row as ArquitecturaDocumentRow).projectCode }}
-              </button>
-              <div class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+              <BaseButton @click="goProject((row as ArquitecturaDocumentRow).projectId)" variant="link" class="font-medium">{{ (row as ArquitecturaDocumentRow).projectCode }}</BaseButton>
+              <div class="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
                 {{ (row as ArquitecturaDocumentRow).projectName }}
               </div>
             </td>
-            <td class="py-3 px-4 text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+            <td class="py-3 px-4 text-sm font-medium text-gray-800 dark:text-white/90">
               {{ (row as ArquitecturaDocumentRow).title }}
             </td>
             <td class="py-3 px-4 text-sm">
-              <button
-                v-if="hasFile(row as ArquitecturaDocumentRow)"
-                type="button"
-                class="inline-flex items-center gap-1 hover:underline"
-                :style="{ color: 'var(--color-primary)' }"
-                @click="openArquitecturaDocumentFile(row as ArquitecturaDocumentRow)"
-              >
-                <AppIcon icon="lucide:external-link" :size="16" />
-                Abrir
-              </button>
+              <BaseButton v-if="hasFile(row as ArquitecturaDocumentRow)" @click="openArquitecturaDocumentFile(row as ArquitecturaDocumentRow)" variant="link" icon="lucide:external-link">Abrir</BaseButton>
 
-              <span v-else class="text-muted" :style="{ color: 'var(--color-text-secondary)' }">—</span>
+              <span v-else class="text-muted text-gray-500 dark:text-gray-400">—</span>
             </td>
-            <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
               {{ formatDate((row as ArquitecturaDocumentRow).createdAt) }}
             </td>
             <td class="py-3 px-4 text-right whitespace-nowrap">
@@ -341,7 +313,7 @@ const navIdleClass =
             </td>
           </template>
         </DataTable>
-        <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+        <div class="border-t border-gray-200 dark:border-gray-800">
           <BasePagination
             v-bind="paginationProps"
             :show-page-size="true"
@@ -350,7 +322,7 @@ const navIdleClass =
           />
         </div>
       </template>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showCreate" title="Nuevo documento" size="lg">
       <div class="space-y-4">
@@ -364,7 +336,7 @@ const navIdleClass =
         />
         <FormInput v-model="createTitle" label="Título" placeholder="Ej. Contrato de obra — revisión 2" required />
         <div>
-          <p class="text-sm font-medium mb-1.5" :style="{ color: 'var(--color-text-primary)' }">Archivo</p>
+          <p class="text-sm font-medium mb-1.5 text-gray-800 dark:text-white/90">Archivo</p>
           <FileDropzone
             v-model="createFile"
             accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xlsx,.xls,.dwg"
@@ -372,7 +344,7 @@ const navIdleClass =
           />
         </div>
 
-        <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
           Categoría actual: <strong>{{ sectionTitle }}</strong>
         </p>
       </div>
@@ -388,7 +360,7 @@ const navIdleClass =
       <div class="space-y-4">
         <FormSelect v-model="editDocType" label="Categoría" required :options="DOCUMENT_TYPE_FORM_OPTIONS" />
         <FormInput v-model="editTitle" label="Título" required />
-        <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
           El archivo no se puede reemplazar desde aquí; elimina y crea uno nuevo si necesitas otro archivo.
         </p>
 

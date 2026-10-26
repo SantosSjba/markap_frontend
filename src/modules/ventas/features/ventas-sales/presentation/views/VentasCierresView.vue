@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
 import { ventasPropertiesRepositoryKey } from '../../../propiedades/application/ports/ventas-properties.port'
 import { useService } from '@shared/presentation/di/services'
@@ -309,10 +314,9 @@ function runAlerts(dryRun: boolean) {
 
     <div
       v-if="newModalLoadError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span class="max-w-xl" style="color: var(--color-error)">{{ newModalLoadError }}</span>
+      <span class="max-w-xl text-error-500 dark:text-error-400">{{ newModalLoadError }}</span>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" :loading="loadingNewModalData" @click="openModal">
         Reintentar
       </BaseButton>
@@ -320,29 +324,24 @@ function runAlerts(dryRun: boolean) {
 
     <div
       v-if="agentsQueryError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span :style="{ color: 'var(--color-text-primary)' }">No se pudieron cargar los asesores para el formulario de cierre.</span>
-      <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(agentsFetchError) }}</span>
+      <span class="text-gray-800 dark:text-white/90">No se pudieron cargar los asesores para el formulario de cierre.</span>
+      <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(agentsFetchError) }}</span>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" @click="() => refetchAgents()">Reintentar</BaseButton>
     </div>
 
-    <div
-      class="rounded-xl border p-4 space-y-3"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
+    <BaseCard padding="sm" class="block space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div class="flex items-start gap-3 min-w-0">
           <div
-            class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-            :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)' }"
+            class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-brand-500/12"
           >
             <AppIcon icon="lucide:scale" :size="18" color="var(--color-primary)" />
           </div>
           <div>
-            <h2 class="text-lg font-semibold" :style="{ color: 'var(--color-text-primary)' }">Pendientes legales</h2>
-            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">Pendientes legales</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
               Operaciones con faltantes de compliance/SUNARP para seguimiento operativo.
             </p>
           </div>
@@ -384,68 +383,60 @@ function runAlerts(dryRun: boolean) {
         <FormCheckbox v-model="boardFilters.onlyOverdue" label="Solo vencidos (nextActionAt)" />
       </div>
 
-      <div v-if="loadingPendingBoard" class="py-8 text-center">
-        <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-      </div>
+      <LoadingState v-if="loadingPendingBoard" class="py-8" />
       <div
         v-else-if="pendingBoardQueryError"
         class="flex flex-col items-center justify-center gap-3 py-10 px-4 text-center"
       >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(pendingBoardFetchError) }}</p>
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(pendingBoardFetchError) }}</p>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchPendingBoard()">Reintentar</BaseButton>
       </div>
       <div v-else class="overflow-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b text-left" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="py-2 px-3">Severidad</th>
-              <th class="py-2 px-3">Propiedad</th>
-              <th class="py-2 px-3">Comprador</th>
-              <th class="py-2 px-3">SUNARP</th>
-              <th class="py-2 px-3">Pendientes</th>
-              <th class="py-2 px-3">Próxima acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
+        <Table class="w-full text-sm">
+          <TableHeader>
+            <TableRow class="border-b text-left border-gray-200 dark:border-gray-800">
+              <TableCell is-header class="py-2 px-3">Severidad</TableCell>
+              <TableCell is-header class="py-2 px-3">Propiedad</TableCell>
+              <TableCell is-header class="py-2 px-3">Comprador</TableCell>
+              <TableCell is-header class="py-2 px-3">SUNARP</TableCell>
+              <TableCell is-header class="py-2 px-3">Pendientes</TableCell>
+              <TableCell is-header class="py-2 px-3">Próxima acción</TableCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow
               v-for="r in pendingBoard?.data ?? []"
               :key="r.checklistId"
-              class="border-b"
-              :style="{ borderColor: 'var(--color-border)' }"
+              class="border-b border-gray-200 dark:border-gray-800"
             >
-              <td class="py-2 px-3">
+              <TableCell class="py-2 px-3">
                 <Badge :variant="r.severity === 'HIGH' ? 'error' : r.severity === 'MEDIUM' ? 'warning' : 'success'">
                   {{ r.severity }}
                 </Badge>
-              </td>
-              <td class="py-2 px-3 font-mono text-xs">{{ r.propertyId }}</td>
-              <td class="py-2 px-3 font-mono text-xs">{{ r.buyerClientId }}</td>
-              <td class="py-2 px-3">{{ r.sunarpStatus }}</td>
-              <td class="py-2 px-3">{{ r.missing.length }}</td>
-              <td class="py-2 px-3">
+              </TableCell>
+              <TableCell class="py-2 px-3 font-mono text-xs">{{ r.propertyId }}</TableCell>
+              <TableCell class="py-2 px-3 font-mono text-xs">{{ r.buyerClientId }}</TableCell>
+              <TableCell class="py-2 px-3">{{ r.sunarpStatus }}</TableCell>
+              <TableCell class="py-2 px-3">{{ r.missing.length }}</TableCell>
+              <TableCell class="py-2 px-3">
                 {{ r.nextActionAt ? formatShortDate(r.nextActionAt) : '—' }}
-              </td>
-            </tr>
-            <tr v-if="!(pendingBoard?.data ?? []).length">
-              <td colspan="6" class="py-4 px-3 text-center opacity-70">Sin pendientes en filtros actuales.</td>
-            </tr>
-          </tbody>
-        </table>
+              </TableCell>
+            </TableRow>
+            <TableRow v-if="!(pendingBoard?.data ?? []).length">
+              <TableCell colspan="6" class="py-4 px-3 text-center opacity-70">Sin pendientes en filtros actuales.</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </div>
-    </div>
+    </BaseCard>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <div
         v-else-if="listQueryError"
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin cierres registrados.">
@@ -492,7 +483,7 @@ function runAlerts(dryRun: boolean) {
           </td>
         </template>
       </DataTable>
-      <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="!isLoading && !listQueryError" class="border-t p-2 border-gray-200 dark:border-gray-800">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"
@@ -500,7 +491,7 @@ function runAlerts(dryRun: boolean) {
           @update:page-size="(s: number) => { listParams.limit = s; listParams.page = 1 }"
         />
       </div>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showNew" title="Registrar cierre de venta" size="lg">
       <div class="p-4 space-y-3">
@@ -508,53 +499,14 @@ function runAlerts(dryRun: boolean) {
         <FormSelect v-model="form.propertyId" label="Inmueble" :options="propertyOptions" required />
         <FormSelect v-model="form.agentId" label="Asesor (comisión)" :options="agentOptions" required />
         <div class="grid sm:grid-cols-2 gap-3">
-          <div>
-            <label class="text-sm font-medium">Precio final (S/)</label>
-            <input
-              v-model.number="form.finalPrice"
-              type="number"
-              min="0"
-              step="1"
-              class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-              :style="{ borderColor: 'var(--color-border)' }"
-            />
-          </div>
+          <FormInput v-model="form.finalPrice" type="number" min="0" step="1" label="Precio final (S/)" />
           <FormSelect v-model="form.paymentType" label="Tipo de pago" :options="[...PAYMENT_TYPE_OPTIONS]" />
         </div>
         <div class="grid sm:grid-cols-2 gap-3">
-          <div>
-            <label class="text-sm font-medium">Monto comisión (S/)</label>
-            <input
-              v-model.number="form.commissionAmount"
-              type="number"
-              min="0"
-              step="0.01"
-              class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-              :style="{ borderColor: 'var(--color-border)' }"
-            />
-          </div>
-          <div>
-            <label class="text-sm font-medium">% comisión (opcional)</label>
-            <input
-              v-model.number="form.commissionPercent"
-              type="number"
-              min="0"
-              max="100"
-              step="0.1"
-              class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-              :style="{ borderColor: 'var(--color-border)' }"
-            />
-          </div>
+          <FormInput v-model="form.commissionAmount" type="number" min="0" step="0.01" label="Monto comisión (S/)" />
+          <FormInput v-model="form.commissionPercent" type="number" min="0" max="100" step="0.1" label="% comisión (opcional)" />
         </div>
-        <div>
-          <label class="text-sm font-medium">Notas</label>
-          <textarea
-            v-model="form.notes"
-            rows="2"
-            class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-            :style="{ borderColor: 'var(--color-border)' }"
-          />
-        </div>
+        <FormTextarea v-model="form.notes" :rows="2" label="Notas" />
         <FileDropzone
           v-model="contractFile"
           label="Contrato de compraventa"

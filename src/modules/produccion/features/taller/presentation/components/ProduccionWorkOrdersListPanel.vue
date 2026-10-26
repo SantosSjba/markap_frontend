@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { useProduccionWorkOrdersList } from '../composables/useProduccionWorkOrders'
 import { WO_STATUS_LABELS, WO_PRIORITY_LABELS, woStatusClass, priorityClass } from '../labels'
 import type { ProduccionWorkOrderListItem } from '../../domain/work-orders.types'
@@ -48,25 +50,17 @@ function goNew() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">{{ title }}</h1>
-        <p v-if="subtitle" class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">{{ subtitle }}</p>
-      </div>
-      <button
-        v-if="showNewButton"
-        type="button"
-        class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white"
-        :style="{ background: 'var(--color-primary)' }"
-        @click="goNew"
-      >
-        <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
-        Nueva OT
-      </button>
-    </div>
+  <div class="space-y-6">
+    <PageHeader
+      :title="title"
+      :subtitle="subtitle ? subtitle : undefined"
+    >
+      <template #actions>
+        <BaseButton v-if="showNewButton" @click="goNew" size="sm" icon="lucide:plus">Nueva OT</BaseButton>
+      </template>
+    </PageHeader>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin órdenes de trabajo." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -75,9 +69,7 @@ function goNew() {
         </template>
         <template #row="{ row }">
           <td class="py-3 px-4">
-            <button type="button" class="font-mono text-sm font-medium hover:underline" :style="{ color: 'var(--color-primary)' }" @click="goDetail(row as ProduccionWorkOrderListItem)">
-              {{ (row as ProduccionWorkOrderListItem).code }}
-            </button>
+            <BaseButton @click="goDetail(row as ProduccionWorkOrderListItem)" variant="link" class="font-mono font-medium">{{ (row as ProduccionWorkOrderListItem).code }}</BaseButton>
             <div class="text-xs" :class="priorityClass((row as ProduccionWorkOrderListItem).priority)">
               {{ WO_PRIORITY_LABELS[(row as ProduccionWorkOrderListItem).priority] }}
             </div>
@@ -91,6 +83,6 @@ function goNew() {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
   </div>
 </template>

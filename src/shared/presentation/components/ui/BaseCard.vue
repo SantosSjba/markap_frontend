@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { Card } from '../../ui/card'
 /**
- * BaseCard Component
- * Reusable card container component
+ * BaseCard — `Card` de TailAdmin. `padding` ajusta el relleno;
+ * `shadow`, `rounded` y `border` se conservan por compatibilidad (la plantilla usa borde fijo, sin sombra).
  */
 
 interface Props {
@@ -19,59 +21,25 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const paddingClasses = {
-  none: '',
-  sm: 'p-3',
-  md: 'p-4',
-  lg: 'p-6',
+  none: 'p-0 sm:p-0',
+  sm: 'p-4 sm:p-4',
+  md: '',
+  lg: 'p-6 sm:p-8',
 }
 
-const shadowClasses = {
-  none: '',
-  sm: 'shadow-sm',
-  md: 'shadow-md',
-  lg: 'shadow-lg',
-}
-
-const roundedClasses = {
-  none: '',
-  sm: 'rounded-sm',
-  md: 'rounded-md',
-  lg: 'rounded-lg',
-  xl: 'rounded-xl',
-}
+const classes = computed(() => paddingClasses[props.padding])
 </script>
 
 <template>
-  <div
-    :class="[
-      paddingClasses[props.padding],
-      shadowClasses[props.shadow],
-      roundedClasses[props.rounded],
-    ]"
-    :style="{
-      backgroundColor: 'var(--color-surface)',
-      border: props.border ? '1px solid var(--color-border)' : 'none',
-    }"
-  >
-    <!-- Header -->
-    <div
-      v-if="$slots.header"
-      class="pb-4 mb-4"
-      :style="{ borderBottom: '1px solid var(--color-border)' }"
-    >
+  <Card :class="classes" class="gap-0 rounded-2xl">
+    <div v-if="$slots.header" class="mb-5 border-b border-gray-100 pb-5 dark:border-gray-800">
       <slot name="header" />
     </div>
 
-    <!-- Content -->
     <slot />
 
-    <!-- Footer -->
-    <div
-      v-if="$slots.footer"
-      class="pt-4 mt-4"
-      :style="{ borderTop: '1px solid var(--color-border)' }"
-    >
+    <div v-if="$slots.footer" class="mt-5 border-t border-gray-100 pt-5 dark:border-gray-800">
       <slot name="footer" />
     </div>
-  </div>
+  </Card>
 </template>

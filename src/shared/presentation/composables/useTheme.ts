@@ -1,4 +1,4 @@
-import { ref, watch, onMounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 const THEME_KEY = 'markap-theme'
 const DARK_CLASS = 'dark'
 
@@ -26,12 +26,21 @@ function applyTheme(theme: Theme) {
   }
 }
 
+/**
+ * Estado compartido: todos los botones de tema (header, login, configuración)
+ * leen y escriben el mismo valor.
+ */
+const isDark = ref((getStoredTheme() ?? getSystemPreference()) === 'dark')
+
+watch(isDark, (dark) => {
+  const theme: Theme = dark ? 'dark' : 'light'
+  applyTheme(theme)
+  localStorage.setItem(THEME_KEY, theme)
+})
+
 /** Apply theme immediately on load (prevents flash of wrong theme) */
 export function initTheme() {
-  const stored = getStoredTheme()
-  const system = getSystemPreference()
-  const theme: Theme = stored ?? system
-  applyTheme(theme)
+  applyTheme(isDark.value ? 'dark' : 'light')
 }
 
 /**
@@ -40,12 +49,6 @@ export function initTheme() {
  * Respects system preference on first load if no stored preference
  */
 export function useTheme() {
-  const stored = getStoredTheme()
-  const system = getSystemPreference()
-  const initialTheme: Theme = stored ?? system
-
-  const isDark = ref(initialTheme === 'dark')
-
   const toggleTheme = () => {
     isDark.value = !isDark.value
   }
@@ -54,18 +57,10 @@ export function useTheme() {
     isDark.value = theme === 'dark'
   }
 
-  watch(isDark, (dark) => {
-    const theme: Theme = dark ? 'dark' : 'light'
-    applyTheme(theme)
-    localStorage.setItem(THEME_KEY, theme)
-  })
-
-  onMounted(() => {
-    applyTheme(isDark.value ? 'dark' : 'light')
-  })
-
   return {
     isDark,
+    /** Alias con el nombre que usan los componentes de TailAdmin. */
+    isDarkMode: computed(() => isDark.value),
     toggleTheme,
     setTheme,
   }

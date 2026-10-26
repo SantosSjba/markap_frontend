@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { useId } from 'vue'
+import { Checkbox } from '../../ui/checkbox'
 /**
- * FormCheckbox Component
- * Reusable checkbox component
+ * FormCheckbox — `Checkbox` de TailAdmin con etiqueta y descripción.
  */
 
 interface Props {
@@ -21,41 +22,38 @@ const emit = defineEmits<{
   change: [value: boolean]
 }>()
 
-const inputId = props.id || `checkbox-${Math.random().toString(36).substr(2, 9)}`
+const inputId = props.id || `checkbox-${useId()}`
 
-const handleChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  emit('update:modelValue', target.checked)
-  emit('change', target.checked)
+const handleChange = (value: boolean | 'indeterminate') => {
+  const checked = value === true
+  emit('update:modelValue', checked)
+  emit('change', checked)
 }
 </script>
 
 <template>
-  <div class="flex items-start">
-    <div class="flex items-center h-5">
-      <input
-        :id="inputId"
-        type="checkbox"
-        :checked="modelValue"
-        :disabled="disabled"
-        class="w-4 h-4 rounded border focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed focus:ring-[var(--color-primary)]"
-        style="accent-color: var(--color-primary); border-color: var(--color-border);"
-        @change="handleChange"
-      />
-    </div>
+  <div class="flex items-start gap-3">
+    <Checkbox
+      :id="inputId"
+      :model-value="modelValue"
+      :disabled="disabled"
+      class="mt-0.5"
+      @update:model-value="handleChange"
+    />
 
-    <div v-if="label || description" class="ml-3">
+    <div v-if="label || description" class="flex flex-col gap-0.5">
       <label
         :for="inputId"
         class="text-sm font-medium"
-        :style="{
-          color: disabled ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-        }"
+        :class="
+          disabled
+            ? 'cursor-not-allowed text-gray-400 dark:text-gray-500'
+            : 'cursor-pointer text-gray-700 dark:text-gray-300'
+        "
       >
         {{ label }}
       </label>
-      <p v-if="description" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      <p v-if="description" class="text-sm text-gray-500 dark:text-gray-400">
         {{ description }}
       </p>
     </div>

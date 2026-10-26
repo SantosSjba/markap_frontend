@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import ActionCard from '@shared/presentation/components/ui/ActionCard.vue'
 import { computed, ref } from 'vue'
 import { useRouter, type RouteLocationRaw } from 'vue-router'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
@@ -155,18 +160,14 @@ const acciones: {
 </script>
 
 <template>
-  <div class="space-y-8 animate-fade-in">
-    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          {{ greeting }}, {{ firstName }}
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Resumen de ventas, embudo y flujo · período del mes en curso
-        </p>
-      </div>
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
-        <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+  <div class="space-y-6">
+    <PageHeader
+      :title="`${greeting}, ${firstName}`"
+      subtitle="Resumen de ventas, embudo y flujo · período del mes en curso"
+    >
+      <template #actions>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
+        <p class="text-sm text-gray-400 dark:text-gray-500">
           {{
             formatDate(new Date(), {
               weekday: 'long',
@@ -181,9 +182,10 @@ const acciones: {
           Reportes detallados
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <p class="text-xs font-medium -mt-4" :style="{ color: 'var(--color-text-muted)' }">
+    <p class="text-xs font-medium -mt-4 text-gray-400 dark:text-gray-500">
       Datos del período: {{ periodLabel }} · puedes cambiar fechas y granularidad en Reportes.
     </p>
 
@@ -192,21 +194,16 @@ const acciones: {
       <div
         v-for="i in 4"
         :key="i"
-        class="rounded-xl border p-4 h-[104px] animate-pulse"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-muted)' }"
+        class="rounded-xl border p-4 h-[104px] animate-pulse border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-950"
       />
     </div>
-    <div
-      v-else-if="conversionQuery.isError.value"
-      class="rounded-xl border p-6 text-center space-y-3"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+    <BaseCard v-else-if="conversionQuery.isError.value" class="block text-center space-y-3">
+      <p class="text-sm font-medium text-gray-800 dark:text-white/90">
         No se pudieron cargar los indicadores principales
       </p>
-      <p class="text-xs max-w-lg mx-auto" :style="{ color: 'var(--color-text-secondary)' }">{{ convErr }}</p>
+      <p class="text-xs max-w-lg mx-auto text-gray-500 dark:text-gray-400">{{ convErr }}</p>
       <BaseButton type="button" icon="lucide:refresh-cw" @click="() => conversionQuery.refetch()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
     <div v-else-if="conv" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <StatsCard title="Procesos en embudo" :value="String(pipelineTotal(conv))">
         <template #icon>
@@ -237,198 +234,148 @@ const acciones: {
 
     <div class="grid lg:grid-cols-2 gap-6">
       <!-- Flujo financiero -->
-      <div
-        class="rounded-xl border p-5 lg:p-6 min-h-[200px]"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-card)',
-        }"
+      <FormSectionCard
+        title="Flujo financiero (período)"
+        subtitle="Cobranzas, costos y comisiones"
+        dense
       >
-        <h2 class="text-lg font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Flujo financiero (período)
-        </h2>
-        <p class="text-xs mb-5" :style="{ color: 'var(--color-text-muted)' }">Cobranzas, costos y comisiones</p>
-
-        <div v-if="financialQuery.isLoading.value && !fin" class="flex justify-center py-12">
-          <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-        </div>
+        <LoadingState v-if="financialQuery.isLoading.value && !fin" class="py-12" />
         <div v-else-if="financialQuery.isError.value && !fin" class="text-center space-y-3 py-6">
-          <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ finErr }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ finErr }}</p>
           <BaseButton size="sm" type="button" variant="outline" icon="lucide:refresh-cw" @click="() => financialQuery.refetch()">
             Reintentar
           </BaseButton>
         </div>
         <dl v-else-if="fin" class="space-y-4">
           <div class="flex justify-between gap-4 text-sm">
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Cobranzas comprador</dt>
-            <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+            <dt class="text-gray-500 dark:text-gray-400">Cobranzas comprador</dt>
+            <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
               {{ formatPenDec(fin.buyerPaymentsCollected) }}
             </dd>
           </div>
           <div class="flex justify-between gap-4 text-sm">
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Pendiente comprador</dt>
-            <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+            <dt class="text-gray-500 dark:text-gray-400">Pendiente comprador</dt>
+            <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
               {{ formatPenDec(fin.buyerPaymentsPending) }}
             </dd>
           </div>
           <div class="flex justify-between gap-4 text-sm">
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Comisiones pagadas</dt>
-            <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+            <dt class="text-gray-500 dark:text-gray-400">Comisiones pagadas</dt>
+            <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
               {{ formatPenDec(fin.commissionsPaidAmount) }}
             </dd>
           </div>
           <div
-            class="flex justify-between gap-4 text-sm pt-3 border-t"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="flex justify-between gap-4 text-sm pt-3 border-t border-gray-200 dark:border-gray-800"
           >
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Neto estimado</dt>
-            <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+            <dt class="text-gray-500 dark:text-gray-400">Neto estimado</dt>
+            <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
               {{ formatPenDec(fin.estimatedNetAfterCosts) }}
             </dd>
           </div>
         </dl>
-        <p v-else class="text-sm text-center py-8" :style="{ color: 'var(--color-text-secondary)' }">
+        <p v-else class="text-sm text-center py-8 text-gray-500 dark:text-gray-400">
           Sin datos de flujo financiero.
         </p>
-      </div>
+      </FormSectionCard>
 
       <!-- Conversión y pipeline (misma fuente que KPIs; UI de carga alineada) -->
-      <div
-        class="rounded-xl border p-5 lg:p-6 min-h-[200px]"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-card)',
-        }"
+      <FormSectionCard
+        title="Conversión y pipeline"
+        subtitle="Resultados y movimiento del período"
+        dense
       >
-        <h2 class="text-lg font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Conversión y pipeline
-        </h2>
-        <p class="text-xs mb-5" :style="{ color: 'var(--color-text-muted)' }">Resultados y movimiento del período</p>
-
-        <div v-if="conversionQuery.isLoading.value" class="flex justify-center py-12">
-          <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-        </div>
+        <LoadingState v-if="conversionQuery.isLoading.value" class="py-12" />
         <div v-else-if="conversionQuery.isError.value" class="text-center space-y-3 py-6">
-          <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ convErr }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ convErr }}</p>
           <BaseButton size="sm" type="button" variant="outline" icon="lucide:refresh-cw" @click="() => conversionQuery.refetch()">
             Reintentar
           </BaseButton>
         </div>
         <dl v-else-if="conv" class="space-y-4">
           <div class="flex justify-between gap-4 text-sm">
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Ganadas</dt>
-            <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+            <dt class="text-gray-500 dark:text-gray-400">Ganadas</dt>
+            <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
               {{ conv.opportunitiesWon }}
             </dd>
           </div>
           <div class="flex justify-between gap-4 text-sm">
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Perdidas</dt>
-            <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+            <dt class="text-gray-500 dark:text-gray-400">Perdidas</dt>
+            <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
               {{ conv.opportunitiesLost }}
             </dd>
           </div>
           <div class="flex justify-between gap-4 text-sm">
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Separaciones</dt>
-            <dd class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+            <dt class="text-gray-500 dark:text-gray-400">Separaciones</dt>
+            <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
               {{ conv.separationsCreated }}
             </dd>
           </div>
           <div
-            class="rounded-lg border p-3 text-xs space-y-2"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="rounded-lg border p-3 text-xs space-y-2 border-gray-200 dark:border-gray-800"
           >
-            <p class="font-medium" :style="{ color: 'var(--color-text-muted)' }">Embudo por etapa</p>
+            <p class="font-medium text-gray-400 dark:text-gray-500">Embudo por etapa</p>
             <div
               v-for="(count, stage) in conv.activePipelineByStage"
               :key="stage"
               class="flex justify-between gap-2"
             >
-              <span :style="{ color: 'var(--color-text-secondary)' }">{{
+              <span class="text-gray-500 dark:text-gray-400">{{
                 PIPELINE_STAGE_LABEL[stage] ?? stage
               }}</span>
-              <span class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">{{
+              <span class="font-semibold tabular-nums text-gray-800 dark:text-white/90">{{
                 count
               }}</span>
             </div>
           </div>
         </dl>
-      </div>
+      </FormSectionCard>
     </div>
 
     <!-- Ventas cerradas -->
-    <div
-      class="rounded-xl border p-5 lg:p-6"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-        boxShadow: 'var(--shadow-card)',
-      }"
+    <FormSectionCard
+      title="Ventas cerradas (agregado por mes en el período)"
+      subtitle="Suma de series devueltas por el reporte “ventas por período”"
+      dense
     >
-      <h2 class="text-lg font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-        Ventas cerradas (agregado por mes en el período)
-      </h2>
-      <p class="text-xs mb-5" :style="{ color: 'var(--color-text-muted)' }">
-        Suma de series devueltas por el reporte “ventas por período”
-      </p>
-
-      <div v-if="salesQuery.isLoading.value" class="flex justify-center py-12">
-        <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-      </div>
+      <LoadingState v-if="salesQuery.isLoading.value" class="py-12" />
       <div v-else-if="salesQuery.isError.value" class="text-center space-y-3 py-6">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ salesErr }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ salesErr }}</p>
         <BaseButton size="sm" type="button" variant="outline" icon="lucide:refresh-cw" @click="() => salesQuery.refetch()">
           Reintentar
         </BaseButton>
       </div>
       <div v-else class="grid sm:grid-cols-2 gap-4">
-        <div class="rounded-lg border p-4" :style="{ borderColor: 'var(--color-border)' }">
-          <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Cierres registrados</p>
-          <p class="text-2xl font-bold tabular-nums mt-1" :style="{ color: 'var(--color-text-primary)' }">
+        <div class="rounded-lg border p-4 border-gray-200 dark:border-gray-800">
+          <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Cierres registrados</p>
+          <p class="text-2xl font-bold tabular-nums mt-1 text-gray-800 dark:text-white/90">
             {{ salesTotals.closings }}
           </p>
         </div>
-        <div class="rounded-lg border p-4" :style="{ borderColor: 'var(--color-border)' }">
-          <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Volumen total (S/)</p>
-          <p class="text-2xl font-bold tabular-nums mt-1" :style="{ color: 'var(--color-text-primary)' }">
+        <div class="rounded-lg border p-4 border-gray-200 dark:border-gray-800">
+          <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Volumen total (S/)</p>
+          <p class="text-2xl font-bold tabular-nums mt-1 text-gray-800 dark:text-white/90">
             {{ formatPen(salesTotals.amount) }}
           </p>
         </div>
       </div>
-    </div>
+    </FormSectionCard>
 
-    <div
-      class="rounded-xl border p-5 lg:p-6"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-        boxShadow: 'var(--shadow-card)',
-      }"
+    <FormSectionCard
+      title="Acciones rápidas"
+      subtitle="Accesos frecuentes"
+      dense
     >
-      <h2 class="text-lg font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">Acciones rápidas</h2>
-      <p class="text-xs mb-5" :style="{ color: 'var(--color-text-muted)' }">Accesos frecuentes</p>
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <button
+        <ActionCard
           v-for="ac in acciones"
           :key="ac.label"
-          type="button"
-          class="flex items-start gap-3 rounded-xl border p-4 text-left transition-all hover-surface"
-          :style="{ borderColor: 'var(--color-border)' }"
+          :icon="ac.icon"
+          :title="ac.label"
+          :description="ac.sub"
           @click="router.push(ac.to)"
-        >
-          <div
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-            style="background-color: var(--color-primary-light); color: var(--color-primary)"
-          >
-            <AppIcon :icon="ac.icon" :size="20" />
-          </div>
-          <div class="min-w-0">
-            <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">{{ ac.label }}</p>
-            <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">{{ ac.sub }}</p>
-          </div>
-        </button>
+        />
       </div>
-    </div>
+    </FormSectionCard>
   </div>
 </template>

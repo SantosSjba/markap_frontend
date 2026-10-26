@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed } from 'vue'
 import * as yup from 'yup'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
@@ -259,14 +262,12 @@ async function exportDashboardExcel() {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Reportes</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Vista consolidada de proyectos, presupuestos, cobranzas, ejecución y compras. Los datos dependen de los demás módulos.
-        </p>
-      </div>
-      <BaseButton
+    <PageHeader
+      title="Reportes"
+      subtitle="Vista consolidada de proyectos, presupuestos, cobranzas, ejecución y compras. Los datos dependen de los demás módulos."
+    >
+      <template #actions>
+        <BaseButton
         variant="secondary"
         class="flex items-center gap-2 shrink-0"
         :loading="isExporting"
@@ -276,49 +277,40 @@ async function exportDashboardExcel() {
         <ExcelIcon class="w-4 h-4" />
         Exportar Excel
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
     <form
-      class="rounded-xl border p-4 flex flex-wrap gap-4 items-end"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+      class="rounded-2xl border p-4 flex flex-wrap gap-4 items-end bg-white dark:bg-gray-dark border-gray-200 dark:border-gray-800"
       @submit.prevent="applyFilters"
     >
       <div class="min-w-[140px]">
         <FormInput label="Desde" type="date" v-bind="filterBinds.startDate" />
-        <p v-if="errors.startDate" class="text-xs text-red-600 mt-1">{{ errors.startDate }}</p>
+        <p v-if="errors.startDate" class="text-xs text-error-600 dark:text-error-500 mt-1">{{ errors.startDate }}</p>
       </div>
       <div class="min-w-[140px]">
         <FormInput label="Hasta" type="date" v-bind="filterBinds.endDate" />
-        <p v-if="errors.endDate" class="text-xs text-red-600 mt-1">{{ errors.endDate }}</p>
+        <p v-if="errors.endDate" class="text-xs text-error-600 dark:text-error-500 mt-1">{{ errors.endDate }}</p>
       </div>
       <BaseButton type="submit" variant="primary">Aplicar</BaseButton>
-      <p v-if="d" class="text-xs w-full sm:w-auto sm:ml-auto" :style="{ color: 'var(--color-text-muted)' }">
+      <p v-if="d" class="text-xs w-full sm:w-auto sm:ml-auto text-gray-400 dark:text-gray-500">
         Rango aplicado: {{ d.range.startDate }} — {{ d.range.endDate }}
       </p>
     </form>
 
-    <div v-if="dashboardQuery.isLoading.value" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="dashboardQuery.isLoading.value" />
 
-    <div
-      v-else-if="dashboardQuery.isError.value"
-      class="rounded-xl border p-8 text-center space-y-4"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <p class="text-sm" style="color: var(--color-error)">
+    <BaseCard v-else-if="dashboardQuery.isError.value" padding="lg" class="block text-center space-y-4">
+      <p class="text-sm text-error-500 dark:text-error-400">
         {{ getApiErrorMessage(dashboardQuery.error.value) }}
       </p>
       <BaseButton variant="secondary" @click="() => dashboardQuery.refetch()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
 
     <template v-else-if="d">
       <BaseTabs v-model="activeTab" :tabs="reportTabs" />
 
-      <div
-        class="rounded-xl border p-6"
-        :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-      >
+      <BaseCard class="block">
         <template v-if="activeTab === 'ventas'">
           <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard title="Cobranzas (período)" :value="formatPen(d.ventas.cobranzasPeriodo)">
@@ -334,7 +326,7 @@ async function exportDashboardExcel() {
               <template #icon><AppIcon icon="lucide:clock" :size="20" color="var(--color-warning)" /></template>
             </StatsCard>
           </div>
-          <p class="text-xs mt-4" :style="{ color: 'var(--color-text-muted)' }">
+          <p class="text-xs mt-4 text-gray-400 dark:text-gray-500">
             Cobranzas: pagos del cliente marcados como pagados en el rango. Pendiente: cuotas programadas aún no saldadas (PENDING / PARTIAL).
           </p>
         </template>
@@ -363,7 +355,7 @@ async function exportDashboardExcel() {
               <template #icon><AppIcon icon="lucide:send" :size="20" color="var(--color-primary)" /></template>
             </StatsCard>
           </div>
-          <h3 class="text-sm font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">
+          <h3 class="text-sm font-semibold mb-2 text-gray-800 dark:text-white/90">
             Proyectos por estado (cartera actual)
           </h3>
           <DataTable :columns="estadoColumns" :data="estadoRows" row-key="status" empty-text="Sin proyectos.">
@@ -397,7 +389,7 @@ async function exportDashboardExcel() {
               <template #icon><AppIcon icon="lucide:chart-no-axes-combined" :size="20" color="var(--color-primary)" /></template>
             </StatsCard>
           </div>
-          <p class="text-xs mt-4" :style="{ color: 'var(--color-text-muted)' }">
+          <p class="text-xs mt-4 text-gray-400 dark:text-gray-500">
             Estimación simple: total presupuestos aprobados en el período menos costos de obra registrados y compras a proveedores en el mismo rango.
           </p>
         </template>
@@ -443,7 +435,7 @@ async function exportDashboardExcel() {
               <template #icon><AppIcon icon="lucide:truck" :size="20" color="var(--color-primary)" /></template>
             </StatsCard>
           </div>
-          <h3 class="text-sm font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">
+          <h3 class="text-sm font-semibold mb-2 text-gray-800 dark:text-white/90">
             Ejecución por categoría (período)
           </h3>
           <DataTable :columns="costoCatColumns" :data="costoCatRows" row-key="category" empty-text="Sin costos registrados en el rango.">
@@ -471,11 +463,11 @@ async function exportDashboardExcel() {
               <template #icon><AppIcon icon="lucide:file-pen" :size="20" color="var(--color-primary)" /></template>
             </StatsCard>
           </div>
-          <p class="text-xs mt-4" :style="{ color: 'var(--color-text-muted)' }">
+          <p class="text-xs mt-4 text-gray-400 dark:text-gray-500">
             Activos: proyectos que no están cancelados ni finalizados. Use las demás pestañas para el detalle por período.
           </p>
         </template>
-      </div>
+      </BaseCard>
     </template>
   </div>
 </template>

@@ -42,7 +42,7 @@ function submit() {
     @update:model-value="(v: boolean) => (v ? emit('update:modelValue', true) : close())"
   >
     <div class="p-4 space-y-4">
-      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
         <template v-if="processCode">
           Proceso <strong>{{ processCode }}</strong> —
         </template>

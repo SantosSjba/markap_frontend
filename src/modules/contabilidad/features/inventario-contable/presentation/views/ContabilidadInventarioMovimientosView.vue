@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { toCalendarDateString } from '@shared/utils/formatters'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -122,7 +123,7 @@ const showOffset = computed(
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:arrow-left-right"
       title="Movimientos de inventario"
@@ -133,14 +134,11 @@ const showOffset = computed(
       </template>
     </PageHeader>
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración → Contexto contable.
     </p>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -178,7 +176,7 @@ const showOffset = computed(
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" title="Registrar movimiento" size="md">
       <div class="space-y-4">
@@ -205,7 +203,7 @@ const showOffset = computed(
           :options="INVENTORY_OFFSET_TYPE_OPTIONS"
         />
         <FormTextarea v-model="form.notes" label="Notas" :rows="2" />
-        <p v-if="form.movementType === 'ADJUST'" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+        <p v-if="form.movementType === 'ADJUST'" class="text-xs text-gray-400 dark:text-gray-500">
           En ajustes use cantidad positiva (entrada) o negativa (salida).
         </p>
       </div>

@@ -1,4 +1,6 @@
 ﻿<script setup lang="ts">
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import { computed, ref, toRef } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
@@ -145,7 +147,7 @@ const totalSaldo = () => allItems().reduce((s, i) => s + (i.supplierBalance ?? 0
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
         Gestión interna de compras: costo real, proveedor del catálogo (o texto libre) y abonos (hasta 3 por partida).
       </p>
       <BaseButton
@@ -177,23 +179,7 @@ const totalSaldo = () => allItems().reduce((s, i) => s + (i.supplierBalance ?? 0
           <td class="py-2 px-3 text-sm max-w-[220px] truncate">{{ (row as any).description }}</td>
           <td class="py-2 px-3 text-sm">{{ formatSol((row as any).budgetedCost) }}</td>
           <td class="py-2 px-3 text-sm w-28">
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              class="w-full bg-transparent border-b border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none py-1"
-              :value="(row as any).actualPurchaseCost ?? ''"
-              placeholder="0.00"
-              @change="
-                savePurchaseField(
-                  (row as any).id,
-                  'actualPurchaseCost',
-                  ($event.target as HTMLInputElement).value
-                    ? Number(($event.target as HTMLInputElement).value)
-                    : null,
-                )
-              "
-            />
+            <FormInput type="number" min="0" step="0.01" :model-value="(row as any).actualPurchaseCost ?? ''" placeholder="0.00" @change="savePurchaseField((row as any).id, 'actualPurchaseCost', ($event.target as HTMLInputElement).value ? Number(($event.target as HTMLInputElement).value) : null)" size="sm" />
           </td>
           <td class="py-2 px-3 text-sm">
             <Badge
@@ -206,38 +192,17 @@ const totalSaldo = () => allItems().reduce((s, i) => s + (i.supplierBalance ?? 0
           </td>
           <td class="py-2 px-3 text-sm min-w-[160px]">
             <div class="space-y-1">
-              <select
-                class="w-full text-xs bg-transparent border rounded px-1 py-1"
-                :style="{ borderColor: 'var(--color-border)' }"
-                :value="(row as any).supplierId ?? ''"
-                @change="
-                  onSupplierChange(
-                    (row as any).id,
-                    ($event.target as HTMLSelectElement).value || null,
-                  )
-                "
-              >
-                <option v-for="opt in supplierOptions" :key="String(opt.value)" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
-              <input
-                v-if="!(row as any).supplierId"
-                class="w-full text-xs bg-transparent border-b border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none py-0.5"
-                :value="(row as any).supplierName ?? ''"
-                placeholder="Nombre libre"
-                @change="
-                  savePurchaseField(
-                    (row as any).id,
-                    'supplierName',
-                    ($event.target as HTMLInputElement).value || null,
-                  )
-                "
+              <FormSelect
+                :model-value="(row as any).supplierId ?? ''"
+                :options="supplierOptions"
+                size="sm"
+                placeholder="Proveedor"
+                @update:model-value="onSupplierChange((row as any).id, ($event as string | null) || null)"
               />
+              <FormInput v-if="!(row as any).supplierId" :model-value="(row as any).supplierName ?? ''" placeholder="Nombre libre" @change="savePurchaseField((row as any).id, 'supplierName', ($event.target as HTMLInputElement).value || null)" size="sm" />
               <span
                 v-else
-                class="text-xs truncate block"
-                :style="{ color: 'var(--color-text-muted)' }"
+                class="text-xs truncate block text-gray-400 dark:text-gray-500"
                 :title="(row as any).supplierName ?? ''"
               >
                 {{ (row as any).supplierName }}
@@ -252,19 +217,13 @@ const totalSaldo = () => allItems().reduce((s, i) => s + (i.supplierBalance ?? 0
                 class="flex items-center gap-2 text-xs"
               >
                 <span>#{{ p.paymentNumber }}: {{ formatSol(p.amount) }}</span>
-                <button
-                  type="button"
-                  class="opacity-60 hover:opacity-100"
-                  @click="onDeletePayment(p.id)"
-                >
-                  <AppIcon icon="lucide:x" :size="12" />
-                </button>
+                <IconButton @click="onDeletePayment(p.id)" icon="lucide:x" label="Quitar" size="xs" />
               </div>
-              <span v-if="!(row as any).supplierPayments?.length" :style="{ color: 'var(--color-text-muted)' }">—</span>
+              <span class="text-gray-400 dark:text-gray-500" v-if="!(row as any).supplierPayments?.length">—</span>
             </div>
           </td>
           <td class="py-2 px-3 text-sm font-medium">
-            <span :class="(row as any).supplierBalance > 0.01 ? 'text-amber-600' : ''">
+            <span :class="(row as any).supplierBalance > 0.01 ? 'text-warning-600 dark:text-orange-400' : ''">
               {{ formatSol((row as any).supplierBalance) }}
             </span>
           </td>
@@ -284,7 +243,7 @@ const totalSaldo = () => allItems().reduce((s, i) => s + (i.supplierBalance ?? 0
 
     <BaseModal v-model="showPaymentModal" title="Registrar abono al proveedor">
       <div v-if="paymentLine" class="space-y-4">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           {{ paymentLine.description }}
         </p>
         <FormInput

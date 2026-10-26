@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -418,45 +421,29 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start gap-3">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goHub"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div class="flex-1 min-w-0">
-        <p class="text-xs uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">Ejecución</p>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          {{ ov?.projectName ?? '…' }}
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          {{ ov?.projectCode }}
-          <button
-            type="button"
-            class="ml-2 underline"
-            :style="{ color: 'var(--color-primary)' }"
-            @click="goProject"
-          >
-            Ficha proyecto
-          </button>
-        </p>
-      </div>
-      <BaseButton variant="primary" type="button" class="shrink-0" @click="openCreateTask">
+  <div class="space-y-6">
+    <PageHeader
+      :title="ov?.projectName ?? '…'"
+      eyebrow="Ejecución"
+      back
+      @back="goHub"
+    >
+      <template #subtitle>
+        {{ ov?.projectCode }}
+          <BaseButton @click="goProject" variant="link" class="ml-2">Ficha proyecto</BaseButton>
+      </template>
+      <template #actions>
+        <BaseButton variant="primary" type="button" class="shrink-0" @click="openCreateTask">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nueva tarea
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div v-if="isLoading" class="flex justify-center py-20">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" class="py-20" />
 
-    <div v-else-if="isError || !ov" class="text-center py-16 space-y-3 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-      <p style="color: var(--color-error)">{{ isError ? getApiErrorMessage(overviewError) : 'No se pudo cargar el tablero de ejecución.' }}</p>
+    <div v-else-if="isError || !ov" class="text-center py-16 space-y-3 text-sm text-gray-500 dark:text-gray-400">
+      <p class="text-error-500 dark:text-error-400">{{ isError ? getApiErrorMessage(overviewError) : 'No se pudo cargar el tablero de ejecución.' }}</p>
       <div class="flex flex-wrap justify-center gap-2">
         <BaseButton variant="outline" @click="() => refetchOverview()">Reintentar</BaseButton>
         <BaseButton variant="outline" @click="goHub">Volver al hub</BaseButton>
@@ -464,7 +451,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
     </div>
 
     <template v-else-if="ov">
-      <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+      <BaseCard padding="none" class="block overflow-hidden">
         <BaseTabs v-model="activeTab" :tabs="tabs" />
         <div class="p-5 space-y-6">
           <!-- Resumen -->
@@ -483,21 +470,21 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                 <template #icon><AppIcon icon="lucide:trending-down" :size="20" color="#d97706" /></template>
               </StatsCard>
             </div>
-            <div class="flex flex-wrap items-end gap-4 p-4 rounded-xl border" :style="{ borderColor: 'var(--color-border)' }">
+            <div class="flex flex-wrap items-end gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-800">
               <FormInput v-model="progressDraft" type="number" label="Actualizar avance global (0–100)" class="w-40" />
               <BaseButton variant="primary" type="button" :loading="patchProgress.isPending.value" @click="saveProgress">
                 Guardar avance
               </BaseButton>
-              <p class="text-xs flex-1 min-w-[200px]" :style="{ color: 'var(--color-text-muted)' }">
+              <p class="text-xs flex-1 min-w-[200px] text-gray-400 dark:text-gray-500">
                 Referencia presupuesto:
                 {{ ov.budgetReference.code ?? '—' }}
                 <template v-if="ov.budgetReference.version != null">· v{{ ov.budgetReference.version }}</template>
               </p>
             </div>
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-              <div v-for="ph in ['DESIGN', 'PURCHASES', 'PRODUCTION', 'INSTALLATION']" :key="ph" class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
-                <p class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">{{ PHASE_LABELS[ph] }}</p>
-                <p class="mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+              <div v-for="ph in ['DESIGN', 'PURCHASES', 'PRODUCTION', 'INSTALLATION']" :key="ph" class="p-3 rounded-lg border border-gray-200 dark:border-gray-800">
+                <p class="font-semibold text-gray-800 dark:text-white/90">{{ PHASE_LABELS[ph] }}</p>
+                <p class="mt-1 text-gray-500 dark:text-gray-400">
                   {{ ov.tasks.filter((t) => t.phase === ph).length }} tareas
                 </p>
               </div>
@@ -511,26 +498,24 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
               <div
                 v-for="col in KANBAN_ORDER"
                 :key="col"
-                class="rounded-xl border p-3 min-h-[220px]"
-                :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface-elevated, var(--color-surface))' }"
+                class="rounded-xl border p-3 min-h-[220px] border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
               >
-                <p class="text-sm font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
+                <p class="text-sm font-semibold mb-3 text-gray-800 dark:text-white/90">
                   {{ KANBAN_LABELS[col] }}
                 </p>
                 <ul class="space-y-2">
                   <li
                     v-for="task in tasksByColumn[col]"
                     :key="task.id"
-                    class="p-3 rounded-lg border text-sm cursor-pointer hover:opacity-95"
-                    :style="{ borderColor: 'var(--color-border)' }"
+                    class="p-3 rounded-lg border text-sm cursor-pointer hover:opacity-95 border-gray-200 dark:border-gray-800"
                     @click="openEditTask(task)"
                   >
-                    <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ task.title }}</p>
-                    <p class="text-xs mt-1" :style="{ color: 'var(--color-text-muted)' }">
+                    <p class="font-medium text-gray-800 dark:text-white/90">{{ task.title }}</p>
+                    <p class="text-xs mt-1 text-gray-400 dark:text-gray-500">
                       {{ PHASE_LABELS[task.phase] ?? task.phase }} · {{ task.progressPct }}%
                     </p>
                     <div class="flex gap-2 mt-2">
-                      <button type="button" class="text-xs underline text-red-600" @click.stop="removeTask(task)">Eliminar</button>
+                      <BaseButton @click.stop="removeTask(task)" variant="link" class="text-error-500 dark:text-error-400 text-xs">Eliminar</BaseButton>
                     </div>
                   </li>
                 </ul>
@@ -540,19 +525,18 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
 
           <!-- Timeline -->
           <div v-show="activeTab === 'timeline'" class="space-y-3">
-            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
               Hitos del proyecto y tareas con fechas planificadas (seguimiento lineal).
             </p>
             <ul class="space-y-2">
               <li
                 v-for="(row, idx) in timelineRows"
                 :key="idx"
-                class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border text-sm"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border text-sm border-gray-200 dark:border-gray-800"
               >
-                <span :style="{ color: 'var(--color-text-primary)' }">{{ row.title }}</span>
+                <span class="text-gray-800 dark:text-white/90">{{ row.title }}</span>
                 <span class="flex items-center gap-2 shrink-0">
-                  <span :style="{ color: 'var(--color-text-muted)' }">{{ row.meta }}</span>
+                  <span class="text-gray-400 dark:text-gray-500">{{ row.meta }}</span>
                   <Badge variant="neutral">{{ row.badge }}</Badge>
                 </span>
               </li>
@@ -561,7 +545,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
 
           <!-- Gantt -->
           <div v-show="activeTab === 'gantt'" class="space-y-4 overflow-x-auto">
-            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
               Franjas proporcionales según fechas planificadas de cada tarea.
             </p>
             <div class="space-y-2 min-w-[640px]">
@@ -570,16 +554,11 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                 :key="task.id"
                 class="grid grid-cols-[200px_1fr] gap-3 items-center text-sm"
               >
-                <span class="truncate pr-2" :style="{ color: 'var(--color-text-primary)' }">{{ task.title }}</span>
-                <div class="relative h-8 rounded-md overflow-hidden" style="background: var(--color-border)">
+                <span class="truncate pr-2 text-gray-800 dark:text-white/90">{{ task.title }}</span>
+                <div class="relative h-8 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-800">
                   <template v-if="ganttBar(task)">
                     <div
-                      class="absolute top-1 bottom-1 rounded-md"
-                      :style="{
-                        left: `${ganttBar(task)!.left}%`,
-                        width: `${ganttBar(task)!.width}%`,
-                        background: 'var(--color-primary)',
-                      }"
+                      class="absolute top-1 bottom-1 rounded-md bg-brand-500" :style="{ left: `${ganttBar(task)!.left}%`, width: `${ganttBar(task)!.width}%` }"
                     />
                   </template>
                   <span v-else class="absolute inset-0 flex items-center px-2 text-xs opacity-70">Sin fechas plan.</span>
@@ -594,16 +573,16 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
               <BaseButton variant="primary" type="button" size="sm" @click="openCost">Registrar costo</BaseButton>
             </div>
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-              <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
+              <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                 Mano de obra: <strong>{{ formatSol(ov.costTotals.labor) }}</strong>
               </div>
-              <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
+              <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                 Materiales: <strong>{{ formatSol(ov.costTotals.material) }}</strong>
               </div>
-              <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
+              <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                 Transporte: <strong>{{ formatSol(ov.costTotals.transport) }}</strong>
               </div>
-              <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
+              <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                 Gastos: <strong>{{ formatSol(ov.costTotals.expense) }}</strong>
               </div>
             </div>
@@ -628,9 +607,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                 <td class="py-2 px-3 text-sm">{{ (row as any).amount }}</td>
                 <td class="py-2 px-3 text-sm">{{ (row as any).mat }}</td>
                 <td class="py-2 px-3 text-right">
-                  <button type="button" class="text-xs text-red-600 underline" @click="removeCost((row as { id: string }).id)">
-                    Quitar
-                  </button>
+                  <BaseButton @click="removeCost((row as { id: string }).id)" variant="link" class="text-error-500 dark:text-error-400 text-xs">Quitar</BaseButton>
                 </td>
               </template>
             </DataTable>
@@ -645,8 +622,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
               <div
                 v-for="e in ov.evidences"
                 :key="e.id"
-                class="rounded-xl border overflow-hidden flex flex-col"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="rounded-xl border overflow-hidden flex flex-col border-gray-200 dark:border-gray-800"
               >
                 <button
                   type="button"
@@ -660,12 +636,12 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                     class="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  <AppIcon v-else icon="lucide:file-text" :size="36" :style="{ color: 'var(--color-text-muted)' }" />
+                  <AppIcon class="text-gray-400 dark:text-gray-500" v-else icon="lucide:file-text" :size="36" />
                 </button>
                 <div class="p-2 text-xs flex-1 flex flex-col gap-1">
                   <span class="font-medium line-clamp-2">{{ e.title }}</span>
-                  <span :style="{ color: 'var(--color-text-muted)' }">{{ EVIDENCE_LABELS[e.kind] ?? e.kind }}</span>
-                  <button type="button" class="text-red-600 underline mt-auto self-start" @click="removeEvidence(e.id)">Eliminar</button>
+                  <span class="text-gray-400 dark:text-gray-500">{{ EVIDENCE_LABELS[e.kind] ?? e.kind }}</span>
+                  <BaseButton @click="removeEvidence(e.id)" variant="link" class="text-error-500 dark:text-error-400 mt-auto self-start">Eliminar</BaseButton>
                 </div>
               </div>
             </div>
@@ -696,14 +672,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                 <td class="py-2 px-3 text-sm">{{ (row as any).title }}</td>
                 <td class="py-2 px-3 text-sm">{{ (row as any).statusLabel }}</td>
                 <td class="py-2 px-3 text-right">
-                  <button
-                    v-if="(row as { status: string }).status !== 'CLOSED'"
-                    type="button"
-                    class="text-xs underline"
-                    @click="closeIncident((row as { id: string }).id)"
-                  >
-                    Cerrar
-                  </button>
+                  <BaseButton v-if="(row as { status: string }).status !== 'CLOSED'" @click="closeIncident((row as { id: string }).id)" variant="link" class="text-xs">Cerrar</BaseButton>
                 </td>
               </template>
             </DataTable>
@@ -733,13 +702,13 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
               row-key="id"
             >
               <template #row="{ row }">
-                <td class="py-2 px-3" :style="{ color: 'var(--color-text-primary)' }">{{ (row as any).c }}</td>
+                <td class="py-2 px-3 text-gray-800 dark:text-white/90">{{ (row as any).c }}</td>
                 <td class="py-2 px-3 text-right font-medium">{{ (row as any).v }}</td>
               </template>
             </DataTable>
           </div>
         </div>
-      </div>
+      </BaseCard>
     </template>
 
     <!-- Modales -->
@@ -768,7 +737,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
         <FormSelect v-model="evKind" label="Tipo" :options="Object.entries(EVIDENCE_LABELS).map(([value, label]) => ({ value, label }))" />
         <FormInput v-model="evTitle" label="Título" required />
         <div>
-          <p class="text-sm font-medium mb-1.5" :style="{ color: 'var(--color-text-primary)' }">Archivo</p>
+          <p class="text-sm font-medium mb-1.5 text-gray-800 dark:text-white/90">Archivo</p>
           <FileDropzone
             v-model="evFile"
             accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"

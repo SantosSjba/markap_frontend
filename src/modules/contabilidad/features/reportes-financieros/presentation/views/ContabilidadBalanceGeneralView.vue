@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { computed } from 'vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -27,7 +28,7 @@ function exportPdf() {
 </script>
 
 <template>
-  <div class="financial-report-print w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="financial-report-print w-full space-y-6">
     <PageHeader
       icon="lucide:scale"
       title="Balance general"
@@ -57,23 +58,20 @@ function exportPdf() {
       </template>
     </PageHeader>
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
     <div v-else-if="isError" class="text-center py-8">
-      <button type="button" class="text-sm underline" @click="refetch()">Reintentar</button>
+      <BaseButton @click="refetch()" variant="link">Reintentar</BaseButton>
     </div>
 
     <template v-else-if="data">
       <div
         v-if="!data.isBalanced"
-        class="rounded-lg border px-4 py-3 text-sm"
-        :style="{ borderColor: 'var(--color-warning)', color: 'var(--color-warning)' }"
+        class="rounded-lg border px-4 py-3 text-sm border-warning-500 text-warning-600 dark:text-orange-400"
       >
         El balance no cuadra: diferencia {{ formatPen(data.difference) }}.
       </div>
@@ -98,15 +96,14 @@ function exportPdf() {
       />
 
       <div
-        class="rounded-xl border p-4 flex flex-col sm:flex-row sm:justify-between gap-2"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+        class="rounded-xl border p-4 flex flex-col sm:flex-row sm:justify-between gap-2 border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
       >
         <div>
-          <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">Resultado del periodo</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Resultado del periodo</p>
           <p class="text-lg font-semibold font-mono">{{ formatPen(data.netIncomePeriod) }}</p>
         </div>
         <div class="text-right">
-          <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">Pasivo + patrimonio</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Pasivo + patrimonio</p>
           <p class="text-lg font-semibold font-mono">{{ formatPen(data.totalLiabilitiesAndEquity) }}</p>
         </div>
       </div>

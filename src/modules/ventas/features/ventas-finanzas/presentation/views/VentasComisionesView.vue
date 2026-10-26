@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { computed, ref } from 'vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -240,26 +242,21 @@ function onRecalcCommission(commissionId: string) {
 
     <div
       v-if="agentsQueryError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span :style="{ color: 'var(--color-text-primary)' }">No se pudieron cargar los asesores para filtros.</span>
-      <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(agentsFetchError) }}</span>
+      <span class="text-gray-800 dark:text-white/90">No se pudieron cargar los asesores para filtros.</span>
+      <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(agentsFetchError) }}</span>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" @click="() => refetchAgents()">Reintentar</BaseButton>
     </div>
 
-    <div
-      class="rounded-xl border p-4 space-y-4"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
+    <BaseCard padding="sm" class="block space-y-4">
       <div class="flex items-center gap-2">
         <div
-          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)' }"
+          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-brand-500/12"
         >
           <AppIcon icon="lucide:filter" :size="16" color="var(--color-primary)" />
         </div>
-        <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Filtros</p>
+        <p class="text-sm font-medium text-gray-800 dark:text-white/90">Filtros</p>
       </div>
       <div class="flex flex-wrap gap-3 items-end">
       <div class="min-w-[140px]">
@@ -269,20 +266,15 @@ function onRecalcCommission(commissionId: string) {
         <FormSelect v-model="listParams.agentId" label="Asesor" :options="agentFilterOptions" />
       </div>
       </div>
-    </div>
+    </BaseCard>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <div
         v-else-if="listQueryError"
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin comisiones registradas.">
@@ -304,8 +296,7 @@ function onRecalcCommission(commissionId: string) {
             <div>Bruto S/ {{ commissionGross(row as CommissionRow).toLocaleString('es-PE') }}</div>
             <div
               v-if="(row as CommissionRow).deductibles?.length"
-              class="text-xs mt-0.5"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="text-xs mt-0.5 text-gray-400 dark:text-gray-500"
             >
               − deducibles S/ {{ ((row as CommissionRow).deductiblesTotal ?? 0).toLocaleString('es-PE') }}
             </div>
@@ -322,8 +313,7 @@ function onRecalcCommission(commissionId: string) {
             <div class="space-y-2">
               <ul
                 v-if="(row as CommissionRow).paymentParts?.length"
-                class="text-xs space-y-1"
-                :style="{ color: 'var(--color-text-secondary)' }"
+                class="text-xs space-y-1 text-gray-500 dark:text-gray-400"
               >
                 <li
                   v-for="part in (row as CommissionRow).paymentParts"
@@ -333,7 +323,7 @@ function onRecalcCommission(commissionId: string) {
                   <span>
                     {{ part.label || `Parte ${part.partNumber}` }}:
                     S/ {{ part.amount.toLocaleString('es-PE') }}
-                    <span v-if="part.status === 'PAID'" class="text-green-600">(pagada)</span>
+                    <span v-if="part.status === 'PAID'" class="text-success-600 dark:text-success-500">(pagada)</span>
                   </span>
                   <BaseButton
                     v-if="part.status !== 'PAID' && canPayCommission(row as CommissionRow)"
@@ -374,15 +364,13 @@ function onRecalcCommission(commissionId: string) {
               </div>
               <p
                 v-else-if="(row as CommissionRow).status === 'CANCELLED' || (row as CommissionRow).saleProcess?.status === 'LOST'"
-                class="text-xs"
-                :style="{ color: 'var(--color-text-muted)' }"
+                class="text-xs text-gray-400 dark:text-gray-500"
               >
                 Sin pagos: venta caída o comisión anulada.
               </p>
               <ul
                 v-if="(row as CommissionRow).deductibles?.length"
-                class="text-xs"
-                :style="{ color: 'var(--color-text-muted)' }"
+                class="text-xs text-gray-400 dark:text-gray-500"
               >
                 <li v-for="d in (row as CommissionRow).deductibles" :key="d.id">
                   {{ DEDUCTIBLE_LABELS[d.deductibleType] ?? d.deductibleType }}:
@@ -393,7 +381,7 @@ function onRecalcCommission(commissionId: string) {
           </td>
         </template>
       </DataTable>
-      <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="!isLoading && !listQueryError" class="border-t p-2 border-gray-200 dark:border-gray-800">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"
@@ -401,6 +389,6 @@ function onRecalcCommission(commissionId: string) {
           @update:page-size="(s: number) => { listParams.limit = s; listParams.page = 1 }"
         />
       </div>
-    </div>
+    </BaseCard>
   </div>
 </template>

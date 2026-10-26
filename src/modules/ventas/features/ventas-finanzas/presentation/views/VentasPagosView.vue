@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
 import { ventasSalesRepositoryKey } from '../../../ventas-sales/application/ports/ventas-sales.port'
 import { useService } from '@shared/presentation/di/services'
@@ -246,14 +249,12 @@ function onMarkPaid(row: BuyerPaymentRow) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Pagos</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Inicial y cuotas del comprador por cierre; pendiente, pagado o atrasado según vencimiento.
-        </p>
-      </div>
-      <BaseButton
+    <PageHeader
+      title="Pagos"
+      subtitle="Inicial y cuotas del comprador por cierre; pendiente, pagado o atrasado según vencimiento."
+    >
+      <template #actions>
+        <BaseButton
         variant="primary"
         class="flex items-center gap-2"
         :loading="loadingNewModalData"
@@ -262,16 +263,13 @@ function onMarkPaid(row: BuyerPaymentRow) {
         <AppIcon icon="lucide:plus" :size="18" />
         Registrar pago
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      class="flex flex-wrap gap-3 items-end rounded-xl border p-4"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
+    <BaseCard padding="sm" class="flex flex-wrap gap-3 items-end flex-row">
       <div
         v-if="buyersLoadState === 'error'"
-        class="w-full flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
-        style="border-color: var(--color-border); color: var(--color-error)"
+        class="w-full flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm border-gray-200 dark:border-gray-800 text-error-500 dark:text-error-400"
       >
         <span>No se pudieron cargar los clientes del filtro: {{ buyersErrorMsg }}</span>
         <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="loadBuyers">Reintentar</BaseButton>
@@ -289,21 +287,15 @@ function onMarkPaid(row: BuyerPaymentRow) {
       <div class="min-w-[160px]">
         <FormSelect v-model="listParams.kind" label="Tipo" :options="kindFilterOptions" />
       </div>
-    </div>
+    </BaseCard>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <div
         v-else-if="isError"
-        class="p-8 text-center space-y-3"
-        :style="{ color: 'var(--color-text-secondary)' }"
+        class="p-8 text-center space-y-3 text-gray-500 dark:text-gray-400"
       >
-        <p class="text-sm" style="color: var(--color-error)">{{ getApiErrorMessage(listQueryError) }}</p>
+        <p class="text-sm text-error-500 dark:text-error-400">{{ getApiErrorMessage(listQueryError) }}</p>
         <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin pagos registrados.">
@@ -341,7 +333,7 @@ function onMarkPaid(row: BuyerPaymentRow) {
           </td>
         </template>
       </DataTable>
-      <div class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div class="border-t p-2 border-gray-200 dark:border-gray-800">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"
@@ -349,20 +341,20 @@ function onMarkPaid(row: BuyerPaymentRow) {
           @update:page-size="(s: number) => { listParams.limit = s; listParams.page = 1 }"
         />
       </div>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showNew" title="Registrar pago" size="md">
       <form class="space-y-4" @submit.prevent="onSubmitPayment">
         <FormSelect label="Cierre de venta" v-bind="binds.saleClosingId" :options="closingOptions" />
-        <p v-if="paymentErrors.saleClosingId" class="text-sm text-red-600">{{ paymentErrors.saleClosingId }}</p>
+        <p v-if="paymentErrors.saleClosingId" class="text-sm text-error-600 dark:text-error-500">{{ paymentErrors.saleClosingId }}</p>
 
         <FormSelect label="Tipo" v-bind="binds.kind" :options="kindOptions" />
 
         <FormInput label="Monto" type="number" step="0.01" v-bind="binds.amount" />
-        <p v-if="paymentErrors.amount" class="text-sm text-red-600">{{ paymentErrors.amount }}</p>
+        <p v-if="paymentErrors.amount" class="text-sm text-error-600 dark:text-error-500">{{ paymentErrors.amount }}</p>
 
         <FormInput label="Vencimiento" type="date" v-bind="binds.dueDate" />
-        <p v-if="paymentErrors.dueDate" class="text-sm text-red-600">{{ paymentErrors.dueDate }}</p>
+        <p v-if="paymentErrors.dueDate" class="text-sm text-error-600 dark:text-error-500">{{ paymentErrors.dueDate }}</p>
 
         <FormTextarea label="Notas (opcional)" v-bind="binds.notes" />
 

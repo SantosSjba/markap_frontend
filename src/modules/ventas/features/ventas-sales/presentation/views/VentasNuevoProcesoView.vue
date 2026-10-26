@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
 import { ventasPropertiesRepositoryKey } from '../../../propiedades/application/ports/ventas-properties.port'
 import { useService } from '@shared/presentation/di/services'
@@ -7,7 +8,6 @@ import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import { useVentasPipelineStages } from '../../../ventas-configuracion/presentation/composables/useVentasConfig'
 import { useVentasCreateProcess, useVentasFinancingChannels } from '../composables/useVentasSales'
@@ -508,30 +508,18 @@ function submit() {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center gap-3">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-        @click="router.push('/ventas/procesos')"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Nuevo proceso de venta
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Configure aquí compradores, comisiones (varios asesores, % o monto fijo) y medio de pago.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Nuevo proceso de venta"
+      subtitle="Configure aquí compradores, comisiones (varios asesores, % o monto fijo) y medio de pago."
+      back
+      @back="router.push('/ventas/procesos')"
+    />
 
     <div
       v-if="loadError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span class="max-w-xl" style="color: var(--color-error)">{{ loadError }}</span>
+      <span class="max-w-xl text-error-500 dark:text-error-400">{{ loadError }}</span>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" :loading="loading" @click="loadCatalogs">
         Reintentar
       </BaseButton>
@@ -574,8 +562,7 @@ function submit() {
         <div
           v-for="(row, idx) in commissionRows"
           :key="`comm-${idx}`"
-          class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end rounded-lg border p-3"
-          :style="{ borderColor: 'var(--color-border)' }"
+          class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end rounded-lg border p-3 border-gray-200 dark:border-gray-800"
         >
           <div class="md:col-span-5">
             <FormSelect
@@ -617,11 +604,10 @@ function submit() {
           </div>
 
           <div
-            class="md:col-span-12 rounded-lg border px-3 py-3 space-y-3"
-            :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+            class="md:col-span-12 rounded-lg border px-3 py-3 space-y-3 border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
           >
             <div class="flex flex-wrap items-end justify-between gap-3">
-              <p class="text-sm font-medium w-full sm:w-auto" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="text-sm font-medium w-full sm:w-auto text-gray-800 dark:text-white/90">
                 Plan de pago de comisión
               </p>
               <div class="flex flex-wrap items-end gap-2">
@@ -648,7 +634,7 @@ function submit() {
                 </BaseButton>
               </div>
             </div>
-            <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+            <p class="text-xs text-gray-400 dark:text-gray-500">
               Indique cuántas cuotas tendrá el pago. Los montos se calculan del neto × % de cada parte.
               <template v-if="resolveCommissionNet(row) != null">
                 Neto: <strong>S/ {{ resolveCommissionNet(row)!.toLocaleString('es-PE') }}</strong>
@@ -656,8 +642,7 @@ function submit() {
             </p>
             <p
               v-if="Math.abs(paymentPartsPercentSum(row) - 100) > 0.05"
-              class="text-xs"
-              :style="{ color: 'var(--color-warning)' }"
+              class="text-xs text-warning-600 dark:text-orange-400"
             >
               Los porcentajes suman {{ paymentPartsPercentSum(row).toFixed(2) }} % (deben ser 100 %).
             </p>
@@ -666,7 +651,7 @@ function submit() {
               :key="`part-${idx}-${pIdx}`"
               class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end"
             >
-              <div class="md:col-span-1 text-xs pt-6" :style="{ color: 'var(--color-text-muted)' }">
+              <div class="md:col-span-1 text-xs pt-6 text-gray-400 dark:text-gray-500">
                 {{ pIdx + 1 }}/{{ row.paymentParts.length }}
               </div>
               <div class="md:col-span-3">
@@ -713,18 +698,17 @@ function submit() {
           </div>
 
           <div
-            class="md:col-span-12 rounded-lg border px-3 py-3 space-y-3"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="md:col-span-12 rounded-lg border px-3 py-3 space-y-3 border-gray-200 dark:border-gray-800"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="text-sm font-medium text-gray-800 dark:text-white/90">
                 Deducibles (pasajes, impuestos, etc.)
               </p>
               <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addDeductible(idx)">
                 Deducible
               </BaseButton>
             </div>
-            <p v-if="!row.deductibles.length" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+            <p v-if="!row.deductibles.length" class="text-xs text-gray-400 dark:text-gray-500">
               Sin deducibles. El neto a pagar será igual a la comisión bruta.
             </p>
             <div
@@ -753,8 +737,7 @@ function submit() {
             </div>
             <p
               v-if="row.agentId && resolveCommissionNet(row) != null"
-              class="text-xs"
-              :style="{ color: 'var(--color-text-secondary)' }"
+              class="text-xs text-gray-500 dark:text-gray-400"
             >
               Neto estimado a pagar:
               <strong>S/ {{ resolveCommissionNet(row)!.toLocaleString('es-PE') }}</strong>
@@ -764,21 +747,19 @@ function submit() {
           </div>
         </div>
 
-        <p v-if="commissionFormError" class="text-sm" :style="{ color: 'var(--color-error)' }">
+        <p v-if="commissionFormError" class="text-sm text-error-500 dark:text-error-400">
           {{ commissionFormError }}
         </p>
 
         <div
           v-if="commissionsPreview.length"
-          class="rounded-lg border px-4 py-3 space-y-2 text-sm"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+          class="rounded-lg border px-4 py-3 space-y-2 text-sm border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
         >
-          <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Vista previa</p>
+          <p class="font-medium text-gray-800 dark:text-white/90">Vista previa</p>
           <ul class="space-y-1">
-            <li
+            <li :class="(p.invalid) ? 'text-error-500 dark:text-error-400' : 'text-gray-500 dark:text-gray-400'"
               v-for="(p, i) in commissionsPreview"
               :key="i"
-              :style="{ color: p.invalid ? 'var(--color-error)' : 'var(--color-text-secondary)' }"
             >
               {{ p.agentName }} ({{ p.agentType }}) —
               <template v-if="p.row.calculationType === 'PERCENT'">{{ p.row.value }}%</template>
@@ -791,11 +772,11 @@ function submit() {
               · {{ p.row.paymentParts.length }} parte(s)
             </li>
           </ul>
-          <p v-if="propertySalePrice != null && propertySalePrice > 0" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+          <p v-if="propertySalePrice != null && propertySalePrice > 0" class="text-xs text-gray-400 dark:text-gray-500">
             Precio inmueble: S/ {{ propertySalePrice.toLocaleString('es-PE') }} · Total comisiones:
             <strong>S/ {{ commissionsTotal.toLocaleString('es-PE') }}</strong>
           </p>
-          <p v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+          <p v-else class="text-xs text-gray-400 dark:text-gray-500">
             Sin precio en el inmueble: los montos en % se calcularán cuando haya precio o al cierre.
           </p>
         </div>
@@ -840,25 +821,23 @@ function submit() {
         subtitle="Titulares registrados en la ficha del inmueble"
         icon="lucide:user-check"
       >
-        <p v-if="loadingPropertyOwners" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+        <p v-if="loadingPropertyOwners" class="text-sm text-gray-400 dark:text-gray-500">
           Cargando propietarios…
         </p>
         <ul v-else-if="propertyOwners.length" class="space-y-1 text-sm">
-          <li
+          <li class="text-gray-800 dark:text-white/90"
             v-for="o in propertyOwners"
             :key="o.id"
-            :style="{ color: 'var(--color-text-primary)' }"
           >
             {{ o.fullName }}
             <span v-if="o.documentNumber"> ({{ o.documentNumber }})</span>
             <span
               v-if="o.isPrimary"
-              class="ml-1 text-xs"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="ml-1 text-xs text-gray-400 dark:text-gray-500"
             >— principal</span>
           </li>
         </ul>
-        <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+        <p v-else class="text-sm text-gray-400 dark:text-gray-500">
           Sin propietarios registrados en la ficha del inmueble.
         </p>
       </FormSectionCard>

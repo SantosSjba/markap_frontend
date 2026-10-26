@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
 import { ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -86,63 +90,49 @@ async function confirmDeactivate(row: ContabilidadCostCenterDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Centros de costo
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Segmentación analítica para asientos y reportes por área.
-        </p>
-      </div>
-      <BaseButton variant="primary" @click="openNew">
+  <div class="w-full space-y-6">
+    <PageHeader
+      title="Centros de costo"
+      subtitle="Segmentación analítica para asientos y reportes por área."
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="16" class="mr-1" />
         Nuevo centro
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
     <SearchInput v-model="searchInput" placeholder="Buscar por código o nombre…" class="max-w-md" />
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
-    <div
-      v-else-if="isError"
-      class="rounded-xl border p-8 text-center"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard v-else-if="isError" padding="lg" class="block text-center">
       <BaseButton variant="secondary" @click="refetch()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
 
-    <div
-      v-else
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Código</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Nombre</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Estado</th>
-            <th class="py-3 px-4" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr
+    <BaseCard v-else padding="none" class="block overflow-hidden">
+      <Table class="w-full text-sm">
+        <TableHeader>
+          <TableRow class="border-b border-gray-200 dark:border-gray-800">
+            <TableCell is-header class="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Código</TableCell>
+            <TableCell is-header class="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Nombre</TableCell>
+            <TableCell is-header class="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Estado</TableCell>
+            <TableCell is-header class="py-3 px-4" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow
             v-for="row in rows"
             :key="row.id"
-            class="border-b last:border-b-0"
-            :style="{ borderColor: 'var(--color-border)', opacity: row.isActive ? 1 : 0.55 }"
+            class="border-b last:border-b-0 border-gray-200 dark:border-gray-800" :style="{ opacity: row.isActive ? 1 : 0.55 }"
           >
-            <td class="py-2.5 px-4 font-mono text-xs" :style="{ color: 'var(--color-primary)' }">{{ row.code }}</td>
-            <td class="py-2.5 px-4" :style="{ color: 'var(--color-text-primary)' }">{{ row.name }}</td>
-            <td class="py-2.5 px-4 text-xs" :style="{ color: row.isActive ? 'var(--color-success)' : 'var(--color-text-muted)' }">
+            <TableCell class="py-2.5 px-4 font-mono text-xs text-brand-500 dark:text-brand-400">{{ row.code }}</TableCell>
+            <TableCell class="py-2.5 px-4 text-gray-800 dark:text-white/90">{{ row.name }}</TableCell>
+            <TableCell :class="(row.isActive) ? 'text-success-600 dark:text-success-500' : 'text-gray-400 dark:text-gray-500'" class="py-2.5 px-4 text-xs">
               {{ row.isActive ? 'Activo' : 'Inactivo' }}
-            </td>
-            <td class="py-2.5 px-4 text-right">
+            </TableCell>
+            <TableCell class="py-2.5 px-4 text-right">
               <div class="flex justify-end gap-1">
                 <BaseButton variant="ghost" size="sm" @click="openEdit(row)">
                   <AppIcon icon="lucide:pencil" :size="16" />
@@ -157,16 +147,16 @@ async function confirmDeactivate(row: ContabilidadCostCenterDTO) {
                   <AppIcon icon="lucide:ban" :size="16" />
                 </BaseButton>
               </div>
-            </td>
-          </tr>
-          <tr v-if="!rows?.length">
-            <td colspan="4" class="py-8 text-center text-sm" :style="{ color: 'var(--color-text-muted)' }">
+            </TableCell>
+          </TableRow>
+          <TableRow v-if="!rows?.length">
+            <TableCell colspan="4" class="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
               Sin centros de costo
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" :title="editing ? 'Editar centro de costo' : 'Nuevo centro de costo'" size="md">
       <form class="space-y-4" @submit.prevent="submitForm">

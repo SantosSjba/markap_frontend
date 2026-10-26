@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import ActionCard from '@shared/presentation/components/ui/ActionCard.vue'
 import { useRouter } from 'vue-router'
-import { Icon } from '@iconify/vue'
 /**
  * DashboardAccionesRapidas
  * Grid de botones de acceso rápido a las acciones más frecuentes.
@@ -83,41 +83,19 @@ function navigate(action: Action) {
 
 <template>
   <div>
-    <h3 class="text-sm font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
+    <h3 class="text-sm font-semibold mb-3 text-gray-800 dark:text-white/90">
       Acciones Rápidas
     </h3>
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-      <button
+      <ActionCard
         v-for="action in actions"
         :key="action.id"
-        class="flex flex-col items-center gap-2 p-3 rounded-xl border transition-all duration-150 hover-surface-strong text-center group"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-card)',
-        }"
+        :icon="action.icon"
+        :title="action.label"
+        :description="action.description"
+        layout="stacked"
         @click="navigate(action)"
-      >
-        <div
-          class="w-9 h-9 rounded-xl flex items-center justify-center transition-transform duration-150 group-hover:scale-110"
-          :style="{ backgroundColor: action.accentLight }"
-        >
-          <Icon
-            :icon="action.icon"
-            :width="20"
-            :height="20"
-            :style="{ color: action.accent }"
-          />
-        </div>
-        <div>
-          <p class="text-xs font-semibold leading-tight" :style="{ color: 'var(--color-text-primary)' }">
-            {{ action.label }}
-          </p>
-          <p class="text-xs leading-tight mt-0.5 hidden sm:block" :style="{ color: 'var(--color-text-muted)' }">
-            {{ action.description }}
-          </p>
-        </div>
-      </button>
+      />
     </div>
   </div>
 </template>

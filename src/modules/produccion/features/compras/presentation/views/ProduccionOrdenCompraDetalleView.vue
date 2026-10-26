@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -6,13 +8,12 @@ import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
   useProduccionPurchaseOrderDetail,
   usePurchaseOrderMutations,
 } from '../composables/useProduccionPurchases'
-import { formatSol, formatDate, PO_STATUS_LABELS, poStatusClass } from '../labels'
+import { formatSol, formatDate, PO_STATUS_LABELS } from '../labels'
 import { formatQty } from '../../../inventario/presentation/labels'
 import type { ProduccionPurchaseOrderLine } from '../../domain/purchases.types'
 const route = useRoute()
@@ -108,61 +109,56 @@ async function doReceive() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-center gap-3">
-      <BaseButton variant="ghost" @click="router.push({ name: 'produccion-compras-ordenes-compra' })">
-        <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />
-        Volver
-      </BaseButton>
-      <div class="flex-1 min-w-0">
-        <h1 class="text-xl font-bold font-mono" :style="{ color: 'var(--color-text-primary)' }">
-          {{ order?.code ?? 'Orden de compra' }}
-        </h1>
-        <p v-if="order" class="text-sm mt-0.5" :class="poStatusClass(order.status)">
-          {{ PO_STATUS_LABELS[order.status] }} · {{ order.supplierName }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="space-y-6">
+    <PageHeader
+      :title="order?.code ?? 'Orden de compra'"
+      :subtitle="order ? `${PO_STATUS_LABELS[order.status]} · ${order.supplierName}` : undefined"
+      back
+      @back="router.push({ name: 'produccion-compras-ordenes-compra' })"
+    >
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton v-if="canSend" variant="primary" @click="doSend">Enviar</BaseButton>
         <BaseButton v-if="canReceive" variant="primary" @click="showReceiveModal = true">Registrar recepción</BaseButton>
         <BaseButton v-if="canCancel" variant="secondary" @click="doCancel">Cancelar</BaseButton>
         <BaseButton v-if="canDelete" variant="danger" @click="doDelete">Eliminar</BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando…</div>
+    <div v-if="isLoading" class="text-sm text-gray-500 dark:text-gray-400">Cargando…</div>
 
     <template v-else-if="order">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-        <div class="rounded-lg border p-3" :style="{ borderColor: 'var(--color-border)' }">
-          <div :style="{ color: 'var(--color-text-secondary)' }">Proveedor</div>
+        <div class="rounded-lg border p-3 border-gray-200 dark:border-gray-800">
+          <div class="text-gray-500 dark:text-gray-400">Proveedor</div>
           <div class="font-medium">{{ order.supplierName }}</div>
           <div class="text-xs font-mono">{{ order.supplierRuc }}</div>
         </div>
-        <div class="rounded-lg border p-3" :style="{ borderColor: 'var(--color-border)' }">
-          <div :style="{ color: 'var(--color-text-secondary)' }">Fecha orden</div>
+        <div class="rounded-lg border p-3 border-gray-200 dark:border-gray-800">
+          <div class="text-gray-500 dark:text-gray-400">Fecha orden</div>
           <div class="font-medium">{{ formatDate(order.orderedAt) }}</div>
         </div>
-        <div class="rounded-lg border p-3" :style="{ borderColor: 'var(--color-border)' }">
-          <div :style="{ color: 'var(--color-text-secondary)' }">Entrega esperada</div>
+        <div class="rounded-lg border p-3 border-gray-200 dark:border-gray-800">
+          <div class="text-gray-500 dark:text-gray-400">Entrega esperada</div>
           <div class="font-medium">{{ formatDate(order.expectedAt) }}</div>
         </div>
-        <div class="rounded-lg border p-3" :style="{ borderColor: 'var(--color-border)' }">
-          <div :style="{ color: 'var(--color-text-secondary)' }">Total</div>
+        <div class="rounded-lg border p-3 border-gray-200 dark:border-gray-800">
+          <div class="text-gray-500 dark:text-gray-400">Total</div>
           <div class="font-bold text-lg">{{ formatSol(order.totalAmount) }}</div>
         </div>
       </div>
 
-      <p v-if="order.notes" class="text-sm rounded-lg border p-3" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
+      <p v-if="order.notes" class="text-sm rounded-lg border p-3 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400">
         {{ order.notes }}
       </p>
 
-      <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+      <BaseCard padding="none" class="block overflow-hidden">
         <DataTable :columns="lineColumns" :data="order.lines" empty-text="Sin líneas." row-key="id">
           <template #row="{ row }">
             <td class="py-3 px-4">
               <div class="font-medium text-sm">{{ (row as ProduccionPurchaseOrderLine).materialName }}</div>
-              <div class="text-xs font-mono" :style="{ color: 'var(--color-text-secondary)' }">{{ (row as ProduccionPurchaseOrderLine).materialCode }}</div>
+              <div class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ (row as ProduccionPurchaseOrderLine).materialCode }}</div>
             </td>
             <td class="py-3 px-4 text-sm">{{ formatQty((row as ProduccionPurchaseOrderLine).quantityOrdered, (row as ProduccionPurchaseOrderLine).unit) }}</td>
             <td class="py-3 px-4 text-sm">{{ formatQty((row as ProduccionPurchaseOrderLine).quantityReceived, (row as ProduccionPurchaseOrderLine).unit) }}</td>
@@ -171,13 +167,13 @@ async function doReceive() {
             <td class="py-3 px-4 text-sm font-medium">{{ formatSol((row as ProduccionPurchaseOrderLine).lineTotal) }}</td>
           </template>
         </DataTable>
-      </div>
+      </BaseCard>
     </template>
 
     <BaseModal v-model="showReceiveModal" size="md">
       <template #title>Registrar recepción</template>
       <div class="p-4 space-y-4">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Indique la cantidad recibida por línea. Se registrará un ingreso en inventario.
         </p>
         <div v-for="line in pendingLines" :key="line.id" class="flex items-end gap-3">

@@ -1,4 +1,6 @@
 ﻿<script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { useService } from '@shared/presentation/di/services'
 import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
 import { ref, watch, computed } from 'vue'
@@ -145,20 +147,14 @@ const sortedImages = computed(() =>
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[960px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start gap-3 justify-between">
-      <div>
-        <p class="text-xs font-medium uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">
-          Catálogo
-        </p>
-        <h1 class="text-xl font-bold mt-0.5" :style="{ color: 'var(--color-text-primary)' }">
-          {{ detail?.code ?? '…' }} · {{ detail?.name ?? 'Cargando…' }}
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Precio ref. {{ formatSol(detail?.price) }} · Stock {{ formatQty(detail?.stock) }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="max-w-[960px] mx-auto space-y-6">
+    <PageHeader
+      :title="`${detail?.code ?? '…'} · ${detail?.name ?? 'Cargando…'}`"
+      :subtitle="`Precio ref. ${formatSol(detail?.price)} · Stock ${formatQty(detail?.stock)}`"
+      eyebrow="Catálogo"
+    >
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton variant="ghost" type="button" @click="goBack">
           <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1.5" />
           Listado
@@ -170,22 +166,18 @@ const sortedImages = computed(() =>
           Guardar cambios
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando…</div>
+    <div v-if="isLoading" class="text-sm text-gray-500 dark:text-gray-400">Cargando…</div>
 
     <template v-else-if="detail">
-      <div
-        v-if="sortedImages.length"
-        class="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl border p-4"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
+      <BaseCard v-if="sortedImages.length" padding="sm" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <button
           v-for="img in sortedImages"
           :key="img.id"
           type="button"
-          class="aspect-square rounded-lg overflow-hidden border text-left"
-          :style="{ borderColor: 'var(--color-border)' }"
+          class="aspect-square rounded-lg overflow-hidden border text-left border-gray-200 dark:border-gray-800"
           @click="openPath(img.url)"
         >
           <img
@@ -197,19 +189,15 @@ const sortedImages = computed(() =>
           />
           <div
             v-else
-            class="w-full h-full flex items-center justify-center text-xs px-2 text-center"
-            :style="{ color: 'var(--color-text-secondary)' }"
+            class="w-full h-full flex items-center justify-center text-xs px-2 text-center text-gray-500 dark:text-gray-400"
           >
             Ver imagen
           </div>
         </button>
-      </div>
+      </BaseCard>
 
-      <div
-        class="space-y-4 p-4 sm:p-6 rounded-xl border"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
-        <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Edición</p>
+      <BaseCard class="block space-y-4">
+        <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Edición</p>
         <div class="grid sm:grid-cols-2 gap-4">
           <FormInput :model-value="detail.code" label="Código" disabled />
           <FormInput v-model="name" label="Nombre" required />
@@ -278,16 +266,14 @@ const sortedImages = computed(() =>
               :key="`${u}-${idx}`"
               class="flex items-center justify-between gap-2"
             >
-              <button type="button" class="truncate underline text-left" @click="openPath(u)">
-                {{ u.split('/').pop() }}
-              </button>
+              <BaseButton @click="openPath(u)" variant="link">{{ u.split('/').pop() }}</BaseButton>
               <BaseButton type="button" variant="ghost" size="sm" @click="removeImage(idx)">
                 Quitar
               </BaseButton>
             </li>
           </ul>
         </div>
-      </div>
+      </BaseCard>
     </template>
   </div>
 </template>

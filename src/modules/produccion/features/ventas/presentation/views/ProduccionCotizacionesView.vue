@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -62,21 +64,20 @@ function goNew() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Cotizaciones</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Propuestas comerciales para clientes — borrador, envío y aceptación.
-        </p>
-      </div>
-      <BaseButton variant="primary" @click="goNew">
+  <div class="space-y-6">
+    <PageHeader
+      title="Cotizaciones"
+      subtitle="Propuestas comerciales para clientes — borrador, envío y aceptación."
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="goNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nueva cotización
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin cotizaciones." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -91,14 +92,7 @@ function goNew() {
         </template>
         <template #row="{ row }">
           <td class="py-3 px-4">
-            <button
-              type="button"
-              class="font-mono text-sm font-medium hover:underline"
-              :style="{ color: 'var(--color-primary)' }"
-              @click="goDetail(row as ProduccionQuotationListItem)"
-            >
-              {{ (row as ProduccionQuotationListItem).code }}
-            </button>
+            <BaseButton @click="goDetail(row as ProduccionQuotationListItem)" variant="link" class="font-mono font-medium">{{ (row as ProduccionQuotationListItem).code }}</BaseButton>
           </td>
           <td class="py-3 px-4 text-sm">{{ (row as ProduccionQuotationListItem).clientName }}</td>
           <td class="py-3 px-4 text-sm font-medium" :class="quotationStatusClass((row as ProduccionQuotationListItem).status)">
@@ -108,6 +102,6 @@ function goNew() {
           <td class="py-3 px-4 text-sm font-medium">{{ formatSol((row as ProduccionQuotationListItem).totalAmount) }}</td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
   </div>
 </template>

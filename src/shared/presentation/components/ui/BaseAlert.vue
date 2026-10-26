@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import AppIcon from './AppIcon.vue'
+import { computed } from 'vue'
+import { Alert, AlertDescription, AlertTitle } from '../../ui/alert'
+import type { AlertVariant } from '../../ui/alert'
+import { Button } from '../../ui/button'
+import {
+  AlertIcon,
+  CheckCircleIcon,
+  InfoIcon,
+  OctagonAlertIcon,
+  XIcon,
+} from '../../icons/layout'
 /**
- * BaseAlert Component
- * Reusable alert/notification component
+ * BaseAlert — `Alert` de TailAdmin (info | success | warning | error).
  */
 
 interface Props {
@@ -14,6 +23,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   type: 'info',
+  title: undefined,
   dismissible: false,
   icon: true,
 })
@@ -22,56 +32,40 @@ const emit = defineEmits<{
   dismiss: []
 }>()
 
-const typeClasses = {
-  info: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/50 dark:border-blue-800 dark:text-blue-100',
-  success:
-    'bg-green-50 border-green-200 text-green-800 dark:bg-green-950/50 dark:border-green-800 dark:text-green-100',
-  warning:
-    'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-100',
-  error:
-    'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/50 dark:border-red-800 dark:text-red-100',
+const variantMap: Record<NonNullable<Props['type']>, AlertVariant> = {
+  info: 'info',
+  success: 'success',
+  warning: 'warning',
+  error: 'destructive',
 }
 
-const iconColors = {
-  info: 'text-blue-500 dark:text-blue-400',
-  success: 'text-green-600 dark:text-green-400',
-  warning: 'text-yellow-600 dark:text-yellow-400',
-  error: 'text-red-500 dark:text-red-400',
+const iconMap = {
+  info: InfoIcon,
+  success: CheckCircleIcon,
+  warning: AlertIcon,
+  error: OctagonAlertIcon,
 }
+
+const variant = computed(() => variantMap[props.type])
+const iconComponent = computed(() => iconMap[props.type])
 </script>
 
 <template>
-  <div
-    :class="[
-      'flex items-start gap-3 p-4 border rounded-lg',
-      typeClasses[type],
-    ]"
-    role="alert"
-  >
-    <!-- Icon -->
-    <div v-if="icon" :class="['flex-shrink-0', iconColors[type]]">
-      <AppIcon v-if="type === 'info'" icon="lucide:info" :size="20" color="currentColor" />
-      <AppIcon v-else-if="type === 'success'" icon="lucide:circle-check" :size="20" color="currentColor" />
-      <AppIcon v-else-if="type === 'warning'" icon="lucide:triangle-alert" :size="20" color="currentColor" />
-      <AppIcon v-else-if="type === 'error'" icon="lucide:circle-x" :size="20" color="currentColor" />
-    </div>
-
-    <!-- Content -->
-    <div class="flex-1">
-      <h4 v-if="title" class="font-medium mb-1">{{ title }}</h4>
-      <div class="text-sm">
-        <slot />
-      </div>
-    </div>
-
-    <!-- Dismiss button -->
-    <button
+  <Alert :variant="variant" class="p-4" :class="dismissible ? 'pe-12' : undefined">
+    <component :is="iconComponent" v-if="icon" class="size-5" />
+    <AlertTitle v-if="title">{{ title }}</AlertTitle>
+    <AlertDescription>
+      <slot />
+    </AlertDescription>
+    <Button
       v-if="dismissible"
-      type="button"
-      class="flex-shrink-0 p-1 hover:opacity-70 transition-opacity"
+      variant="ghost"
+      size="icon-xs"
+      class="absolute end-2 top-2 text-gray-400 hover:text-gray-700 dark:hover:text-white"
+      aria-label="Cerrar"
       @click="emit('dismiss')"
     >
-      <AppIcon icon="lucide:x" :size="16" color="currentColor" />
-    </button>
-  </div>
+      <XIcon class="size-4" />
+    </Button>
+  </Alert>
 </template>

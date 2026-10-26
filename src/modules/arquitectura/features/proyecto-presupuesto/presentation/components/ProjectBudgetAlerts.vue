@@ -40,20 +40,19 @@ const hasAlerts = computed(
 <template>
   <div
     v-if="hasAlerts"
-    class="rounded-xl border p-4 space-y-3"
-    :style="{ borderColor: 'var(--color-warning, #f59e0b)', background: 'color-mix(in srgb, #f59e0b 8%, transparent)' }"
+    class="rounded-xl border p-4 space-y-3 border-warning-500 bg-warning-500/8"
   >
-    <div class="flex items-center gap-2 text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+    <div class="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-white/90">
       <AppIcon icon="lucide:triangle-alert" :size="18" color="#d97706" />
       Alertas financieras
     </div>
 
-    <ul class="space-y-2 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+    <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
       <li v-if="pendingClientCollect" class="flex gap-2">
         <AppIcon icon="lucide:wallet" :size="16" color="#d97706" class="shrink-0 mt-0.5" />
         <span>
           Cobro pendiente al cliente:
-          <strong :style="{ color: 'var(--color-text-primary)' }">
+          <strong class="text-gray-800 dark:text-white/90">
             {{ formatSol(settlement!.pendingToCollect) }}
           </strong>
         </span>
@@ -62,7 +61,7 @@ const hasAlerts = computed(
         <AppIcon icon="lucide:hand-coins" :size="16" color="#d97706" class="shrink-0 mt-0.5" />
         <span>
           Saldo pendiente a proveedores:
-          <strong :style="{ color: 'var(--color-text-primary)' }">
+          <strong class="text-gray-800 dark:text-white/90">
             {{ formatSol(totalSupplierPending) }}
           </strong>
           en {{ supplierBalanceItems.length }} partida(s)

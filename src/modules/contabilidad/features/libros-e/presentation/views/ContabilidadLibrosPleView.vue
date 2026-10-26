@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { computed, ref, watch } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -152,7 +156,7 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:file-archive"
       title="Generación PLE"
@@ -180,21 +184,17 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
       </template>
     </PageHeader>
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuracin ? Contexto contable.
     </p>
 
-    <div
-      v-if="mandatoryProfile"
-      class="rounded-xl border p-4"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard v-if="mandatoryProfile" padding="sm" class="block">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div>
-          <h3 class="font-semibold text-sm" :style="{ color: 'var(--color-text-primary)' }">
+          <h3 class="font-semibold text-sm text-gray-800 dark:text-white/90">
             Checklist régimen tributario
           </h3>
-          <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+          <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
             {{ mandatoryProfile.taxRegimeLabel }} — libros obligatorios marcados con etiqueta «Obligatorio».
           </p>
         </div>
@@ -203,24 +203,16 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
         </BaseButton>
       </div>
       <div class="flex flex-wrap gap-2">
-        <span
+        <Badge
           v-for="book in mandatoryProfile.books.filter((b) => b.mandatory)"
           :key="book.code"
-          class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border"
-          :style="{
-            borderColor: selectedCodes.includes(book.code) ? 'var(--color-primary)' : 'var(--color-border)',
-            backgroundColor: selectedCodes.includes(book.code) ? 'var(--color-primary-soft)' : 'transparent',
-          }"
+          :variant="selectedCodes.includes(book.code) ? 'primary' : 'neutral'"
         >
-          <AppIcon
-            :icon="selectedCodes.includes(book.code) ? 'lucide:check-circle' : 'lucide:circle'"
-            :size="12"
-            :color="selectedCodes.includes(book.code) ? 'var(--color-primary)' : 'var(--color-text-muted)'"
-          />
+          <AppIcon :icon="selectedCodes.includes(book.code) ? 'lucide:check-circle' : 'lucide:circle'" />
           {{ book.name }}
-        </span>
+        </Badge>
       </div>
-    </div>
+    </BaseCard>
 
     <div class="flex flex-wrap gap-2">
       <BaseButton variant="secondary" size="sm" @click="selectAll">Seleccionar todos</BaseButton>
@@ -231,8 +223,7 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
       <label
         v-for="book in books"
         :key="book.code"
-        class="flex items-start gap-3 p-4 rounded-xl border cursor-pointer"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+        class="flex items-start gap-3 p-4 rounded-2xl border cursor-pointer border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-dark"
       >
         <FormCheckbox
           :model-value="selectedCodes.includes(book.code)"
@@ -243,113 +234,88 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
             <span class="font-medium text-sm">{{ book.name }}</span>
             <Badge v-if="isMandatory(book.code)" variant="info">Obligatorio</Badge>
           </div>
-          <div class="text-xs font-mono mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+          <div class="text-xs font-mono mt-0.5 text-gray-400 dark:text-gray-500">
             {{ book.code }} · Estructura {{ book.sunatStructure }}
           </div>
-          <div class="text-xs mt-1" :style="{ color: 'var(--color-text-secondary)' }">{{ book.description }}</div>
+          <div class="text-xs mt-1 text-gray-500 dark:text-gray-400">{{ book.description }}</div>
         </div>
       </label>
     </div>
 
     <template v-if="lastResult">
-      <div
+      <FormSectionCard
         v-if="lastResult.blocked"
-        class="rounded-xl border p-4"
-        :style="{ borderColor: 'var(--color-danger)', backgroundColor: 'var(--color-surface)' }"
+        title="Exportación bloqueada"
+        subtitle="Corrija los errores críticos antes de descargar archivos o el ZIP del periodo."
+        dense
       >
-        <h3 class="font-semibold text-sm mb-1" :style="{ color: 'var(--color-danger)' }">
-          Exportación bloqueada
-        </h3>
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-          Corrija los errores críticos antes de descargar archivos o el ZIP del periodo.
-        </p>
-      </div>
 
-      <div
-        v-if="lineErrors.length"
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-danger)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <div class="px-4 py-3 border-b" :style="{ borderColor: 'var(--color-border)' }">
-          <h3 class="font-semibold text-sm" :style="{ color: 'var(--color-danger)' }">
+      </FormSectionCard>
+
+      <BaseCard v-if="lineErrors.length" padding="none" class="block overflow-hidden border-error-500">
+        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          <h3 class="font-semibold text-sm text-error-500 dark:text-error-400">
             Vista previa de líneas con error
           </h3>
         </div>
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="text-left py-2 px-4 font-medium w-16">Línea</th>
-              <th class="text-left py-2 px-4 font-medium w-24">Libro</th>
-              <th class="text-left py-2 px-4 font-medium">Mensaje</th>
-              <th class="text-left py-2 px-4 font-medium hidden lg:table-cell">Contenido</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(err, i) in lineErrors"
-              :key="issueKey(err, i)"
-              class="border-b last:border-0"
-              :style="{ borderColor: 'var(--color-border)' }"
-            >
+        <DataTable
+          :columns="[
+            { key: 'c0', label: 'Línea' },
+            { key: 'c1', label: 'Libro' },
+            { key: 'c2', label: 'Mensaje' },
+            { key: 'c3', label: 'Contenido' },
+          ]"
+          :data="lineErrors"
+        >
+          <template #row="{ row: err }">
               <td class="py-2 px-4 font-mono text-xs">{{ err.lineNumber ?? '—' }}</td>
               <td class="py-2 px-4 font-mono text-xs">{{ err.bookCode }}</td>
               <td class="py-2 px-4">{{ err.message }}</td>
               <td class="py-2 px-4 font-mono text-xs truncate max-w-md hidden lg:table-cell" :title="err.linePreview">
                 {{ err.linePreview ?? '—' }}
               </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          </template>
+        </DataTable>
+      </BaseCard>
 
-      <div
+      <FormSectionCard
         v-if="lastResult.errors.length && !lineErrors.length"
-        class="rounded-xl border p-4"
-        :style="{ borderColor: 'var(--color-danger)', backgroundColor: 'var(--color-surface)' }"
+        title="Errores de validación"
+        dense
       >
-        <h3 class="font-semibold text-sm mb-2" :style="{ color: 'var(--color-danger)' }">Errores de validación</h3>
         <ul class="text-sm space-y-1">
           <li v-for="(err, i) in lastResult.errors" :key="issueKey(err, i)">
             <Badge variant="error" class="mr-2">{{ err.bookCode }}</Badge>
             {{ err.message }}
           </li>
         </ul>
-      </div>
+      </FormSectionCard>
 
-      <div
+      <FormSectionCard
         v-if="lastResult.warnings.length"
-        class="rounded-xl border p-4"
-        :style="{ borderColor: 'var(--color-warning)', backgroundColor: 'var(--color-surface)' }"
+        title="Advertencias"
+        dense
       >
-        <h3 class="font-semibold text-sm mb-2" :style="{ color: 'var(--color-warning)' }">Advertencias</h3>
         <ul class="text-sm space-y-1">
           <li v-for="(w, i) in lastResult.warnings" :key="issueKey(w, i)">
             <Badge variant="warning" class="mr-2">{{ w.bookCode }}</Badge>
             {{ w.message }}
           </li>
         </ul>
-      </div>
+      </FormSectionCard>
 
-      <div
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="text-left py-3 px-4">Libro</th>
-              <th class="text-left py-3 px-4">Archivo</th>
-              <th class="text-right py-3 px-4">Líneas</th>
-              <th class="py-3 px-4 w-28" />
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="file in lastResult.files"
-              :key="file.bookCode"
-              class="border-b last:border-b-0"
-              :style="{ borderColor: 'var(--color-border)' }"
-            >
+      <BaseCard padding="none" class="block overflow-hidden">
+        <DataTable
+          :columns="[
+            { key: 'c0', label: 'Libro' },
+            { key: 'c1', label: 'Archivo' },
+            { key: 'c2', label: 'Líneas', align: 'right' },
+            { key: 'c3', label: '' },
+          ]"
+          :data="lastResult.files"
+          row-key="bookCode"
+        >
+          <template #row="{ row: file }">
               <td class="py-2.5 px-4">{{ file.bookName }}</td>
               <td class="py-2.5 px-4 font-mono text-xs">{{ file.fileName }}</td>
               <td class="py-2.5 px-4 text-right">{{ file.lineCount }}</td>
@@ -363,52 +329,39 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
                   Descargar
                 </BaseButton>
               </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          </template>
+        </DataTable>
+      </BaseCard>
     </template>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <div class="px-4 py-3 border-b" :style="{ borderColor: 'var(--color-border)' }">
-        <h3 class="font-semibold text-sm" :style="{ color: 'var(--color-text-primary)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+        <h3 class="font-semibold text-sm text-gray-800 dark:text-white/90">
           Historial de exportaciones
         </h3>
       </div>
 
-      <div v-if="loadingLogs" class="flex justify-center py-10">
-        <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-      </div>
+      <LoadingState v-if="loadingLogs" class="py-10" />
 
       <div
         v-else-if="!exportLogs?.length"
-        class="p-8 text-center text-sm"
-        :style="{ color: 'var(--color-text-muted)' }"
+        class="p-8 text-center text-sm text-gray-400 dark:text-gray-500"
       >
         Sin exportaciones registradas para este periodo.
       </div>
 
-      <table v-else class="w-full text-sm">
-        <thead>
-          <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <th class="text-left py-2.5 px-4 font-medium">Fecha</th>
-            <th class="text-left py-2.5 px-4 font-medium">Periodo</th>
-            <th class="text-left py-2.5 px-4 font-medium hidden md:table-cell">Libros</th>
-            <th class="text-right py-2.5 px-4 font-medium">Archivos</th>
-            <th class="text-right py-2.5 px-4 font-medium">Errores</th>
-            <th class="text-left py-2.5 px-4 font-medium">Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="log in exportLogs"
-            :key="log.id"
-            class="border-b last:border-0"
-            :style="{ borderColor: 'var(--color-border)' }"
-          >
+      <DataTable
+        :columns="[
+          { key: 'c0', label: 'Fecha' },
+          { key: 'c1', label: 'Periodo' },
+          { key: 'c2', label: 'Libros' },
+          { key: 'c3', label: 'Archivos', align: 'right' },
+          { key: 'c4', label: 'Errores', align: 'right' },
+          { key: 'c5', label: 'Estado' },
+        ]"
+        :data="exportLogs ?? []"
+      >
+        <template #row="{ row: log }">
             <td class="py-2 px-4 whitespace-nowrap text-xs">{{ formatLogDate(log.createdAt) }}</td>
             <td class="py-2 px-4 font-mono text-xs">{{ formatPeriod(log.year, log.month) }}</td>
             <td class="py-2 px-4 text-xs hidden md:table-cell">
@@ -421,9 +374,8 @@ function issueKey(issue: ContabilidadPleValidationIssueDTO, index: number) {
                 {{ PLE_EXPORT_STATUS_LABELS[log.status] ?? log.status }}
               </Badge>
             </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        </template>
+      </DataTable>
+    </BaseCard>
   </div>
 </template>

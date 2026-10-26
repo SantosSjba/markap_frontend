@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -147,7 +148,7 @@ function goJournal(row: ContabilidadRetentionDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:shield-minus"
       title="Retenciones"
@@ -161,10 +162,7 @@ function goJournal(row: ContabilidadRetentionDTO) {
       </template>
     </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -183,7 +181,7 @@ function goJournal(row: ContabilidadRetentionDTO) {
           <td class="py-3 px-4 text-sm">{{ typeLabel((row as ContabilidadRetentionDTO).retentionType) }}</td>
           <td class="py-3 px-4 text-sm">
             <div>{{ (row as ContabilidadRetentionDTO).counterpartyName }}</div>
-            <div class="text-xs font-mono" :style="{ color: 'var(--color-text-muted)' }">
+            <div class="text-xs font-mono text-gray-400 dark:text-gray-500">
               {{ (row as ContabilidadRetentionDTO).counterpartyRuc }}
             </div>
           </td>
@@ -203,7 +201,7 @@ function goJournal(row: ContabilidadRetentionDTO) {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" title="Registrar retención" size="md">
       <form class="space-y-4" @submit.prevent="submit">

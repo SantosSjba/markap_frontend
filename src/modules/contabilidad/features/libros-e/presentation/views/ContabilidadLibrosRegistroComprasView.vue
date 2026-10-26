@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed } from 'vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
@@ -33,16 +34,13 @@ const columns = [
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:book-down"
       title="Registro de compras"
       subtitle="Vista consulta 8.1 — comprobantes de compra del periodo (base PLE)."
     />
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin compras en el periodo." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -59,6 +57,6 @@ const columns = [
           <td class="py-3 px-4 text-sm text-right font-mono font-semibold">{{ formatPen((row as ContabilidadPurchaseInvoiceDTO).totalAmount) }}</td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
   </div>
 </template>

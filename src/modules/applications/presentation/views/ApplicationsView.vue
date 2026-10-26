@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
 import ThemeToggle from '@shared/presentation/components/ui/ThemeToggle.vue'
+import UserDropdown from '@app/layouts/components/header/UserDropdown.vue'
 import { useMyApplications } from '../composables/useApplications'
 import type { Application } from '../../domain/application.types'
 const router = useRouter()
@@ -11,7 +13,6 @@ const authStore = useAuthStore()
 
 const { data: applications, isLoading, error, refetch } = useMyApplications()
 
-const isUserMenuOpen = ref(false)
 
 // Labels descriptivos por slug de aplicación
 const statsLabels: Record<string, { active: string; pending: string }> = {
@@ -48,39 +49,12 @@ const navigateToApp = (app: Application) => {
   if (app.url) router.push(app.url)
 }
 
-const toggleUserMenu = () => {
-  isUserMenuOpen.value = !isUserMenuOpen.value
-}
-const closeUserMenu = () => {
-  isUserMenuOpen.value = false
-}
-const goToProfile = () => {
-  closeUserMenu()
-  router.push('/settings/profile')
-}
-const goToSettings = () => {
-  closeUserMenu()
-  router.push('/settings')
-}
-const handleLogout = () => {
-  closeUserMenu()
-  authStore.logout()
-  router.push('/auth/login')
-}
-
-const handleClickOutside = (event: MouseEvent) => {
-  const target = event.target as HTMLElement
-  if (!target.closest('.user-menu-container')) closeUserMenu()
-}
-
-onMounted(() => document.addEventListener('click', handleClickOutside))
-onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col" style="background-color: var(--color-background);">
+  <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
-    <header class="bg-surface border-b" style="border-color: var(--color-border);">
+    <header class="sticky top-0 z-99 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
@@ -88,63 +62,9 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
             <img src="/images/logo_bg_removed.png" alt="MARKAP Homes" class="h-12 w-auto object-contain" />
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3">
             <ThemeToggle />
-            <!-- User menu -->
-            <div class="relative user-menu-container">
-              <button @click="toggleUserMenu" class="flex items-center gap-3 p-2 rounded-lg hover-surface">
-                <div class="text-right hidden sm:block">
-                  <p class="text-sm font-medium" style="color: var(--color-text-primary);">{{ authStore.userFullName }}</p>
-                  <p class="text-xs" style="color: var(--color-text-muted);">{{ authStore.user?.email }}</p>
-                </div>
-                <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium text-white" style="background-color: var(--color-primary);">
-                  {{ authStore.userInitials }}
-                </div>
-                <Icon
-                  icon="lucide:chevron-down"
-                  class="w-4 h-4 transition-transform"
-                  :class="{ 'rotate-180': isUserMenuOpen }"
-                  :style="{ color: 'var(--color-text-muted)' }"
-                />
-              </button>
-
-              <!-- Dropdown -->
-              <Transition
-                enter-active-class="transition-all duration-200 ease-out"
-                leave-active-class="transition-all duration-150 ease-in"
-                enter-from-class="opacity-0 scale-95 -translate-y-1"
-                leave-to-class="opacity-0 scale-95 -translate-y-1"
-              >
-                <div
-                  v-if="isUserMenuOpen"
-                  class="absolute right-0 mt-2 w-56 bg-surface rounded-xl shadow-lg border py-2 z-50"
-                  style="border-color: var(--color-border);"
-                >
-                  <div class="px-4 py-3 border-b" style="border-color: var(--color-border);">
-                    <p class="text-sm font-medium" style="color: var(--color-text-primary);">{{ authStore.userFullName }}</p>
-                    <p class="text-xs" style="color: var(--color-text-muted);">{{ authStore.user?.email }}</p>
-                  </div>
-
-                  <div class="py-1">
-                    <button @click="goToProfile" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover-surface mx-1 rounded-lg" style="color: var(--color-text-primary);">
-                      <Icon icon="lucide:user" class="w-5 h-5" :style="{ color: 'var(--color-text-muted)' }" />
-                      Mi Perfil
-                    </button>
-                    <button @click="goToSettings" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover-surface mx-1 rounded-lg" style="color: var(--color-text-primary);">
-                      <Icon icon="lucide:settings" class="w-5 h-5" :style="{ color: 'var(--color-text-muted)' }" />
-                      Configuración
-                    </button>
-                  </div>
-
-                  <div class="border-t pt-1" style="border-color: var(--color-border);">
-                    <button @click="handleLogout" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover-danger mx-1 rounded-lg" style="color: var(--color-error);">
-                      <Icon icon="lucide:log-out" class="w-5 h-5" />
-                      Cerrar Sesión
-                    </button>
-                  </div>
-                </div>
-              </Transition>
-            </div>
+            <UserDropdown profile-to="/settings/profile" />
           </div>
         </div>
       </div>
@@ -153,21 +73,19 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
     <!-- Main content -->
     <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
       <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold mb-2" style="color: var(--color-text-primary);">
+        <h2 class="text-xl font-semibold mb-2 text-gray-800 dark:text-white/90">
           Bienvenido, {{ authStore.user?.firstName }}
         </h2>
-        <p style="color: var(--color-text-secondary);">Selecciona la aplicación a la que deseas acceder</p>
+        <p class="text-gray-500 dark:text-gray-400">Selecciona la aplicación a la que deseas acceder</p>
       </div>
 
       <!-- Loading -->
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <Icon icon="svg-spinners:ring-resize" class="w-10 h-10" :style="{ color: 'var(--color-primary)' }" />
-      </div>
+      <LoadingState v-if="isLoading" class="py-12" />
 
       <!-- Error -->
       <div v-else-if="error" class="text-center py-12">
-        <p style="color: var(--color-error);">Error al cargar las aplicaciones</p>
-        <button @click="() => refetch()" class="btn-primary mt-4 px-6 py-2 rounded-lg">Reintentar</button>
+        <p class="text-error-500 dark:text-error-400">Error al cargar las aplicaciones</p>
+        <BaseButton @click="() => refetch()" size="sm" class="mt-4">Reintentar</BaseButton>
       </div>
 
       <!-- Applications grid -->
@@ -176,7 +94,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
           v-for="app in (applications ?? [])"
           :key="app.id"
           @click="navigateToApp(app)"
-          class="card group text-left p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+          class="card group p-5 text-start transition-all duration-200 hover:border-brand-300 hover:shadow-theme-md md:p-6 dark:hover:border-brand-800"
         >
           <div class="flex items-start justify-between mb-4">
             <!-- Icon -->
@@ -194,26 +112,25 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
             <!-- Arrow -->
             <Icon
               icon="lucide:chevron-right"
-              class="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 dark:text-gray-500"
             />
           </div>
 
           <!-- Content -->
-          <h3 class="font-semibold mb-1" style="color: var(--color-text-primary);">{{ app.name }}</h3>
-          <p class="text-sm mb-4 line-clamp-2" style="color: var(--color-text-secondary);">{{ app.description }}</p>
+          <h3 class="font-semibold mb-1 text-gray-800 dark:text-white/90">{{ app.name }}</h3>
+          <p class="text-sm mb-4 line-clamp-2 text-gray-500 dark:text-gray-400">{{ app.description }}</p>
 
           <!-- Stats -->
           <div class="flex items-center gap-4 text-sm">
             <span class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full" style="background-color: var(--color-success);"></span>
-              <span style="color: var(--color-success);">{{ app.activeCount }}</span>
-              <span style="color: var(--color-text-muted);">{{ getStatsLabels(app.slug).active }}</span>
+              <span class="w-2 h-2 rounded-full bg-success-500"></span>
+              <span class="text-success-600 dark:text-success-500">{{ app.activeCount }}</span>
+              <span class="text-gray-400 dark:text-gray-500">{{ getStatsLabels(app.slug).active }}</span>
             </span>
             <span v-if="app.pendingCount > 0" class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full" style="background-color: var(--color-warning);"></span>
-              <span style="color: var(--color-warning);">{{ app.pendingCount }}</span>
-              <span style="color: var(--color-text-muted);">{{ getStatsLabels(app.slug).pending }}</span>
+              <span class="w-2 h-2 rounded-full bg-warning-500"></span>
+              <span class="text-warning-600 dark:text-orange-400">{{ app.pendingCount }}</span>
+              <span class="text-gray-400 dark:text-gray-500">{{ getStatsLabels(app.slug).pending }}</span>
             </span>
           </div>
         </button>
@@ -221,17 +138,17 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
       <!-- Empty state -->
       <div v-if="!isLoading && !error && (applications ?? []).length === 0" class="text-center py-12">
-        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background-color: var(--color-primary-light);">
-          <Icon icon="lucide:layout-grid" class="w-8 h-8" :style="{ color: 'var(--color-primary)' }" />
+        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-brand-50 dark:bg-brand-500/12">
+          <Icon icon="lucide:layout-grid" class="w-8 h-8 text-brand-500 dark:text-brand-400" />
         </div>
-        <h3 class="text-lg font-medium mb-2" style="color: var(--color-text-primary);">No tienes aplicaciones asignadas</h3>
-        <p style="color: var(--color-text-secondary);">Contacta al administrador para solicitar acceso.</p>
+        <h3 class="text-lg font-medium mb-2 text-gray-800 dark:text-white/90">No tienes aplicaciones asignadas</h3>
+        <p class="text-gray-500 dark:text-gray-400">Contacta al administrador para solicitar acceso.</p>
       </div>
     </main>
 
     <!-- Footer -->
-    <footer class="py-4 text-center border-t mt-auto" style="border-color: var(--color-border);">
-      <p class="text-xs" style="color: var(--color-text-muted);">
+    <footer class="py-4 text-center border-t mt-auto border-gray-200 dark:border-gray-800">
+      <p class="text-xs text-gray-400 dark:text-gray-500">
         MARKAP S.A.C. © {{ new Date().getFullYear() }} - Sistema Integral de Gestión Empresarial
       </p>
     </footer>

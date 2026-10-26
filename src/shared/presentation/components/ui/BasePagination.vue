@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import FormSelect from '../forms/FormSelect.vue'
-import AppIcon from './AppIcon.vue'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '../../ui/pagination'
 /**
- * BasePagination Component
- * Reusable pagination component for tables and lists
+ * BasePagination — pie de tabla de TailAdmin (`CardFooter` de las tablas básicas):
+ * texto de resultados, selector de tamaño y botones outline.
  */
 
 interface Props {
@@ -102,23 +110,24 @@ const onPageSizeChange = (value: string | number | null | undefined) => {
 
 <template>
   <div
-    class="flex flex-col sm:flex-row items-center justify-between gap-3 py-4 px-4"
-    style="color: var(--color-text-secondary);"
+    class="flex flex-col items-center justify-between gap-3 px-5 py-4 sm:flex-row sm:px-6"
   >
     <!-- Info text -->
-    <div class="text-sm order-2 sm:order-1">
+    <p class="order-2 text-sm text-gray-500 sm:order-1 dark:text-gray-400">
       <span v-if="totalItems > 0">
-        Mostrando {{ startItem }}-{{ endItem }} de {{ totalItems }} resultados
+        Mostrando
+        <span class="font-medium text-gray-800 dark:text-white/90">{{ startItem }}-{{ endItem }}</span>
+        de
+        <span class="font-medium text-gray-800 dark:text-white/90">{{ totalItems }}</span>
+        resultados
       </span>
-      <span v-else>
-        No hay resultados
-      </span>
-    </div>
+      <span v-else>No hay resultados</span>
+    </p>
 
-    <div class="flex items-center gap-4 order-1 sm:order-2">
+    <div class="order-1 flex flex-wrap items-center justify-center gap-4 sm:order-2">
       <!-- Page size selector -->
       <div v-if="showPageSize && totalItems > 0" class="flex items-center gap-2">
-        <span class="text-sm shrink-0">Por página:</span>
+        <span class="shrink-0 text-sm text-gray-500 dark:text-gray-400">Por página:</span>
         <div class="w-20 shrink-0">
           <FormSelect
             :model-value="pageSize"
@@ -130,59 +139,71 @@ const onPageSizeChange = (value: string | number | null | undefined) => {
         </div>
       </div>
 
-      <!-- Pagination controls -->
-      <nav
-        v-if="totalPages > 1"
-        class="flex items-center gap-1"
-        aria-label="Paginación"
-      >
-        <button
-          type="button"
-          class="p-2 rounded-lg hover-surface disabled:opacity-40 disabled:cursor-not-allowed"
-          :disabled="!canPrev"
+      <!-- Mobile (< sm) -->
+      <div v-if="totalPages > 1" class="flex items-center gap-2 sm:hidden">
+        <PaginationPrevious
+          href="#"
+          size="icon"
+          variant="outline"
           aria-label="Página anterior"
-          @click="goToPage(currentPage - 1)"
-        >
-          <AppIcon icon="lucide:chevron-left" :size="20" color="currentColor" />
-        </button>
-
-        <div class="flex items-center gap-1">
-          <button
-            v-for="(pageNum, index) in pageNumbers"
-            :key="index"
-            type="button"
-            :class="[
-              'min-w-[2.25rem] px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-              pageNum === 'ellipsis'
-                ? 'cursor-default'
-                : pageNum === currentPage
-                  ? 'text-white'
-                  : 'hover-surface',
-            ]"
-            :style="
-              pageNum === currentPage
-                ? { backgroundColor: 'var(--color-primary)' }
-                : { color: 'var(--color-text-primary)' }
-            "
-            :disabled="pageNum === 'ellipsis'"
-            :aria-current="pageNum === currentPage ? 'page' : undefined"
-            :aria-label="pageNum === 'ellipsis' ? undefined : `Página ${pageNum}`"
-            @click="pageNum !== 'ellipsis' && goToPage(pageNum as number)"
-          >
-            {{ pageNum === 'ellipsis' ? '...' : pageNum }}
-          </button>
-        </div>
-
-        <button
-          type="button"
-          class="p-2 rounded-lg hover-surface disabled:opacity-40 disabled:cursor-not-allowed"
-          :disabled="!canNext"
+          :disabled="!canPrev"
+          @click.prevent="goToPage(currentPage - 1)"
+        />
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-400">
+          {{ currentPage }}/{{ totalPages }}
+        </span>
+        <PaginationNext
+          href="#"
+          size="icon"
+          variant="outline"
           aria-label="Página siguiente"
-          @click="goToPage(currentPage + 1)"
-        >
-          <AppIcon icon="lucide:chevron-right" :size="20" color="currentColor" />
-        </button>
-      </nav>
+          :disabled="!canNext"
+          @click.prevent="goToPage(currentPage + 1)"
+        />
+      </div>
+
+      <!-- Desktop (>= sm) -->
+      <Pagination v-if="totalPages > 1" class="mx-0 hidden w-auto sm:flex" aria-label="Paginación">
+        <PaginationContent class="gap-1.5">
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              size="icon"
+              variant="outline"
+              aria-label="Página anterior"
+              :disabled="!canPrev"
+              @click.prevent="goToPage(currentPage - 1)"
+            />
+          </PaginationItem>
+          <template v-for="(pageNum, index) in pageNumbers" :key="index">
+            <PaginationItem v-if="pageNum === 'ellipsis'">
+              <PaginationEllipsis />
+            </PaginationItem>
+            <PaginationItem v-else>
+              <PaginationLink
+                href="#"
+                size="icon"
+                variant="outline"
+                :is-active="pageNum === currentPage"
+                :aria-label="`Página ${pageNum}`"
+                @click.prevent="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </PaginationLink>
+            </PaginationItem>
+          </template>
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              size="icon"
+              variant="outline"
+              aria-label="Página siguiente"
+              :disabled="!canNext"
+              @click.prevent="goToPage(currentPage + 1)"
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   </div>
 </template>

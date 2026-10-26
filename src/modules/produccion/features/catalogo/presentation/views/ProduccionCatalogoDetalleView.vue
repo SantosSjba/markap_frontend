@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import { ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -150,22 +155,18 @@ const onSave = () => (activeTab.value === 'bom' ? saveBom() : save())
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start gap-3 justify-between">
-      <div>
-        <p class="text-xs font-medium uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">
-          Catálogo
-        </p>
-        <h1 class="text-xl font-bold mt-0.5" :style="{ color: 'var(--color-text-primary)' }">
-          {{ detail?.code ?? '…' }} · {{ detail?.name ?? 'Cargando…' }}
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Precio ref. {{ formatSol(detail?.referencePrice) }}
+  <div class="space-y-6">
+    <PageHeader
+      :title="`${detail?.code ?? '…'} · ${detail?.name ?? 'Cargando…'}`"
+      eyebrow="Catálogo"
+    >
+      <template #subtitle>
+        Precio ref. {{ formatSol(detail?.referencePrice) }}
           · {{ formatDimensions(detail?.widthCm, detail?.depthCm, detail?.heightCm) }}
           <span v-if="detail"> · {{ detail.bomLines.length }} líneas BOM</span>
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+      </template>
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton variant="ghost" type="button" @click="goBack">
           <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1.5" />
           Listado
@@ -183,70 +184,40 @@ const onSave = () => (activeTab.value === 'bom' ? saveBom() : save())
           Guardar cambios
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="flex gap-1 border-b overflow-x-auto" :style="{ borderColor: 'var(--color-border)' }">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap"
-        :style="{
-          borderColor: activeTab === tab.id ? 'var(--color-primary)' : 'transparent',
-          color: activeTab === tab.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-        }"
-        @click="activeTab = tab.id"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
+    <BaseTabs v-model="activeTab" :tabs="tabs" />
 
-    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando…</div>
+    <div v-if="isLoading" class="text-sm text-gray-500 dark:text-gray-400">Cargando…</div>
 
     <template v-else-if="detail && activeTab === 'ficha'">
-      <div
-        v-if="sortedImages.length"
-        class="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl border p-4"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
+      <BaseCard v-if="sortedImages.length" padding="sm" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <a
           v-for="img in sortedImages"
           :key="img.id"
           :href="img.url"
           target="_blank"
           rel="noopener noreferrer"
-          class="aspect-square rounded-lg overflow-hidden border"
-          :style="{ borderColor: 'var(--color-border)' }"
+          class="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800"
         >
           <img :src="img.url" alt="" class="w-full h-full object-cover" loading="lazy" />
         </a>
-      </div>
+      </BaseCard>
 
-      <div
-        class="space-y-4 p-4 sm:p-6 rounded-xl border"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
-        <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Edición</p>
+      <BaseCard class="block space-y-4">
+        <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Edición</p>
         <div class="grid sm:grid-cols-2 gap-4">
           <FormInput :model-value="detail.code" label="Código" disabled />
           <FormInput v-model="name" label="Nombre" required />
         </div>
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5" :style="{ color: 'var(--color-text-primary)' }">
-              Categoría
-            </label>
-            <select
+            <FormSelect
               v-model="category"
-              class="w-full px-3 py-2 rounded-lg border text-sm"
-              :style="{
-                borderColor: 'var(--color-border)',
-                background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-              }"
-            >
-              <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
-            </select>
+              :options="categoryOptions"
+              label="Categoría"
+            />
           </div>
           <FormInput v-model="referencePrice" type="number" label="Precio referencia (S/)" required />
         </div>
@@ -259,24 +230,17 @@ const onSave = () => (activeTab.value === 'bom' ? saveBom() : save())
         <FormInput v-model="technicalSheetUrl" type="url" label="Ficha técnica (URL)" />
         <FormTextarea v-model="notes" label="Notas internas" :rows="2" />
         <FormTextarea v-model="imageUrlsRaw" label="Imágenes (una URL por línea)" :rows="4" />
-        <label class="flex items-center gap-2 text-sm cursor-pointer" :style="{ color: 'var(--color-text-primary)' }">
-          <input v-model="isActive" type="checkbox" class="rounded" />
-          Activo en catálogo
-        </label>
-      </div>
+        <FormCheckbox v-model="isActive" label="Activo en catálogo" />
+      </BaseCard>
     </template>
 
     <ProduccionFurnitureBomEditor v-else-if="detail && activeTab === 'bom'" v-model="bomLines" />
 
-    <div
-      v-else-if="detail && activeTab === 'costeo'"
-      class="p-6 rounded-xl border"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
+    <BaseCard v-else-if="detail && activeTab === 'costeo'" class="block">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Costeo de muebles</p>
-          <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+          <p class="text-sm font-medium text-gray-800 dark:text-white/90">Costeo de muebles</p>
+          <p class="text-sm mt-1 text-gray-500 dark:text-gray-400">
             Calcule materiales, mano de obra y gastos para este mueble.
           </p>
         </div>
@@ -289,18 +253,14 @@ const onSave = () => (activeTab.value === 'bom' ? saveBom() : save())
           Ver costeo
         </BaseButton>
       </div>
-    </div>
+    </BaseCard>
 
-    <div
-      v-else-if="detail && activeTab === 'cotizaciones'"
-      class="p-6 rounded-xl border text-center"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
+    <BaseCard v-else-if="detail && activeTab === 'cotizaciones'" class="block text-center">
       <AppIcon icon="lucide:file-text" :size="32" class="mx-auto mb-3" color="var(--color-text-secondary)" />
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">Cotizaciones vinculadas</p>
-      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-sm font-medium text-gray-800 dark:text-white/90">Cotizaciones vinculadas</p>
+      <p class="text-sm mt-1 text-gray-500 dark:text-gray-400">
         Disponible en la fase de Ventas. Aquí listará las cotizaciones que incluyan este mueble.
       </p>
-    </div>
+    </BaseCard>
   </div>
 </template>

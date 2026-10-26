@@ -1,42 +1,37 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { Badge } from '../../ui/badge'
 /**
- * Badge - Etiqueta reutilizable (Propietario, Inquilino, Activo, etc.)
+ * Badge — `Badge` de TailAdmin (variante light, tamaño sm) con los colores
+ * semánticos de Markap: primary | success | info | warning | error | neutral.
  */
-type BadgeVariant = 'success' | 'info' | 'warning' | 'error' | 'neutral'
-
-const variantStyles: Record<BadgeVariant, string> = {
-  success: 'var(--color-success-bg, #dcfce7)',
-  info: 'var(--color-info-bg, #dbeafe)',
-  warning: 'var(--color-warning-bg, #fef3c7)',
-  error: 'var(--color-error-bg, #fee2e2)',
-  neutral: 'var(--color-surface-elevated)',
-}
-
-const variantText: Record<BadgeVariant, string> = {
-  success: 'var(--color-success, #16a34a)',
-  info: 'var(--color-info, #2563eb)',
-  warning: 'var(--color-warning, #d97706)',
-  error: 'var(--color-error)',
-  neutral: 'var(--color-text-secondary)',
-}
+type BadgeVariant = 'primary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
 interface Props {
   variant?: BadgeVariant
+  /** Texto del badge (alternativa al slot por defecto) */
+  label?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   variant: 'neutral',
+  label: undefined,
 })
+
+const colorMap = {
+  primary: 'primary',
+  success: 'success',
+  info: 'info',
+  warning: 'warning',
+  error: 'error',
+  neutral: 'light',
+} as const
+
+const color = computed(() => colorMap[props.variant] ?? 'light')
 </script>
 
 <template>
-  <span
-    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-    :style="{
-      backgroundColor: variantStyles[props.variant],
-      color: variantText[props.variant],
-    }"
-  >
-    <slot />
-  </span>
+  <Badge size="sm" :color="color">
+    <slot>{{ label }}</slot>
+  </Badge>
 </template>

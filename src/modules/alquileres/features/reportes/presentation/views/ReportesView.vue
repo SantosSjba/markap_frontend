@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { reportesRepositoryKey } from '../../application/ports/reportes.port'
 import { useService } from '@shared/presentation/di/services'
 import { ref, computed, watch } from 'vue'
@@ -404,43 +409,35 @@ async function handleExportTab() {
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold" style="color: var(--color-text-primary);">
-          Reportes
-        </h1>
-        <p class="text-sm mt-0.5" style="color: var(--color-text-secondary);">
-          Análisis y exportación de datos
-        </p>
-      </div>
-      <div class="flex items-center gap-2 w-full sm:w-auto">
+    <PageHeader
+      title="Reportes"
+      subtitle="Análisis y exportación de datos"
+    >
+      <template #actions>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
         <AppIcon icon="lucide:filter" :size="15" color="var(--color-text-muted)" class="shrink-0" />
-        <label class="text-sm shrink-0" style="color: var(--color-text-secondary);">Período:</label>
+        <label class="text-sm shrink-0 text-gray-500 dark:text-gray-400">Período:</label>
         <FormSelect
           v-model="periodFilter"
           :options="periodOptions"
           class="min-w-[170px]"
         />
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Cards resumen (independiente del resto de consultas) -->
     <div v-if="summaryQuery.isPending.value" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div
         v-for="i in 4"
         :key="i"
-        class="rounded-xl border h-24 animate-pulse"
-        :style="{ backgroundColor: 'var(--color-surface-elevated)', borderColor: 'var(--color-border)' }"
+        class="rounded-xl border h-24 animate-pulse bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800"
       />
     </div>
-    <div
-      v-else-if="summaryQuery.isError.value"
-      class="rounded-xl border p-6 text-center space-y-3"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <p class="text-sm" style="color: var(--color-error)">{{ getApiErrorMessage(summaryQuery.error.value) }}</p>
+    <BaseCard v-else-if="summaryQuery.isError.value" class="block text-center space-y-3">
+      <p class="text-sm text-error-500 dark:text-error-400">{{ getApiErrorMessage(summaryQuery.error.value) }}</p>
       <BaseButton variant="outline" size="sm" @click="() => summaryQuery.refetch()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title="Contratos por Vencer" :value="stats.contratosPorVencer">
           <template #icon><AppIcon icon="lucide:calendar-clock" :size="20" color="var(--color-primary)" /></template>
@@ -460,20 +457,14 @@ async function handleExportTab() {
       <BaseTabs v-model="activeTab" :tabs="reportTabs" />
 
       <!-- Contenido según pestaña activa -->
-      <div
-        class="rounded-xl border p-6"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-        }"
-      >
+      <BaseCard class="block">
         <!-- Contratos por Vencer -->
         <template v-if="activeTab === 'contratos-por-vencer'">
           <div
             v-if="contractsExpiringQuery.isError.value"
             class="text-center py-10 space-y-3"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(contractsExpiringQuery.error.value) }}
             </p>
             <BaseButton variant="outline" size="sm" @click="() => contractsExpiringQuery.refetch()">Reintentar</BaseButton>
@@ -482,16 +473,15 @@ async function handleExportTab() {
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center"
-              :style="{ backgroundColor: 'var(--color-primary-light)' }"
+              class="w-10 h-10 rounded-lg flex items-center justify-center bg-brand-50 dark:bg-brand-500/12"
             >
                 <AppIcon icon="lucide:calendar-clock" :size="20" color="var(--color-primary)" />
               </div>
               <div>
-                <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">
                   Contratos por Vencer
                 </h2>
-                <p class="text-sm" style="color: var(--color-text-secondary);">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
                   Contratos que vencen en los próximos {{ periodFilter }} días
                 </p>
               </div>
@@ -502,43 +492,32 @@ async function handleExportTab() {
             </BaseButton>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-sm">
-              <thead>
-                <tr style="border-bottom: 1px solid var(--color-border);">
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Contrato</th>
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Inquilino</th>
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Propiedad</th>
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Propietario</th>
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Vencimiento</th>
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Días</th>
-                </tr>
-              </thead>
-              <TableBodySkeleton
-                v-if="contractsExpiringQuery.isFetching.value"
-                :rows="8"
-                :columns="6"
-              />
-              <tbody v-else>
-                <tr
-                  v-for="row in contratosPorVencerRows"
-                  :key="row.id"
-                  style="border-bottom: 1px solid var(--color-border);"
-                >
-                  <td class="py-3 px-4 font-medium" style="color: var(--color-text-primary);">{{ row.code }}</td>
-                  <td class="py-3 px-4" style="color: var(--color-text-primary);">{{ row.tenantName }}</td>
-                  <td class="py-3 px-4" style="color: var(--color-text-primary);">{{ row.propertyAddress }}</td>
-                  <td class="py-3 px-4" style="color: var(--color-text-primary);">{{ row.ownerName }}</td>
-                  <td class="py-3 px-4" style="color: var(--color-text-primary);">{{ formatDate(row.endDate) }}</td>
+            <DataTable
+              :columns="[
+                { key: 'c0', label: 'Contrato' },
+                { key: 'c1', label: 'Inquilino' },
+                { key: 'c2', label: 'Propiedad' },
+                { key: 'c3', label: 'Propietario' },
+                { key: 'c4', label: 'Vencimiento' },
+                { key: 'c5', label: 'Días' },
+              ]"
+              :data="contratosPorVencerRows"
+              :loading="contractsExpiringQuery.isFetching.value"
+            >
+              <template #row="{ row }">
+                  <td class="py-3 px-4 font-medium text-gray-800 dark:text-white/90">{{ row.code }}</td>
+                  <td class="py-3 px-4 text-gray-800 dark:text-white/90">{{ row.tenantName }}</td>
+                  <td class="py-3 px-4 text-gray-800 dark:text-white/90">{{ row.propertyAddress }}</td>
+                  <td class="py-3 px-4 text-gray-800 dark:text-white/90">{{ row.ownerName }}</td>
+                  <td class="py-3 px-4 text-gray-800 dark:text-white/90">{{ formatDate(row.endDate) }}</td>
                   <td class="py-3 px-4">
                     <Badge variant="error">{{ row.daysLeft }} días</Badge>
                   </td>
-                </tr>
-              </tbody>
-            </table>
+              </template>
+            </DataTable>
             <div
               v-if="!contractsExpiringQuery.isFetching.value && !contratosPorVencerRows.length"
-              class="flex flex-col items-center gap-2 py-10"
-              style="color: var(--color-text-muted);"
+              class="flex flex-col items-center gap-2 py-10 text-gray-400 dark:text-gray-500"
             >
               <AppIcon icon="lucide:calendar-check" :size="40" />
               <p class="text-sm">No hay contratos por vencer en el período seleccionado.</p>
@@ -553,7 +532,7 @@ async function handleExportTab() {
             v-if="propertiesWithoutContractQuery.isError.value"
             class="text-center py-10 space-y-3"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(propertiesWithoutContractQuery.error.value) }}
             </p>
             <BaseButton variant="outline" size="sm" @click="() => propertiesWithoutContractQuery.refetch()">Reintentar</BaseButton>
@@ -562,14 +541,13 @@ async function handleExportTab() {
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center"
-              :style="{ backgroundColor: 'var(--color-primary-light)' }"
+              class="w-10 h-10 rounded-lg flex items-center justify-center bg-brand-50 dark:bg-brand-500/12"
             >
               <AppIcon icon="lucide:building-2" :size="20" color="var(--color-primary)" />
             </div>
             <div>
-              <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">Propiedades sin contrato</h2>
-              <p class="text-sm" style="color: var(--color-text-secondary);">Propiedades disponibles sin contrato activo</p>
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">Propiedades sin contrato</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Propiedades disponibles sin contrato activo</p>
             </div>
           </div>
             <BaseButton variant="outline" :loading="isExporting" @click="handleExportTab">
@@ -578,35 +556,24 @@ async function handleExportTab() {
             </BaseButton>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-sm">
-              <thead>
-                <tr style="border-bottom: 1px solid var(--color-border);">
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Código</th>
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Dirección</th>
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Propietario</th>
-                </tr>
-              </thead>
-              <TableBodySkeleton
-                v-if="propertiesWithoutContractQuery.isFetching.value"
-                :rows="8"
-                :columns="3"
-              />
-              <tbody v-else>
-                <tr
-                  v-for="row in propertiesWithoutContractRows"
-                  :key="row.id"
-                  style="border-bottom: 1px solid var(--color-border);"
-                >
-                  <td class="py-3 px-4 font-medium" style="color: var(--color-text-primary);">{{ row.code }}</td>
-                  <td class="py-3 px-4" style="color: var(--color-text-primary);">{{ row.addressLine }}</td>
-                  <td class="py-3 px-4" style="color: var(--color-text-primary);">{{ row.ownerName }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <DataTable
+              :columns="[
+                { key: 'c0', label: 'Código' },
+                { key: 'c1', label: 'Dirección' },
+                { key: 'c2', label: 'Propietario' },
+              ]"
+              :data="propertiesWithoutContractRows"
+              :loading="propertiesWithoutContractQuery.isFetching.value"
+            >
+              <template #row="{ row }">
+                  <td class="py-3 px-4 font-medium text-gray-800 dark:text-white/90">{{ row.code }}</td>
+                  <td class="py-3 px-4 text-gray-800 dark:text-white/90">{{ row.addressLine }}</td>
+                  <td class="py-3 px-4 text-gray-800 dark:text-white/90">{{ row.ownerName }}</td>
+              </template>
+            </DataTable>
             <div
               v-if="!propertiesWithoutContractQuery.isFetching.value && !propertiesWithoutContractRows.length"
-              class="flex flex-col items-center gap-2 py-10"
-              style="color: var(--color-text-muted);"
+              class="flex flex-col items-center gap-2 py-10 text-gray-400 dark:text-gray-500"
             >
               <AppIcon icon="lucide:building-2" :size="40" />
               <p class="text-sm">No hay propiedades sin contrato.</p>
@@ -621,7 +588,7 @@ async function handleExportTab() {
             v-if="activeClientsQuery.isError.value"
             class="text-center py-10 space-y-3"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(activeClientsQuery.error.value) }}
             </p>
             <BaseButton variant="outline" size="sm" @click="() => activeClientsQuery.refetch()">Reintentar</BaseButton>
@@ -630,14 +597,13 @@ async function handleExportTab() {
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center"
-              :style="{ backgroundColor: 'var(--color-primary-light)' }"
+              class="w-10 h-10 rounded-lg flex items-center justify-center bg-brand-50 dark:bg-brand-500/12"
             >
               <AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" />
             </div>
             <div>
-              <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">Clientes activos</h2>
-              <p class="text-sm" style="color: var(--color-text-secondary);">Inquilinos con al menos un contrato vigente</p>
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">Clientes activos</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Inquilinos con al menos un contrato vigente</p>
             </div>
           </div>
             <BaseButton variant="outline" :loading="isExporting" @click="handleExportTab">
@@ -646,33 +612,22 @@ async function handleExportTab() {
             </BaseButton>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-sm">
-              <thead>
-                <tr style="border-bottom: 1px solid var(--color-border);">
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Cliente</th>
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Contratos activos</th>
-                </tr>
-              </thead>
-              <TableBodySkeleton
-                v-if="activeClientsQuery.isFetching.value"
-                :rows="8"
-                :columns="2"
-              />
-              <tbody v-else>
-                <tr
-                  v-for="row in activeClientsRows"
-                  :key="row.id"
-                  style="border-bottom: 1px solid var(--color-border);"
-                >
-                  <td class="py-3 px-4 font-medium" style="color: var(--color-text-primary);">{{ row.fullName }}</td>
-                  <td class="py-3 px-4" style="color: var(--color-text-primary);">{{ row.contractsCount }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <DataTable
+              :columns="[
+                { key: 'c0', label: 'Cliente' },
+                { key: 'c1', label: 'Contratos activos' },
+              ]"
+              :data="activeClientsRows"
+              :loading="activeClientsQuery.isFetching.value"
+            >
+              <template #row="{ row }">
+                  <td class="py-3 px-4 font-medium text-gray-800 dark:text-white/90">{{ row.fullName }}</td>
+                  <td class="py-3 px-4 text-gray-800 dark:text-white/90">{{ row.contractsCount }}</td>
+              </template>
+            </DataTable>
             <div
               v-if="!activeClientsQuery.isFetching.value && !activeClientsRows.length"
-              class="flex flex-col items-center gap-2 py-10"
-              style="color: var(--color-text-muted);"
+              class="flex flex-col items-center gap-2 py-10 text-gray-400 dark:text-gray-500"
             >
               <AppIcon icon="lucide:users" :size="40" />
               <p class="text-sm">No hay clientes activos.</p>
@@ -687,16 +642,15 @@ async function handleExportTab() {
           <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                :style="{ backgroundColor: 'var(--color-primary-light)' }"
+                class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-brand-50 dark:bg-brand-500/12"
               >
                 <AppIcon icon="lucide:bar-chart-2" :size="20" color="var(--color-primary)" />
               </div>
               <div>
-                <h2 class="text-lg font-semibold" style="color: var(--color-text-primary);">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">
                   Ingresos por alquileres por mes
                 </h2>
-                <p class="text-sm" style="color: var(--color-text-secondary);">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
                   Contratos nuevos, vencidos, activos y el ingreso único que la empresa recibe al concretar cada alquiler
                 </p>
               </div>
@@ -709,8 +663,7 @@ async function handleExportTab() {
 
           <!-- Filtros -->
           <div
-            class="p-4 rounded-xl mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            class="p-4 rounded-xl mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
           >
             <!-- Modo de filtro -->
             <FormSelect
@@ -753,24 +706,15 @@ async function handleExportTab() {
               v-if="hasActiveRentalsByMonthFilters"
               class="flex items-end sm:col-span-2 lg:col-span-1"
             >
-              <button
-                type="button"
-                class="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg hover-surface transition-colors w-full sm:w-auto justify-center"
-                :style="{ color: 'var(--color-text-muted)' }"
-                @click="clearRentalsByMonthFilters"
-              >
-                <AppIcon icon="lucide:x" :size="14" />
-                Limpiar filtros
-              </button>
+              <BaseButton @click="clearRentalsByMonthFilters" variant="ghost" size="sm" block icon="lucide:x" class="sm:w-auto">Limpiar filtros</BaseButton>
             </div>
           </div>
 
           <div
             v-if="rentalsByMonthQuery.isError.value"
-            class="rounded-xl border p-6 text-center space-y-3 mb-5"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)', borderColor: 'var(--color-border)' }"
+            class="rounded-xl border p-6 text-center space-y-3 mb-5 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(rentalsByMonthQuery.error.value) }}
             </p>
             <BaseButton variant="outline" size="sm" @click="() => rentalsByMonthQuery.refetch()">Reintentar</BaseButton>
@@ -783,132 +727,121 @@ async function handleExportTab() {
             class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5"
           >
             <div
-              class="rounded-xl p-3"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
               <div class="flex items-center gap-1.5 mb-1">
                 <AppIcon icon="lucide:circle-plus" :size="14" color="var(--color-primary)" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Ingreso</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Ingreso</p>
               </div>
-              <p class="text-base font-bold" :style="{ color: 'var(--color-primary)' }">
+              <p class="text-base font-bold text-brand-500 dark:text-brand-400">
                 {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.companyRevenue, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-xl p-3"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
               <div class="flex items-center gap-1.5 mb-1">
                 <AppIcon icon="lucide:minus-circle" :size="14" color="var(--color-text-muted)" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Gastos</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Gastos</p>
               </div>
-              <p class="text-base font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="text-base font-bold text-gray-800 dark:text-white/90">
                 − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExpense, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-xl p-3"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
               <div class="flex items-center gap-1.5 mb-1">
                 <AppIcon icon="lucide:receipt" :size="14" color="var(--color-text-muted)" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Impuestos</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Impuestos</p>
               </div>
-              <p class="text-base font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="text-base font-bold text-gray-800 dark:text-white/90">
                 − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalTax, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-xl p-3"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
               <div class="flex items-center gap-1.5 mb-1">
                 <AppIcon icon="lucide:user-round-cog" :size="14" color="var(--color-text-muted)" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Com. externo</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Com. externo</p>
               </div>
-              <p class="text-base font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="text-base font-bold text-gray-800 dark:text-white/90">
                 − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-xl p-3"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="rounded-xl p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
               <div class="flex items-center gap-1.5 mb-1">
                 <AppIcon icon="lucide:user-check" :size="14" color="var(--color-text-muted)" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">Com. interno</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Com. interno</p>
               </div>
-              <p class="text-base font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="text-base font-bold text-gray-800 dark:text-white/90">
                 − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalInternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
             <div
-              class="rounded-xl p-3"
-              :style="{ backgroundColor: 'var(--color-primary-light)', border: '1px solid var(--color-primary)' }"
+              class="rounded-xl p-3 bg-brand-50 dark:bg-brand-500/12 border border-brand-500"
             >
               <div class="flex items-center gap-1.5 mb-1">
                 <AppIcon icon="lucide:circle-check" :size="14" color="var(--color-primary)" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-primary)' }">{{ RENTAL_UTILITY_NET_SHORT_LABEL }}</p>
+                <p class="text-xs font-medium text-brand-500 dark:text-brand-400">{{ RENTAL_UTILITY_NET_SHORT_LABEL }}</p>
               </div>
-              <p class="text-base font-bold" :style="{ color: 'var(--color-primary)' }">
+              <p class="text-base font-bold text-brand-500 dark:text-brand-400">
                 {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalUtility, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
               </p>
             </div>
           </div>
 
           <p
-            class="text-xs mb-3"
-            style="color: var(--color-text-muted);"
+            class="text-xs mb-3 text-gray-400 dark:text-gray-500"
           >
             Haz clic en un mes con ingresos para desplegar el detalle de cada alquiler (mismas columnas).
           </p>
 
           <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-sm">
-              <thead>
-                <tr style="border-bottom: 2px solid var(--color-border);">
-                  <th class="text-left py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Período</th>
-                  <th class="text-right py-3 px-4 font-semibold" :style="{ color: 'var(--color-primary)' }">
+            <Table class="w-full border-collapse text-sm">
+              <TableHeader>
+                <TableRow class="border-b-2 border-gray-200 dark:border-gray-800">
+                  <TableCell is-header class="text-left py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Período</TableCell>
+                  <TableCell is-header class="text-right py-3 px-4 font-semibold text-brand-500 dark:text-brand-400">
                     Ingreso
-                    <span class="block text-xs font-normal" :style="{ color: 'var(--color-text-muted)' }">(monto base)</span>
-                  </th>
-                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Gastos</th>
-                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">Impuestos</th>
-                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">
+                    <span class="block text-xs font-normal text-gray-400 dark:text-gray-500">(monto base)</span>
+                  </TableCell>
+                  <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Gastos</TableCell>
+                  <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Impuestos</TableCell>
+                  <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">
                     Comisión
                     <span class="block text-xs font-normal">ag. externo</span>
-                  </th>
-                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">
+                  </TableCell>
+                  <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">
                     Comisión
                     <span class="block text-xs font-normal">ag. interno</span>
-                  </th>
-                  <th class="text-right py-3 px-4 font-semibold" :style="{ color: 'var(--color-primary)' }">
+                  </TableCell>
+                  <TableCell is-header class="text-right py-3 px-4 font-semibold text-brand-500 dark:text-brand-400">
                     {{ RENTAL_UTILITY_NET_SHORT_LABEL }}
                     <span class="block text-xs font-normal">(inmobiliaria)</span>
-                  </th>
-                  <th class="text-right py-3 px-4 font-semibold" style="color: var(--color-text-secondary);">
+                  </TableCell>
+                  <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">
                     Contratos
                     <span class="block text-xs font-normal">nuevos / activos</span>
-                  </th>
-                </tr>
-              </thead>
+                  </TableCell>
+                </TableRow>
+              </TableHeader>
               <TableBodySkeleton
                 v-if="rentalsByMonthQuery.isFetching.value"
                 :rows="6"
                 :columns="8"
               />
-              <tbody v-else>
+              <TableBody v-else>
                 <template v-for="row in rentalsByMonthRows" :key="`${row.year}-${row.month}`">
-                  <tr
+                  <TableRow
                     class="transition-opacity"
-                    :class="canExpandMonth(row) ? 'cursor-pointer hover:opacity-90' : ''"
-                    :style="{
-                      borderBottom: isMonthExpanded(row) ? undefined : '1px solid var(--color-border)',
-                      backgroundColor: isMonthExpanded(row) ? 'var(--color-primary-light)' : undefined,
-                    }"
+                    :class="[canExpandMonth(row) ? 'cursor-pointer hover:opacity-90' : '', (isMonthExpanded(row) ? '' : 'border-b border-gray-200 dark:border-gray-800'), (isMonthExpanded(row) ? 'bg-brand-50 dark:bg-brand-500/12' : '')]"
                     @click="toggleMonthDetail(row)"
                   >
-                    <td class="py-3 px-4 font-medium" style="color: var(--color-text-primary);">
+                    <TableCell class="py-3 px-4 font-medium text-gray-800 dark:text-white/90">
                       <span class="inline-flex items-center gap-2">
                         <AppIcon
                           v-if="canExpandMonth(row)"
@@ -919,131 +852,126 @@ async function handleExportTab() {
                         <span v-else class="w-3.5 shrink-0" />
                         {{ row.monthName }}
                       </span>
-                    </td>
-                    <td class="py-3 px-4 text-right font-semibold" :style="{ color: 'var(--color-primary)' }">
+                    </TableCell>
+                    <TableCell class="py-3 px-4 text-right font-semibold text-brand-500 dark:text-brand-400">
                       {{ formatCurrency(row.companyRevenue, row.currency) }}
-                    </td>
-                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    </TableCell>
+                    <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
                       {{ row.totalExpense > 0 ? `− ${formatCurrency(row.totalExpense, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
-                    </td>
-                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    </TableCell>
+                    <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
                       {{ row.totalTax > 0 ? `− ${formatCurrency(row.totalTax, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
-                    </td>
-                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    </TableCell>
+                    <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
                       {{ row.totalExternalCommission > 0 ? `− ${formatCurrency(row.totalExternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
-                    </td>
-                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    </TableCell>
+                    <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
                       {{ row.totalInternalCommission > 0 ? `− ${formatCurrency(row.totalInternalCommission, row.currency)}` : `− ${formatCurrency(0, row.currency)}` }}
-                    </td>
-                    <td class="py-3 px-4 text-right font-bold" :style="{ color: row.totalUtility >= 0 ? 'var(--color-primary)' : 'var(--color-error)' }">
+                    </TableCell>
+                    <TableCell :class="(row.totalUtility >= 0) ? 'text-brand-500 dark:text-brand-400' : 'text-error-500 dark:text-error-400'" class="py-3 px-4 text-right font-bold">
                       {{ formatCurrency(row.totalUtility, row.currency) }}
-                    </td>
-                    <td class="py-3 px-4 text-right" style="color: var(--color-text-secondary);">
+                    </TableCell>
+                    <TableCell class="py-3 px-4 text-right text-gray-500 dark:text-gray-400">
                       {{ row.newContracts }} / {{ row.activeAtEndOfMonth }}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
 
                   <template v-if="isMonthExpanded(row)">
-                    <tr
+                    <TableRow class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
                       v-if="financialDistributionQuery.isFetching.value"
-                      :style="{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
                     >
-                      <td colspan="8" class="py-4 px-4 text-center">
+                      <TableCell colspan="8" class="py-4 px-4 text-center">
                         <AppIcon icon="svg-spinners:ring-resize" :size="22" color="var(--color-primary)" />
-                      </td>
-                    </tr>
-                    <tr
+                      </TableCell>
+                    </TableRow>
+                    <TableRow class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
                       v-else-if="financialDistributionQuery.isError.value"
-                      :style="{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
                     >
-                      <td colspan="8" class="py-4 px-4 text-center space-y-2">
-                        <p class="text-sm" style="color: var(--color-error)">
+                      <TableCell colspan="8" class="py-4 px-4 text-center space-y-2">
+                        <p class="text-sm text-error-500 dark:text-error-400">
                           {{ getApiErrorMessage(financialDistributionQuery.error.value) }}
                         </p>
                         <BaseButton variant="outline" size="sm" @click.stop="() => financialDistributionQuery.refetch()">
                           Reintentar
                         </BaseButton>
-                      </td>
-                    </tr>
-                    <tr
+                      </TableCell>
+                    </TableRow>
+                    <TableRow class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
                       v-else-if="!getRentalsForMonth(row).length"
-                      :style="{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
                     >
-                      <td colspan="8" class="py-3 px-4 pl-10 text-sm" style="color: var(--color-text-muted);">
+                      <TableCell colspan="8" class="py-3 px-4 pl-10 text-sm text-gray-400 dark:text-gray-500">
                         No hay alquileres concretados en este mes.
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                     <template v-else>
-                      <tr
+                      <TableRow
                         v-for="item in getRentalsForMonth(row)"
                         :key="item.rentalId"
-                        class="cursor-pointer hover:opacity-90 transition-opacity"
-                        :style="{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+                        class="cursor-pointer hover:opacity-90 transition-opacity border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
                         @click.stop="goToRentalDetail(item.rentalId)"
                       >
-                        <td class="py-2.5 px-4 pl-10">
-                          <p class="font-medium text-sm" :style="{ color: 'var(--color-primary)' }">{{ item.rentalCode }}</p>
-                          <p class="text-xs mt-0.5 line-clamp-2" style="color: var(--color-text-primary);">{{ item.propertyAddress }}</p>
-                          <p class="text-xs mt-0.5" style="color: var(--color-text-muted);">
+                        <TableCell class="py-2.5 px-4 pl-10">
+                          <p class="font-medium text-sm text-brand-500 dark:text-brand-400">{{ item.rentalCode }}</p>
+                          <p class="text-xs mt-0.5 line-clamp-2 text-gray-800 dark:text-white/90">{{ item.propertyAddress }}</p>
+                          <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
                             {{ item.tenantName }}
                             <span v-if="item.contractStartDate"> · {{ formatDate(item.contractStartDate) }}</span>
                           </p>
-                        </td>
-                        <td class="py-2.5 px-4 text-right font-medium" :style="{ color: 'var(--color-primary)' }">
+                        </TableCell>
+                        <TableCell class="py-2.5 px-4 text-right font-medium text-brand-500 dark:text-brand-400">
                           {{ formatCurrency(item.baseAmount, item.currency) }}
-                        </td>
-                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-secondary);">
+                        </TableCell>
+                        <TableCell class="py-2.5 px-4 text-right text-sm text-gray-500 dark:text-gray-400">
                           − {{ formatCurrency(item.expense, item.currency) }}
-                        </td>
-                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-secondary);">
+                        </TableCell>
+                        <TableCell class="py-2.5 px-4 text-right text-sm text-gray-500 dark:text-gray-400">
                           − {{ formatCurrency(item.tax, item.currency) }}
-                        </td>
-                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-secondary);">
+                        </TableCell>
+                        <TableCell class="py-2.5 px-4 text-right text-sm text-gray-500 dark:text-gray-400">
                           − {{ formatCurrency(item.externalAgentCommission, item.currency) }}
-                        </td>
-                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-secondary);">
+                        </TableCell>
+                        <TableCell class="py-2.5 px-4 text-right text-sm text-gray-500 dark:text-gray-400">
                           − {{ formatCurrency(item.internalAgentCommission, item.currency) }}
-                        </td>
-                        <td class="py-2.5 px-4 text-right font-semibold text-sm" :style="{ color: 'var(--color-primary)' }">
+                        </TableCell>
+                        <TableCell class="py-2.5 px-4 text-right font-semibold text-sm text-brand-500 dark:text-brand-400">
                           {{ formatCurrency(item.utility, item.currency) }}
-                        </td>
-                        <td class="py-2.5 px-4 text-right text-sm" style="color: var(--color-text-muted);">—</td>
-                      </tr>
+                        </TableCell>
+                        <TableCell class="py-2.5 px-4 text-right text-sm text-gray-400 dark:text-gray-500">—</TableCell>
+                      </TableRow>
                     </template>
                   </template>
                 </template>
-              </tbody>
+              </TableBody>
               <tfoot v-if="rentalsByMonthRows.length > 1">
-                <tr style="border-top: 2px solid var(--color-border);">
-                  <td class="py-3 px-4 font-semibold" style="color: var(--color-text-primary);">Total</td>
-                  <td class="py-3 px-4 text-right font-bold" :style="{ color: 'var(--color-primary)' }">
+                <TableRow class="border-t-2 border-gray-200 dark:border-gray-800">
+                  <TableCell class="py-3 px-4 font-semibold text-gray-800 dark:text-white/90">Total</TableCell>
+                  <TableCell class="py-3 px-4 text-right font-bold text-brand-500 dark:text-brand-400">
                     {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.companyRevenue, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </td>
-                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
                     − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExpense, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </td>
-                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
                     − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalTax, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </td>
-                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
                     − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalExternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </td>
-                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
                     − {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalInternalCommission, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </td>
-                  <td class="py-3 px-4 text-right font-bold" :style="{ color: 'var(--color-primary)' }">
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-bold text-brand-500 dark:text-brand-400">
                     {{ formatCurrency(rentalsByMonthRows.reduce((s, r) => s + r.totalUtility, 0), rentalsByMonthRows[0]?.currency ?? 'PEN') }}
-                  </td>
-                  <td class="py-3 px-4 text-right font-semibold" style="color: var(--color-text-secondary);">
+                  </TableCell>
+                  <TableCell class="py-3 px-4 text-right font-semibold text-gray-500 dark:text-gray-400">
                     {{ rentalsByMonthRows.reduce((s, r) => s + r.newContracts, 0) }} / —
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               </tfoot>
-            </table>
+            </Table>
             <p
               v-if="!rentalsByMonthRows.length && !rentalsByMonthQuery.isFetching.value && !rentalsByMonthQuery.isError.value"
-              class="py-8 text-center text-sm"
-              style="color: var(--color-text-muted);"
+              class="py-8 text-center text-sm text-gray-400 dark:text-gray-500"
             >
               No hay datos para el período seleccionado.
             </p>
@@ -1051,32 +979,24 @@ async function handleExportTab() {
           </template>
 
         </template>
-      </div>
+      </BaseCard>
 
       <!-- Paneles inferiores -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Resumen de Estado de Contratos -->
-        <div
-          class="rounded-xl border p-6"
-          :style="{
-            backgroundColor: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-          }"
-        >
+        <BaseCard class="block">
           <div class="flex items-center gap-2 mb-4">
             <AppIcon icon="lucide:clock" :size="20" color="var(--color-text-muted)" />
-            <h3 class="text-base font-semibold" style="color: var(--color-text-primary);">
+            <h3 class="text-base font-semibold text-gray-800 dark:text-white/90">
               Resumen de Estado de Contratos
             </h3>
           </div>
-          <div v-if="contractStatusQuery.isPending.value" class="flex justify-center py-10">
-            <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-          </div>
+          <LoadingState v-if="contractStatusQuery.isPending.value" class="py-10" />
           <div
             v-else-if="contractStatusQuery.isError.value"
             class="text-center py-6 space-y-3"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(contractStatusQuery.error.value) }}
             </p>
             <BaseButton variant="outline" size="sm" @click="() => contractStatusQuery.refetch()">Reintentar</BaseButton>
@@ -1087,10 +1007,10 @@ async function handleExportTab() {
               :key="i"
               class="flex items-center gap-3"
             >
-              <span class="text-sm w-40 shrink-0" style="color: var(--color-text-secondary);">
+              <span class="text-sm w-40 shrink-0 text-gray-500 dark:text-gray-400">
                 {{ item.label }}
               </span>
-              <div class="flex-1 h-6 rounded-full overflow-hidden" :style="{ backgroundColor: 'var(--color-background)' }">
+              <div class="flex-1 h-6 rounded-full overflow-hidden bg-gray-50 dark:bg-gray-900">
                 <div
                   class="h-full rounded-full transition-all duration-300"
                   :style="{
@@ -1099,88 +1019,76 @@ async function handleExportTab() {
                   }"
                 />
               </div>
-              <span class="text-sm font-medium w-8 text-right" style="color: var(--color-text-primary);">
+              <span class="text-sm font-medium w-8 text-right text-gray-800 dark:text-white/90">
                 {{ item.value }}
               </span>
             </div>
           </div>
-        </div>
+        </BaseCard>
 
         <!-- Métricas del Mes -->
-        <div
-          class="rounded-xl border p-6"
-          :style="{
-            backgroundColor: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-          }"
-        >
+        <BaseCard class="block">
           <div class="flex items-center gap-2 mb-4">
             <AppIcon icon="lucide:trending-up" :size="20" color="var(--color-text-muted)" />
-            <h3 class="text-base font-semibold" style="color: var(--color-text-primary);">
+            <h3 class="text-base font-semibold text-gray-800 dark:text-white/90">
               Métricas del Mes
             </h3>
           </div>
-          <div v-if="monthlyMetricsQuery.isPending.value" class="flex justify-center py-10">
-            <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-          </div>
+          <LoadingState v-if="monthlyMetricsQuery.isPending.value" class="py-10" />
           <div
             v-else-if="monthlyMetricsQuery.isError.value"
             class="text-center py-6 space-y-3"
           >
-            <p class="text-sm" style="color: var(--color-error)">
+            <p class="text-sm text-error-500 dark:text-error-400">
               {{ getApiErrorMessage(monthlyMetricsQuery.error.value) }}
             </p>
             <BaseButton variant="outline" size="sm" @click="() => monthlyMetricsQuery.refetch()">Reintentar</BaseButton>
           </div>
           <div v-else class="grid grid-cols-2 gap-3">
             <div
-              class="rounded-lg p-3"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="rounded-lg p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
               <div class="flex items-center gap-1.5 mb-2">
                 <AppIcon icon="lucide:home" :size="15" :color="metricasMes.tasaOcupacion >= 80 ? 'var(--color-success)' : '#f59e0b'" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Ocupación</p>
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Ocupación</p>
               </div>
-              <p class="text-2xl font-bold" style="color: var(--color-text-primary);">{{ metricasMes.tasaOcupacion }}%</p>
-              <span class="text-xs font-medium" :style="{ color: metricasMes.tasaOcupacion >= 80 ? 'var(--color-success)' : '#f59e0b' }">
+              <p class="text-2xl font-bold text-gray-800 dark:text-white/90">{{ metricasMes.tasaOcupacion }}%</p>
+              <span :class="(metricasMes.tasaOcupacion >= 80) ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-orange-400'" class="text-xs font-medium">
                 {{ metricasMes.tasaOcupacion >= 80 ? '✓ Bueno' : '⚠ Regular' }}
               </span>
             </div>
             <div
-              class="rounded-lg p-3"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="rounded-lg p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
               <div class="flex items-center gap-1.5 mb-2">
                 <AppIcon icon="lucide:wallet" :size="15" color="var(--color-primary)" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Cobranza</p>
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Cobranza</p>
               </div>
-              <p class="text-2xl font-bold" style="color: var(--color-text-primary);">{{ metricasMes.tasaCobranza }}%</p>
-              <span class="text-xs" style="color: var(--color-text-muted);">En desarrollo</span>
+              <p class="text-2xl font-bold text-gray-800 dark:text-white/90">{{ metricasMes.tasaCobranza }}%</p>
+              <span class="text-xs text-gray-400 dark:text-gray-500">En desarrollo</span>
             </div>
             <div
-              class="rounded-lg p-3"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="rounded-lg p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
               <div class="flex items-center gap-1.5 mb-2">
                 <AppIcon icon="lucide:refresh-cw" :size="15" color="#10b981" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Renovados</p>
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Renovados</p>
               </div>
-              <p class="text-2xl font-bold" style="color: var(--color-text-primary);">{{ metricasMes.contratosRenovados }}</p>
-              <span class="text-xs" style="color: var(--color-text-muted);">Este mes</span>
+              <p class="text-2xl font-bold text-gray-800 dark:text-white/90">{{ metricasMes.contratosRenovados }}</p>
+              <span class="text-xs text-gray-400 dark:text-gray-500">Este mes</span>
             </div>
             <div
-              class="rounded-lg p-3"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="rounded-lg p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
               <div class="flex items-center gap-1.5 mb-2">
                 <AppIcon icon="lucide:user-plus" :size="15" color="#6366f1" />
-                <p class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Clientes nuevos</p>
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Clientes nuevos</p>
               </div>
-              <p class="text-2xl font-bold" style="color: var(--color-text-primary);">{{ metricasMes.clientesNuevos }}</p>
-              <span class="text-xs" style="color: var(--color-text-muted);">Este mes</span>
+              <p class="text-2xl font-bold text-gray-800 dark:text-white/90">{{ metricasMes.clientesNuevos }}</p>
+              <span class="text-xs text-gray-400 dark:text-gray-500">Este mes</span>
             </div>
           </div>
-        </div>
+        </BaseCard>
       </div>
   </div>
 </template>

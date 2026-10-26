@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { PRODUCCION_BASE_PATH } from '../../../../config/routes.constants'
 import { useProduccionFurnitureCategoryOptions } from '../../../configuracion/presentation/composables/useProduccionConfigOptions'
 import { useCreateProduccionCatalogItem } from '../composables/useProduccionCatalog'
@@ -77,50 +80,29 @@ const goBack = () => router.push(`${PRODUCCION_BASE_PATH}/catalogo`)
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex items-center gap-4 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" color="currentColor" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Nuevo mueble
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Defina la ficha base del producto para costeo y cotizaciones.
-        </p>
-      </div>
-    </div>
+  <div class="space-y-6">
+    <PageHeader
+      title="Nuevo mueble"
+      subtitle="Defina la ficha base del producto para costeo y cotizaciones."
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
-    <div
-      class="space-y-4 p-4 sm:p-6 rounded-xl border"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
+    <BaseCard class="block space-y-4">
       <div class="grid sm:grid-cols-2 gap-4">
         <FormInput v-model="code" label="Código" required placeholder="MUE-..." />
         <FormInput v-model="name" label="Nombre" required placeholder="Descripción corta" />
       </div>
       <div class="grid sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium mb-1.5" :style="{ color: 'var(--color-text-primary)' }">
-            Categoría <span class="text-[var(--color-error)]">*</span>
+          <label class="block text-sm font-medium mb-1.5 text-gray-800 dark:text-white/90">
+            Categoría <span class="text-error-500 dark:text-error-400">*</span>
           </label>
-          <select
+          <FormSelect
             v-model="category"
-            class="w-full px-3 py-2 rounded-lg border text-sm"
-            :style="{
-              borderColor: 'var(--color-border)',
-              background: 'var(--color-surface)',
-              color: 'var(--color-text-primary)',
-            }"
-          >
-            <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
-          </select>
+            :options="categoryOptions"
+          />
         </div>
         <FormInput v-model="referencePrice" type="number" label="Precio referencia (S/)" required />
       </div>
@@ -138,10 +120,7 @@ const goBack = () => router.push(`${PRODUCCION_BASE_PATH}/catalogo`)
         :rows="4"
         placeholder="https://…"
       />
-      <label class="flex items-center gap-2 text-sm cursor-pointer" :style="{ color: 'var(--color-text-primary)' }">
-        <input v-model="isActive" type="checkbox" class="rounded" />
-        Activo en catálogo
-      </label>
+      <FormCheckbox v-model="isActive" label="Activo en catálogo" />
 
       <div class="flex justify-end gap-2 pt-2">
         <BaseButton variant="secondary" type="button" @click="goBack">Cancelar</BaseButton>
@@ -149,6 +128,6 @@ const goBack = () => router.push(`${PRODUCCION_BASE_PATH}/catalogo`)
           Crear mueble
         </BaseButton>
       </div>
-    </div>
+    </BaseCard>
   </div>
 </template>

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import Avatar from '@shared/presentation/components/ui/Avatar.vue'
 import { paymentsRepositoryKey } from '../../application/ports/payments.port'
 import { useService } from '@shared/presentation/di/services'
 import { ref, computed } from 'vue'
@@ -99,30 +103,7 @@ function formatDate(dateStr: string) {
   return formatShortDate(dateStr)
 }
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-}
 
-const avatarColors = [
-  '#6366f1',
-  '#8b5cf6',
-  '#ec4899',
-  '#f59e0b',
-  '#10b981',
-  '#14b8a6',
-  '#3b82f6',
-  '#f97316',
-]
-function getAvatarColor(name: string) {
-  let hash = 0
-  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % avatarColors.length
-  return avatarColors[Math.abs(hash)]
-}
 
 function clearFilters() {
   search.value = ''
@@ -191,21 +172,14 @@ async function handleExport() {
 <template>
   <div class="flex flex-col gap-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <button
-          class="p-2 rounded-lg hover-surface transition-colors"
-          :style="{ color: 'var(--color-text-muted)' }"
-          @click="router.push({ name: 'alquileres-cobranzas' })"
-        >
-          <AppIcon icon="lucide:chevron-left" :size="20" />
-        </button>
-        <div>
-          <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Historial de Pagos</h1>
-          <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">Registro de todos los pagos realizados</p>
-        </div>
-      </div>
-      <BaseButton
+    <PageHeader
+      title="Historial de Pagos"
+      subtitle="Registro de todos los pagos realizados"
+      back
+      @back="router.push({ name: 'alquileres-cobranzas' })"
+    >
+      <template #actions>
+        <BaseButton
           variant="outline"
           class="flex items-center gap-2"
           :loading="isExporting"
@@ -215,7 +189,8 @@ async function handleExport() {
           <ExcelIcon class="w-5 h-5" />
           Exportar
         </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -253,34 +228,22 @@ async function handleExport() {
       <div class="w-full sm:w-44">
         <FormSelect v-model="filterMethod" :options="methodOptions" placeholder="Todos los métodos" />
       </div>
-      <button
-        v-if="search || filterYear || filterMonth || filterMethod"
-        class="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg hover-surface transition-colors"
-        :style="{ color: 'var(--color-text-muted)' }"
-        @click="clearFilters"
-      >
-        <AppIcon icon="lucide:x" :size="14" />
-        Limpiar
-      </button>
+      <BaseButton v-if="search || filterYear || filterMonth || filterMethod" @click="clearFilters" variant="ghost" size="sm" icon="lucide:x">Limpiar</BaseButton>
     </div>
 
     <!-- Tabla -->
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <template v-if="historyIsError">
         <div class="flex flex-col items-center justify-center py-16 gap-3 px-4 text-center">
           <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-          <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(historyFetchError) }}</p>
+          <p class="text-sm font-medium max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(historyFetchError) }}</p>
           <BaseButton variant="outline" size="sm" @click="() => refetchHistory()">Reintentar</BaseButton>
         </div>
       </template>
 
       <template v-else>
         <div
-          class="hidden lg:grid grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b"
-          :style="{ color: 'var(--color-text-muted)', borderColor: 'var(--color-border)' }"
+          class="hidden lg:grid grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-800"
         >
           <span>Fecha</span>
           <span>Inquilino</span>
@@ -304,48 +267,37 @@ async function handleExport() {
           class="flex flex-col items-center justify-center py-16 gap-3"
         >
           <AppIcon icon="lucide:clipboard-list" :size="48" color="var(--color-text-muted)" />
-          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No se encontraron pagos</p>
+          <p class="text-sm text-gray-400 dark:text-gray-500">No se encontraron pagos</p>
         </div>
 
         <div
           v-else
           v-for="item in historyData.data"
           :key="item.paymentId"
-          class="grid grid-cols-1 lg:grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-5 py-4 border-b transition-colors hover-surface items-center"
-          :style="{ borderColor: 'var(--color-border)' }"
+          class="grid grid-cols-1 lg:grid-cols-[1fr_2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-5 py-4 border-b transition-colors hover-surface items-center border-gray-200 dark:border-gray-800"
         >
           <!-- Fecha -->
           <div>
-            <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ formatDate(item.paidDate) }}</p>
+            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ formatDate(item.paidDate) }}</p>
           </div>
 
           <!-- Inquilino -->
           <div class="flex items-center gap-2">
-            <div
-              class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-              :style="{ backgroundColor: getAvatarColor(item.tenantName) }"
-            >
-              {{ getInitials(item.tenantName) }}
-            </div>
+            <Avatar :name="item.tenantName" size="sm" />
             <div>
-              <p class="text-sm" :style="{ color: 'var(--color-text-primary)' }">{{ item.tenantName }}</p>
+              <p class="text-sm text-gray-800 dark:text-white/90">{{ item.tenantName }}</p>
             </div>
           </div>
 
           <!-- Propiedad -->
           <div>
-            <p class="text-sm" :style="{ color: 'var(--color-text-primary)' }">{{ item.propertyAddress }}</p>
-            <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ item.ownerName }}</p>
+            <p class="text-sm text-gray-800 dark:text-white/90">{{ item.propertyAddress }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">{{ item.ownerName }}</p>
           </div>
 
           <!-- Período -->
           <div>
-            <span
-              class="inline-block text-xs px-2 py-0.5 rounded-full font-medium"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }"
-            >
-              {{ item.periodLabel }}
-            </span>
+            <Badge>{{ item.periodLabel }}</Badge>
           </div>
 
           <!-- Método -->
@@ -355,17 +307,17 @@ async function handleExport() {
               :size="14"
               color="var(--color-text-muted)"
             />
-            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ methodLabels[item.paymentMethod] ?? item.paymentMethod }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ methodLabels[item.paymentMethod] ?? item.paymentMethod }}</p>
           </div>
 
           <!-- Referencia -->
           <div>
-            <p class="text-sm font-mono" :style="{ color: 'var(--color-text-muted)' }">{{ item.referenceNumber ?? '—' }}</p>
+            <p class="text-sm font-mono text-gray-400 dark:text-gray-500">{{ item.referenceNumber ?? '—' }}</p>
           </div>
 
           <!-- Monto -->
           <div class="text-right">
-            <p class="text-sm font-semibold" :style="{ color: '#10b981' }">
+            <p class="text-sm font-semibold text-success-600 dark:text-success-500">
               {{ formatCurrency(item.paidAmount, item.currency) }}
             </p>
           </div>
@@ -376,7 +328,7 @@ async function handleExport() {
           </div>
         </div>
       </template>
-    </div>
+    </BaseCard>
 
     <!-- Paginación -->
     <BasePagination

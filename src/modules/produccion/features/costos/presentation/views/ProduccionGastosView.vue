@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import { ref, computed } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
@@ -90,21 +93,20 @@ async function del(r: ProduccionExtraCostCatalogItem) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Gastos adicionales</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Catálogo de gastos reutilizables en el costeo (transporte, embalaje, etc.).
-        </p>
-      </div>
-      <BaseButton variant="primary" @click="openNew">
+  <div class="space-y-6">
+    <PageHeader
+      title="Gastos adicionales"
+      subtitle="Catálogo de gastos reutilizables en el costeo (transporte, embalaje, etc.)."
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo concepto
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin gastos en catálogo." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -114,16 +116,16 @@ async function del(r: ProduccionExtraCostCatalogItem) {
         <template #row="{ row }">
           <td class="py-3 px-4 font-medium">{{ (row as ProduccionExtraCostCatalogItem).name }}</td>
           <td class="py-3 px-4 text-sm">{{ formatSol((row as ProduccionExtraCostCatalogItem).defaultAmount) }}</td>
-          <td class="py-3 px-4 text-sm truncate max-w-[200px]" :style="{ color: 'var(--color-text-secondary)' }">
+          <td class="py-3 px-4 text-sm truncate max-w-[200px] text-gray-500 dark:text-gray-400">
             {{ (row as ProduccionExtraCostCatalogItem).description ?? '—' }}
           </td>
           <td class="py-3 px-4 text-right space-x-2">
-            <button type="button" class="text-sm hover:underline" :style="{ color: 'var(--color-primary)' }" @click="openEdit(row as ProduccionExtraCostCatalogItem)">Editar</button>
-            <button type="button" class="text-sm hover:underline" :style="{ color: 'var(--color-error)' }" @click="del(row as ProduccionExtraCostCatalogItem)">Eliminar</button>
+            <BaseButton @click="openEdit(row as ProduccionExtraCostCatalogItem)" variant="link">Editar</BaseButton>
+            <BaseButton @click="del(row as ProduccionExtraCostCatalogItem)" variant="link" class="text-error-500 dark:text-error-400">Eliminar</BaseButton>
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showModal" size="md">
       <template #title>{{ editing ? 'Editar gasto' : 'Nuevo gasto' }}</template>
@@ -131,12 +133,9 @@ async function del(r: ProduccionExtraCostCatalogItem) {
         <FormInput v-model="name" label="Concepto" required />
         <FormInput v-model="defaultAmount" type="number" label="Monto referencia (S/)" required />
         <FormTextarea v-model="description" label="Descripción" :rows="2" />
-        <label class="flex items-center gap-2 text-sm">
-          <input v-model="isActive" type="checkbox" class="rounded" />
-          Activo
-        </label>
+        <FormCheckbox v-model="isActive" label="Activo" />
       </div>
-      <div class="flex justify-end gap-2 p-4 border-t" :style="{ borderColor: 'var(--color-border)' }">
+      <div class="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" @click="showModal = false">Cancelar</BaseButton>
         <BaseButton variant="primary" :loading="saving" @click="save">Guardar</BaseButton>
       </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Badge from '@shared/presentation/components/ui/Badge.vue'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -22,14 +23,13 @@ const periodOpen = computed(() => activePeriod.value?.status === 'OPEN')
 
 <template>
   <div
-    class="mb-4 flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
-    :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+    class="mb-4 flex flex-col gap-2 rounded-lg border py-2 text-sm sm:flex-row sm:items-center sm:justify-between border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-dark"
   >
     <div
       v-if="initError"
       class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 w-full"
     >
-      <p class="text-xs flex-1" :style="{ color: 'var(--color-danger)' }">
+      <p class="text-xs flex-1 text-error-500 dark:text-error-400">
         {{ initError }}
       </p>
       <BaseButton variant="secondary" size="sm" @click="retryInit">Reintentar</BaseButton>
@@ -45,25 +45,15 @@ const periodOpen = computed(() => activePeriod.value?.status === 'OPEN')
           color="var(--color-primary)"
           class="shrink-0"
         />
-        <p class="truncate text-xs sm:text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="truncate text-xs sm:text-sm text-gray-500 dark:text-gray-400">
           {{ contextLabel }}
         </p>
-        <span
-          v-if="activePeriod && !initializing"
-          class="hidden sm:inline-flex text-xs px-2 py-0.5 rounded-full shrink-0"
-          :style="{
-            backgroundColor: periodOpen ? 'var(--color-primary-soft)' : 'var(--color-surface-elevated)',
-            color: periodOpen ? 'var(--color-primary)' : 'var(--color-text-muted)',
-          }"
-        >
-          {{ CONTABILIDAD_PERIOD_STATUS_LABELS[activePeriod.status] }}
-        </span>
+        <Badge v-if="activePeriod && !initializing" :variant="periodOpen ? 'primary' : 'neutral'" class="hidden sm:inline-flex shrink-0">{{ CONTABILIDAD_PERIOD_STATUS_LABELS[activePeriod.status] }}</Badge>
       </div>
 
       <RouterLink
         to="/contabilidad/configuracion?tab=contexto"
-        class="text-xs font-medium shrink-0 hover:underline"
-        :style="{ color: 'var(--color-primary)' }"
+        class="text-xs font-medium shrink-0 hover:underline text-brand-500 dark:text-brand-400"
       >
         Cambiar en configuración
       </RouterLink>

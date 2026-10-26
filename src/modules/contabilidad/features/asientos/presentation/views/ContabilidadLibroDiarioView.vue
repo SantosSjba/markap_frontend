@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -61,7 +62,7 @@ function goDetail(row: ContabilidadJournalEntryListItemDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:book-open-text"
       title="Libro diario"
@@ -75,14 +76,11 @@ function goDetail(row: ContabilidadJournalEntryListItemDTO) {
       </template>
     </PageHeader>
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable. para ver y registrar asientos.
     </p>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -136,6 +134,6 @@ function goDetail(row: ContabilidadJournalEntryListItemDTO) {
           </div>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
   </div>
 </template>

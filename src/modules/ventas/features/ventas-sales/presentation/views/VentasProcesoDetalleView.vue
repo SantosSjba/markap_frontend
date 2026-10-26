@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -250,30 +253,18 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center gap-3">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-        @click="router.push('/ventas/procesos')"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          {{ detail?.code ?? 'Proceso' }}
-        </h1>
-        <p v-if="detail?.title" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-          {{ detail.title }}
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      :title="detail?.code ?? 'Proceso'"
+      :subtitle="detail?.title ? detail.title : undefined"
+      back
+      @back="router.push('/ventas/procesos')"
+    />
 
     <div
       v-if="pipelineConfigQuery.isError.value"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span :style="{ color: 'var(--color-text-primary)' }">
+      <span class="text-gray-800 dark:text-white/90">
         No se cargó la configuración de etapas; se muestran valores por defecto.
       </span>
       <BaseButton variant="outline" size="sm" icon="lucide:settings" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
@@ -281,35 +272,28 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
       </BaseButton>
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
-    <div
-      v-else-if="detailQueryError"
-      class="flex flex-col items-center justify-center gap-3 py-16 rounded-xl border px-4 text-center"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">
+    <BaseCard v-else-if="detailQueryError" class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center">
+      <p class="text-sm font-medium max-w-md text-error-500 dark:text-error-400">
         {{ getApiErrorMessage(detailFetchError) }}
       </p>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchDetail()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
 
     <template v-else-if="detail">
       <div
         v-if="isProcessLost"
-        class="rounded-xl border px-4 py-3 text-sm space-y-1"
-        :style="{ borderColor: 'var(--color-error)', backgroundColor: 'var(--color-warning-light)' }"
+        class="rounded-xl border px-4 py-3 text-sm space-y-1 border-error-500 bg-warning-50 dark:bg-warning-500/15"
       >
-        <p class="font-semibold flex items-center gap-2" style="color: var(--color-error)">
+        <p class="font-semibold flex items-center gap-2 text-error-500 dark:text-error-400">
           <AppIcon icon="lucide:ban" :size="18" />
           Venta registrada como caída
         </p>
-        <p v-if="detail.lostReason" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-gray-500 dark:text-gray-400" v-if="detail.lostReason">
           Motivo: {{ detail.lostReason }}
         </p>
-        <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+        <p class="text-xs text-gray-400 dark:text-gray-500">
           Las comisiones pendientes fueron anuladas. No se puede modificar la etapa ni retroceder en el pipeline.
         </p>
       </div>
@@ -356,7 +340,7 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
             Guardar cambios
           </BaseButton>
         </div>
-        <p class="text-xs mt-3" :style="{ color: 'var(--color-text-muted)' }">
+        <p class="text-xs mt-3 text-gray-400 dark:text-gray-500">
           Etapa actual: {{ pipelineStageLabel(detail.pipelineStage) }} · Estado:
           {{ processStatusLabel(detail.status) }}.
           <template v-if="isProcessActive"> Solo puede avanzar de etapa, no retroceder.</template>
@@ -379,67 +363,67 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
         >
           <dl class="grid sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Código</dt>
-              <dd class="font-mono font-medium" :style="{ color: 'var(--color-text-primary)' }">
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Código</dt>
+              <dd class="font-mono font-medium text-gray-800 dark:text-white/90">
                 {{ detail.property?.code }}
               </dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Estado comercial</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Estado comercial</dt>
+              <dd class="text-gray-800 dark:text-white/90">
                 {{ listingLabel(detail.property?.listingStatus) }}
               </dd>
             </div>
             <div class="sm:col-span-2">
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Dirección</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property?.addressLine }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Dirección</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ detail.property?.addressLine }}</dd>
             </div>
             <div v-if="detail.property?.locationLabel" class="sm:col-span-2">
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Ubicación</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.locationLabel }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Ubicación</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ detail.property.locationLabel }}</dd>
             </div>
             <div v-if="detail.property?.projectName">
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Proyecto</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.projectName }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Proyecto</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ detail.property.projectName }}</dd>
             </div>
             <div v-if="detail.property?.propertyTypeName">
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Tipo</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.propertyTypeName }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Tipo</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ detail.property.propertyTypeName }}</dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Precio de venta</dt>
-              <dd class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Precio de venta</dt>
+              <dd class="font-medium text-gray-800 dark:text-white/90">
                 {{ formatSalePrice(detail.property?.salePrice, detail.property?.saleCurrency) }}
               </dd>
             </div>
             <div v-if="primaryOwner" class="sm:col-span-2">
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Propietario</dt>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Propietario</dt>
               <dd class="mt-0.5">
-                <p class="font-medium flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
+                <p class="font-medium flex items-center gap-1.5 text-gray-800 dark:text-white/90">
                   <AppIcon icon="lucide:user-round" :size="14" color="var(--color-primary)" />
                   {{ primaryOwner.fullName }}
                 </p>
-                <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+                <p class="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
                   {{ primaryOwner.documentTypeName ? `${primaryOwner.documentTypeName}: ` : '' }}{{
                     primaryOwner.documentNumber || '—'
                   }}
                 </p>
-                <p v-if="primaryOwner.primaryPhone" class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                <p v-if="primaryOwner.primaryPhone" class="text-xs text-gray-500 dark:text-gray-400">
                   Tel: {{ primaryOwner.primaryPhone }}
                 </p>
               </dd>
             </div>
             <div v-if="detail.property?.area != null">
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Área</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.area }} m²</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Área</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ detail.property.area }} m²</dd>
             </div>
             <div v-if="detail.property?.bedrooms != null">
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Dormitorios</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.bedrooms }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Dormitorios</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ detail.property.bedrooms }}</dd>
             </div>
             <div v-if="detail.property?.bathrooms != null">
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Baños</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ detail.property.bathrooms }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Baños</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ detail.property.bathrooms }}</dd>
             </div>
           </dl>
         </FormSectionCard>
@@ -451,61 +435,58 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
           icon="lucide:users"
         >
           <div>
-            <p class="text-xs font-medium mb-2 uppercase tracking-wide" :style="{ color: 'var(--color-text-muted)' }">
+            <p class="text-xs font-medium mb-2 uppercase tracking-wide text-gray-400 dark:text-gray-500">
               Compradores
             </p>
             <ul v-if="buyersList.length" class="space-y-2">
               <li
                 v-for="b in buyersList"
                 :key="b.id"
-                class="rounded-lg border px-3 py-2 text-sm"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="rounded-lg border px-3 py-2 text-sm border-gray-200 dark:border-gray-800"
               >
-                <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                <p class="font-medium text-gray-800 dark:text-white/90">
                   {{ b.fullName }}
                   <span
                     v-if="b.isPrimary"
-                    class="text-xs font-normal ml-1"
-                    :style="{ color: 'var(--color-text-muted)' }"
+                    class="text-xs font-normal ml-1 text-gray-400 dark:text-gray-500"
                   >(principal)</span>
                 </p>
-                <p :style="{ color: 'var(--color-text-secondary)' }">
+                <p class="text-gray-500 dark:text-gray-400">
                   {{ b.documentTypeName ? `${b.documentTypeName}: ` : '' }}{{ b.documentNumber || '—' }}
                 </p>
-                <p v-if="b.primaryPhone" :style="{ color: 'var(--color-text-secondary)' }">
+                <p class="text-gray-500 dark:text-gray-400" v-if="b.primaryPhone">
                   Tel: {{ b.primaryPhone }}
                 </p>
-                <p v-if="b.primaryEmail" :style="{ color: 'var(--color-text-secondary)' }">{{ b.primaryEmail }}</p>
+                <p class="text-gray-500 dark:text-gray-400" v-if="b.primaryEmail">{{ b.primaryEmail }}</p>
               </li>
             </ul>
-            <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Sin compradores registrados.</p>
+            <p v-else class="text-sm text-gray-400 dark:text-gray-500">Sin compradores registrados.</p>
           </div>
 
-          <div class="mt-4 pt-4 border-t" :style="{ borderColor: 'var(--color-border)' }">
-            <p class="text-xs font-medium mb-2 uppercase tracking-wide" :style="{ color: 'var(--color-text-muted)' }">
+          <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+            <p class="text-xs font-medium mb-2 uppercase tracking-wide text-gray-400 dark:text-gray-500">
               Propietarios
             </p>
             <ul v-if="ownersList.length" class="space-y-2">
               <li
                 v-for="o in ownersList"
                 :key="o.id"
-                class="rounded-lg border px-3 py-2 text-sm"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="rounded-lg border px-3 py-2 text-sm border-gray-200 dark:border-gray-800"
               >
-                <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ o.fullName }}</p>
-                <p :style="{ color: 'var(--color-text-secondary)' }">
+                <p class="font-medium text-gray-800 dark:text-white/90">{{ o.fullName }}</p>
+                <p class="text-gray-500 dark:text-gray-400">
                   {{ o.documentTypeName ? `${o.documentTypeName}: ` : '' }}{{ o.documentNumber || '—' }}
                 </p>
-                <p v-if="o.primaryPhone" :style="{ color: 'var(--color-text-secondary)' }">Tel: {{ o.primaryPhone }}</p>
+                <p class="text-gray-500 dark:text-gray-400" v-if="o.primaryPhone">Tel: {{ o.primaryPhone }}</p>
               </li>
             </ul>
-            <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+            <p v-else class="text-sm text-gray-400 dark:text-gray-500">
               Sin propietario registrado en la ficha del inmueble (Venta → Propiedades).
             </p>
           </div>
 
-          <p v-if="detail.agent" class="text-sm pt-4 mt-4 border-t" :style="{ borderColor: 'var(--color-border)' }">
-            <strong :style="{ color: 'var(--color-text-primary)' }">Asesor principal:</strong>
+          <p v-if="detail.agent" class="text-sm pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+            <strong class="text-gray-800 dark:text-white/90">Asesor principal:</strong>
             {{ detail.agent.fullName }}
           </p>
         </FormSectionCard>
@@ -526,21 +507,20 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
           <li
             v-for="c in commissionsList"
             :key="c.id"
-            class="rounded-lg border px-3 py-3 space-y-2 text-sm"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="rounded-lg border px-3 py-3 space-y-2 text-sm border-gray-200 dark:border-gray-800"
           >
             <div class="flex flex-wrap justify-between gap-2">
-              <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="font-medium text-gray-800 dark:text-white/90">
                 {{ c.agent.fullName }}
-                <span class="text-xs font-normal ml-1" :style="{ color: 'var(--color-text-muted)' }">
+                <span class="text-xs font-normal ml-1 text-gray-400 dark:text-gray-500">
                   ({{ agentTypeLabel(c.agent.type) }})
                 </span>
               </p>
-              <span :style="{ color: 'var(--color-text-secondary)' }">
+              <span class="text-gray-500 dark:text-gray-400">
                 {{ commissionStatusLabel(c.status) }}
               </span>
             </div>
-            <p :style="{ color: 'var(--color-text-secondary)' }">
+            <p class="text-gray-500 dark:text-gray-400">
               {{ commissionCalcLabel(c) }} · bruto
               <strong>S/ {{ (c.grossAmount ?? c.amount).toLocaleString('es-PE') }}</strong>
               <template v-if="c.deductibles?.length">
@@ -551,8 +531,7 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
             </p>
             <ul
               v-if="c.deductibles?.length"
-              class="text-xs space-y-0.5"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="text-xs space-y-0.5 text-gray-400 dark:text-gray-500"
             >
               <li v-for="d in c.deductibles" :key="d.id">
                 Deducible {{ DEDUCTIBLE_LABELS[d.deductibleType] ?? d.deductibleType }}:
@@ -561,8 +540,7 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
             </ul>
             <ul
               v-if="c.paymentParts?.length"
-              class="text-xs space-y-1 mt-1"
-              :style="{ color: 'var(--color-text-secondary)' }"
+              class="text-xs space-y-1 mt-1 text-gray-500 dark:text-gray-400"
             >
               <li v-for="p in c.paymentParts" :key="p.id">
                 {{ p.label || `Parte ${p.partNumber}` }}: S/ {{ p.amount.toLocaleString('es-PE') }}
@@ -592,14 +570,13 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
             </div>
             <p
               v-else-if="c.status === 'CANCELLED' || isProcessLost"
-              class="text-xs"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="text-xs text-gray-400 dark:text-gray-500"
             >
               Comisión sin efecto (venta caída).
             </p>
           </li>
         </ul>
-        <p v-else class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+        <p v-else class="text-sm text-gray-400 dark:text-gray-500">
           Sin comisiones. Defínalas al crear el proceso (asesores internos o externos, % o monto fijo).
         </p>
       </FormSectionCard>
@@ -610,17 +587,16 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
         subtitle="Checklist legal, tributario y compliance"
         icon="lucide:clipboard-check"
       >
-        <p v-if="loadingReadiness" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p v-if="loadingReadiness" class="text-sm text-gray-500 dark:text-gray-400">
           Validando checklist legal/tributario/compliance...
         </p>
         <div v-else-if="readinessQueryError" class="mt-2 flex flex-wrap items-center gap-2 text-sm">
-          <span style="color: var(--color-error)">{{ getApiErrorMessage(readinessFetchError) }}</span>
+          <span class="text-error-500 dark:text-error-400">{{ getApiErrorMessage(readinessFetchError) }}</span>
           <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchReadiness()">Reintentar</BaseButton>
         </div>
         <template v-else>
-          <p
+          <p :class="(closingReadiness?.ok) ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-orange-400'"
             class="text-sm mt-1"
-            :style="{ color: closingReadiness?.ok ? 'var(--color-success)' : 'var(--color-warning)' }"
           >
             {{
               closingReadiness?.ok
@@ -630,8 +606,7 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
           </p>
           <ul
             v-if="!closingReadiness?.ok && closingReadiness?.missing?.length"
-            class="mt-2 list-disc pl-5 text-sm"
-            :style="{ color: 'var(--color-text-secondary)' }"
+            class="mt-2 list-disc pl-5 text-sm text-gray-500 dark:text-gray-400"
           >
             <li v-for="m in closingReadiness.missing" :key="m">{{ m }}</li>
           </ul>

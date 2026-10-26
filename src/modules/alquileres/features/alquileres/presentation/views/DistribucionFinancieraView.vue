@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableRow } from '@shared/presentation/ui/table'
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -223,40 +227,25 @@ watch(upsertSuccess, (ok) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
+  <div >
     <!-- Header -->
-    <div class="flex items-center gap-3 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg transition-colors hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        title="Volver al detalle"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <AppIcon icon="lucide:sliders-horizontal" :size="18" color="var(--color-primary)" />
-          <h1 class="text-xl font-bold truncate" :style="{ color: 'var(--color-text-primary)' }">
-            Distribución financiera – {{ rental?.code ?? 'Alquiler' }}
-          </h1>
-        </div>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Monto ingresado, gastos, impuestos y comisiones de agentes
-        </p>
-      </div>
-      <BaseButton variant="outline" size="sm" class="flex items-center gap-1.5 shrink-0" @click="goToEdit">
+    <PageHeader
+      :title="`Distribución financiera – ${rental?.code ?? 'Alquiler'}`"
+      subtitle="Monto ingresado, gastos, impuestos y comisiones de agentes"
+      back
+      @back="goBack"
+      class="mb-6"
+    >
+      <template #actions>
+        <BaseButton variant="outline" size="sm" class="flex items-center gap-1.5 shrink-0" @click="goToEdit">
         <AppIcon icon="lucide:pencil" :size="14" />
         <span class="hidden sm:inline">Editar alquiler</span>
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Loading -->
-    <div v-if="loadingRental" class="flex flex-col items-center justify-center py-24 gap-3">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando información...</p>
-    </div>
+    <LoadingState v-if="loadingRental" text="Cargando información..." class="py-24" />
 
     <!-- Error -->
     <div
@@ -264,7 +253,7 @@ watch(upsertSuccess, (ok) => {
       class="flex flex-col items-center justify-center py-16 gap-3"
     >
       <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-      <p class="text-sm font-medium text-center max-w-md" :style="{ color: 'var(--color-error)' }">
+      <p class="text-sm font-medium text-center max-w-md text-error-500 dark:text-error-400">
         {{ rentalError ? getApiErrorMessage(rentalFetchError) : 'No se encontró el alquiler.' }}
       </p>
       <div class="flex flex-wrap justify-center gap-2">
@@ -276,16 +265,15 @@ watch(upsertSuccess, (ok) => {
     <template v-else>
       <div
         v-if="internalAgentsQueryError || externalAgentsQueryError"
-        class="mb-5 rounded-xl border px-4 py-3 text-sm space-y-2"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+        class="mb-5 rounded-xl border px-4 py-3 text-sm space-y-2 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
       >
-        <p v-if="internalAgentsQueryError" class="flex flex-wrap items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
-          <span class="font-medium text-red-600">Agentes internos</span>
+        <p v-if="internalAgentsQueryError" class="flex flex-wrap items-center gap-2 text-gray-800 dark:text-white/90">
+          <span class="font-medium text-error-600 dark:text-error-500">Agentes internos</span>
           <span class="text-xs flex-1 min-w-0">{{ getApiErrorMessage(internalAgentsFetchError) }}</span>
           <BaseButton variant="outline" size="sm" @click="() => refetchInternalAgents()">Reintentar</BaseButton>
         </p>
-        <p v-if="externalAgentsQueryError" class="flex flex-wrap items-center gap-2" :style="{ color: 'var(--color-text-primary)' }">
-          <span class="font-medium text-red-600">Agentes externos</span>
+        <p v-if="externalAgentsQueryError" class="flex flex-wrap items-center gap-2 text-gray-800 dark:text-white/90">
+          <span class="font-medium text-error-600 dark:text-error-500">Agentes externos</span>
           <span class="text-xs flex-1 min-w-0">{{ getApiErrorMessage(externalAgentsFetchError) }}</span>
           <BaseButton variant="outline" size="sm" @click="() => refetchExternalAgents()">Reintentar</BaseButton>
         </p>
@@ -319,12 +307,11 @@ watch(upsertSuccess, (ok) => {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <!-- Gastos -->
               <div
-                class="p-4 rounded-lg space-y-3"
-                :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+                class="p-4 rounded-lg space-y-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
               >
                 <div class="flex items-center gap-2">
                   <AppIcon icon="lucide:receipt" :size="15" color="var(--color-text-muted)" />
-                  <label class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Gastos</label>
+                  <label class="text-sm font-semibold text-gray-800 dark:text-white/90">Gastos</label>
                 </div>
                 <FormSelect
                   v-model="form.expenseType"
@@ -348,12 +335,11 @@ watch(upsertSuccess, (ok) => {
               </div>
               <!-- Impuestos -->
               <div
-                class="p-4 rounded-lg space-y-3"
-                :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+                class="p-4 rounded-lg space-y-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
               >
                 <div class="flex items-center gap-2">
                   <AppIcon icon="lucide:landmark" :size="15" color="var(--color-text-muted)" />
-                  <label class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Impuestos</label>
+                  <label class="text-sm font-semibold text-gray-800 dark:text-white/90">Impuestos</label>
                 </div>
                 <FormSelect
                   v-model="form.taxType"
@@ -479,14 +465,9 @@ watch(upsertSuccess, (ok) => {
           </FormSectionCard>
 
           <!-- Mensaje de éxito -->
-          <div
-            v-if="upsertFinancial.isSuccess.value"
-            class="flex items-center gap-3 px-4 py-3 rounded-lg"
-            :style="{ backgroundColor: 'color-mix(in srgb, var(--color-success) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', color: 'var(--color-success, #16a34a)' }"
-          >
-            <AppIcon icon="lucide:circle-check" :size="18" />
+          <BaseAlert v-if="upsertFinancial.isSuccess.value" type="success">
             <span class="text-sm font-medium">Configuración guardada correctamente.</span>
-          </div>
+          </BaseAlert>
 
           <!-- Botones de acción (móvil) -->
           <div class="xl:hidden flex gap-3">
@@ -516,17 +497,17 @@ watch(upsertSuccess, (ok) => {
           >
             <dl class="space-y-3 text-sm">
               <div>
-                <dt class="font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto mensual (contrato)</dt>
-                <dd class="font-bold text-base" :style="{ color: 'var(--color-text-primary)' }">
+                <dt class="font-medium mb-0.5 text-gray-400 dark:text-gray-500">Monto mensual (contrato)</dt>
+                <dd class="font-bold text-base text-gray-800 dark:text-white/90">
                   {{ rental ? formatAmount(rental.monthlyAmount, rental.currency) : '—' }}
                 </dd>
               </div>
               <div>
-                <dt class="font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Monto base para distribución</dt>
-                <dd class="font-bold text-base" :style="{ color: 'var(--color-primary)' }">
+                <dt class="font-medium mb-0.5 text-gray-400 dark:text-gray-500">Monto base para distribución</dt>
+                <dd class="font-bold text-base text-brand-500 dark:text-brand-400">
                   {{ breakdown ? formatAmount(breakdown.baseAmount, breakdown.currency) : '—' }}
                 </dd>
-                <dd class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <dd class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
                   <span v-if="breakdown && breakdown.baseAmount !== breakdown.monthlyAmount">Monto personalizado</span>
                   <span v-else>Igual al contrato</span>
                 </dd>
@@ -539,112 +520,105 @@ watch(upsertSuccess, (ok) => {
             subtitle="Cálculo según la configuración guardada"
             icon="lucide:wallet"
           >
-            <div v-if="loadingBreakdown" class="flex items-center gap-2 py-4" :style="{ color: 'var(--color-text-muted)' }">
-              <AppIcon icon="svg-spinners:ring-resize" :size="18" color="var(--color-primary)" />
-              <span class="text-sm">Calculando...</span>
-            </div>
+            <LoadingState v-if="loadingBreakdown" variant="inline" text="Calculando..." />
 
             <div
               v-else-if="breakdownQueryError"
-              class="flex flex-col items-center py-6 gap-2 rounded-lg text-center px-2"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+              class="flex flex-col items-center py-6 gap-2 rounded-lg text-center px-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
             >
-              <p class="text-xs" style="color: var(--color-error)">{{ getApiErrorMessage(breakdownFetchError) }}</p>
+              <p class="text-xs text-error-500 dark:text-error-400">{{ getApiErrorMessage(breakdownFetchError) }}</p>
               <BaseButton variant="outline" size="sm" @click="() => refetchBreakdown()">Reintentar</BaseButton>
             </div>
 
-            <div v-else-if="breakdown" class="rounded-lg overflow-hidden" :style="{ border: '1px solid var(--color-border)' }">
-              <table class="w-full text-xs">
-                <tbody>
-                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                    <td class="py-2.5 px-3 flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
+            <div v-else-if="breakdown" class="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800">
+              <Table class="w-full text-xs">
+                <TableBody>
+                  <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                    <TableCell class="py-2.5 px-3 flex items-center gap-1.5 text-gray-800 dark:text-white/90">
                       <AppIcon icon="lucide:circle-plus" :size="13" color="var(--color-success, #16a34a)" />
                       Ingreso base
-                    </td>
-                    <td class="py-2.5 px-3 text-right font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+                    </TableCell>
+                    <TableCell class="py-2.5 px-3 text-right font-semibold text-gray-800 dark:text-white/90">
                       {{ formatAmount(breakdown.baseAmount, breakdown.currency) }}
-                    </td>
-                  </tr>
-                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                    <td class="py-2.5 px-3" :style="{ color: 'var(--color-text-secondary)' }">
+                    </TableCell>
+                  </TableRow>
+                  <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                    <TableCell class="py-2.5 px-3 text-gray-500 dark:text-gray-400">
                       <span class="flex items-center gap-1.5">
                         <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
                         Gastos
                       </span>
                       <p
                         v-if="breakdown.config?.expenseDetail"
-                        class="text-[11px] mt-1 pl-5 line-clamp-2"
-                        style="color: var(--color-text-muted);"
+                        class="text-[11px] mt-1 pl-5 line-clamp-2 text-gray-400 dark:text-gray-500"
                       >
                         {{ breakdown.config.expenseDetail }}
                       </p>
-                    </td>
-                    <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                    </TableCell>
+                    <TableCell class="py-2.5 px-3 text-right text-gray-500 dark:text-gray-400">
                       − {{ formatAmount(breakdown.expense, breakdown.currency) }}
-                    </td>
-                  </tr>
-                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                    <td class="py-2.5 px-3" :style="{ color: 'var(--color-text-secondary)' }">
+                    </TableCell>
+                  </TableRow>
+                  <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                    <TableCell class="py-2.5 px-3 text-gray-500 dark:text-gray-400">
                       <span class="flex items-center gap-1.5">
                         <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
                         Impuestos
                       </span>
                       <p
                         v-if="breakdown.config?.taxDetail"
-                        class="text-[11px] mt-1 pl-5 line-clamp-2"
-                        style="color: var(--color-text-muted);"
+                        class="text-[11px] mt-1 pl-5 line-clamp-2 text-gray-400 dark:text-gray-500"
                       >
                         {{ breakdown.config.taxDetail }}
                       </p>
-                    </td>
-                    <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                    </TableCell>
+                    <TableCell class="py-2.5 px-3 text-right text-gray-500 dark:text-gray-400">
                       − {{ formatAmount(breakdown.tax, breakdown.currency) }}
-                    </td>
-                  </tr>
-                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                    <td class="py-2.5 px-3" :style="{ color: 'var(--color-text-secondary)' }">
+                    </TableCell>
+                  </TableRow>
+                  <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                    <TableCell class="py-2.5 px-3 text-gray-500 dark:text-gray-400">
                       <span class="flex items-center gap-1.5">
                         <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
                         Ag. externo
                       </span>
-                    </td>
-                    <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                    </TableCell>
+                    <TableCell class="py-2.5 px-3 text-right text-gray-500 dark:text-gray-400">
                       − {{ formatAmount(breakdown.externalAgentCommission, breakdown.currency) }}
-                    </td>
-                  </tr>
-                  <tr :style="{ borderBottom: '1px solid var(--color-border)' }">
-                    <td class="py-2.5 px-3" :style="{ color: 'var(--color-text-secondary)' }">
+                    </TableCell>
+                  </TableRow>
+                  <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                    <TableCell class="py-2.5 px-3 text-gray-500 dark:text-gray-400">
                       <span class="flex items-center gap-1.5">
                         <AppIcon icon="lucide:minus-circle" :size="13" color="var(--color-warning, #d97706)" />
                         Ag. interno
                       </span>
-                    </td>
-                    <td class="py-2.5 px-3 text-right" :style="{ color: 'var(--color-text-secondary)' }">
+                    </TableCell>
+                    <TableCell class="py-2.5 px-3 text-right text-gray-500 dark:text-gray-400">
                       − {{ formatAmount(breakdown.internalAgentCommission, breakdown.currency) }}
-                    </td>
-                  </tr>
-                  <tr :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 5%, transparent)' }">
-                    <td class="py-3 px-3 font-bold" :style="{ color: 'var(--color-text-primary)' }">
+                    </TableCell>
+                  </TableRow>
+                  <TableRow class="bg-brand-500/5">
+                    <TableCell class="py-3 px-3 font-bold text-gray-800 dark:text-white/90">
                       <span class="flex items-center gap-1.5">
                         <AppIcon icon="lucide:circle-check" :size="14" color="var(--color-primary)" />
                         {{ RENTAL_UTILITY_NET_LABEL }}
                       </span>
-                    </td>
-                    <td class="py-3 px-3 text-right font-bold text-sm" :style="{ color: 'var(--color-primary)' }">
+                    </TableCell>
+                    <TableCell class="py-3 px-3 text-right font-bold text-sm text-brand-500 dark:text-brand-400">
                       {{ formatAmount(breakdown.utility, breakdown.currency) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
 
             <div
               v-else
-              class="flex flex-col items-center py-6 gap-2 rounded-lg"
-              :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px dashed var(--color-border)' }"
+              class="flex flex-col items-center py-6 gap-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-700"
             >
               <AppIcon icon="lucide:bar-chart-2" :size="24" color="var(--color-text-muted)" />
-              <p class="text-xs text-center" :style="{ color: 'var(--color-text-muted)' }">
+              <p class="text-xs text-center text-gray-400 dark:text-gray-500">
                 Configura los valores para ver el desglose
               </p>
             </div>

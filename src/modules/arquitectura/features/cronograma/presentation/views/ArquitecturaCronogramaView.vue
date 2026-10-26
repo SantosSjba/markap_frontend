@@ -1,4 +1,8 @@
 ﻿<script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import { useService } from '@shared/presentation/di/services'
 import { DIRECTORY } from '@shared/application/ports/directory.port'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -410,24 +414,24 @@ const monthTitle = computed(() =>
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1400px] mx-auto space-y-6">
-    <div>
-      <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Cronograma</h1>
-      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+  <div class="space-y-6">
+    <PageHeader
+      title="Cronograma"
+    >
+      <template #actions>
+        <p class="text-sm mt-1 text-gray-500 dark:text-gray-400">
         Reuniones, visitas, visitas de obra, fechas límite y agenda del equipo; integrado con hitos, tareas de ejecución y cobros programados.
       </p>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden space-y-4 p-4 sm:p-5"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="sm" class="block overflow-hidden space-y-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <BaseButton variant="outline" size="sm" type="button" @click="prevMonth">
             <AppIcon icon="lucide:chevron-left" :size="18" />
           </BaseButton>
-          <span class="text-sm font-semibold capitalize min-w-[160px] text-center" :style="{ color: 'var(--color-text-primary)' }">
+          <span class="text-sm font-semibold capitalize min-w-[160px] text-center text-gray-800 dark:text-white/90">
             {{ monthTitle }}
           </span>
           <BaseButton variant="outline" size="sm" type="button" @click="nextMonth">
@@ -447,16 +451,15 @@ const monthTitle = computed(() =>
 
       <div
         v-if="projectsQueryError || agentsQueryError"
-        class="rounded-lg border px-3 py-2 text-sm space-y-2"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+        class="rounded-lg border px-3 py-2 text-sm space-y-2 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
       >
-        <p v-if="projectsQueryError" class="flex flex-wrap items-center gap-2" style="color: var(--color-text-primary)">
-          <span class="text-xs font-medium text-red-600">Proyectos</span>
+        <p v-if="projectsQueryError" class="flex flex-wrap items-center gap-2 text-gray-800 dark:text-white/90">
+          <span class="text-xs font-medium text-error-600 dark:text-error-500">Proyectos</span>
           <span class="text-xs">{{ getApiErrorMessage(projectsListError) }}</span>
           <BaseButton variant="outline" size="sm" class="ml-auto" @click="() => refetchProjects()">Reintentar</BaseButton>
         </p>
-        <p v-if="agentsQueryError" class="flex flex-wrap items-center gap-2" style="color: var(--color-text-primary)">
-          <span class="text-xs font-medium text-red-600">Agentes</span>
+        <p v-if="agentsQueryError" class="flex flex-wrap items-center gap-2 text-gray-800 dark:text-white/90">
+          <span class="text-xs font-medium text-error-600 dark:text-error-500">Agentes</span>
           <span class="text-xs">{{ getApiErrorMessage(agentsListError) }}</span>
           <BaseButton variant="outline" size="sm" class="ml-auto" @click="() => refetchAgents()">Reintentar</BaseButton>
         </p>
@@ -465,29 +468,23 @@ const monthTitle = computed(() =>
       <BaseTabs v-model="lens" :tabs="lensTabs" />
 
       <div
-        class="rounded-lg border p-3 overflow-x-auto"
-        :style="{ borderColor: 'var(--color-border)' }"
+        class="rounded-lg border p-3 overflow-x-auto border-gray-200 dark:border-gray-800"
       >
-        <p class="text-xs mb-2" :style="{ color: 'var(--color-text-muted)' }">
+        <p class="text-xs mb-2 text-gray-400 dark:text-gray-500">
           Vista rápida del mes · número = cantidad de ítems en esta vista
         </p>
-        <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">
+        <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium mb-1 text-gray-500 dark:text-gray-400">
           <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
         </div>
         <div class="grid grid-cols-7 gap-1">
-          <div
+          <div :class="[(c.iso && countsByDay[c.iso] ? 'bg-brand-50 dark:bg-brand-500/12' : 'bg-transparent')]"
             v-for="c in monthDays"
             :key="c.key"
-            class="aspect-square rounded-md flex flex-col items-center justify-center text-xs border border-transparent"
-            :style="{
-              background: c.iso && countsByDay[c.iso] ? 'var(--color-primary-soft, rgba(59,130,246,0.12))' : 'transparent',
-              color: 'var(--color-text-primary)',
-              opacity: c.label ? 1 : 0,
-            }"
+            class="aspect-square rounded-md flex flex-col items-center justify-center text-xs border border-transparent text-gray-800 dark:text-white/90" :style="{ opacity: c.label ? 1 : 0 }"
           >
             <template v-if="c.label">
               <span>{{ c.label }}</span>
-              <span v-if="countsByDay[c.iso!]" class="font-semibold text-[10px]" :style="{ color: 'var(--color-primary)' }">
+              <span v-if="countsByDay[c.iso!]" class="font-semibold text-[10px] text-brand-500 dark:text-brand-400">
                 {{ countsByDay[c.iso!] }}
               </span>
             </template>
@@ -495,11 +492,9 @@ const monthTitle = computed(() =>
         </div>
       </div>
 
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
-      <div v-else-if="isError" class="text-center py-12 space-y-3 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-        <p style="color: var(--color-error)">{{ getApiErrorMessage(feedError) }}</p>
+      <LoadingState v-if="isLoading" />
+      <div v-else-if="isError" class="text-center py-12 space-y-3 text-sm text-gray-500 dark:text-gray-400">
+        <p class="text-error-500 dark:text-error-400">{{ getApiErrorMessage(feedError) }}</p>
         <BaseButton variant="outline" size="sm" @click="() => refetchFeed()">Reintentar</BaseButton>
       </div>
       <DataTable
@@ -538,11 +533,11 @@ const monthTitle = computed(() =>
               v-if="!(row as CalendarFeedItemDto).readOnly"
               :items="getEventActions(row as CalendarFeedItemDto)"
             />
-            <span v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">—</span>
+            <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" :title="editId ? 'Editar evento' : 'Nuevo evento'" size="lg">
       <form :id="CAL_EVENT_FORM_ID" class="space-y-3" @submit.prevent="onSubmitEvent">
@@ -551,15 +546,7 @@ const monthTitle = computed(() =>
         <FormTextarea v-bind="evBinds.description" label="Detalle" :rows="2" />
         <FormInput v-bind="evBinds.location" label="Ubicación (visitas / obra)" />
         <div class="flex flex-wrap gap-4 items-center">
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              class="rounded border"
-              :checked="evValues.allDay"
-              @change="setFieldValue('allDay', ($event.target as HTMLInputElement).checked)"
-            />
-            Todo el día
-          </label>
+          <FormCheckbox :model-value="!!evValues.allDay" label="Todo el día" @update:model-value="setFieldValue('allDay', $event)" />
         </div>
         <FormInput v-bind="evBinds.startsAt" :type="evValues.allDay ? 'date' : 'datetime-local'" label="Inicio" />
         <FormInput v-bind="evBinds.endsAt" :type="evValues.allDay ? 'date' : 'datetime-local'" label="Fin (opcional)" />

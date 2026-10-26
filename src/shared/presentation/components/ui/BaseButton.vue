@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Icon } from '@iconify/vue'
+import { RouterLink, type RouteLocationRaw } from 'vue-router'
+import { Button } from '../../ui/button'
+import type { ButtonSize, ButtonVariant } from '../../ui/button'
+import { LoaderCircleIcon } from '../../icons/layout'
 import AppIcon from './AppIcon.vue'
 /**
- * BaseButton Component
- * Reusable button component with multiple variants and sizes
+ * BaseButton — `Button` de TailAdmin con la API histórica de Markap
+ * (variant primary/secondary/outline/ghost/danger/link, size sm/md/lg, icon, loading, block).
  */
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'link'
   size?: 'sm' | 'md' | 'lg'
   type?: 'button' | 'submit' | 'reset'
   disabled?: boolean
@@ -16,6 +19,12 @@ interface Props {
   block?: boolean
   /** Icono lucide/iconify antes del texto (ej. lucide:save) */
   icon?: string
+  /** Texto mientras `loading` (por defecto «Cargando...») */
+  loadingText?: string
+  /** Navegación interna: se renderiza como `RouterLink` */
+  to?: RouteLocationRaw
+  /** Enlace externo/descarga: se renderiza como `<a>` */
+  href?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -26,29 +35,34 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   block: false,
   icon: undefined,
+  loadingText: 'Cargando...',
+  to: undefined,
+  href: undefined,
 })
-
-const iconSize = computed(() => (props.size === 'sm' ? 15 : props.size === 'lg' ? 18 : 16))
 
 const emit = defineEmits<{
   click: [event: MouseEvent]
 }>()
 
-const variantClasses = {
-  primary: 'bg-primary-500 text-white hover:bg-primary-700 focus:ring-primary-500',
-  secondary:
-    'bg-gray-600 text-white hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 focus:ring-gray-500',
-  outline:
-    'border-2 border-primary-500 text-primary-500 hover:bg-[var(--color-primary-light)] focus:ring-primary-500',
-  ghost: 'text-[var(--color-text-secondary)] hover:bg-[var(--color-hover)] focus:ring-gray-500',
-  danger: 'bg-error-500 text-white hover:bg-error-600 focus:ring-error-500',
+const variantMap: Record<NonNullable<Props['variant']>, ButtonVariant> = {
+  primary: 'default',
+  secondary: 'outline',
+  outline: 'outline',
+  ghost: 'ghost',
+  danger: 'destructive',
+  link: 'link',
 }
 
-const sizeClasses = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-base',
-  lg: 'px-6 py-3 text-lg',
+const sizeMap: Record<NonNullable<Props['size']>, ButtonSize> = {
+  sm: 'sm',
+  md: 'default',
+  lg: 'lg',
 }
+
+const buttonVariant = computed(() => variantMap[props.variant])
+const buttonSize = computed(() => sizeMap[props.size])
+
+const tag = computed(() => (props.to ? RouterLink : props.href ? 'a' : 'button'))
 
 const handleClick = (event: MouseEvent) => {
   if (!props.disabled && !props.loading) {
@@ -58,36 +72,25 @@ const handleClick = (event: MouseEvent) => {
 </script>
 
 <template>
-  <button
+  <Button
+    :as="tag"
+    :to="to"
+    :href="href"
     :type="type"
+    :variant="buttonVariant"
+    :size="buttonSize"
     :disabled="disabled || loading"
-    :class="[
-      'inline-flex items-center justify-center gap-2 font-medium rounded-lg',
-      'transition-all duration-200 ease-in-out',
-      'focus:outline-none focus:ring-2 focus:ring-offset-2',
-      'disabled:opacity-60 disabled:cursor-not-allowed',
-      variantClasses[variant],
-      sizeClasses[size],
-      { 'w-full': block },
-    ]"
+    :aria-busy="loading || undefined"
+    :class="block ? 'w-full' : undefined"
     @click="handleClick"
   >
-    <!-- Cuando loading: spinner animado + texto "Cargando..." -->
     <template v-if="loading">
-      <Icon icon="svg-spinners:ring-resize" class="w-5 h-5 shrink-0" />
-      <span>Cargando...</span>
+      <LoaderCircleIcon class="animate-spin" />
+      <span>{{ loadingText }}</span>
     </template>
-
-    <!-- Estado normal: icono opcional + contenido del slot -->
     <template v-else>
-      <AppIcon
-        v-if="icon"
-        :icon="icon"
-        :size="iconSize"
-        color="currentColor"
-        class="shrink-0"
-      />
+      <AppIcon v-if="icon" :icon="icon" color="currentColor" />
       <slot />
     </template>
-  </button>
+  </Button>
 </template>

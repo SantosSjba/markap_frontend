@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
 import { toCalendarDateString } from '@shared/utils/formatters'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -233,36 +236,18 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
+  <div >
     <!-- Header -->
-    <div class="flex items-center gap-3 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg transition-colors hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        title="Volver al detalle"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <AppIcon icon="lucide:pencil" :size="18" color="var(--color-primary)" />
-          <h1 class="text-xl font-bold truncate" :style="{ color: 'var(--color-text-primary)' }">
-            Editar alquiler {{ rental?.code ?? '' }}
-          </h1>
-        </div>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Modificar fechas, montos, adjuntos y estado del contrato
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      :title="`Editar alquiler ${rental?.code ?? ''}`"
+      subtitle="Modificar fechas, montos, adjuntos y estado del contrato"
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
     <!-- Loading -->
-    <div v-if="loading" class="flex flex-col items-center justify-center py-24 gap-3">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando contrato...</p>
-    </div>
+    <LoadingState v-if="loading" text="Cargando contrato..." class="py-24" />
 
     <!-- Error -->
     <div
@@ -270,7 +255,7 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
       class="flex flex-col items-center justify-center py-16 gap-3"
     >
       <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-      <p class="text-sm font-medium text-center max-w-md" :style="{ color: 'var(--color-error)' }">
+      <p class="text-sm font-medium text-center max-w-md text-error-500 dark:text-error-400">
         {{ rentalError ? getApiErrorMessage(rentalFetchError) : 'No se encontró el alquiler.' }}
       </p>
       <div class="flex flex-wrap justify-center gap-2">
@@ -288,20 +273,14 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
           subtitle="Datos del inmueble del contrato"
           icon="lucide:building-2"
         >
-          <span
-            class="inline-block mb-3 text-xs px-2 py-0.5 rounded-full font-medium"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }"
-          >
-            Solo lectura
-          </span>
+          <Badge class="mb-3">Solo lectura</Badge>
           <div
-            class="flex items-center gap-3 p-3 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
+            class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
           >
             <AppIcon icon="lucide:map-pin" :size="16" color="var(--color-text-muted)" />
             <div class="min-w-0">
-              <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Propiedad</p>
-              <p class="text-sm font-semibold truncate" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="text-xs font-medium mb-0.5 text-gray-400 dark:text-gray-500">Propiedad</p>
+              <p class="text-sm font-semibold truncate text-gray-800 dark:text-white/90">
                 {{ rental?.property?.code }} – {{ rental?.property?.addressLine }}
               </p>
             </div>
@@ -381,12 +360,8 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
           <!-- Adjuntos actuales con descarga -->
           <div class="space-y-2 mb-4">
             <!-- Contrato actual -->
-            <div
-              class="flex items-center gap-3 p-3 rounded-lg text-sm"
-              :style="{
-                backgroundColor: rental.hasContract ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'var(--color-surface-elevated)',
-                border: `1px solid ${rental.hasContract ? 'color-mix(in srgb, var(--color-success) 20%, transparent)' : 'var(--color-border)'}`,
-              }"
+            <div class="flex items-center gap-3 p-3 rounded-lg text-sm border"
+                :class="rental.hasContract ? 'border-success-500/20 bg-success-500/6' : 'border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800'"
             >
               <AppIcon
                 :icon="rental.hasContract ? 'lucide:file-check-2' : 'lucide:file-x-2'"
@@ -394,21 +369,20 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
                 :color="rental.hasContract ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)'"
               />
               <div class="flex-1 min-w-0">
-                <span class="font-medium block" :style="{ color: rental.hasContract ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }">
+                <span :class="(rental.hasContract) ? 'text-gray-800 dark:text-white/90' : 'text-gray-400 dark:text-gray-500'" class="font-medium block">
                   Contrato firmado
                 </span>
-                <span v-if="rental.attachments?.find(a => a.type === 'CONTRACT')" class="text-xs truncate block" :style="{ color: 'var(--color-text-muted)' }">
+                <span v-if="rental.attachments?.find(a => a.type === 'CONTRACT')" class="text-xs truncate block text-gray-400 dark:text-gray-500">
                   {{ rental.attachments.find(a => a.type === 'CONTRACT')!.originalFileName }}
                 </span>
-                <span v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Sin archivo — sube uno abajo</span>
+                <span v-else class="text-xs text-gray-400 dark:text-gray-500">Sin archivo — sube uno abajo</span>
               </div>
               <a
                 v-if="rental.attachments?.find(a => a.type === 'CONTRACT')"
                 :href="getAttachmentUrl(rental.attachments.find(a => a.type === 'CONTRACT')!)"
                 target="_blank"
                 download
-                class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md shrink-0"
-                :style="{ color: 'var(--color-primary)', background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
+                class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md shrink-0 text-brand-500 dark:text-brand-400 bg-brand-500/10"
               >
                 <AppIcon icon="lucide:download" :size="12" />
                 Descargar
@@ -416,12 +390,8 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
             </div>
 
             <!-- Acta actual -->
-            <div
-              class="flex items-center gap-3 p-3 rounded-lg text-sm"
-              :style="{
-                backgroundColor: rental.hasDeliveryAct ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'var(--color-surface-elevated)',
-                border: `1px solid ${rental.hasDeliveryAct ? 'color-mix(in srgb, var(--color-success) 20%, transparent)' : 'var(--color-border)'}`,
-              }"
+            <div class="flex items-center gap-3 p-3 rounded-lg text-sm border"
+                :class="rental.hasDeliveryAct ? 'border-success-500/20 bg-success-500/6' : 'border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800'"
             >
               <AppIcon
                 :icon="rental.hasDeliveryAct ? 'lucide:file-check-2' : 'lucide:file-x-2'"
@@ -429,21 +399,20 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
                 :color="rental.hasDeliveryAct ? 'var(--color-success, #16a34a)' : 'var(--color-text-muted)'"
               />
               <div class="flex-1 min-w-0">
-                <span class="font-medium block" :style="{ color: rental.hasDeliveryAct ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }">
+                <span :class="(rental.hasDeliveryAct) ? 'text-gray-800 dark:text-white/90' : 'text-gray-400 dark:text-gray-500'" class="font-medium block">
                   Acta de entrega
                 </span>
-                <span v-if="rental.attachments?.find(a => a.type === 'DELIVERY_ACT')" class="text-xs truncate block" :style="{ color: 'var(--color-text-muted)' }">
+                <span v-if="rental.attachments?.find(a => a.type === 'DELIVERY_ACT')" class="text-xs truncate block text-gray-400 dark:text-gray-500">
                   {{ rental.attachments.find(a => a.type === 'DELIVERY_ACT')!.originalFileName }}
                 </span>
-                <span v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Sin archivo — sube uno abajo</span>
+                <span v-else class="text-xs text-gray-400 dark:text-gray-500">Sin archivo — sube uno abajo</span>
               </div>
               <a
                 v-if="rental.attachments?.find(a => a.type === 'DELIVERY_ACT')"
                 :href="getAttachmentUrl(rental.attachments.find(a => a.type === 'DELIVERY_ACT')!)"
                 target="_blank"
                 download
-                class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md shrink-0"
-                :style="{ color: 'var(--color-primary)', background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
+                class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md shrink-0 text-brand-500 dark:text-brand-400 bg-brand-500/10"
               >
                 <AppIcon icon="lucide:download" :size="12" />
                 Descargar
@@ -451,7 +420,7 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
             </div>
           </div>
 
-          <p class="text-xs mb-3" :style="{ color: 'var(--color-text-muted)' }">
+          <p class="text-xs mb-3 text-gray-400 dark:text-gray-500">
             Subir un nuevo archivo reemplazará el existente.
           </p>
 
@@ -497,27 +466,24 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
 
       <!-- Columna lateral: resumen y acciones -->
       <div class="xl:col-span-1">
-        <div
-          class="p-5 rounded-xl border sticky top-4"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        <FormSectionCard
+          title="Resumen del contrato"
+          dense
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
-            Resumen del contrato
-          </h2>
           <dl class="space-y-3 text-sm mb-6">
             <div>
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:map-pin" :size="13" />
                 Propiedad
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ rental?.property?.code }} – {{ rental?.property?.addressLine }}</dd>
+              <dd class="text-gray-800 dark:text-white/90">{{ rental?.property?.code }} – {{ rental?.property?.addressLine }}</dd>
             </div>
             <div>
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:user" :size="13" />
                 Inquilino
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">
+              <dd class="text-gray-800 dark:text-white/90">
                 {{
                   (rental?.tenants?.length
                     ? rental.tenants.map((t) => t.fullName)
@@ -528,27 +494,26 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
                 }}
               </dd>
             </div>
-            <div class="border-t pt-3" :style="{ borderColor: 'var(--color-border)' }">
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+            <div class="border-t pt-3 border-gray-200 dark:border-gray-800">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:calendar" :size="13" />
                 Vigencia
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">
+              <dd class="text-gray-800 dark:text-white/90">
                 {{ values.startDate || '—' }} → {{ values.endDate || '—' }}
               </dd>
             </div>
             <div>
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:banknote" :size="13" />
                 Monto mensual
               </dt>
-              <dd class="font-bold" :style="{ color: 'var(--color-primary)' }">
+              <dd class="font-bold text-brand-500 dark:text-brand-400">
                 {{ values.currency === 'USD' ? 'US$' : 'S/' }}
                 {{ values.monthlyAmount !== '' && values.monthlyAmount !== undefined ? Number(values.monthlyAmount).toLocaleString('es-PE', { minimumFractionDigits: 2 }) : '0.00' }}
               </dd>
             </div>
           </dl>
-
           <div class="flex flex-col gap-3">
             <BaseButton
               type="submit"
@@ -564,7 +529,7 @@ const onSubmit = handleSubmit(async (formValues: EditarRentalFormValues) => {
               Cancelar
             </BaseButton>
           </div>
-        </div>
+        </FormSectionCard>
       </div>
     </form>
   </div>

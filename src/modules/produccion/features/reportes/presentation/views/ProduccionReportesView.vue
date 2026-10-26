@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed } from 'vue'
 import * as yup from 'yup'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
@@ -315,15 +318,13 @@ async function exportDashboardExcel() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Reportes</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Producción, ventas, inventario valorizado y rentabilidad por mueble.
-        </p>
-      </div>
-      <BaseButton
+  <div class="space-y-6">
+    <PageHeader
+      title="Reportes"
+      subtitle="Producción, ventas, inventario valorizado y rentabilidad por mueble."
+    >
+      <template #actions>
+        <BaseButton
         variant="secondary"
         size="sm"
         class="w-full sm:w-auto self-start shrink-0 whitespace-nowrap"
@@ -334,11 +335,11 @@ async function exportDashboardExcel() {
         <ExcelIcon class="w-4 h-4 shrink-0" aria-hidden="true" />
         Exportar Excel
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
     <form
-      class="rounded-xl border p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
+      class="rounded-2xl border p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-dark"
       @submit.prevent="applyFilters"
     >
       <FormInput v-bind="filterBinds.startDate" label="Desde" type="date" />
@@ -351,9 +352,7 @@ async function exportDashboardExcel() {
       </BaseButton>
     </form>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
     <template v-else-if="d">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -382,14 +381,14 @@ async function exportDashboardExcel() {
             :loading="isLoading"
             color="var(--color-primary)"
           />
-          <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+          <BaseCard padding="none" class="block overflow-hidden">
             <DataTable :columns="woStatusColumns" :data="woStatusRows" empty-text="Sin OT." row-key="status">
               <template #row="{ row }">
                 <td class="py-3 px-4 text-sm">{{ WO_STATUS_LABELS[(row as { status: string }).status] ?? (row as { status: string }).status }}</td>
                 <td class="py-3 px-4 text-sm font-medium">{{ (row as { count: number }).count }}</td>
               </template>
             </DataTable>
-          </div>
+          </BaseCard>
         </div>
       </div>
 
@@ -427,7 +426,7 @@ async function exportDashboardExcel() {
             color="var(--color-warning)"
             :value-formatter="formatPen"
           />
-          <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+          <BaseCard padding="none" class="block overflow-hidden">
             <DataTable :columns="invCatColumns" :data="invCatRows" empty-text="Sin datos." row-key="category">
               <template #row="{ row }">
                 <td class="py-3 px-4 text-sm">{{ (row as { category: string }).category }}</td>
@@ -435,15 +434,15 @@ async function exportDashboardExcel() {
                 <td class="py-3 px-4 text-sm font-medium">{{ formatPen((row as { totalValue: number }).totalValue) }}</td>
               </template>
             </DataTable>
-          </div>
+          </BaseCard>
         </div>
       </div>
 
       <div v-show="activeTab === 'rentabilidad'" class="space-y-4">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Costo estimado desde BOM + mano de obra + gastos del catálogo. Margen vs precio de referencia.
         </p>
-        <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+        <BaseCard padding="none" class="block overflow-hidden">
           <DataTable :columns="rentColumns" :data="rentRows" empty-text="Sin muebles en catálogo." row-key="furnitureId">
             <template #row="{ row }">
               <td class="py-3 px-4 text-sm font-mono">{{ (row as ProduccionReportsRentabilidadRow).furnitureCode }}</td>
@@ -456,7 +455,7 @@ async function exportDashboardExcel() {
               <td class="py-3 px-4 text-sm">{{ (row as ProduccionReportsRentabilidadRow).unitsSoldPeriod }}</td>
             </template>
           </DataTable>
-        </div>
+        </BaseCard>
       </div>
 
       <div v-show="activeTab === 'kpis'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

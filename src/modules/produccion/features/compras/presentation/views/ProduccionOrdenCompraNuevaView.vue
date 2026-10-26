@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -90,16 +93,14 @@ async function save() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex items-center gap-3">
-      <BaseButton variant="ghost" @click="router.push({ name: 'produccion-compras-ordenes-compra' })">
-        <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />
-        Volver
-      </BaseButton>
-      <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Nueva orden de compra</h1>
-    </div>
+  <div class="space-y-6">
+    <PageHeader
+      title="Nueva orden de compra"
+      back
+      @back="router.push({ name: 'produccion-compras-ordenes-compra' })"
+    />
 
-    <div class="rounded-xl border p-4 space-y-4" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="sm" class="block space-y-4">
       <FormSelect v-model="supplierId" label="Proveedor" :options="supplierOptions" />
       <FormInput v-model="expectedAt" label="Fecha esperada de entrega" type="date" />
       <FormTextarea v-model="notes" label="Notas" :rows="2" />
@@ -115,8 +116,7 @@ async function save() {
         <div
           v-for="(line, i) in lines"
           :key="i"
-          class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end p-3 rounded-lg"
-          :style="{ background: 'var(--color-bg)' }"
+          class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end p-3 rounded-lg bg-gray-50 dark:bg-gray-900"
         >
           <div class="sm:col-span-5">
             <FormSelect
@@ -133,19 +133,17 @@ async function save() {
             <FormInput v-model.number="line.unitPrice" label="Precio unit. (S/)" type="number" min="0" step="0.01" />
           </div>
           <div class="sm:col-span-1 flex justify-end pb-1">
-            <button v-if="lines.length > 1" type="button" class="text-sm" :style="{ color: 'var(--color-error)' }" @click="removeLine(i)">
-              <AppIcon icon="lucide:trash-2" :size="18" />
-            </button>
+            <IconButton v-if="lines.length > 1" @click="removeLine(i)" icon="lucide:trash-2" label="Eliminar" danger />
           </div>
         </div>
       </div>
 
-      <div class="flex items-center justify-between pt-2 border-t" :style="{ borderColor: 'var(--color-border)' }">
+      <div class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
         <span class="text-sm font-medium">Total estimado</span>
         <span class="text-lg font-bold">{{ formatSol(total) }}</span>
       </div>
 
       <BaseButton variant="primary" :loading="saving" @click="save">Crear orden (borrador)</BaseButton>
-    </div>
+    </BaseCard>
   </div>
 </template>

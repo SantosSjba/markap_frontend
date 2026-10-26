@@ -1,34 +1,64 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string = string">
 import { computed } from 'vue'
-import { Icon } from '@iconify/vue'
+import AppIcon from './AppIcon.vue'
 /**
- * BaseTabs - Navegación por pestañas reutilizable
+ * BaseTabs — pestañas de TailAdmin.
+ * `underline`: pestañas subrayadas. `segmented`: selector compacto (como el de los gráficos del dashboard).
  */
 
 interface Tab {
-  id: string
+  id: T
   label: string
   icon?: string
 }
 
 interface Props {
-  tabs: Tab[]
-  modelValue: string
+  tabs: readonly Tab[]
+  modelValue: T
+  variant?: 'underline' | 'segmented'
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<{ 'update:modelValue': [id: string] }>()
+const props = withDefaults(defineProps<Props>(), { variant: 'underline' })
+const emit = defineEmits<{ 'update:modelValue': [id: T] }>()
 
 const activeId = computed(() => props.modelValue)
 
-function selectTab(id: string) {
+function selectTab(id: T) {
   emit('update:modelValue', id)
 }
 </script>
 
 <template>
-  <div class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-    <nav class="flex gap-1 overflow-x-auto scrollbar-none" role="tablist" aria-label="Pestañas">
+  <div
+    v-if="variant === 'segmented'"
+    class="inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg bg-gray-100 p-0.5 no-scrollbar dark:bg-gray-900"
+    role="tablist"
+    aria-label="Pestañas"
+  >
+    <button
+      v-for="tab in tabs"
+      :key="tab.id"
+      type="button"
+      role="tab"
+      :aria-selected="activeId === tab.id"
+      :class="[
+        'inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-theme-sm font-medium whitespace-nowrap transition-colors',
+        activeId === tab.id
+          ? 'bg-white text-gray-900 shadow-theme-xs dark:bg-gray-800 dark:text-white'
+          : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white',
+      ]"
+      @click="selectTab(tab.id)"
+    >
+      <AppIcon v-if="tab.icon" :icon="tab.icon" class="size-4" />
+      {{ tab.label }}
+    </button>
+  </div>
+  <div v-else class="border-b border-gray-200 dark:border-gray-800">
+    <nav
+      class="-mb-px flex gap-2 overflow-x-auto no-scrollbar"
+      role="tablist"
+      aria-label="Pestañas"
+    >
       <button
         v-for="tab in tabs"
         :key="tab.id"
@@ -36,19 +66,14 @@ function selectTab(id: string) {
         role="tab"
         :aria-selected="activeId === tab.id"
         :class="[
-          'flex items-center gap-1.5 px-4 py-3 text-sm font-medium rounded-t-lg transition-colors border-b-2 -mb-px whitespace-nowrap shrink-0',
+          'inline-flex shrink-0 items-center gap-2 border-b-2 px-2.5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-200 ease-in-out',
           activeId === tab.id
-            ? 'border-current'
-            : 'border-transparent hover:opacity-80',
+            ? 'border-brand-500 text-brand-500 dark:border-brand-400 dark:text-brand-400'
+            : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:text-gray-200',
         ]"
-        :style="
-          activeId === tab.id
-            ? { color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }
-            : { color: 'var(--color-text-secondary)' }
-        "
         @click="selectTab(tab.id)"
       >
-        <Icon v-if="tab.icon" :icon="tab.icon" width="16" height="16" />
+        <AppIcon v-if="tab.icon" :icon="tab.icon" class="size-4" />
         {{ tab.label }}
       </button>
     </nav>

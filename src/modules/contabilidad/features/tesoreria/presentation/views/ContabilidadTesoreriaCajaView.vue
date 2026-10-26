@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { computed, ref, watch } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
@@ -118,7 +120,7 @@ function typeLabel(type: string) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:wallet"
       title="Caja"
@@ -134,7 +136,7 @@ function typeLabel(type: string) {
       </template>
     </PageHeader>
 
-    <div v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <div v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </div>
 
@@ -148,30 +150,20 @@ function typeLabel(type: string) {
       <StatsCard title="Movimientos del periodo" :value="String(movements.length)" />
     </div>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <div v-if="loadingMovements" class="flex justify-center py-12">
-        <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-      </div>
-      <table v-else class="w-full text-sm">
-        <thead>
-          <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Fecha</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Tipo</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Glosa</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Contrapartida</th>
-            <th class="text-right py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Importe</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in movements"
-            :key="row.id"
-            class="border-b last:border-b-0"
-            :style="{ borderColor: 'var(--color-border)' }"
-          >
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="loadingMovements" class="py-12" />
+      <DataTable
+        :columns="[
+          { key: 'c0', label: 'Fecha' },
+          { key: 'c1', label: 'Tipo' },
+          { key: 'c2', label: 'Glosa' },
+          { key: 'c3', label: 'Contrapartida' },
+          { key: 'c4', label: 'Importe', align: 'right' },
+        ]"
+        :data="movements"
+        empty-text="Sin movimientos en este periodo"
+      >
+        <template #row="{ row }">
             <td class="py-2.5 px-4">{{ (row as ContabilidadTreasuryMovementDTO).movementDate }}</td>
             <td class="py-2.5 px-4">
               <Badge :variant="(row as ContabilidadTreasuryMovementDTO).movementType === 'IN' ? 'success' : 'warning'">
@@ -185,15 +177,9 @@ function typeLabel(type: string) {
             <td class="py-2.5 px-4 text-right font-mono font-semibold">
               {{ formatPen((row as ContabilidadTreasuryMovementDTO).amount) }}
             </td>
-          </tr>
-          <tr v-if="!movements.length">
-            <td colspan="5" class="py-8 text-center" :style="{ color: 'var(--color-text-muted)' }">
-              Sin movimientos en este periodo
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        </template>
+      </DataTable>
+    </BaseCard>
 
     <BaseModal
       v-model="modalOpen"

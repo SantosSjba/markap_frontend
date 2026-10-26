@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -56,17 +57,14 @@ function goJournal(row: ContabilidadTreasuryMovementDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:arrow-left-right"
       title="Movimientos de tesorería"
       subtitle="Ingresos, egresos y transferencias del periodo activo."
     />
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -97,7 +95,7 @@ function goJournal(row: ContabilidadTreasuryMovementDTO) {
           </td>
           <td class="py-3 px-4 text-sm">
             {{ TREASURY_SOURCE_TYPE_LABELS[(row as ContabilidadTreasuryMovementDTO).sourceType] ?? (row as ContabilidadTreasuryMovementDTO).sourceType }}
-            <span class="block text-xs" :style="{ color: 'var(--color-text-muted)' }">
+            <span class="block text-xs text-gray-400 dark:text-gray-500">
               {{ (row as ContabilidadTreasuryMovementDTO).cashBoxCode ?? (row as ContabilidadTreasuryMovementDTO).bankCode }}
             </span>
           </td>
@@ -119,6 +117,6 @@ function goJournal(row: ContabilidadTreasuryMovementDTO) {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
   </div>
 </template>

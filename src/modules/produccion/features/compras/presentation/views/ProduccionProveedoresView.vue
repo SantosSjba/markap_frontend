@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -109,21 +112,20 @@ async function del(r: ProduccionSupplierListItem) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Proveedores</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Empresas que abastecen materiales al taller.
-        </p>
-      </div>
-      <BaseButton variant="primary" @click="openNew">
+  <div class="space-y-6">
+    <PageHeader
+      title="Proveedores"
+      subtitle="Empresas que abastecen materiales al taller."
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo proveedor
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin proveedores." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -132,21 +134,19 @@ async function del(r: ProduccionSupplierListItem) {
         </template>
         <template #row="{ row }">
           <td class="py-3 px-4">
-            <button type="button" class="font-medium text-left hover:underline" :style="{ color: 'var(--color-primary)' }" @click="goDetail(row as ProduccionSupplierListItem)">
-              {{ (row as ProduccionSupplierListItem).companyName }}
-            </button>
+            <BaseButton @click="goDetail(row as ProduccionSupplierListItem)" variant="link" class="font-medium">{{ (row as ProduccionSupplierListItem).companyName }}</BaseButton>
           </td>
           <td class="py-3 px-4 font-mono text-sm">{{ (row as ProduccionSupplierListItem).ruc }}</td>
           <td class="py-3 px-4 text-sm">{{ (row as ProduccionSupplierListItem).contactName ?? '—' }}</td>
           <td class="py-3 px-4 text-sm">{{ (row as ProduccionSupplierListItem).phone ?? '—' }}</td>
           <td class="py-3 px-4 text-sm">{{ (row as ProduccionSupplierListItem).linkedMaterialsCount }}</td>
           <td class="py-3 px-4 text-right space-x-2">
-            <button type="button" class="text-sm hover:underline" :style="{ color: 'var(--color-primary)' }" @click="openEdit(row as ProduccionSupplierListItem)">Editar</button>
-            <button type="button" class="text-sm hover:underline" :style="{ color: 'var(--color-error)' }" @click="del(row as ProduccionSupplierListItem)">Eliminar</button>
+            <BaseButton @click="openEdit(row as ProduccionSupplierListItem)" variant="link">Editar</BaseButton>
+            <BaseButton @click="del(row as ProduccionSupplierListItem)" variant="link" class="text-error-500 dark:text-error-400">Eliminar</BaseButton>
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showModal" size="md">
       <template #title>{{ editing ? 'Editar proveedor' : 'Nuevo proveedor' }}</template>
@@ -159,10 +159,7 @@ async function del(r: ProduccionSupplierListItem) {
         </div>
         <FormInput v-model="email" label="Email" type="email" />
         <FormTextarea v-model="notes" label="Notas" :rows="2" />
-        <label class="flex items-center gap-2 text-sm">
-          <input v-model="isActive" type="checkbox" class="rounded" />
-          Activo
-        </label>
+        <FormCheckbox v-model="isActive" label="Activo" />
       </div>
       <template #footer>
         <BaseButton variant="ghost" @click="showModal = false">Cancelar</BaseButton>

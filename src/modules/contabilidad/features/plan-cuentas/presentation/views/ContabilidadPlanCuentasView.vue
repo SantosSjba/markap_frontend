@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
 import { ref, computed, watch } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -259,17 +264,13 @@ const codeReadonly = computed(
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Plan de cuentas (PCGE)
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Estructura contable según PCGE (Res. 194-2013-EF). Cuentas título y de movimiento.
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="w-full space-y-6">
+    <PageHeader
+      title="Plan de cuentas (PCGE)"
+      subtitle="Estructura contable según PCGE (Res. 194-2013-EF). Cuentas título y de movimiento."
+    >
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton variant="secondary" size="sm" @click="importModalOpen = true">Importar PCGE</BaseButton>
         <BaseButton variant="secondary" size="sm" @click="expandAll">Expandir todo</BaseButton>
         <BaseButton variant="secondary" size="sm" @click="collapseAll">Colapsar</BaseButton>
@@ -277,106 +278,73 @@ const codeReadonly = computed(
           Exportar Excel
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
       <SearchInput v-model="searchInput" placeholder="Buscar por código o nombre…" class="flex-1 max-w-md" />
-      <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+      <p class="text-xs text-gray-400 dark:text-gray-500">
         {{ visibleRows.length }} visible(s) · {{ accountStats.system }} sistema · {{ accountStats.custom }} personalizadas
       </p>
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
-    <div
-      v-else-if="isError"
-      class="rounded-xl border p-8 text-center space-y-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">No se pudo cargar el plan</p>
-      <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">{{ loadError }}</p>
+    <BaseCard v-else-if="isError" padding="lg" class="block text-center space-y-3">
+      <p class="text-sm font-medium text-gray-800 dark:text-white/90">No se pudo cargar el plan</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400">{{ loadError }}</p>
       <BaseButton variant="secondary" @click="refetch()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
 
-    <div
-      v-else
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <th class="text-left py-3 px-4 font-medium w-[38%]" :style="{ color: 'var(--color-text-secondary)' }">
+    <BaseCard v-else padding="none" class="block overflow-hidden">
+      <Table class="w-full text-sm">
+        <TableHeader>
+          <TableRow class="border-b border-gray-200 dark:border-gray-800">
+            <TableCell is-header class="text-left py-3 px-4 font-medium w-[38%] text-gray-500 dark:text-gray-400">
               Cuenta
-            </th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Tipo</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">
+            </TableCell>
+            <TableCell is-header class="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Tipo</TableCell>
+            <TableCell is-header class="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">
               Naturaleza
-            </th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Origen</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Estado</th>
-            <th class="py-3 px-4" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr
+            </TableCell>
+            <TableCell is-header class="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Origen</TableCell>
+            <TableCell is-header class="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Estado</TableCell>
+            <TableCell is-header class="py-3 px-4" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow
             v-for="row in visibleRows"
             :key="row.id"
-            class="border-b last:border-b-0 hover:opacity-90"
-            :style="{
-              borderColor: 'var(--color-border)',
-              opacity: row.isActive ? 1 : 0.55,
-            }"
+            class="border-b last:border-b-0 hover:opacity-90 border-gray-200 dark:border-gray-800" :style="{ opacity: row.isActive ? 1 : 0.55 }"
           >
-            <td class="py-2.5 px-4">
+            <TableCell class="py-2.5 px-4">
               <div class="flex items-center gap-1" :style="{ paddingLeft: `${row.depth * 1.25}rem` }">
-                <button
-                  v-if="row.hasChildren && !searchActive"
-                  type="button"
-                  class="p-0.5 rounded hover:bg-black/5"
-                  @click="toggleExpand(row.id)"
-                >
-                  <AppIcon
-                    :icon="expandedIds.has(row.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
-                    :size="16"
-                    color="var(--color-text-muted)"
-                  />
-                </button>
+                <IconButton v-if="row.hasChildren && !searchActive" @click="toggleExpand(row.id)" :icon="expandedIds.has(row.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'" label="Expandir" />
                 <span v-else class="w-5" />
-                <span class="font-mono text-xs mr-2" :style="{ color: 'var(--color-primary)' }">{{ row.code }}</span>
-                <span :style="{ color: 'var(--color-text-primary)' }">{{ row.name }}</span>
+                <span class="font-mono text-xs mr-2 text-brand-500 dark:text-brand-400">{{ row.code }}</span>
+                <span class="text-gray-800 dark:text-white/90">{{ row.name }}</span>
               </div>
-            </td>
-            <td class="py-2.5 px-4" :style="{ color: 'var(--color-text-secondary)' }">
+            </TableCell>
+            <TableCell class="py-2.5 px-4 text-gray-500 dark:text-gray-400">
               {{ typeLabel(row.accountType) }}
-            </td>
-            <td class="py-2.5 px-4">
-              <span
-                class="text-xs px-2 py-0.5 rounded-full"
-                :style="{
-                  backgroundColor: row.isMovement ? 'var(--color-primary-soft)' : 'var(--color-surface-elevated)',
-                  color: row.isMovement ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                }"
-              >
-                {{ row.isMovement ? 'Movimiento' : 'Título' }}
-              </span>
-            </td>
-            <td class="py-2.5 px-4">
+            </TableCell>
+            <TableCell class="py-2.5 px-4">
+              <Badge :variant="row.isMovement ? 'primary' : 'neutral'">{{ row.isMovement ? 'Movimiento' : 'Título' }}</Badge>
+            </TableCell>
+            <TableCell class="py-2.5 px-4">
               <Badge :variant="row.isSystem ? 'neutral' : 'info'">
                 {{ row.isSystem ? 'Sistema' : 'Personalizada' }}
               </Badge>
-            </td>
-            <td class="py-2.5 px-4">
-              <span
+            </TableCell>
+            <TableCell class="py-2.5 px-4">
+              <span :class="(row.isActive) ? 'text-success-600 dark:text-success-500' : 'text-gray-400 dark:text-gray-500'"
                 class="text-xs"
-                :style="{ color: row.isActive ? 'var(--color-success)' : 'var(--color-text-muted)' }"
               >
                 {{ row.isActive ? 'Activa' : 'Inactiva' }}
               </span>
-            </td>
-            <td class="py-2.5 px-4 text-right">
+            </TableCell>
+            <TableCell class="py-2.5 px-4 text-right">
               <div class="flex justify-end gap-1">
                 <BaseButton
                   v-if="!row.isMovement && row.isActive"
@@ -401,11 +369,11 @@ const codeReadonly = computed(
                   <AppIcon icon="lucide:ban" :size="16" />
                 </BaseButton>
               </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </BaseCard>
 
     <BaseModal
       v-model="modalOpen"
@@ -413,7 +381,7 @@ const codeReadonly = computed(
       size="md"
     >
       <form class="space-y-4" @submit.prevent="submitForm">
-        <p v-if="parentAccount" class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+        <p v-if="parentAccount" class="text-xs text-gray-500 dark:text-gray-400">
           Cuenta padre: <strong>{{ parentAccount.code }}</strong> — {{ parentAccount.name }}
         </p>
         <FormInput
@@ -440,29 +408,20 @@ const codeReadonly = computed(
     </BaseModal>
 
     <BaseModal v-model="importModalOpen" title="Importar catálogo PCGE" size="md">
-      <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-sm mb-4 text-gray-500 dark:text-gray-400">
         Agrega cuentas oficiales por clase sin duplicar códigos existentes. Las cuentas importadas se marcan como
         <strong>sistema</strong>.
       </p>
       <div class="space-y-2 max-h-72 overflow-y-auto">
-        <label
+        <FormCheckbox
           v-for="opt in pcgeClassOptions"
           :key="opt.class"
-          class="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-black/5"
-        >
-          <input
-            type="checkbox"
-            class="mt-1"
-            :checked="selectedClasses.includes(opt.class)"
-            @change="toggleClass(opt.class)"
-          />
-          <span>
-            <span class="font-medium text-sm">Clase {{ opt.class }}</span>
-            <span class="block text-xs" :style="{ color: 'var(--color-text-muted)' }">
-              {{ opt.label }} · {{ opt.accountCount }} cuentas en catálogo
-            </span>
-          </span>
-        </label>
+          class="rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-white/3"
+          :model-value="selectedClasses.includes(opt.class)"
+          :label="`Clase ${opt.class}`"
+          :description="`${opt.label} · ${opt.accountCount} cuentas en catálogo`"
+          @update:model-value="toggleClass(opt.class)"
+        />
       </div>
       <template #footer>
         <BaseButton variant="secondary" @click="importModalOpen = false">Cancelar</BaseButton>

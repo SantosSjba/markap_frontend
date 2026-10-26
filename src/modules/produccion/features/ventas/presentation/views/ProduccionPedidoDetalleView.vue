@@ -1,12 +1,13 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { useProduccionOrderDetail, useOrderMutations } from '../composables/useProduccionSales'
-import { formatSol, formatDate, ORDER_STATUS_LABELS, orderStatusClass } from '../labels'
+import { formatSol, formatDate, ORDER_STATUS_LABELS } from '../labels'
 import type { ProduccionOrderLine } from '../../domain/sales.types'
 const route = useRoute()
 const router = useRouter()
@@ -83,21 +84,15 @@ async function doDelete() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-center gap-3">
-      <BaseButton variant="ghost" @click="router.push({ name: 'produccion-ventas-pedidos' })">
-        <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />
-        Volver
-      </BaseButton>
-      <div class="flex-1 min-w-0">
-        <h1 class="text-xl font-bold font-mono" :style="{ color: 'var(--color-text-primary)' }">
-          {{ order?.code ?? 'Pedido' }}
-        </h1>
-        <p v-if="order" class="text-sm mt-0.5" :class="orderStatusClass(order.status)">
-          {{ ORDER_STATUS_LABELS[order.status] }} · {{ order.clientName }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="space-y-6">
+    <PageHeader
+      :title="order?.code ?? 'Pedido'"
+      :subtitle="order ? `${ORDER_STATUS_LABELS[order.status]} · ${order.clientName}` : undefined"
+      back
+      @back="router.push({ name: 'produccion-ventas-pedidos' })"
+    >
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton v-if="canConfirm" variant="primary" @click="doConfirm">Confirmar</BaseButton>
         <BaseButton v-if="canCreateWo" variant="primary" @click="doCreateWo">Generar OT</BaseButton>
         <BaseButton
@@ -112,19 +107,16 @@ async function doDelete() {
         <BaseButton v-if="canCancel" variant="danger" @click="doCancel">Cancelar</BaseButton>
         <BaseButton v-if="canDelete" variant="danger" @click="doDelete">Eliminar</BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      v-if="order"
-      class="rounded-xl border p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
+    <BaseCard v-if="order" padding="sm" class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
       <div><span class="text-secondary">Fecha pedido:</span> {{ formatDate(order.orderedAt) }}</div>
       <div v-if="order.quotationCode"><span class="text-secondary">Cotización:</span> {{ order.quotationCode }}</div>
       <div v-if="order.notes" class="sm:col-span-2"><span class="text-secondary">Notas:</span> {{ order.notes }}</div>
-    </div>
+    </BaseCard>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="lineColumns"
         :data="order?.lines ?? []"
@@ -141,9 +133,9 @@ async function doDelete() {
           <td class="py-3 px-4 text-sm font-medium">{{ formatSol((row as ProduccionOrderLine).lineTotal) }}</td>
         </template>
       </DataTable>
-      <div v-if="order" class="px-4 py-3 border-t text-right font-semibold" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="order" class="px-4 py-3 border-t text-right font-semibold border-gray-200 dark:border-gray-800">
         Total: {{ formatSol(order.totalAmount) }}
       </div>
-    </div>
+    </BaseCard>
   </div>
 </template>

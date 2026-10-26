@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -6,7 +8,6 @@ import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { useVentasProcessesList } from '../composables/useVentasSales'
@@ -124,13 +125,12 @@ function goDetail(row: SaleProcessListRow) {
 
     <div
       v-if="pipelineConfigQuery.isError.value"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span :style="{ color: 'var(--color-text-primary)' }">
+      <span class="text-gray-800 dark:text-white/90">
         No se cargó la configuración de etapas; se muestran valores por defecto.
       </span>
-      <span class="text-xs max-w-md" style="color: var(--color-error)">{{
+      <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{
         getApiErrorMessage(pipelineConfigQuery.error.value)
       }}</span>
       <BaseButton variant="outline" size="sm" icon="lucide:settings" class="ml-auto shrink-0" @click="() => pipelineConfigQuery.refetch()">
@@ -138,18 +138,13 @@ function goDetail(row: SaleProcessListRow) {
       </BaseButton>
     </div>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <div
         v-else-if="listQueryError"
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable
@@ -189,18 +184,17 @@ function goDetail(row: SaleProcessListRow) {
         <template #row="{ row }">
           <td class="py-3 px-4 font-mono text-sm">{{ (row as SaleProcessListRow).code }}</td>
           <td class="py-3 px-4">
-            <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{
+            <span class="font-medium text-gray-800 dark:text-white/90">{{
               (row as SaleProcessListRow).buyer.fullName
             }}</span>
             <p
               v-if="(row as SaleProcessListRow).buyers && (row as SaleProcessListRow).buyers!.length > 1"
-              class="text-xs"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="text-xs text-gray-400 dark:text-gray-500"
             >
               +{{ (row as SaleProcessListRow).buyers!.length - 1 }} comprador(es)
             </p>
           </td>
-          <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
             {{ (row as SaleProcessListRow).property.code }}
           </td>
           <td class="py-3 px-4">
@@ -226,7 +220,7 @@ function goDetail(row: SaleProcessListRow) {
           </td>
         </template>
       </DataTable>
-      <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="!isLoading && !listQueryError" class="border-t p-2 border-gray-200 dark:border-gray-800">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"
@@ -234,7 +228,7 @@ function goDetail(row: SaleProcessListRow) {
           @update:page-size="(s: number) => { listParams.limit = s; listParams.page = 1 }"
         />
       </div>
-    </div>
+    </BaseCard>
 
   </div>
 </template>

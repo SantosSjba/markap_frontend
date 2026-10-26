@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
 import { computed } from 'vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -26,7 +29,7 @@ function exportPdf() {
 </script>
 
 <template>
-  <div class="financial-report-print w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="financial-report-print w-full space-y-6">
     <PageHeader
       icon="lucide:arrow-left-right"
       title="Flujo de efectivo"
@@ -56,75 +59,64 @@ function exportPdf() {
       </template>
     </PageHeader>
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
     <div v-else-if="isError" class="text-center py-8">
-      <button type="button" class="text-sm underline" @click="refetch()">Reintentar</button>
+      <BaseButton @click="refetch()" variant="link">Reintentar</BaseButton>
     </div>
 
     <template v-else-if="data">
-      <div
-        v-for="(section, key) in [
+      <BaseCard v-for="(section, key) in [
           { title: 'Actividades operativas', lines: data.operating },
           { title: 'Actividades de inversión', lines: data.investing },
           { title: 'Actividades de financiamiento', lines: data.financing },
-        ]"
-        :key="key"
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <div class="px-4 py-3 border-b font-semibold" :style="{ borderColor: 'var(--color-border)' }">
+        ]" :key="key" padding="none" class="block overflow-hidden">
+        <div class="px-4 py-3 border-b font-semibold border-gray-200 dark:border-gray-800">
           {{ section.title }}
         </div>
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="text-left py-2 px-4">Concepto</th>
-              <th v-if="showPrior" class="text-right py-2 px-4">Periodo ant.</th>
-              <th class="text-right py-2 px-4">Periodo actual</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
+        <Table class="w-full text-sm">
+          <TableHeader>
+            <TableRow class="border-b border-gray-200 dark:border-gray-800">
+              <TableCell is-header class="text-left py-2 px-4">Concepto</TableCell>
+              <TableCell is-header v-if="showPrior" class="text-right py-2 px-4">Periodo ant.</TableCell>
+              <TableCell is-header class="text-right py-2 px-4">Periodo actual</TableCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow
               v-for="(line, idx) in section.lines"
               :key="idx"
-              class="border-b last:border-0"
+              class="border-b last:border-0 border-gray-200 dark:border-gray-800"
               :class="{ 'font-semibold': line.label.includes('neto') }"
-              :style="{ borderColor: 'var(--color-border)' }"
             >
-              <td class="py-2 px-4">{{ line.label }}</td>
-              <td v-if="showPrior" class="py-2 px-4 text-right font-mono">
+              <TableCell class="py-2 px-4">{{ line.label }}</TableCell>
+              <TableCell v-if="showPrior" class="py-2 px-4 text-right font-mono">
                 {{ formatPen(line.priorAmount) }}
-              </td>
-              <td class="py-2 px-4 text-right font-mono">{{ formatPen(line.amount) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </TableCell>
+              <TableCell class="py-2 px-4 text-right font-mono">{{ formatPen(line.amount) }}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </BaseCard>
 
-      <div
-        class="rounded-xl border p-4 grid gap-4 sm:grid-cols-3 text-sm"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
+      <BaseCard padding="sm" class="grid gap-4 sm:grid-cols-3 text-sm">
         <div>
-          <span :style="{ color: 'var(--color-text-secondary)' }">Variación neta de efectivo (indirecto)</span>
+          <span class="text-gray-500 dark:text-gray-400">Variación neta de efectivo (indirecto)</span>
           <p class="font-mono font-bold text-lg">{{ formatPen(data.netCashChange) }}</p>
         </div>
         <div>
-          <span :style="{ color: 'var(--color-text-secondary)' }">Tesorería — ingresos</span>
+          <span class="text-gray-500 dark:text-gray-400">Tesorería — ingresos</span>
           <p class="font-mono">{{ formatPen(data.treasuryInTotal) }}</p>
         </div>
         <div>
-          <span :style="{ color: 'var(--color-text-secondary)' }">Tesorería — egresos</span>
+          <span class="text-gray-500 dark:text-gray-400">Tesorería — egresos</span>
           <p class="font-mono">{{ formatPen(data.treasuryOutTotal) }}</p>
         </div>
-      </div>
+      </BaseCard>
     </template>
   </div>
 </template>

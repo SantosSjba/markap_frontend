@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
@@ -53,19 +56,18 @@ function goMovements(materialId: string) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Stock</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Niveles de inventario y alertas por stock mínimo.
-        </p>
-      </div>
-      <BaseButton variant="secondary" @click="goMovements('')">
+  <div class="space-y-6">
+    <PageHeader
+      title="Stock"
+      subtitle="Niveles de inventario y alertas por stock mínimo."
+    >
+      <template #actions>
+        <BaseButton variant="secondary" @click="goMovements('')">
         <AppIcon icon="lucide:arrow-left-right" :size="18" class="mr-1.5" />
         Ver movimientos
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <StatsCard title="Materiales" :value="String(stats?.totalMaterials ?? 0)" />
@@ -73,12 +75,12 @@ function goMovements(materialId: string) {
       <StatsCard
         title="Bajo mínimo"
         :value="String(stats?.lowStockCount ?? 0)"
-        :class="(stats?.lowStockCount ?? 0) > 0 ? 'ring-1 ring-amber-400/50' : ''"
+        :class="(stats?.lowStockCount ?? 0) > 0 ? 'ring-1 ring-warning-400/50' : ''"
       />
       <StatsCard title="Valor inventario" :value="formatSol(stats?.totalStockValue)" />
     </div>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin datos de stock." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -101,18 +103,11 @@ function goMovements(materialId: string) {
           <td class="py-3 px-4 text-sm">{{ formatQty((row as ProduccionMaterial).minStockQty, (row as ProduccionMaterial).unit) }}</td>
           <td class="py-3 px-4 text-sm">{{ formatSol(stockValue(row as ProduccionMaterial)) }}</td>
           <td class="py-3 px-4">
-            <span
-              v-if="(row as ProduccionMaterial).isLowStock"
-              class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-              :style="{ background: 'color-mix(in srgb, var(--color-warning) 15%, transparent)', color: 'var(--color-warning)' }"
-            >
-              <AppIcon icon="lucide:alert-triangle" :size="12" />
-              Bajo mínimo
-            </span>
-            <span v-else class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">OK</span>
+            <Badge v-if="(row as ProduccionMaterial).isLowStock" variant="warning"><AppIcon icon="lucide:alert-triangle" :size="12" /> Bajo mínimo</Badge>
+            <span v-else class="text-xs text-gray-500 dark:text-gray-400">OK</span>
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
   </div>
 </template>

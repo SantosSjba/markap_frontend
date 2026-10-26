@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import { computed, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import {
   useRoleApplicationsPage,
   useAssignRoleApplication,
@@ -61,107 +64,75 @@ const toggleAccess = (roleId: string, applicationId: string) => {
 
 <template>
   <div>
-    <h2 class="text-2xl font-bold mb-2" style="color: var(--color-text-primary);">
+    <h2 class="text-xl font-semibold mb-2 text-gray-800 dark:text-white/90">
       Gestión de roles y aplicaciones
     </h2>
-    <p class="text-sm mb-6" style="color: var(--color-text-secondary);">
+    <p class="text-sm mb-6 text-gray-500 dark:text-gray-400">
       Define qué roles tienen acceso a cada aplicación del sistema.
     </p>
 
     <div
       v-if="pageQuery.isError.value"
-      class="rounded-lg p-4 mb-6 flex flex-wrap items-center gap-3"
-      style="background-color: var(--color-error-light); color: var(--color-error);"
+      class="rounded-lg p-4 mb-6 flex flex-wrap items-center gap-3 bg-error-50 dark:bg-error-500/15 text-error-500 dark:text-error-400"
     >
       <span>Error al cargar. Intenta de nuevo.</span>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-opacity disabled:opacity-60"
-        style="border-color: currentColor; color: inherit;"
-        :disabled="pageQuery.isFetching.value"
-        @click="() => pageQuery.refetch()"
-      >
-        <Icon
-          v-if="pageQuery.isFetching.value"
-          icon="svg-spinners:ring-resize"
-          class="w-4 h-4"
-        />
-        Reintentar
-      </button>
+      <BaseButton :disabled="pageQuery.isFetching.value" @click="() => pageQuery.refetch()" variant="secondary" size="sm" :loading="pageQuery.isFetching.value">Reintentar</BaseButton>
     </div>
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <Icon icon="svg-spinners:ring-resize" class="w-10 h-10" :style="{ color: 'var(--color-primary)' }" />
-    </div>
+    <LoadingState v-if="loading" class="py-12" />
 
     <div v-else class="card overflow-x-auto">
-      <table class="w-full border-collapse min-w-[600px]">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--color-border);">
-            <th
-              class="text-left py-3 px-4 font-semibold sticky left-0 z-10"
-              style="color: var(--color-text-primary); background-color: var(--color-surface);"
+      <Table class="w-full border-collapse min-w-[600px]">
+        <TableHeader>
+          <TableRow class="border-b border-gray-200 dark:border-gray-800">
+            <TableCell is-header
+              class="text-left py-3 px-4 font-semibold sticky left-0 z-10 text-gray-800 dark:text-white/90 bg-white dark:bg-gray-dark"
             >
               Rol
-            </th>
-            <th
+            </TableCell>
+            <TableCell is-header
               v-for="app in applications"
               :key="app.id"
-              class="text-center py-3 px-3 font-medium text-sm"
-              style="color: var(--color-text-secondary);"
+              class="text-center py-3 px-3 font-medium text-sm text-gray-500 dark:text-gray-400"
             >
               <span class="block truncate max-w-[120px]" :title="app.name">{{ app.name }}</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
+            </TableCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow
             v-for="role in roles"
             :key="role.id"
-            class="border-b border-t"
-            style="border-color: var(--color-border);"
+            class="border-b border-t border-gray-200 dark:border-gray-800"
           >
-            <td
-              class="py-3 px-4 sticky left-0 z-10 font-medium"
-              style="color: var(--color-text-primary); background-color: var(--color-surface);"
+            <TableCell
+              class="py-3 px-4 sticky left-0 z-10 font-medium text-gray-800 dark:text-white/90 bg-white dark:bg-gray-dark"
             >
               <span class="font-medium">{{ role.name }}</span>
-              <span class="text-xs block mt-0.5" style="color: var(--color-text-muted);">
+              <span class="text-xs block mt-0.5 text-gray-400 dark:text-gray-500">
                 {{ role.code }}
               </span>
-            </td>
-            <td
+            </TableCell>
+            <TableCell
               v-for="app in applications"
               :key="app.id"
               class="py-2 px-3 text-center"
             >
-              <button
-                type="button"
+              <IconButton
+                :variant="hasAccess(role.id, app.id) ? 'primary' : 'outline'"
                 :disabled="isSaving(role.id, app.id)"
-                :aria-label="hasAccess(role.id, app.id) ? `Quitar ${app.name}` : `Dar acceso a ${app.name}`"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60"
-                :style="{
-                  borderColor: hasAccess(role.id, app.id) ? 'var(--color-primary)' : 'var(--color-border)',
-                  backgroundColor: hasAccess(role.id, app.id) ? 'var(--color-primary-light)' : 'transparent',
-                  color: hasAccess(role.id, app.id) ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                }"
+                :loading="isSaving(role.id, app.id)"
+                :icon="hasAccess(role.id, app.id) ? 'lucide:check' : 'lucide:plus'"
+                :label="hasAccess(role.id, app.id) ? `Quitar ${app.name}` : `Dar acceso a ${app.name}`"
                 @click="toggleAccess(role.id, app.id)"
-              >
-                <Icon v-if="isSaving(role.id, app.id)" icon="svg-spinners:ring-resize" class="w-5 h-5" />
-                <Icon
-                  v-else
-                  :icon="hasAccess(role.id, app.id) ? 'lucide:check' : 'lucide:plus'"
-                  class="w-5 h-5"
-                />
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              />
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
       <p
         v-if="!loading && (roles.length === 0 || applications.length === 0)"
-        class="py-8 text-center text-sm"
-        style="color: var(--color-text-muted);"
+        class="py-8 text-center text-sm text-gray-400 dark:text-gray-500"
       >
         No hay roles o aplicaciones para configurar.
       </p>

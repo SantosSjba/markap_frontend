@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
@@ -36,16 +38,13 @@ function removeLine(key: string) {
 </script>
 
 <template>
-  <div
-    class="space-y-4 p-4 sm:p-6 rounded-xl border"
-    :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-  >
+  <BaseCard class="block space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+        <p class="text-sm font-semibold text-gray-800 dark:text-white/90">
           Lista de materiales (BOM)
         </p>
-        <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
           Materiales base para costeo. En fases posteriores se vincularán al inventario.
         </p>
       </div>
@@ -55,7 +54,7 @@ function removeLine(key: string) {
       </BaseButton>
     </div>
 
-    <div v-if="!lines.length" class="text-sm py-6 text-center" :style="{ color: 'var(--color-text-secondary)' }">
+    <div v-if="!lines.length" class="text-sm py-6 text-center text-gray-500 dark:text-gray-400">
       Sin materiales definidos. Agregue líneas para el despiece base.
     </div>
 
@@ -63,10 +62,9 @@ function removeLine(key: string) {
       <div
         v-for="(line, idx) in lines"
         :key="line.key"
-        class="grid gap-3 p-3 rounded-lg border sm:grid-cols-12 items-end"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-background)' }"
+        class="grid gap-3 p-3 rounded-lg border sm:grid-cols-12 items-end border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900"
       >
-        <div class="sm:col-span-1 text-xs font-medium pt-2" :style="{ color: 'var(--color-text-secondary)' }">
+        <div class="sm:col-span-1 text-xs font-medium pt-2 text-gray-500 dark:text-gray-400">
           {{ idx + 1 }}
         </div>
         <div class="sm:col-span-4">
@@ -85,17 +83,9 @@ function removeLine(key: string) {
           <FormInput v-model="line.notes" label="Notas" placeholder="Opcional" />
         </div>
         <div class="sm:col-span-1 flex justify-end pb-1">
-          <button
-            type="button"
-            class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-            title="Quitar línea"
-            :style="{ color: 'var(--color-error)' }"
-            @click="removeLine(line.key)"
-          >
-            <AppIcon icon="lucide:trash-2" :size="18" />
-          </button>
+          <IconButton @click="removeLine(line.key)" icon="lucide:trash-2" label="Quitar línea" danger />
         </div>
       </div>
     </div>
-  </div>
+  </BaseCard>
 </template>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue'
-import AppIcon from '../ui/AppIcon.vue'
+import { InputGroup, InputGroupAddon } from '../../ui/input-group'
+import { SearchIcon } from '../../icons/layout'
 /**
- * SearchInput - Input de búsqueda con icono a la izquierda.
- * El padding izquierdo va en :style (inline) para imponerse a main.css input[type="search"].
+ * SearchInput — buscador de TailAdmin (`InputGroup` con icono a la izquierda).
  */
 interface Props {
   modelValue: string
@@ -39,33 +39,20 @@ const handleInput = (e: Event) => {
 </script>
 
 <template>
-  <div class="relative w-full" v-bind="wrapperAttrs">
-    <AppIcon
-      icon="lucide:search"
-      :size="20"
-      color="var(--color-text-muted)"
-      class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none shrink-0"
-      aria-hidden="true"
-    />
+  <InputGroup v-bind="wrapperAttrs">
+    <InputGroupAddon align="inline-start">
+      <SearchIcon class="size-5 text-gray-400" />
+    </InputGroupAddon>
     <input
       v-bind="inputAttrs"
+      data-slot="input-group-control"
       :value="modelValue"
       type="search"
       :placeholder="placeholder"
       :aria-label="placeholder"
       :disabled="disabled"
-      class="w-full rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
-      :style="{
-        borderColor: 'var(--color-border)',
-        backgroundColor: 'var(--color-surface)',
-        color: 'var(--color-text-primary)',
-        colorScheme: 'inherit',
-        paddingTop: '0.625rem',
-        paddingBottom: '0.625rem',
-        paddingRight: '1rem',
-        paddingLeft: '2.75rem',
-      }"
+      class="h-full w-full min-w-0 flex-1 rounded-none border-0 bg-transparent py-2.5 ps-2 pe-4 text-sm font-normal text-gray-800 shadow-none outline-hidden placeholder:text-gray-400 focus:ring-0 disabled:cursor-not-allowed disabled:text-gray-400 dark:bg-transparent dark:text-white/90 dark:placeholder:text-gray-500"
       @input="handleInput"
     />
-  </div>
+  </InputGroup>
 </template>

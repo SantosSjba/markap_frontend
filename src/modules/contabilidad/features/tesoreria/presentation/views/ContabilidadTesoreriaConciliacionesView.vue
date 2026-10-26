@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { computed, ref, watch } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
 import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
@@ -100,7 +102,7 @@ async function onClose() {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:check-check"
       title="Conciliación bancaria"
@@ -122,15 +124,12 @@ async function onClose() {
       <FormSelect v-model="selectedBankId" label="Cuenta bancaria" :options="bankOptions" />
     </div>
 
-    <div v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <div v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </div>
 
     <template v-else>
-      <div
-        class="rounded-xl border p-4 sm:p-5"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
+      <BaseCard padding="sm" class="block">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
           <div class="w-full lg:w-56 shrink-0 min-w-0">
             <FormInput
@@ -161,7 +160,7 @@ async function onClose() {
             </BaseButton>
           </div>
         </div>
-      </div>
+      </BaseCard>
 
       <div v-if="reconciliation" class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatsCard title="Saldo libro" :value="formatPen(reconciliation.bookBalance)" />
@@ -173,32 +172,21 @@ async function onClose() {
         />
       </div>
 
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-      </div>
+      <LoadingState v-if="isLoading" class="py-12" />
 
-      <div
-        v-else
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="py-3 px-4 w-12" />
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Fecha</th>
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Glosa</th>
-              <th class="text-right py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Importe</th>
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="m in movements"
-              :key="m.id"
-              class="border-b last:border-b-0"
-              :style="{ borderColor: 'var(--color-border)' }"
-            >
+      <BaseCard v-else padding="none" class="block overflow-hidden">
+        <DataTable
+          :columns="[
+            { key: 'c0', label: '' },
+            { key: 'c1', label: 'Fecha' },
+            { key: 'c2', label: 'Glosa' },
+            { key: 'c3', label: 'Importe', align: 'right' },
+            { key: 'c4', label: 'Estado' },
+          ]"
+          :data="movements"
+          empty-text="Sin movimientos bancarios en este periodo"
+        >
+          <template #row="{ row: m }">
               <td class="py-2.5 px-4">
                 <FormCheckbox
                   :model-value="Boolean(m.reconciledAt)"
@@ -214,15 +202,9 @@ async function onClose() {
                   {{ m.reconciledAt ? 'Conciliado' : 'Pendiente' }}
                 </Badge>
               </td>
-            </tr>
-            <tr v-if="!movements.length">
-              <td colspan="5" class="py-8 text-center" :style="{ color: 'var(--color-text-muted)' }">
-                Sin movimientos bancarios en este periodo
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          </template>
+        </DataTable>
+      </BaseCard>
     </template>
   </div>
 </template>

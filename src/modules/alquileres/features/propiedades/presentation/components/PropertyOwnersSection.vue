@@ -68,8 +68,7 @@ function goToNewOwner(index: number) {
       <div
         v-for="(ownerId, index) in rows"
         :key="index"
-        class="flex flex-wrap items-end gap-3 p-4 rounded-lg"
-        :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+        class="flex flex-wrap items-end gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
       >
         <div class="flex-1 min-w-[200px]">
           <FormSelect
@@ -116,8 +115,7 @@ function goToNewOwner(index: number) {
 
     <p
       v-if="ownerOptions.length === 0"
-      class="text-sm mt-3 flex items-center gap-2"
-      :style="{ color: 'var(--color-text-muted)' }"
+      class="text-sm mt-3 flex items-center gap-2 text-gray-400 dark:text-gray-500"
     >
       <AppIcon icon="lucide:info" :size="14" />
       No hay propietarios registrados. Registra un cliente tipo «Propietario» desde Clientes.

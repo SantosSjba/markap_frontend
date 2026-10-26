@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, useSlots, useAttrs, computed, useId } from 'vue'
-import AppIcon from '../ui/AppIcon.vue'
+import { EyeCloseIcon, EyeIcon } from '../../icons/layout'
+import { cn } from '../../utils/cn'
+import { fieldErrorClass, fieldHintClass, fieldLabelClass, inputClass } from './field-classes'
 /**
- * FormInput — único input de formulario de texto/número/fecha del design system.
- * (Reemplaza el antiguo BaseInput, eliminado por duplicar esta misma funcionalidad.)
+ * FormInput — `Field` + `Input` de TailAdmin: único input de texto/número/fecha del design system.
  */
 
 interface Props {
@@ -23,6 +24,8 @@ interface Props {
   inputmode?: 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
   /** Mostrar ojito para ver/ocultar (solo type="password"). Por defecto true. */
   showPasswordToggle?: boolean
+  /** `sm`: control compacto (h-9) para tablas y filas editables */
+  size?: 'sm' | 'default'
 }
 
 // Atributos nativos (min, step, max, autocomplete, readonly, name…) van al <input>;
@@ -36,6 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
   required: false,
   inputClass: '',
   showPasswordToggle: true,
+  size: 'default',
 })
 
 const slots = useSlots()
@@ -93,6 +97,15 @@ const handleInput = (event: Event) => {
   emit('update:modelValue', val)
 }
 
+const controlClass = computed(() =>
+  cn(
+    inputClass,
+    props.size === 'sm' && 'h-9 rounded-lg py-2 ps-3 pe-3',
+    hasRightAdornment.value && 'pe-12',
+    props.inputClass,
+  ),
+)
+
 const handleBlur = (event: FocusEvent) => {
   editingText.value = null
   emit('blur', event)
@@ -100,20 +113,16 @@ const handleBlur = (event: FocusEvent) => {
 </script>
 
 <template>
-  <div class="w-full" v-bind="wrapperAttrs">
-    <label
-      v-if="label"
-      :for="inputId"
-      class="block text-sm font-medium mb-1"
-      :style="{ color: 'var(--color-text-primary)' }"
-    >
+  <div role="group" data-slot="field" class="flex w-full flex-col gap-2" v-bind="wrapperAttrs">
+    <label v-if="label" :for="inputId" :class="fieldLabelClass">
       {{ label }}
-      <span v-if="required" :style="{ color: 'var(--color-error)' }">*</span>
+      <span v-if="required" class="text-error-500">*</span>
     </label>
     <div class="relative w-full">
       <input
         v-bind="inputAttrs"
         :id="inputId"
+        data-slot="input"
         :type="inputType"
         :value="displayValue()"
         :placeholder="placeholder"
@@ -123,45 +132,34 @@ const handleBlur = (event: FocusEvent) => {
         :inputmode="inputmode"
         :aria-invalid="error ? 'true' : undefined"
         :aria-describedby="error || hint ? messageId : undefined"
-        class="w-full px-4 py-2.5 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
-        :class="[hasRightAdornment ? 'pr-12' : '', props.inputClass]"
-        :style="{
-          borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
-          backgroundColor: 'var(--color-surface)',
-          color: 'var(--color-text-primary)',
-          colorScheme: 'inherit',
-        }"
+        :class="controlClass"
         @input="handleInput"
         @blur="handleBlur"
         @focus="emit('focus', $event)"
       />
       <div
         v-if="hasRightAdornment"
-        class="absolute inset-y-0 right-0 flex items-center gap-1 pr-3 pointer-events-none [&_button]:pointer-events-auto"
+        class="pointer-events-none absolute inset-y-0 end-0 flex items-center gap-1 pe-3.5 text-gray-500 dark:text-gray-400 [&_button]:pointer-events-auto"
       >
         <button
           v-if="hasPasswordToggle"
           type="button"
-          class="p-0.5 rounded transition-colors hover:opacity-80"
-          style="color: var(--color-text-muted)"
+          class="flex size-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           :aria-label="passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
           :disabled="disabled"
           tabindex="-1"
           @click="togglePasswordVisible"
         >
-          <AppIcon
-            :icon="passwordVisible ? 'lucide:eye-off' : 'lucide:eye'"
-            :size="20"
-            color="currentColor"
-          />
+          <EyeIcon v-if="passwordVisible" class="size-5" />
+          <EyeCloseIcon v-else class="size-5" />
         </button>
         <slot v-if="hasSuffixSlot" name="suffix" />
       </div>
     </div>
-    <p v-if="error" :id="messageId" role="alert" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">
+    <p v-if="error" :id="messageId" role="alert" :class="fieldErrorClass">
       {{ error }}
     </p>
-    <p v-else-if="hint" :id="messageId" class="mt-1 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+    <p v-else-if="hint" :id="messageId" :class="fieldHintClass">
       {{ hint }}
     </p>
   </div>

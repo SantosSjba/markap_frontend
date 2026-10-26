@@ -19,8 +19,7 @@ const emit = defineEmits<{
     icon="lucide:bell"
   >
     <div
-      class="rounded-lg overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+      class="rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
     >
       <ConfigToggleRow
         no-border

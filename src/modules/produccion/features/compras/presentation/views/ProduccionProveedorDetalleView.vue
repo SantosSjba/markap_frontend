@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -121,40 +125,40 @@ async function unlink(link: ProduccionSupplierMaterialLink) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-center gap-3">
-      <BaseButton variant="ghost" @click="router.push({ name: 'produccion-compras-proveedores' })">
-        <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />
-        Volver
-      </BaseButton>
-      <h1 class="text-xl font-bold flex-1" :style="{ color: 'var(--color-text-primary)' }">
-        {{ detail?.companyName ?? 'Proveedor' }}
-      </h1>
-      <BaseButton variant="danger" @click="del">Eliminar</BaseButton>
-    </div>
+  <div class="space-y-6">
+    <PageHeader
+      :title="detail?.companyName ?? 'Proveedor'"
+      back
+      @back="router.push({ name: 'produccion-compras-proveedores' })"
+    >
+      <template #actions>
+        <BaseButton variant="danger" @click="del">Eliminar</BaseButton>
+      </template>
+    </PageHeader>
 
-    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando…</div>
+    <div v-if="isLoading" class="text-sm text-gray-500 dark:text-gray-400">Cargando…</div>
 
     <template v-else-if="detail">
-      <div class="rounded-xl border p-4 space-y-4" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
-        <h2 class="font-semibold text-sm">Datos del proveedor</h2>
-        <FormInput v-model="companyName" label="Razón social" />
-        <FormInput v-model="ruc" label="RUC" />
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <FormSectionCard
+        title="Datos del proveedor"
+        dense
+      >
+        <div class="space-y-4">
+          <FormInput v-model="companyName" label="Razón social" />
+          <FormInput v-model="ruc" label="RUC" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormInput v-model="contactName" label="Contacto" />
           <FormInput v-model="phone" label="Teléfono" />
         </div>
-        <FormInput v-model="email" label="Email" type="email" />
-        <FormTextarea v-model="notes" label="Notas" :rows="2" />
-        <label class="flex items-center gap-2 text-sm">
-          <input v-model="isActive" type="checkbox" class="rounded" />
-          Activo
-        </label>
-        <BaseButton variant="primary" :loading="saving" @click="save">Guardar cambios</BaseButton>
-      </div>
+          <FormInput v-model="email" label="Email" type="email" />
+          <FormTextarea v-model="notes" label="Notas" :rows="2" />
+          <FormCheckbox v-model="isActive" label="Activo" />
+          <BaseButton variant="primary" :loading="saving" @click="save">Guardar cambios</BaseButton>
+        </div>
+      </FormSectionCard>
 
-      <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
-        <div class="flex items-center justify-between p-4 border-b" :style="{ borderColor: 'var(--color-border)' }">
+      <BaseCard padding="none" class="block overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <h2 class="font-semibold text-sm">Materiales que suministra</h2>
           <BaseButton variant="secondary" size="sm" @click="showLinkModal = true">
             <AppIcon icon="lucide:link" :size="16" class="mr-1" />
@@ -170,15 +174,15 @@ async function unlink(link: ProduccionSupplierMaterialLink) {
           <template #row="{ row }">
             <td class="py-3 px-4">
               <div class="font-medium text-sm">{{ (row as ProduccionSupplierMaterialLink).materialName }}</div>
-              <div class="text-xs font-mono" :style="{ color: 'var(--color-text-secondary)' }">{{ (row as ProduccionSupplierMaterialLink).materialCode }}</div>
+              <div class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ (row as ProduccionSupplierMaterialLink).materialCode }}</div>
             </td>
             <td class="py-3 px-4 text-sm">{{ (row as ProduccionSupplierMaterialLink).supplierSku ?? '—' }}</td>
             <td class="py-3 px-4 text-right">
-              <button type="button" class="text-sm hover:underline" :style="{ color: 'var(--color-error)' }" @click="unlink(row as ProduccionSupplierMaterialLink)">Quitar</button>
+              <BaseButton @click="unlink(row as ProduccionSupplierMaterialLink)" variant="link" class="text-error-500 dark:text-error-400">Quitar</BaseButton>
             </td>
           </template>
         </DataTable>
-      </div>
+      </BaseCard>
     </template>
 
     <BaseModal v-model="showLinkModal" size="md">

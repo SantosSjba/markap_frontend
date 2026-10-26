@@ -104,7 +104,7 @@ function submit() {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:repeat"
       title="Transferencias"
@@ -112,13 +112,12 @@ function submit() {
     />
 
     <form
-      class="w-full rounded-xl border p-4 sm:p-5 space-y-5"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+      class="w-full rounded-2xl border p-4 sm:p-5 space-y-5 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-dark"
       @submit.prevent="submit"
     >
       <div class="grid gap-4 sm:grid-cols-2">
         <div class="space-y-3 min-w-0">
-          <h3 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Origen</h3>
+          <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">Origen</h3>
           <FormSelect v-model="form.fromType" label="Tipo" :options="sourceTypeOptions" />
           <div v-if="form.fromType === 'CASH'" class="min-w-0">
             <FormSelect
@@ -136,7 +135,7 @@ function submit() {
           </div>
         </div>
         <div class="space-y-3 min-w-0">
-          <h3 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Destino</h3>
+          <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">Destino</h3>
           <FormSelect v-model="form.toType" label="Tipo" :options="sourceTypeOptions" />
           <div v-if="form.toType === 'CASH'" class="min-w-0">
             <FormSelect

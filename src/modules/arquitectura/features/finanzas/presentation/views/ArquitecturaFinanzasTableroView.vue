@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
@@ -367,41 +370,25 @@ function cuotaLabel(scheduleId: string | null): string {
 
 <template>
   <div
-    :class="
-      embedded
-        ? 'space-y-6'
-        : 'px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6'
-    "
+    :class="embedded ? 'space-y-6' : 'px-3 space-y-6'"
   >
-    <div v-if="!embedded" class="flex flex-wrap items-start gap-3">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goHub"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div class="flex-1 min-w-0">
-        <p class="text-xs uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">Finanzas</p>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          {{ ov?.projectName ?? '…' }}
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          {{ ov?.projectCode }}
-          <button type="button" class="ml-2 underline" :style="{ color: 'var(--color-primary)' }" @click="goProject">
-            Ficha proyecto
-          </button>
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      v-if="!embedded"
+      :title="ov?.projectName ?? '…'"
+      eyebrow="Finanzas"
+      back
+      @back="goHub"
+    >
+      <template #subtitle>
+        {{ ov?.projectCode }}
+          <BaseButton @click="goProject" variant="link" class="ml-2">Ficha proyecto</BaseButton>
+      </template>
+    </PageHeader>
 
-    <div v-if="isLoading" class="flex justify-center py-20">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" class="py-20" />
 
-    <div v-else-if="isError || !ov" class="text-center py-16 space-y-3 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-      <p style="color: var(--color-error)">{{ isError ? getApiErrorMessage(overviewError) : 'No se pudo cargar el panel financiero.' }}</p>
+    <div v-else-if="isError || !ov" class="text-center py-16 space-y-3 text-sm text-gray-500 dark:text-gray-400">
+      <p class="text-error-500 dark:text-error-400">{{ isError ? getApiErrorMessage(overviewError) : 'No se pudo cargar el panel financiero.' }}</p>
       <div class="flex flex-wrap justify-center gap-2">
         <BaseButton variant="outline" @click="() => refetchOverview()">Reintentar</BaseButton>
         <BaseButton variant="outline" @click="goHub">Volver</BaseButton>
@@ -409,10 +396,7 @@ function cuotaLabel(scheduleId: string | null): string {
     </div>
 
     <template v-else-if="ov">
-      <div
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
+      <BaseCard padding="none" class="block overflow-hidden">
         <BaseTabs v-model="activeTab" :tabs="tabs" />
         <div class="p-5 space-y-6">
           <div v-show="activeTab === 'resumen'" class="space-y-6">
@@ -430,16 +414,16 @@ function cuotaLabel(scheduleId: string | null): string {
                 <template #icon><AppIcon icon="lucide:trending-down" :size="20" color="#dc2626" /></template>
               </StatsCard>
             </div>
-            <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+            <p class="text-sm text-gray-400 dark:text-gray-500">
               Presupuesto referencia:
               <template v-if="ov.budgetReference">
                 {{ ov.budgetReference.code }} · v{{ ov.budgetReference.version }} · {{ ov.budgetReference.status }}
               </template>
               <template v-else>Sin presupuesto aprobado en sistema — los KPI usan cero como contrato.</template>
             </p>
-            <div class="rounded-lg border p-4 text-sm space-y-2" :style="{ borderColor: 'var(--color-border)' }">
-              <p class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">Ingresos programados</p>
-              <p :style="{ color: 'var(--color-text-secondary)' }">
+            <div class="rounded-lg border p-4 text-sm space-y-2 border-gray-200 dark:border-gray-800">
+              <p class="font-semibold text-gray-800 dark:text-white/90">Ingresos programados</p>
+              <p class="text-gray-500 dark:text-gray-400">
                 Adelantos: {{ formatSol(ov.incomeSummary.advancesScheduled) }} · Cuotas:
                 {{ formatSol(ov.incomeSummary.installmentsScheduled) }} · Total programado:
                 {{ formatSol(ov.incomeSummary.scheduledTotal) }}
@@ -477,20 +461,9 @@ function cuotaLabel(scheduleId: string | null): string {
                 <td class="py-2 px-3 text-sm">{{ (row as any).statusLabel }}</td>
                 <td class="py-2 px-3 text-sm max-w-[200px] truncate" :title="(row as any).concept">{{ (row as any).concept }}</td>
                 <td class="py-2 px-3 text-right space-x-2 whitespace-nowrap">
-                  <button type="button" class="text-xs underline" @click="openEditSchedule(row as ArquitecturaFinanceScheduleDto)">
-                    Editar
-                  </button>
-                  <button
-                    v-if="(row as ArquitecturaFinanceScheduleDto).status !== 'WAIVED'"
-                    type="button"
-                    class="text-xs underline text-amber-700"
-                    @click="openWaive(row as ArquitecturaFinanceScheduleDto)"
-                  >
-                    Condonar
-                  </button>
-                  <button type="button" class="text-xs text-red-600 underline" @click="removeSchedule(row as ArquitecturaFinanceScheduleDto)">
-                    Quitar
-                  </button>
+                  <BaseButton @click="openEditSchedule(row as ArquitecturaFinanceScheduleDto)" variant="link" class="text-xs">Editar</BaseButton>
+                  <BaseButton v-if="(row as ArquitecturaFinanceScheduleDto).status !== 'WAIVED'" @click="openWaive(row as ArquitecturaFinanceScheduleDto)" variant="link" class="text-warning-600 dark:text-orange-400 text-xs">Condonar</BaseButton>
+                  <BaseButton @click="removeSchedule(row as ArquitecturaFinanceScheduleDto)" variant="link" class="text-error-500 dark:text-error-400 text-xs">Quitar</BaseButton>
                 </td>
               </template>
             </DataTable>
@@ -522,31 +495,29 @@ function cuotaLabel(scheduleId: string | null): string {
                 <td class="py-2 px-3 text-sm">{{ (row as any).statusLabel }}</td>
                 <td class="py-2 px-3 text-xs">{{ (row as any).cuota }}</td>
                 <td class="py-2 px-3 text-right space-x-2">
-                  <button type="button" class="text-xs underline" @click="openEditPayment(row as any)">Editar</button>
-                  <button type="button" class="text-xs text-red-600 underline" @click="removePayment((row as { id: string }).id)">
-                    Quitar
-                  </button>
+                  <BaseButton @click="openEditPayment(row as any)" variant="link" class="text-xs">Editar</BaseButton>
+                  <BaseButton @click="removePayment((row as { id: string }).id)" variant="link" class="text-error-500 dark:text-error-400 text-xs">Quitar</BaseButton>
                 </td>
               </template>
             </DataTable>
           </div>
 
           <div v-show="activeTab === 'egresos'" class="space-y-4">
-            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
               Los montos provienen de <strong>costos reales</strong> registrados en la ejecución del proyecto (compras, mano de obra, transporte y gastos).
               Para alta y baja de ítems use el tablero de ejecución.
             </p>
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-              <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
+              <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                 Compras / materiales: <strong>{{ formatSol(ov.expenseSummary.purchases) }}</strong>
               </div>
-              <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
+              <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                 Mano de obra: <strong>{{ formatSol(ov.expenseSummary.labor) }}</strong>
               </div>
-              <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
+              <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                 Transporte: <strong>{{ formatSol(ov.expenseSummary.transport) }}</strong>
               </div>
-              <div class="p-3 rounded-lg border" :style="{ borderColor: 'var(--color-border)' }">
+              <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                 Otros gastos: <strong>{{ formatSol(ov.expenseSummary.otherExpenses) }}</strong>
               </div>
             </div>
@@ -587,8 +558,8 @@ function cuotaLabel(scheduleId: string | null): string {
             >
               <template #row="{ row }">
                 <td class="py-2 px-3 text-sm font-mono">{{ (row as any).month }}</td>
-                <td class="py-2 px-3 text-sm text-green-700">{{ (row as any).inflow }}</td>
-                <td class="py-2 px-3 text-sm text-red-700">{{ (row as any).outflow }}</td>
+                <td class="py-2 px-3 text-sm text-success-700 dark:text-success-500">{{ (row as any).inflow }}</td>
+                <td class="py-2 px-3 text-sm text-error-700 dark:text-error-400">{{ (row as any).outflow }}</td>
                 <td class="py-2 px-3 text-sm font-medium">{{ (row as any).net }}</td>
               </template>
             </DataTable>
@@ -609,7 +580,7 @@ function cuotaLabel(scheduleId: string | null): string {
                 <template #icon><AppIcon icon="lucide:percent" :size="20" color="#d97706" /></template>
               </StatsCard>
             </div>
-            <ul class="text-sm space-y-2 list-disc pl-5" :style="{ color: 'var(--color-text-secondary)' }">
+            <ul class="text-sm space-y-2 list-disc pl-5 text-gray-500 dark:text-gray-400">
               <li>
                 <strong>Rentabilidad vs contrato:</strong> compara el total del presupuesto de referencia con la suma de egresos reales.
               </li>
@@ -620,7 +591,7 @@ function cuotaLabel(scheduleId: string | null): string {
           </div>
 
           <div v-show="activeTab === 'reportes'" class="space-y-4">
-            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
               Movimientos recientes consolidados (pagos confirmados y costos de obra). Use exportación desde su herramienta de BI o contabilidad si necesita CSV formal.
             </p>
             <DataTable
@@ -650,7 +621,7 @@ function cuotaLabel(scheduleId: string | null): string {
             </DataTable>
           </div>
         </div>
-      </div>
+      </BaseCard>
     </template>
 
     <BaseModal v-model="schModal" :title="schEditId ? 'Editar programación' : 'Nueva programación de cobro'" size="lg">
@@ -686,7 +657,7 @@ function cuotaLabel(scheduleId: string | null): string {
     </BaseModal>
 
     <BaseModal v-model="waiveModal" title="Condonar cuota" size="md">
-      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
         Marcar como <strong>WAIVED</strong> detiene el seguimiento cobranza de esta línea. ¿Continuar?
       </p>
       <div class="flex justify-end gap-2 mt-6">

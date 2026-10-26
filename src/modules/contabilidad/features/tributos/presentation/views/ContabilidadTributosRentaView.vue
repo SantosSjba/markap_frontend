@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -216,7 +220,7 @@ function formatDate(iso: string) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:landmark"
       title="Impuesto a la renta"
@@ -247,15 +251,12 @@ function formatDate(iso: string) {
 
     <div
       v-if="!activePeriod"
-      class="rounded-xl border p-6 text-sm text-center"
-      :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }"
+      class="rounded-xl border p-6 text-sm text-center border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-500"
     >
       Seleccione un periodo contable activo.
     </div>
 
-    <div v-else-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-else-if="isLoading" />
 
     <template v-else-if="detail">
       <BaseTabs v-model="activeTab" :tabs="tabs" />
@@ -289,56 +290,50 @@ function formatDate(iso: string) {
           />
         </div>
 
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-                <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Concepto</th>
-                <th class="text-right py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Periodo</th>
-                <th class="text-right py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Acumulado año</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-                <td class="py-2.5 px-4">Resultado / base imponible</td>
-                <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.taxableBase) }}</td>
-                <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.ytdTaxableBase) }}</td>
-              </tr>
-              <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-                <td class="py-2.5 px-4">Impuesto estimado ({{ detail.incomeTaxRatePercent }}%)</td>
-                <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.estimatedTaxProvision) }}</td>
-                <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.ytdEstimatedTax) }}</td>
-              </tr>
-              <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-                <td class="py-2.5 px-4">Retenciones renta</td>
-                <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.retentionsPeriodTotal) }}</td>
-                <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.retentionsYtdTotal) }}</td>
-              </tr>
-              <tr>
-                <td class="py-2.5 px-4 font-medium">Pagos a cuenta acumulados</td>
-                <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.adjustments.advancePaymentAmount) }}</td>
-                <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.advancePaymentsYtd) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <BaseCard padding="none" class="block overflow-hidden">
+          <Table class="w-full text-sm">
+            <TableHeader>
+              <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                <TableCell is-header class="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Concepto</TableCell>
+                <TableCell is-header class="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Periodo</TableCell>
+                <TableCell is-header class="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Acumulado año</TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                <TableCell class="py-2.5 px-4">Resultado / base imponible</TableCell>
+                <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.taxableBase) }}</TableCell>
+                <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.ytdTaxableBase) }}</TableCell>
+              </TableRow>
+              <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                <TableCell class="py-2.5 px-4">Impuesto estimado ({{ detail.incomeTaxRatePercent }}%)</TableCell>
+                <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.estimatedTaxProvision) }}</TableCell>
+                <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.ytdEstimatedTax) }}</TableCell>
+              </TableRow>
+              <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                <TableCell class="py-2.5 px-4">Retenciones renta</TableCell>
+                <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.retentionsPeriodTotal) }}</TableCell>
+                <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.retentionsYtdTotal) }}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell class="py-2.5 px-4 font-medium">Pagos a cuenta acumulados</TableCell>
+                <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.adjustments.advancePaymentAmount) }}</TableCell>
+                <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(detail.advancePaymentsYtd) }}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </BaseCard>
 
-        <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+        <p class="text-xs text-gray-400 dark:text-gray-500">
           Borrador estimativo para revisión interna. No sustituye la declaración anual ni el envío a SUNAT.
         </p>
       </template>
 
       <template v-else-if="activeTab === 'pagos'">
-        <div
-          class="rounded-xl border p-5 space-y-4 max-w-xl"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
+        <BaseCard class="block space-y-4 max-w-xl">
           <div>
-            <h3 class="font-medium text-sm" :style="{ color: 'var(--color-text-primary)' }">Pago a cuenta del periodo</h3>
-            <p class="text-xs mt-1" :style="{ color: 'var(--color-text-muted)' }">
+            <h3 class="font-medium text-sm text-gray-800 dark:text-white/90">Pago a cuenta del periodo</h3>
+            <p class="text-xs mt-1 text-gray-400 dark:text-gray-500">
               Registre el pago a cuenta declarado para este mes. Se acumula en el cálculo YTD.
             </p>
           </div>
@@ -351,7 +346,7 @@ function formatDate(iso: string) {
             :disabled="!periodOpen"
           />
           <p class="text-sm">
-            <span :style="{ color: 'var(--color-text-muted)' }">Acumulado pagos a cuenta (YTD):</span>
+            <span class="text-gray-400 dark:text-gray-500">Acumulado pagos a cuenta (YTD):</span>
             <strong class="ml-2 font-mono">{{ formatPen(detail.advancePaymentsYtd) }}</strong>
           </p>
           <BaseButton
@@ -361,81 +356,60 @@ function formatDate(iso: string) {
           >
             Guardar pago a cuenta
           </BaseButton>
-          <p v-else class="text-xs" :style="{ color: 'var(--color-warning)' }">
+          <p v-else class="text-xs text-warning-600 dark:text-orange-400">
             El periodo está cerrado; no se pueden modificar los pagos a cuenta.
           </p>
-        </div>
+        </BaseCard>
       </template>
 
       <template v-else-if="activeTab === 'retenciones'">
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
+        <BaseCard padding="none" class="block overflow-hidden">
           <div
-            class="flex items-center justify-between px-4 py-3 border-b"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800"
           >
-            <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+            <p class="text-sm font-medium text-gray-800 dark:text-white/90">
               Retenciones renta del periodo
             </p>
             <span class="text-sm font-mono font-semibold">{{ formatPen(detail.retentionsPeriodTotal) }}</span>
           </div>
 
-          <div v-if="detail.retentionsPeriod.length === 0" class="p-8 text-center text-sm" :style="{ color: 'var(--color-text-muted)' }">
+          <div v-if="detail.retentionsPeriod.length === 0" class="p-8 text-center text-sm text-gray-400 dark:text-gray-500">
             No hay retenciones de renta registradas en este periodo.
           </div>
 
-          <table v-else class="w-full text-sm">
-            <thead>
-              <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-                <th class="text-left py-2.5 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Fecha</th>
-                <th class="text-left py-2.5 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Proveedor</th>
-                <th class="text-left py-2.5 px-4 font-medium hidden md:table-cell" :style="{ color: 'var(--color-text-secondary)' }">Documento</th>
-                <th class="text-right py-2.5 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Base</th>
-                <th class="text-right py-2.5 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Retención</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in detail.retentionsPeriod"
-                :key="row.id"
-                class="border-b last:border-0"
-                :style="{ borderColor: 'var(--color-border)' }"
-              >
+          <DataTable
+            :columns="[
+              { key: 'c0', label: 'Fecha' },
+              { key: 'c1', label: 'Proveedor' },
+              { key: 'c2', label: 'Documento' },
+              { key: 'c3', label: 'Base', align: 'right' },
+              { key: 'c4', label: 'Retención', align: 'right' },
+            ]"
+            :data="detail.retentionsPeriod"
+          >
+            <template #row="{ row }">
                 <td class="py-2 px-4 whitespace-nowrap">{{ formatDate(row.issueDate) }}</td>
                 <td class="py-2 px-4">
-                  <div class="font-mono text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ row.counterpartyRuc }}</div>
+                  <div class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ row.counterpartyRuc }}</div>
                   <div>{{ row.counterpartyName }}</div>
                 </td>
                 <td class="py-2 px-4 hidden md:table-cell">{{ row.documentRef ?? '—' }}</td>
                 <td class="py-2 px-4 text-right font-mono">{{ formatPen(row.taxableBase) }}</td>
                 <td class="py-2 px-4 text-right font-mono font-medium">{{ formatPen(row.amount) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+            </template>
+          </DataTable>
+        </BaseCard>
 
-        <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+        <p class="text-xs text-gray-400 dark:text-gray-500">
           Total retenciones acumuladas en el año: {{ formatPen(detail.retentionsYtdTotal) }}.
           Las retenciones se registran en
-          <button
-            type="button"
-            class="underline"
-            :style="{ color: 'var(--color-primary)' }"
-            @click="goTo('/contabilidad/tributos/retenciones')"
-          >
-            Tributos → Retenciones
-          </button>.
+          <BaseButton @click="goTo('/contabilidad/tributos/retenciones')" variant="link">Tributos → Retenciones</BaseButton>.
         </p>
       </template>
 
       <template v-else-if="activeTab === 'ajustes'">
-        <div
-          class="rounded-xl border p-5 space-y-5 max-w-2xl"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <BaseCard class="block space-y-5 max-w-2xl">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
             Ajustes manuales sobre el resultado del estado de resultados para estimar la base imponible.
           </p>
 
@@ -483,11 +457,10 @@ function formatDate(iso: string) {
           />
 
           <div
-            class="rounded-lg border p-4 text-sm space-y-1"
-            :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+            class="rounded-lg border p-4 text-sm space-y-1 border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
           >
             <div class="flex justify-between">
-              <span :style="{ color: 'var(--color-text-muted)' }">Resultado antes de renta</span>
+              <span class="text-gray-400 dark:text-gray-500">Resultado antes de renta</span>
               <span class="font-mono">{{ formatPen(detail.netIncomeBeforeTax) }}</span>
             </div>
             <div class="flex justify-between font-medium">
@@ -499,10 +472,10 @@ function formatDate(iso: string) {
           <BaseButton v-if="periodOpen" :loading="saving" @click="saveDraft">
             Guardar ajustes
           </BaseButton>
-          <p v-else class="text-xs" :style="{ color: 'var(--color-warning)' }">
+          <p v-else class="text-xs text-warning-600 dark:text-orange-400">
             El periodo está cerrado; los ajustes no pueden modificarse.
           </p>
-        </div>
+        </BaseCard>
       </template>
     </template>
   </div>

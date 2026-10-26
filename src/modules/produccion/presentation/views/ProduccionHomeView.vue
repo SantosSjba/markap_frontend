@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import ActionCard from '@shared/presentation/components/ui/ActionCard.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
@@ -104,9 +109,9 @@ function activityTone(item: ProduccionReportsActivityItem): 'primary' | 'success
 }
 
 function toneBorder(tone: 'primary' | 'success' | 'muted') {
-  if (tone === 'success') return 'var(--color-success, #16a34a)'
-  if (tone === 'primary') return 'var(--color-primary)'
-  return 'var(--color-border)'
+  if (tone === 'success') return 'border-l-success-500'
+  if (tone === 'primary') return 'border-l-brand-500'
+  return 'border-l-gray-200 dark:border-l-gray-800'
 }
 
 function openActivity(item: ProduccionReportsActivityItem) {
@@ -134,21 +139,17 @@ const dashboardErrorDetail = computed(() =>
 </script>
 
 <template>
-  <div class="space-y-8 max-w-[1600px] mx-auto w-full animate-fade-in">
-    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold" style="color: var(--color-text-primary)">
-          Producción de muebles
-        </h1>
-        <p class="text-sm mt-1" style="color: var(--color-text-secondary)">
-          Control de órdenes, inventario y planta
-        </p>
-        <p class="text-sm mt-3 font-medium" style="color: var(--color-text-primary)">
-          {{ greeting }}, {{ firstName }}
-        </p>
-      </div>
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
-        <p class="text-sm" style="color: var(--color-text-muted)">
+  <div class="space-y-6 w-full">
+    <PageHeader
+      title="Producción de muebles"
+    >
+      <template #subtitle>
+        Control de órdenes, inventario y planta
+<span class="mt-2 block">{{ greeting }}, {{ firstName }}</span>
+      </template>
+      <template #actions>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
+        <p class="text-sm text-gray-400 dark:text-gray-500">
           {{
             formatDate(new Date(), {
               weekday: 'long',
@@ -163,31 +164,26 @@ const dashboardErrorDetail = computed(() =>
           Reportes detallados
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <p class="text-xs font-medium -mt-4" style="color: var(--color-text-muted)">
+    <p class="text-xs font-medium -mt-4 text-gray-400 dark:text-gray-500">
       Indicadores operativos en tiempo real · ventas del período: {{ periodLabel }}
     </p>
 
-    <div v-if="dashboardQuery.isLoading.value" class="flex justify-center py-20">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="dashboardQuery.isLoading.value" class="py-20" />
 
-    <div
-      v-else-if="dashboardQuery.isError.value"
-      class="rounded-xl border p-8 text-center"
-      style="border-color: var(--color-border); background: var(--color-surface)"
-    >
-      <p class="text-sm font-medium" style="color: var(--color-text-primary)">
+    <BaseCard v-else-if="dashboardQuery.isError.value" padding="lg" class="block text-center">
+      <p class="text-sm font-medium text-gray-800 dark:text-white/90">
         No se pudo cargar el dashboard
       </p>
-      <p class="text-xs mt-2 max-w-md mx-auto" style="color: var(--color-text-secondary)">
+      <p class="text-xs mt-2 max-w-md mx-auto text-gray-500 dark:text-gray-400">
         {{ dashboardErrorDetail || 'Comprueba tu conexión e inténtalo de nuevo.' }}
       </p>
       <BaseButton class="mt-4" type="button" @click="() => dashboardQuery.refetch()">
         Reintentar
       </BaseButton>
-    </div>
+    </BaseCard>
 
     <template v-else-if="d">
       <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -219,134 +215,87 @@ const dashboardErrorDetail = computed(() =>
       </div>
 
       <div class="grid lg:grid-cols-2 gap-6">
-        <div
-          class="rounded-xl border p-5 lg:p-6"
-          :style="{
-            backgroundColor: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-            boxShadow: 'var(--shadow-card)',
-          }"
+        <FormSectionCard
+          title="Actividad reciente"
+          subtitle="Últimas OT, entregas y movimientos de inventario"
+          dense
         >
-          <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
-            Actividad reciente
-          </h2>
-          <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-            Últimas OT, entregas y movimientos de inventario
-          </p>
           <ul v-if="d.recentActivity.length" class="space-y-3">
             <li v-for="a in d.recentActivity" :key="`${a.type}-${a.entityId}`">
               <button
                 type="button"
-                class="w-full flex gap-3 rounded-lg border p-3 text-left transition hover:opacity-90"
-                :style="{
-                  borderColor: 'var(--color-border)',
-                  borderLeftWidth: '3px',
-                  borderLeftColor: toneBorder(activityTone(a)),
-                }"
+                class="w-full flex gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-white/3 border-gray-200 dark:border-gray-800 border-l-3" :class="toneBorder(activityTone(a))"
                 @click="openActivity(a)"
               >
                 <div class="min-w-0 flex-1">
-                  <p class="text-sm font-medium" style="color: var(--color-text-primary)">
+                  <p class="text-sm font-medium text-gray-800 dark:text-white/90">
                     {{ a.title }}
                   </p>
-                  <p class="text-xs mt-0.5 truncate" style="color: var(--color-text-secondary)">
+                  <p class="text-xs mt-0.5 truncate text-gray-500 dark:text-gray-400">
                     {{ a.detail }}
                   </p>
                 </div>
-                <span class="text-[11px] shrink-0 self-start" style="color: var(--color-text-muted)">
+                <span class="text-[11px] shrink-0 self-start text-gray-400 dark:text-gray-500">
                   {{ formatRelativeTime(a.occurredAt) }}
                 </span>
               </button>
             </li>
           </ul>
-          <p v-else class="text-sm py-6 text-center" style="color: var(--color-text-muted)">
+          <p v-else class="text-sm py-6 text-center text-gray-400 dark:text-gray-500">
             Sin actividad registrada aún.
           </p>
-        </div>
+        </FormSectionCard>
 
-        <div
-          class="rounded-xl border p-5 lg:p-6"
-          :style="{
-            backgroundColor: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-            boxShadow: 'var(--shadow-card)',
-          }"
+        <FormSectionCard
+          title="Acciones rápidas"
+          subtitle="Flujo operativo del taller"
+          dense
         >
-          <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
-            Acciones rápidas
-          </h2>
-          <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-            Flujo operativo del taller
-          </p>
           <div class="grid sm:grid-cols-2 gap-3">
-            <button
+            <ActionCard
               v-for="ac in acciones"
               :key="ac.to"
-              type="button"
-              class="flex items-start gap-3 rounded-xl border p-4 text-left transition-all hover-surface"
-              :style="{ borderColor: 'var(--color-border)' }"
+              :icon="ac.icon"
+              :title="ac.label"
+              :description="ac.sub"
               @click="router.push(ac.to)"
-            >
-              <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-                style="background-color: var(--color-primary-light); color: var(--color-primary)"
-              >
-                <AppIcon :icon="ac.icon" :size="20" />
-              </div>
-              <div class="min-w-0">
-                <p class="text-sm font-semibold" style="color: var(--color-text-primary)">
-                  {{ ac.label }}
-                </p>
-                <p class="text-xs mt-0.5" style="color: var(--color-text-muted)">
-                  {{ ac.sub }}
-                </p>
-              </div>
-            </button>
+            />
           </div>
-        </div>
+        </FormSectionCard>
       </div>
 
-      <div
-        class="rounded-xl border p-5 lg:p-6"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-card)',
-        }"
+      <FormSectionCard
+        title="Resumen del período"
+        :subtitle="periodLabel"
+        dense
       >
-        <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
-          Resumen del período
-        </h2>
-        <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-          {{ periodLabel }}
-        </p>
         <dl class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>
-            <dt style="color: var(--color-text-secondary)">OT creadas</dt>
-            <dd class="font-semibold tabular-nums mt-1" style="color: var(--color-text-primary)">
+            <dt class="text-gray-500 dark:text-gray-400">OT creadas</dt>
+            <dd class="font-semibold tabular-nums mt-1 text-gray-800 dark:text-white/90">
               {{ d.produccion.workOrdersCreated }}
             </dd>
           </div>
           <div>
-            <dt style="color: var(--color-text-secondary)">OT completadas</dt>
-            <dd class="font-semibold tabular-nums mt-1" style="color: var(--color-text-primary)">
+            <dt class="text-gray-500 dark:text-gray-400">OT completadas</dt>
+            <dd class="font-semibold tabular-nums mt-1 text-gray-800 dark:text-white/90">
               {{ d.produccion.workOrdersCompleted }}
             </dd>
           </div>
           <div>
-            <dt style="color: var(--color-text-secondary)">Pedidos entregados</dt>
-            <dd class="font-semibold tabular-nums mt-1" style="color: var(--color-text-primary)">
+            <dt class="text-gray-500 dark:text-gray-400">Pedidos entregados</dt>
+            <dd class="font-semibold tabular-nums mt-1 text-gray-800 dark:text-white/90">
               {{ d.ventas.ordersDelivered }}
             </dd>
           </div>
           <div>
-            <dt style="color: var(--color-text-secondary)">Movimientos de stock</dt>
-            <dd class="font-semibold tabular-nums mt-1" style="color: var(--color-text-primary)">
+            <dt class="text-gray-500 dark:text-gray-400">Movimientos de stock</dt>
+            <dd class="font-semibold tabular-nums mt-1 text-gray-800 dark:text-white/90">
               {{ d.inventario.movementsInPeriod }}
             </dd>
           </div>
         </dl>
-      </div>
+      </FormSectionCard>
     </template>
   </div>
 </template>

@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import { ref, watch, computed } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
@@ -205,149 +210,76 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
-    <div>
-      <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-        Configuración — Producción
-      </h1>
-      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+  <div class="space-y-6">
+    <PageHeader
+      title="Configuración — Producción"
+    >
+      <template #actions>
+        <p class="text-sm mt-1 text-gray-500 dark:text-gray-400">
         Parámetros del módulo: categorías de muebles y materiales, etapas de taller, unidades y series documentales.
       </p>
-    </div>
+      </template>
+    </PageHeader>
 
     <BaseTabs v-model="activeTab" :tabs="tabs" />
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
-    <div
-      v-else-if="isError"
-      class="rounded-xl border p-8 text-center space-y-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+    <BaseCard v-else-if="isError" padding="lg" class="block text-center space-y-3">
+      <p class="text-sm font-medium text-gray-800 dark:text-white/90">
         No se pudo cargar la configuración
       </p>
-      <p class="text-xs max-w-lg mx-auto" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-xs max-w-lg mx-auto text-gray-500 dark:text-gray-400">
         {{ configLoadError }}
       </p>
       <BaseButton type="button" @click="() => refetch()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
 
     <template v-else>
       <div v-if="activeTab === 'parametros'" class="space-y-4">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Valores por defecto para costeo y cotizaciones.
         </p>
-        <div
-          class="rounded-xl border p-4 space-y-4 max-w-md"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <label class="block text-sm">
-            <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">IGV (%)</span>
-            <input
-              v-model.number="settingsDraft.igvPercent"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              class="mt-1 w-full px-3 py-2 rounded border text-sm"
-              :style="{
-                borderColor: 'var(--color-border)',
-                backgroundColor: 'var(--color-surface-elevated)',
-                color: 'var(--color-text-primary)',
-              }"
-            />
-          </label>
-          <label class="block text-sm">
-            <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">% desperdicio madera</span>
-            <input
-              v-model.number="settingsDraft.woodWastePercent"
-              type="number"
-              min="0"
-              max="100"
-              step="0.1"
-              class="mt-1 w-full px-3 py-2 rounded border text-sm"
-              :style="{
-                borderColor: 'var(--color-border)',
-                backgroundColor: 'var(--color-surface-elevated)',
-                color: 'var(--color-text-primary)',
-              }"
-            />
-          </label>
-          <label class="block text-sm">
-            <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Vigencia cotización (días)</span>
-            <input
-              v-model.number="settingsDraft.quotationValidDays"
-              type="number"
-              min="1"
-              class="mt-1 w-full px-3 py-2 rounded border text-sm"
-              :style="{
-                borderColor: 'var(--color-border)',
-                backgroundColor: 'var(--color-surface-elevated)',
-                color: 'var(--color-text-primary)',
-              }"
-            />
-          </label>
+        <BaseCard padding="sm" class="block space-y-4 max-w-md">
+          <FormInput v-model="settingsDraft.igvPercent" type="number" min="0" max="100" step="0.01" label="IGV (%)" />
+          <FormInput v-model="settingsDraft.woodWastePercent" type="number" min="0" max="100" step="0.1" label="% desperdicio madera" />
+          <FormInput v-model="settingsDraft.quotationValidDays" type="number" min="1" label="Vigencia cotización (días)" />
           <BaseButton variant="primary" :loading="savingSettings" @click="submitSettings">
             Guardar parámetros
           </BaseButton>
-        </div>
+        </BaseCard>
       </div>
 
       <div v-else-if="activeTab === 'categorias'" class="space-y-3">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Categorías del catálogo de muebles (código técnico + etiqueta visible).
         </p>
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b text-left" :style="{ borderColor: 'var(--color-border)' }">
-                <th class="py-2 px-3">Código</th>
-                <th class="py-2 px-3">Etiqueta</th>
-                <th class="py-2 px-3 w-20">Activa</th>
-                <th class="py-2 px-3 w-28"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
+        <BaseCard padding="none" class="block overflow-hidden">
+          <Table class="w-full text-sm">
+            <TableHeader>
+              <TableRow class="border-b text-left border-gray-200 dark:border-gray-800">
+                <TableCell is-header class="py-2 px-3">Código</TableCell>
+                <TableCell is-header class="py-2 px-3">Etiqueta</TableCell>
+                <TableCell is-header class="py-2 px-3 w-20">Activa</TableCell>
+                <TableCell is-header class="py-2 px-3 w-28"></TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow
                 v-for="(row, idx) in categoriesDraft"
                 :key="row.id ?? `cat-${idx}`"
-                class="border-b"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="border-b border-gray-200 dark:border-gray-800"
               >
-                <td class="py-2 px-3">
-                  <input
-                    v-model="row.code"
-                    type="text"
-                    class="w-full px-2 py-1.5 rounded border text-sm font-mono"
-                    :style="{
-                      borderColor: 'var(--color-border)',
-                      backgroundColor: 'var(--color-surface-elevated)',
-                      color: 'var(--color-text-primary)',
-                    }"
-                  />
-                </td>
-                <td class="py-2 px-3">
-                  <input
-                    v-model="row.label"
-                    type="text"
-                    class="w-full px-2 py-1.5 rounded border text-sm"
-                    :style="{
-                      borderColor: 'var(--color-border)',
-                      backgroundColor: 'var(--color-surface-elevated)',
-                      color: 'var(--color-text-primary)',
-                    }"
-                  />
-                </td>
-                <td class="py-2 px-3 text-center">
-                  <input v-model="row.isActive" type="checkbox" />
-                </td>
-                <td class="py-2 px-3">
+                <TableCell class="py-2 px-3">
+                  <FormInput v-model="row.code" type="text" size="sm" input-class="font-mono" />
+                </TableCell>
+                <TableCell class="py-2 px-3">
+                  <FormInput v-model="row.label" type="text" size="sm" />
+                </TableCell>
+                <TableCell class="py-2 px-3 text-center">
+                  <FormCheckbox v-model="row.isActive" class="justify-center" />
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <div class="flex gap-1">
                     <BaseButton type="button" variant="ghost" size="sm" @click="reorder(categoriesDraft, idx, -1)">
                       ↑
@@ -356,71 +288,49 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
                       ↓
                     </BaseButton>
                   </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-3 border-t flex justify-between" :style="{ borderColor: 'var(--color-border)' }">
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          <div class="p-3 border-t flex justify-between border-gray-200 dark:border-gray-800">
             <BaseButton type="button" variant="ghost" @click="addCategory">+ Categoría</BaseButton>
             <BaseButton variant="primary" :loading="savingCategories" @click="submitCategories">
               Guardar categorías
             </BaseButton>
           </div>
-        </div>
+        </BaseCard>
       </div>
 
       <div v-else-if="activeTab === 'categorias-materiales'" class="space-y-3">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Categorías del inventario de materiales (tableros, herrajes, etc.). La etiqueta se guarda en cada material.
         </p>
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b text-left" :style="{ borderColor: 'var(--color-border)' }">
-                <th class="py-2 px-3">Código</th>
-                <th class="py-2 px-3">Etiqueta</th>
-                <th class="py-2 px-3 w-20">Activa</th>
-                <th class="py-2 px-3 w-28"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
+        <BaseCard padding="none" class="block overflow-hidden">
+          <Table class="w-full text-sm">
+            <TableHeader>
+              <TableRow class="border-b text-left border-gray-200 dark:border-gray-800">
+                <TableCell is-header class="py-2 px-3">Código</TableCell>
+                <TableCell is-header class="py-2 px-3">Etiqueta</TableCell>
+                <TableCell is-header class="py-2 px-3 w-20">Activa</TableCell>
+                <TableCell is-header class="py-2 px-3 w-28"></TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow
                 v-for="(row, idx) in materialCategoriesDraft"
                 :key="row.id ?? `mat-cat-${idx}`"
-                class="border-b"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="border-b border-gray-200 dark:border-gray-800"
               >
-                <td class="py-2 px-3">
-                  <input
-                    v-model="row.code"
-                    type="text"
-                    class="w-full px-2 py-1.5 rounded border text-sm font-mono"
-                    :style="{
-                      borderColor: 'var(--color-border)',
-                      backgroundColor: 'var(--color-surface-elevated)',
-                      color: 'var(--color-text-primary)',
-                    }"
-                  />
-                </td>
-                <td class="py-2 px-3">
-                  <input
-                    v-model="row.label"
-                    type="text"
-                    class="w-full px-2 py-1.5 rounded border text-sm"
-                    :style="{
-                      borderColor: 'var(--color-border)',
-                      backgroundColor: 'var(--color-surface-elevated)',
-                      color: 'var(--color-text-primary)',
-                    }"
-                  />
-                </td>
-                <td class="py-2 px-3 text-center">
-                  <input v-model="row.isActive" type="checkbox" />
-                </td>
-                <td class="py-2 px-3">
+                <TableCell class="py-2 px-3">
+                  <FormInput v-model="row.code" type="text" size="sm" input-class="font-mono" />
+                </TableCell>
+                <TableCell class="py-2 px-3">
+                  <FormInput v-model="row.label" type="text" size="sm" />
+                </TableCell>
+                <TableCell class="py-2 px-3 text-center">
+                  <FormCheckbox v-model="row.isActive" class="justify-center" />
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <div class="flex gap-1">
                     <BaseButton type="button" variant="ghost" size="sm" @click="reorder(materialCategoriesDraft, idx, -1)">
                       ↑
@@ -429,56 +339,43 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
                       ↓
                     </BaseButton>
                   </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-3 border-t flex justify-between" :style="{ borderColor: 'var(--color-border)' }">
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          <div class="p-3 border-t flex justify-between border-gray-200 dark:border-gray-800">
             <BaseButton type="button" variant="ghost" @click="addMaterialCategory">+ Categoría</BaseButton>
             <BaseButton variant="primary" :loading="savingMaterialCategories" @click="submitMaterialCategories">
               Guardar categorías
             </BaseButton>
           </div>
-        </div>
+        </BaseCard>
       </div>
 
       <div v-else-if="activeTab === 'etapas'" class="space-y-3">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Etapas de las órdenes de trabajo. Los códigos técnicos (planificacion, corte, …) no cambian; solo etiquetas y orden.
         </p>
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b text-left" :style="{ borderColor: 'var(--color-border)' }">
-                <th class="py-2 px-3">Código</th>
-                <th class="py-2 px-3">Etiqueta</th>
-                <th class="py-2 px-3 w-28"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
+        <BaseCard padding="none" class="block overflow-hidden">
+          <Table class="w-full text-sm">
+            <TableHeader>
+              <TableRow class="border-b text-left border-gray-200 dark:border-gray-800">
+                <TableCell is-header class="py-2 px-3">Código</TableCell>
+                <TableCell is-header class="py-2 px-3">Etiqueta</TableCell>
+                <TableCell is-header class="py-2 px-3 w-28"></TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow
                 v-for="(row, idx) in stagesDraft"
                 :key="row.stageKey"
-                class="border-b"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="border-b border-gray-200 dark:border-gray-800"
               >
-                <td class="py-2 px-3 font-mono text-xs">{{ row.stageKey }}</td>
-                <td class="py-2 px-3">
-                  <input
-                    v-model="row.label"
-                    type="text"
-                    class="w-full px-2 py-1.5 rounded border text-sm"
-                    :style="{
-                      borderColor: 'var(--color-border)',
-                      backgroundColor: 'var(--color-surface-elevated)',
-                      color: 'var(--color-text-primary)',
-                    }"
-                  />
-                </td>
-                <td class="py-2 px-3">
+                <TableCell class="py-2 px-3 font-mono text-xs">{{ row.stageKey }}</TableCell>
+                <TableCell class="py-2 px-3">
+                  <FormInput v-model="row.label" type="text" size="sm" />
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <div class="flex gap-1">
                     <BaseButton type="button" variant="ghost" size="sm" @click="reorder(stagesDraft, idx, -1)">
                       ↑
@@ -487,68 +384,46 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
                       ↓
                     </BaseButton>
                   </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-3 border-t flex justify-end" :style="{ borderColor: 'var(--color-border)' }">
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          <div class="p-3 border-t flex justify-end border-gray-200 dark:border-gray-800">
             <BaseButton variant="primary" :loading="savingStages" @click="submitStages">Guardar etapas</BaseButton>
           </div>
-        </div>
+        </BaseCard>
       </div>
 
       <div v-else-if="activeTab === 'unidades'" class="space-y-3">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Unidades para materiales e inventario.
         </p>
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b text-left" :style="{ borderColor: 'var(--color-border)' }">
-                <th class="py-2 px-3">Código</th>
-                <th class="py-2 px-3">Etiqueta</th>
-                <th class="py-2 px-3 w-20">Activa</th>
-                <th class="py-2 px-3 w-28"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
+        <BaseCard padding="none" class="block overflow-hidden">
+          <Table class="w-full text-sm">
+            <TableHeader>
+              <TableRow class="border-b text-left border-gray-200 dark:border-gray-800">
+                <TableCell is-header class="py-2 px-3">Código</TableCell>
+                <TableCell is-header class="py-2 px-3">Etiqueta</TableCell>
+                <TableCell is-header class="py-2 px-3 w-20">Activa</TableCell>
+                <TableCell is-header class="py-2 px-3 w-28"></TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow
                 v-for="(row, idx) in unitsDraft"
                 :key="row.id ?? `unit-${idx}`"
-                class="border-b"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="border-b border-gray-200 dark:border-gray-800"
               >
-                <td class="py-2 px-3">
-                  <input
-                    v-model="row.code"
-                    type="text"
-                    class="w-full px-2 py-1.5 rounded border text-sm font-mono"
-                    :style="{
-                      borderColor: 'var(--color-border)',
-                      backgroundColor: 'var(--color-surface-elevated)',
-                      color: 'var(--color-text-primary)',
-                    }"
-                  />
-                </td>
-                <td class="py-2 px-3">
-                  <input
-                    v-model="row.label"
-                    type="text"
-                    class="w-full px-2 py-1.5 rounded border text-sm"
-                    :style="{
-                      borderColor: 'var(--color-border)',
-                      backgroundColor: 'var(--color-surface-elevated)',
-                      color: 'var(--color-text-primary)',
-                    }"
-                  />
-                </td>
-                <td class="py-2 px-3 text-center">
-                  <input v-model="row.isActive" type="checkbox" />
-                </td>
-                <td class="py-2 px-3">
+                <TableCell class="py-2 px-3">
+                  <FormInput v-model="row.code" type="text" size="sm" input-class="font-mono" />
+                </TableCell>
+                <TableCell class="py-2 px-3">
+                  <FormInput v-model="row.label" type="text" size="sm" />
+                </TableCell>
+                <TableCell class="py-2 px-3 text-center">
+                  <FormCheckbox v-model="row.isActive" class="justify-center" />
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <div class="flex gap-1">
                     <BaseButton type="button" variant="ghost" size="sm" @click="reorder(unitsDraft, idx, -1)">
                       ↑
@@ -557,82 +432,35 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
                       ↓
                     </BaseButton>
                   </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-3 border-t flex justify-between" :style="{ borderColor: 'var(--color-border)' }">
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          <div class="p-3 border-t flex justify-between border-gray-200 dark:border-gray-800">
             <BaseButton type="button" variant="ghost" @click="addUnit">+ Unidad</BaseButton>
             <BaseButton variant="primary" :loading="savingUnits" @click="submitUnits">Guardar unidades</BaseButton>
           </div>
-        </div>
+        </BaseCard>
       </div>
 
       <div v-else-if="activeTab === 'numeracion'" class="space-y-4">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Prefijos y correlativos para códigos automáticos al crear documentos.
         </p>
-        <div
-          v-for="series in numberingRows"
-          :key="series.seriesKey"
-          class="rounded-xl border p-4 space-y-3"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
+        <BaseCard v-for="series in numberingRows" :key="series.seriesKey" padding="sm" class="block space-y-3">
           <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 class="font-semibold text-sm" :style="{ color: 'var(--color-text-primary)' }">
+            <h3 class="font-semibold text-sm text-gray-800 dark:text-white/90">
               {{ PRODUCCION_NUMBERING_LABELS[series.seriesKey] ?? series.seriesKey }}
             </h3>
-            <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
-              Próximo: <strong :style="{ color: 'var(--color-text-primary)' }">{{ series.nextPreview }}</strong>
+            <p class="text-xs text-gray-400 dark:text-gray-500">
+              Próximo: <strong class="text-gray-800 dark:text-white/90">{{ series.nextPreview }}</strong>
             </p>
           </div>
           <div v-if="numberingDraft[series.seriesKey]" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <label class="text-sm block">
-              <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Prefijo</span>
-              <input
-                v-model="numberingDraft[series.seriesKey]!.prefix"
-                type="text"
-                class="mt-1 w-full px-2 py-1.5 rounded border text-sm"
-                :style="{
-                  borderColor: 'var(--color-border)',
-                  backgroundColor: 'var(--color-surface-elevated)',
-                  color: 'var(--color-text-primary)',
-                }"
-              />
-            </label>
-            <label class="text-sm block">
-              <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Último número</span>
-              <input
-                v-model.number="numberingDraft[series.seriesKey]!.lastNumber"
-                type="number"
-                min="0"
-                class="mt-1 w-full px-2 py-1.5 rounded border text-sm"
-                :style="{
-                  borderColor: 'var(--color-border)',
-                  backgroundColor: 'var(--color-surface-elevated)',
-                  color: 'var(--color-text-primary)',
-                }"
-              />
-            </label>
-            <label class="text-sm block">
-              <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Dígitos</span>
-              <input
-                v-model.number="numberingDraft[series.seriesKey]!.padLength"
-                type="number"
-                min="1"
-                max="8"
-                class="mt-1 w-full px-2 py-1.5 rounded border text-sm"
-                :style="{
-                  borderColor: 'var(--color-border)',
-                  backgroundColor: 'var(--color-surface-elevated)',
-                  color: 'var(--color-text-primary)',
-                }"
-              />
-            </label>
-            <label class="text-sm flex items-end gap-2 pb-2">
-              <input v-model="numberingDraft[series.seriesKey]!.includeYear" type="checkbox" />
-              <span :style="{ color: 'var(--color-text-primary)' }">Incluir año</span>
-            </label>
+            <FormInput v-model="numberingDraft[series.seriesKey]!.prefix" type="text" label="Prefijo" />
+            <FormInput v-model="numberingDraft[series.seriesKey]!.lastNumber" type="number" min="0" label="Último número" />
+            <FormInput v-model="numberingDraft[series.seriesKey]!.padLength" type="number" min="1" max="8" label="Dígitos" />
+            <FormCheckbox v-model="numberingDraft[series.seriesKey]!.includeYear" label="Incluir año" />
           </div>
           <BaseButton
             variant="primary"
@@ -642,7 +470,7 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
           >
             Guardar serie
           </BaseButton>
-        </div>
+        </BaseCard>
       </div>
     </template>
   </div>

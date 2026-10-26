@@ -12,25 +12,19 @@ withDefaults(
     gridClass: 'grid-cols-1 sm:grid-cols-5',
   },
 )
-
-const barStyle = {
-  backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 14%, transparent)',
-}
 </script>
 
 <template>
   <div
     v-for="row in rows"
     :key="row"
-    :class="['grid gap-4 px-5 py-4 border-b animate-pulse', gridClass]"
-    :style="{ borderColor: 'var(--color-border)' }"
+    :class="['grid animate-pulse gap-4 border-b border-gray-100 px-5 py-4 sm:px-6 dark:border-gray-800', gridClass]"
   >
     <div
       v-for="col in columns"
       :key="col"
-      class="h-9 rounded-md min-w-0"
+      class="h-9 min-w-0 rounded-lg bg-gray-200 dark:bg-gray-800"
       :class="col === 1 ? 'max-w-[85%]' : ''"
-      :style="barStyle"
     />
   </div>
 </template>

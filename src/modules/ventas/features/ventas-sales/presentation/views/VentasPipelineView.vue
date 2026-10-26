@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
 import { reactive, ref, watch, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -274,47 +276,39 @@ const boardBusy = computed(() => savingMove.value)
       </template>
     </PageHeader>
 
-    <div
-      v-if="configQuery.isError.value"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
-    >
-      <AppIcon icon="lucide:triangle-alert" :size="18" color="var(--color-warning)" class="shrink-0" />
-      <span :style="{ color: 'var(--color-text-primary)' }">
+    <BaseAlert v-if="configQuery.isError.value" type="warning">
+      <span class="text-gray-800 dark:text-white/90">
         No se cargó la configuración de etapas; se muestran valores por defecto.
       </span>
-      <span class="text-xs max-w-md" style="color: var(--color-error)">{{
+      <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{
         getApiErrorMessage(configQuery.error.value)
       }}</span>
       <BaseButton variant="outline" size="sm" icon="lucide:settings" class="ml-auto shrink-0" @click="() => configQuery.refetch()">
         Reintentar configuración
       </BaseButton>
-    </div>
+    </BaseAlert>
 
     <div
       v-if="!isLoading && !boardIsError"
       class="flex w-full gap-2"
     >
       <div
-        class="flex flex-1 min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+        class="flex flex-1 min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-dark"
       >
         <div
-          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)' }"
+          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-brand-500/12"
         >
           <AppIcon icon="lucide:layers" :size="16" color="var(--color-primary)" />
         </div>
         <div>
-          <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">En tablero</p>
-          <p class="font-semibold tabular-nums" :style="{ color: 'var(--color-text-primary)' }">{{ totalOnBoard }}</p>
+          <p class="text-xs text-gray-400 dark:text-gray-500">En tablero</p>
+          <p class="font-semibold tabular-nums text-gray-800 dark:text-white/90">{{ totalOnBoard }}</p>
         </div>
       </div>
       <div
         v-for="s in stageSummaries"
         :key="s.value"
-        class="flex flex-1 min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+        class="flex flex-1 min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-dark"
       >
         <div
           class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
@@ -325,7 +319,7 @@ const boardBusy = computed(() => savingMove.value)
           <AppIcon :icon="s.meta.icon" :size="16" :color="s.meta.color" />
         </div>
         <div class="min-w-0">
-          <p class="text-xs truncate max-w-[120px] sm:max-w-none" :style="{ color: 'var(--color-text-muted)' }">
+          <p class="text-xs truncate max-w-[120px] sm:max-w-none text-gray-400 dark:text-gray-500">
             {{ s.label }}
           </p>
           <p class="font-semibold tabular-nums" :style="{ color: s.meta.color }">{{ s.count }}</p>
@@ -333,37 +327,27 @@ const boardBusy = computed(() => savingMove.value)
       </div>
       <div
         v-if="boardBusy"
-        class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ml-auto"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-elevated)' }"
+        class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ml-auto border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
       >
         <AppIcon icon="svg-spinners:ring-resize" :size="16" color="var(--color-primary)" />
-        <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">Guardando…</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">Guardando…</span>
       </div>
     </div>
 
-    <div
-      v-if="isLoading"
-      class="flex flex-col items-center justify-center gap-3 py-24 rounded-xl border"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
+    <BaseCard v-if="isLoading" class="flex flex-col items-center justify-center gap-3 py-24">
       <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando tablero…</p>
-    </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Cargando tablero…</p>
+    </BaseCard>
 
-    <div
-      v-else-if="boardIsError"
-      class="flex flex-col items-center justify-center gap-3 py-20 rounded-xl border text-center px-4"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
+    <BaseCard v-else-if="boardIsError" class="flex flex-col items-center justify-center gap-3 py-20 text-center px-4">
       <div
-        class="w-12 h-12 rounded-full flex items-center justify-center"
-        :style="{ backgroundColor: 'color-mix(in srgb, var(--color-error) 12%, transparent)' }"
+        class="w-12 h-12 rounded-full flex items-center justify-center bg-error-500/12"
       >
         <AppIcon icon="lucide:cloud-off" :size="24" color="var(--color-error)" />
       </div>
-      <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(boardError) }}</p>
+      <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(boardError) }}</p>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchBoard()">Reintentar tablero</BaseButton>
-    </div>
+    </BaseCard>
 
     <div
       v-else
@@ -373,17 +357,10 @@ const boardBusy = computed(() => savingMove.value)
       <div
         v-for="col in stageSummaries"
         :key="col.value"
-        class="flex flex-col flex-1 min-w-[200px] basis-0 rounded-xl border min-h-[360px] max-h-[calc(100vh-260px)] overflow-hidden"
-        :style="{
-          backgroundColor: 'var(--color-surface-elevated)',
-          borderColor: 'var(--color-border)',
-          borderTopWidth: '3px',
-          borderTopColor: col.meta.color,
-        }"
+        class="flex flex-col flex-1 min-w-[200px] basis-0 rounded-xl border min-h-[360px] max-h-[calc(100vh-260px)] overflow-hidden bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 border-t-3" :style="{ borderTopColor: col.meta.color }"
       >
         <div
-          class="px-3 py-2.5 border-b flex items-center gap-2 shrink-0"
-          :style="{ borderColor: 'var(--color-border)' }"
+          class="px-3 py-2.5 border-b flex items-center gap-2 shrink-0 border-gray-200 dark:border-gray-800"
         >
           <div
             class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
@@ -394,7 +371,7 @@ const boardBusy = computed(() => savingMove.value)
             <AppIcon :icon="col.meta.icon" :size="17" :color="col.meta.color" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="font-semibold text-sm truncate" :style="{ color: 'var(--color-text-primary)' }">
+            <p class="font-semibold text-sm truncate text-gray-800 dark:text-white/90">
               {{ col.label }}
             </p>
           </div>
@@ -425,8 +402,7 @@ const boardBusy = computed(() => savingMove.value)
         >
           <div
             v-if="!boardList(col.value).length"
-            class="flex flex-col items-center justify-center gap-2 py-10 px-3 text-center rounded-lg border border-dashed"
-            :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }"
+            class="flex flex-col items-center justify-center gap-2 py-10 px-3 text-center rounded-lg border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-500"
           >
             <AppIcon :icon="col.meta.icon" :size="28" :color="col.meta.color" class="opacity-40" />
             <p class="text-xs">Arrastra un proceso aquí</p>
@@ -436,17 +412,12 @@ const boardBusy = computed(() => savingMove.value)
             :key="p.id"
             :data-process-id="p.id"
             :data-pipeline-stage="normalizePipelineStage(p.pipelineStage)"
-            class="rounded-lg border p-3 cursor-grab active:cursor-grabbing shadow-sm transition hover:shadow-md flex flex-col"
-            :style="{
-              backgroundColor: 'var(--color-surface)',
-              borderColor: 'var(--color-border)',
-            }"
+            class="rounded-lg border p-3 cursor-grab active:cursor-grabbing shadow-sm transition hover:shadow-md flex flex-col bg-white dark:bg-gray-dark border-gray-200 dark:border-gray-800"
           >
             <div class="flex-1 min-h-0">
               <div class="flex items-start justify-between gap-2 mb-2">
                 <span
-                  class="font-mono text-xs inline-flex items-center gap-1"
-                  :style="{ color: 'var(--color-text-muted)' }"
+                  class="font-mono text-xs inline-flex items-center gap-1 text-gray-400 dark:text-gray-500"
                 >
                   <AppIcon icon="lucide:hash" :size="12" />
                   {{ p.code }}
@@ -456,34 +427,27 @@ const boardBusy = computed(() => savingMove.value)
                 </Badge>
               </div>
               <p
-                class="font-medium text-sm leading-snug flex items-start gap-1.5"
-                :style="{ color: 'var(--color-text-primary)' }"
+                class="font-medium text-sm leading-snug flex items-start gap-1.5 text-gray-800 dark:text-white/90"
               >
                 <AppIcon icon="lucide:user" :size="14" class="shrink-0 mt-0.5" color="var(--color-primary)" />
                 <span class="min-w-0">{{ p.buyer.fullName }}</span>
               </p>
               <p
-                class="text-xs mt-1.5 line-clamp-2 flex items-start gap-1.5"
-                :style="{ color: 'var(--color-text-secondary)' }"
+                class="text-xs mt-1.5 line-clamp-2 flex items-start gap-1.5 text-gray-500 dark:text-gray-400"
               >
                 <AppIcon icon="lucide:building-2" :size="13" class="shrink-0 mt-0.5" color="var(--color-text-muted)" />
                 <span>{{ p.property.code }} — {{ p.property.addressLine }}</span>
               </p>
               <div
                 v-if="p.agent"
-                class="mt-2 flex items-center gap-1.5 text-xs rounded-md px-2 py-1"
-                :style="{
-                  color: 'var(--color-text-muted)',
-                  backgroundColor: 'var(--color-hover)',
-                }"
+                class="mt-2 flex items-center gap-1.5 text-xs rounded-md px-2 py-1 text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-white/5"
               >
                 <AppIcon icon="lucide:user-check" :size="13" color="var(--color-primary)" />
                 {{ p.agent.fullName }}
               </div>
             </div>
             <div
-              class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t"
-              :style="{ borderColor: 'var(--color-border)' }"
+              class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-gray-200 dark:border-gray-800"
               @click.stop
             >
               <BaseButton
@@ -521,24 +485,19 @@ const boardBusy = computed(() => savingMove.value)
       </div>
     </div>
 
-    <div
-      v-if="!isLoading && !boardIsError"
-      class="rounded-xl border px-4 py-3 flex items-start gap-3 text-sm shrink-0"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard v-if="!isLoading && !boardIsError" class="px-4 py-3 flex items-start gap-3 text-sm shrink-0 flex-row">
       <div
-        class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-        :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)' }"
+        class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-brand-500/12"
       >
         <AppIcon icon="lucide:info" :size="18" color="var(--color-primary)" />
       </div>
-      <p :style="{ color: 'var(--color-text-secondary)' }">
-        <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Flujo:</span>
+      <p class="text-gray-500 dark:text-gray-400">
+        <span class="font-medium text-gray-800 dark:text-white/90">Flujo:</span>
         {{ stageOptions.map((o) => o.label).join(' → ') }} (solo avance; no retroceder).
         Si la venta no continúa, use <strong>Venta caída</strong> — anula comisiones pendientes.
         <strong>Seguimiento</strong> y <strong>Ficha</strong> para el detalle del proceso.
       </p>
-    </div>
+    </BaseCard>
 
     <MarkSaleLostModal
       v-model="markLostOpen"
@@ -551,8 +510,7 @@ const boardBusy = computed(() => savingMove.value)
       <template #title>
         <div class="flex items-center gap-2 min-w-0">
           <div
-            class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)' }"
+            class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-brand-500/12"
           >
             <AppIcon icon="lucide:message-square-plus" :size="17" color="var(--color-primary)" />
           </div>

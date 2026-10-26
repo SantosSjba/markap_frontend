@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, useId } from 'vue'
-import AppIcon from '../ui/AppIcon.vue'
+import { CheckCircleIcon, FileIcon, UploadIcon, XIcon } from '../../icons/layout'
+import { fieldErrorClass, fieldHintClass, fieldLabelClass } from './field-classes'
 /**
  * FileDropzone - Input de archivo con zona de arrastrar y soltar, ancho completo
  */
@@ -93,6 +94,14 @@ const files = computed(() => {
 })
 
 const hasFiles = computed(() => files.value.length > 0)
+
+/** Borde y fondo del `DropzoneInput` de TailAdmin según el estado. */
+const zoneClass = computed(() => {
+  if (shownError.value) return 'border-error-500 bg-error-50/60 dark:bg-error-950/20'
+  if (isDragging.value) return 'border-brand-500 bg-brand-50/60 dark:bg-brand-950/20'
+  if (hasFiles.value) return 'border-success-500 bg-success-50/40 dark:bg-success-950/20'
+  return 'border-gray-300 bg-gray-50 hover:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-brand-500'
+})
 
 const displayText = computed(() => {
   if (!hasFiles.value) return props.placeholder
@@ -191,15 +200,10 @@ function clearAll() {
 </script>
 
 <template>
-  <div class="w-full">
-    <label
-      v-if="label"
-      :for="inputId"
-      class="block text-sm font-medium mb-1.5"
-      :style="{ color: 'var(--color-text-primary)' }"
-    >
+  <div class="flex w-full flex-col gap-2">
+    <label v-if="label" :for="inputId" :class="fieldLabelClass">
       {{ label }}
-      <span v-if="required" :style="{ color: 'var(--color-error)' }">*</span>
+      <span v-if="required" class="text-error-500">*</span>
     </label>
 
     <input
@@ -219,100 +223,78 @@ function clearAll() {
       :tabindex="disabled ? -1 : 0"
       :aria-label="label || placeholder"
       :aria-disabled="disabled || undefined"
-      class="w-full rounded-xl border-2 border-dashed transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 flex flex-col items-center justify-center gap-2 px-4 cursor-pointer"
+      class="relative flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-5 text-center transition-all duration-200 outline-hidden focus-visible:border-brand-500 focus-visible:ring-3 focus-visible:ring-brand-500/20"
       :class="[
-        hasFiles ? 'min-h-[88px] py-4' : 'min-h-[140px] py-6',
-        { 'opacity-60 cursor-not-allowed': disabled },
+        zoneClass,
+        hasFiles ? 'py-5' : 'py-7',
+        { 'cursor-not-allowed opacity-60': disabled },
       ]"
-      :style="{
-        borderColor: shownError
-          ? 'var(--color-error)'
-          : isDragging
-            ? 'var(--color-primary)'
-            : hasFiles
-              ? 'var(--color-success, #16a34a)'
-              : 'var(--color-border)',
-        backgroundColor: isDragging
-          ? 'var(--color-primary-muted, rgba(11, 176, 190, 0.08))'
-          : hasFiles
-            ? 'color-mix(in srgb, var(--color-success) 6%, var(--color-surface))'
-            : 'var(--color-surface)',
-        '--ring-color': 'var(--color-primary)',
-      }"
       @click="triggerSelect"
       @keydown.enter.space.prevent="triggerSelect"
       @dragover="onDragOver"
       @dragleave="onDragLeave"
       @drop="onDrop"
     >
-      <AppIcon
-        :icon="hasFiles ? 'lucide:file-check-2' : 'lucide:cloud-upload'"
-        :size="hasFiles ? 32 : 40"
-        :color="
+      <div
+        class="mb-3 flex items-center justify-center rounded-full"
+        :class="[
           hasFiles
-            ? 'var(--color-success, #16a34a)'
-            : isDragging
-              ? 'var(--color-primary)'
-              : 'var(--color-text-muted)'
-        "
-        class="shrink-0 transition-colors duration-200"
-        aria-hidden="true"
-      />
+            ? 'size-12 bg-success-100 text-success-600 dark:bg-success-500/15 dark:text-success-500'
+            : 'size-14 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+        ]"
+      >
+        <CheckCircleIcon v-if="hasFiles" class="size-6" />
+        <UploadIcon v-else class="size-6" />
+      </div>
       <p
-        class="text-sm text-center max-w-md leading-snug"
-        :style="{ color: hasFiles ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }"
+        class="max-w-md text-sm leading-snug"
+        :class="hasFiles ? 'font-medium text-gray-800 dark:text-white/90' : 'text-gray-700 dark:text-gray-400'"
       >
         {{ displayText }}
       </p>
-      <p
-        v-if="accept && !hasFiles"
-        class="text-xs text-center"
-        :style="{ color: 'var(--color-text-muted)' }"
-      >
+      <p v-if="accept && !hasFiles" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
         Formatos aceptados: {{ acceptLabel }}
       </p>
+      <span
+        v-if="!hasFiles && !disabled"
+        class="mt-3 text-sm font-medium text-brand-500 underline hover:text-brand-600"
+      >
+        Buscar archivo
+      </span>
     </div>
 
     <!-- Lista de archivos seleccionados -->
-    <ul
-      v-if="files.length > 0"
-      class="mt-3 space-y-2"
-    >
+    <ul v-if="files.length > 0" class="mt-1 space-y-2">
       <li
         v-for="(file, index) in files"
         :key="`${file.name}-${file.size}-${index}`"
-        class="flex items-center gap-2.5 py-2.5 px-3 rounded-lg text-sm"
-        :style="{
-          backgroundColor: 'var(--color-surface-elevated, var(--color-surface))',
-          color: 'var(--color-text-primary)',
-          border: '1px solid var(--color-border)',
-        }"
+        class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
       >
         <div
-          class="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
-          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
+          class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400"
         >
-          <AppIcon icon="lucide:file-text" :size="16" color="var(--color-primary)" />
+          <FileIcon class="size-4" />
         </div>
-        <span class="flex-1 min-w-0 truncate font-medium" :title="file.name">{{ file.name }}</span>
-        <span class="text-xs shrink-0" :style="{ color: 'var(--color-text-muted)' }">
+        <span
+          class="min-w-0 flex-1 truncate font-medium text-gray-800 dark:text-white/90"
+          :title="file.name"
+        >{{ file.name }}</span>
+        <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">
           {{ fileSize(file.size) }}
         </span>
         <button
           type="button"
-          class="p-1 rounded hover:bg-[var(--color-hover)] transition-colors"
-          :style="{ color: 'var(--color-text-muted)' }"
+          class="flex size-7 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5 dark:hover:text-white"
           aria-label="Quitar archivo"
           @click.stop="removeFile(index)"
         >
-          <AppIcon icon="lucide:x" :size="16" color="currentColor" />
+          <XIcon class="size-4" />
         </button>
       </li>
       <li v-if="files.length > 1">
         <button
           type="button"
-          class="text-xs underline"
-          :style="{ color: 'var(--color-text-muted)' }"
+          class="text-xs font-medium text-error-500 hover:text-error-600 dark:text-error-400"
           @click.stop="clearAll"
         >
           Quitar todos
@@ -320,19 +302,10 @@ function clearAll() {
       </li>
     </ul>
 
-    <p
-      v-if="shownError"
-      role="alert"
-      class="mt-1.5 text-sm"
-      :style="{ color: 'var(--color-error)' }"
-    >
+    <p v-if="shownError" role="alert" :class="fieldErrorClass">
       {{ shownError }}
     </p>
-    <p
-      v-else-if="hint"
-      class="mt-1.5 text-xs"
-      :style="{ color: 'var(--color-text-muted)' }"
-    >
+    <p v-else-if="hint" :class="fieldHintClass">
       {{ hint }}
     </p>
   </div>

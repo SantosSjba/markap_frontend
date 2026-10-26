@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { computed, ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -102,7 +105,7 @@ function submitForm() {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:file-badge"
       title="Trazabilidad CPE"
@@ -121,32 +124,21 @@ function submitForm() {
       <FormSelect v-model="kindFilter" :options="kindOptions" class="w-full sm:w-56" />
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
-    <div
-      v-else
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Fecha</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Tipo</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Referencia</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Estado</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">CDR / Hash</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in rows"
-            :key="row.id"
-            class="border-b last:border-b-0"
-            :style="{ borderColor: 'var(--color-border)' }"
-          >
+    <BaseCard v-else padding="none" class="block overflow-hidden">
+      <DataTable
+        :columns="[
+          { key: 'c0', label: 'Fecha' },
+          { key: 'c1', label: 'Tipo' },
+          { key: 'c2', label: 'Referencia' },
+          { key: 'c3', label: 'Estado' },
+          { key: 'c4', label: 'CDR / Hash' },
+        ]"
+        :data="rows"
+        empty-text="Sin registros CPE para el periodo"
+      >
+        <template #row="{ row }">
             <td class="py-2.5 px-4 text-xs">{{ formatDateTime((row as ContabilidadCpeLogDTO).createdAt) }}</td>
             <td class="py-2.5 px-4">{{ (row as ContabilidadCpeLogDTO).documentKind }}</td>
             <td class="py-2.5 px-4 font-mono">{{ (row as ContabilidadCpeLogDTO).documentRef }}</td>
@@ -158,15 +150,9 @@ function submitForm() {
             <td class="py-2.5 px-4 text-xs font-mono truncate max-w-[200px]" :title="(row as ContabilidadCpeLogDTO).cdrReference ?? (row as ContabilidadCpeLogDTO).xmlHash ?? ''">
               {{ (row as ContabilidadCpeLogDTO).cdrReference ?? (row as ContabilidadCpeLogDTO).xmlHash ?? '—' }}
             </td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td colspan="5" class="py-8 text-center" :style="{ color: 'var(--color-text-muted)' }">
-              Sin registros CPE para el periodo
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        </template>
+      </DataTable>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" title="Registrar trazabilidad CPE" size="md">
       <form class="space-y-4" @submit.prevent="submitForm">

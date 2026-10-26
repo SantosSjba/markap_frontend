@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
 import { useService } from '@shared/presentation/di/services'
 import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
@@ -9,7 +13,6 @@ import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
@@ -195,21 +198,22 @@ const {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Costos de documentación</h1>
-      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+    <PageHeader
+      title="Costos de documentación"
+    >
+      <template #actions>
+        <p class="text-sm mt-1 text-gray-500 dark:text-gray-400">
         Notaría, registros u otros gastos ligados al cierre; afectan la rentabilidad neta estimada.
       </p>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      class="rounded-xl border p-4 space-y-3"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+    <FormSectionCard
+      title="Rentabilidad por cierre (precio − gastos − comisión)"
+      dense
     >
-      <h2 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-        Rentabilidad por cierre (precio − gastos − comisión)
-      </h2>
-      <div class="flex flex-wrap gap-3 items-end">
+      <div class="space-y-3">
+        <div class="flex flex-wrap gap-3 items-end">
         <div class="min-w-[280px] flex-1">
           <FormSelect
             v-model="profitabilityClosingId"
@@ -219,44 +223,42 @@ const {
           />
         </div>
       </div>
-      <div v-if="!profitabilityClosingId" class="text-sm opacity-70">Elija un cierre para ver el resumen.</div>
-      <template v-else>
-        <div v-if="profitLoading" class="flex py-4 justify-center">
-          <AppIcon icon="svg-spinners:ring-resize" :size="24" color="var(--color-primary)" />
-        </div>
+        <div v-if="!profitabilityClosingId" class="text-sm opacity-70">Elija un cierre para ver el resumen.</div>
+        <template v-else>
+        <LoadingState v-if="profitLoading" class="py-4" />
         <div
           v-else-if="profitQueryError"
           class="flex flex-col sm:flex-row sm:items-center gap-2 py-4 text-sm"
         >
-          <span style="color: var(--color-error)">{{ getApiErrorMessage(profitFetchError) }}</span>
+          <span class="text-error-500 dark:text-error-400">{{ getApiErrorMessage(profitFetchError) }}</span>
           <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="self-start shrink-0" @click="() => refetchProfit()">Reintentar</BaseButton>
         </div>
         <div
           v-else-if="profit"
-          class="grid sm:grid-cols-2 gap-3 text-sm"
-          :style="{ color: 'var(--color-text-secondary)' }"
+          class="grid sm:grid-cols-2 gap-3 text-sm text-gray-500 dark:text-gray-400"
         >
         <p>
-          <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Precio final:</span>
+          <span class="font-medium text-gray-800 dark:text-white/90">Precio final:</span>
           S/ {{ profit.finalPrice.toLocaleString('es-PE') }}
         </p>
         <p>
-          <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Gastos documentación:</span>
+          <span class="font-medium text-gray-800 dark:text-white/90">Gastos documentación:</span>
           S/ {{ profit.documentationCostsTotal.toLocaleString('es-PE') }}
         </p>
         <p>
-          <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Comisión:</span>
+          <span class="font-medium text-gray-800 dark:text-white/90">Comisión:</span>
           S/ {{ profit.commissionAmount.toLocaleString('es-PE') }}
           <Badge v-if="profit.commissionStatus" variant="neutral" class="ml-1">{{ profit.commissionStatus }}</Badge>
         </p>
         <p>
-          <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Neto estimado:</span>
+          <span class="font-medium text-gray-800 dark:text-white/90">Neto estimado:</span>
           S/ {{ profit.netEstimated.toLocaleString('es-PE') }}
         </p>
         </div>
         <p v-else class="text-sm opacity-70">No hay datos de rentabilidad para este cierre.</p>
       </template>
-    </div>
+      </div>
+    </FormSectionCard>
 
     <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
       <div class="min-w-[240px] flex-1 max-w-md">
@@ -267,18 +269,13 @@ const {
       </BaseButton>
     </div>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <div
         v-else-if="listQueryError"
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin costos registrados.">
@@ -299,7 +296,7 @@ const {
           </td>
         </template>
       </DataTable>
-      <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="!isLoading && !listQueryError" class="border-t p-2 border-gray-200 dark:border-gray-800">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"
@@ -307,20 +304,20 @@ const {
           @update:page-size="(s: number) => { listParams.limit = s; listParams.page = 1 }"
         />
       </div>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showNew" title="Registrar costo de documentación" size="md">
       <form class="space-y-4" @submit.prevent="onSubmitCost">
         <FormSelect label="Cierre de venta" v-bind="costBinds.saleClosingId" :options="closingSelectOptions" />
-        <p v-if="costErrors.saleClosingId" class="text-sm text-red-600">{{ costErrors.saleClosingId }}</p>
+        <p v-if="costErrors.saleClosingId" class="text-sm text-error-600 dark:text-error-500">{{ costErrors.saleClosingId }}</p>
 
         <FormSelect label="Tipo" v-bind="costBinds.costType" :options="costTypeOptions" />
 
         <FormInput label="Monto" type="number" step="0.01" v-bind="costBinds.amount" />
-        <p v-if="costErrors.amount" class="text-sm text-red-600">{{ costErrors.amount }}</p>
+        <p v-if="costErrors.amount" class="text-sm text-error-600 dark:text-error-500">{{ costErrors.amount }}</p>
 
         <FormInput label="Fecha del gasto" type="date" v-bind="costBinds.expenseDate" />
-        <p v-if="costErrors.expenseDate" class="text-sm text-red-600">{{ costErrors.expenseDate }}</p>
+        <p v-if="costErrors.expenseDate" class="text-sm text-error-600 dark:text-error-500">{{ costErrors.expenseDate }}</p>
 
         <FormTextarea label="Descripción (opcional)" v-bind="costBinds.description" />
 

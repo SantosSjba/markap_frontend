@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { computed } from 'vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -58,7 +60,7 @@ function printReport() {
 </script>
 
 <template>
-  <div class="financial-report-print w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6 w-full">
+  <div class="financial-report-print w-full space-y-6">
     <PageHeader
       icon="lucide:line-chart"
       title="Análisis financiero"
@@ -83,37 +85,29 @@ function printReport() {
       </template>
     </PageHeader>
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
     <div v-else-if="isError" class="text-center py-8 print:hidden">
-      <button type="button" class="text-sm underline" @click="refetch()">Reintentar</button>
+      <BaseButton @click="refetch()" variant="link">Reintentar</BaseButton>
     </div>
 
     <template v-else-if="data">
       <p
         v-if="!hasAnyValue"
-        class="text-sm rounded-lg border px-4 py-3"
-        :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }"
+        class="text-sm rounded-lg border px-4 py-3 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400"
       >
         Sin movimientos publicados en el periodo: los ratios se calcularán cuando haya asientos y saldos en el libro mayor.
       </p>
 
       <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <div
-          v-for="ratio in data.ratios"
-          :key="ratio.key"
-          class="rounded-xl border p-4 flex flex-col gap-2 min-h-[7.5rem]"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
+        <BaseCard v-for="ratio in data.ratios" :key="ratio.key" padding="sm" class="flex flex-col gap-2 min-h-[7.5rem]">
           <div class="min-w-0">
             <p class="font-semibold text-sm leading-snug">{{ ratio.label }}</p>
-            <p class="text-xs mt-1 line-clamp-2" :style="{ color: 'var(--color-text-secondary)' }">
+            <p class="text-xs mt-1 line-clamp-2 text-gray-500 dark:text-gray-400">
               {{ ratio.description }}
             </p>
           </div>
@@ -123,13 +117,12 @@ function printReport() {
             </p>
             <p
               v-if="showPrior && ratio.priorValue != null"
-              class="text-xs mt-1 font-mono tabular-nums"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="text-xs mt-1 font-mono tabular-nums text-gray-400 dark:text-gray-500"
             >
               Periodo ant.: {{ formatValue(ratio.unit, ratio.priorValue) }}
             </p>
           </div>
-        </div>
+        </BaseCard>
       </div>
     </template>
   </div>

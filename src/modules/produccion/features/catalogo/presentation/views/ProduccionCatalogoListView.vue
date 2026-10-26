@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import { produccionCatalogRepositoryKey } from '../../application/ports/catalog.port'
 import { useService } from '@shared/presentation/di/services'
 import { formatDateTime, toCalendarDateString } from '@shared/utils/formatters'
@@ -171,20 +176,16 @@ async function handleExport() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Catálogo de muebles
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Fichas de producto para costeo, cotizaciones y órdenes de trabajo.
-        </p>
-        <p v-if="stats" class="text-xs mt-2" :style="{ color: 'var(--color-text-secondary)' }">
-          {{ stats.total }} muebles · {{ stats.active }} activos · {{ stats.inactive }} inactivos
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2 shrink-0">
+  <div class="space-y-6">
+    <PageHeader
+      title="Catálogo de muebles"
+    >
+      <template #subtitle>
+        Fichas de producto para costeo, cotizaciones y órdenes de trabajo.
+<span v-if="stats" class="mt-2 block">{{ stats.total }} muebles · {{ stats.active }} activos · {{ stats.inactive }} inactivos</span>
+      </template>
+      <template #actions>
+        <div class="flex flex-wrap gap-2 shrink-0">
         <BaseButton
           variant="outline"
           class="flex items-center gap-2"
@@ -200,20 +201,16 @@ async function handleExport() {
           Nuevo mueble
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <div
         v-else-if="listQueryError"
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
         <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <template v-else>
@@ -224,74 +221,35 @@ async function handleExport() {
             </div>
             <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
               <div class="w-full sm:w-[200px] min-w-0">
-                <select
-                  v-model="categoryFilter"
-                  class="w-full px-3 py-2 rounded-lg border text-sm"
-                  :style="{
-                    borderColor: 'var(--color-border)',
-                    background: 'var(--color-surface)',
-                    color: 'var(--color-text-primary)',
-                  }"
-                >
-                  <option value="">Todas las categorías</option>
-                  <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
-                </select>
+                <FormSelect
+                  :model-value="categoryFilter"
+                  @update:model-value="categoryFilter = ($event as string | null) ?? ''"
+                  :options="[{ value: '', label: 'Todas las categorías' }, ...categoryOptions]"
+                />
               </div>
               <div class="w-full sm:w-[160px] min-w-0">
-                <select
+                <FormSelect
                   v-model="activeFilter"
-                  class="w-full px-3 py-2 rounded-lg border text-sm"
-                  :style="{
-                    borderColor: 'var(--color-border)',
-                    background: 'var(--color-surface)',
-                    color: 'var(--color-text-primary)',
-                  }"
-                >
-                  <option value="all">Todos</option>
-                  <option value="active">Activos</option>
-                  <option value="inactive">Inactivos</option>
-                </select>
+                  :options="[{ value: 'all', label: 'Todos' }, { value: 'active', label: 'Activos' }, { value: 'inactive', label: 'Inactivos' }]"
+                />
               </div>
             </div>
           </template>
           <template #row="{ row }">
             <td class="py-3 px-4">
-              <button
-                type="button"
-                class="font-medium text-left hover:underline"
-                :style="{ color: 'var(--color-primary)' }"
-                @click="goDetail(row as ProduccionFurnitureListItem)"
-              >
-                {{ (row as ProduccionFurnitureListItem).code }}
-              </button>
+              <BaseButton @click="goDetail(row as ProduccionFurnitureListItem)" variant="link" class="font-medium">{{ (row as ProduccionFurnitureListItem).code }}</BaseButton>
             </td>
             <td class="py-3 px-4">
-              <button type="button" class="text-left" @click="goDetail(row as ProduccionFurnitureListItem)">
-                <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                  {{ (row as ProduccionFurnitureListItem).name }}
-                </span>
-              </button>
+              <BaseButton variant="link" class="font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400" @click="goDetail(row as ProduccionFurnitureListItem)">{{ (row as ProduccionFurnitureListItem).name }}</BaseButton>
             </td>
-            <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
               {{ (row as ProduccionFurnitureListItem).category }}
             </td>
             <td class="py-3 px-4 text-sm">
               {{ formatSol((row as ProduccionFurnitureListItem).referencePrice) }}
             </td>
             <td class="py-3 px-4 text-sm">
-              <span
-                class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
-                :style="{
-                  background: (row as ProduccionFurnitureListItem).isActive
-                    ? 'var(--color-success-subtle)'
-                    : 'var(--color-border)',
-                  color: (row as ProduccionFurnitureListItem).isActive
-                    ? 'var(--color-success)'
-                    : 'var(--color-text-secondary)',
-                }"
-              >
-                {{ (row as ProduccionFurnitureListItem).isActive ? 'Activo' : 'Inactivo' }}
-              </span>
+              <Badge :variant="(row as ProduccionFurnitureListItem).isActive ? 'success' : 'neutral'">{{ (row as ProduccionFurnitureListItem).isActive ? 'Activo' : 'Inactivo' }}</Badge>
             </td>
             <td class="py-3 px-4 text-sm">{{ (row as ProduccionFurnitureListItem).bomLineCount }}</td>
             <td class="py-3 px-4 text-sm">{{ (row as ProduccionFurnitureListItem).imageCount }}</td>
@@ -300,7 +258,7 @@ async function handleExport() {
             </td>
           </template>
         </DataTable>
-        <div v-if="!isLoading && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+        <div v-if="!isLoading && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
           <BasePagination
             v-bind="paginationProps"
             :show-page-size="true"
@@ -309,25 +267,25 @@ async function handleExport() {
           />
         </div>
       </template>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showDeleteModal" :closable="true" size="sm" @close="closeDeleteModal">
       <template #title>
         <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
-            <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error);" />
+          <div class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15">
+            <AppIcon class="text-error-500 dark:text-error-400" icon="lucide:trash-2" :size="16" />
           </div>
-          <span class="text-base font-semibold" style="color: var(--color-text-primary);">Eliminar mueble</span>
+          <span class="text-base font-semibold text-gray-800 dark:text-white/90">Eliminar mueble</span>
         </div>
       </template>
       <div class="p-4 space-y-3">
-        <p class="text-sm" style="color: var(--color-text-secondary);">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           ¿Eliminar del catálogo
-          <span class="font-semibold" style="color: var(--color-text-primary);">{{ deleteTarget?.code }}</span>
+          <span class="font-semibold text-gray-800 dark:text-white/90">{{ deleteTarget?.code }}</span>
           — {{ deleteTarget?.name }}?
         </p>
       </div>
-      <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+      <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
         <BaseButton variant="danger" :loading="isDeleting" @click="executeDelete">
           <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />

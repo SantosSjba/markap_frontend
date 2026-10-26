@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { formatDateTime } from '@shared/utils/formatters'
 import { computed, ref, toRef, watch } from 'vue'
 import { useForm } from 'vee-validate'
@@ -157,10 +158,8 @@ async function removePayment(id: string) {
 
 <template>
   <div class="space-y-6">
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
-    <div v-else-if="isError || !settlement" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+    <LoadingState v-if="isLoading" />
+    <div v-else-if="isError || !settlement" class="text-center py-12 text-sm text-gray-400 dark:text-gray-500">
       No se pudo cargar la liquidación.
     </div>
     <template v-else>
@@ -191,15 +190,15 @@ async function removePayment(id: string) {
         icon="lucide:pie-chart"
       >
         <dl class="grid sm:grid-cols-2 gap-4 text-sm">
-          <div class="flex justify-between gap-4 p-3 rounded-lg" :style="{ background: 'var(--color-hover)' }">
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Total cobrado al cliente</dt>
-            <dd class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+          <div class="flex justify-between gap-4 p-3 rounded-lg bg-gray-100 dark:bg-white/5">
+            <dt class="text-gray-500 dark:text-gray-400">Total cobrado al cliente</dt>
+            <dd class="font-semibold text-gray-800 dark:text-white/90">
               {{ formatSol(settlement.totalClientPaid) }}
             </dd>
           </div>
-          <div class="flex justify-between gap-4 p-3 rounded-lg" :style="{ background: 'var(--color-hover)' }">
-            <dt :style="{ color: 'var(--color-text-secondary)' }">Abonos a proveedores</dt>
-            <dd class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+          <div class="flex justify-between gap-4 p-3 rounded-lg bg-gray-100 dark:bg-white/5">
+            <dt class="text-gray-500 dark:text-gray-400">Abonos a proveedores</dt>
+            <dd class="font-semibold text-gray-800 dark:text-white/90">
               {{ formatSol(settlement.totalSupplierPayments) }}
             </dd>
           </div>
@@ -212,14 +211,14 @@ async function removePayment(id: string) {
         subtitle="Totales de precio al cliente por zona del proyecto"
         icon="lucide:layers"
       >
-        <dl class="divide-y" :style="{ borderColor: 'var(--color-border)' }">
+        <dl class="divide-y border-gray-200 dark:border-gray-800">
           <div
             v-for="section in budget.sections"
             :key="section.id"
             class="flex justify-between gap-4 py-2.5 text-sm"
           >
-            <dt :style="{ color: 'var(--color-text-secondary)' }">{{ section.name }}</dt>
-            <dd class="font-medium tabular-nums" :style="{ color: 'var(--color-text-primary)' }">
+            <dt class="text-gray-500 dark:text-gray-400">{{ section.name }}</dt>
+            <dd class="font-medium tabular-nums text-gray-800 dark:text-white/90">
               {{ formatSol(section.sectionTotal) }}
             </dd>
           </div>

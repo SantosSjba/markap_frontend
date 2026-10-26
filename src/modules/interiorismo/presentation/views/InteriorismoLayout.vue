@@ -1,25 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import AppLayoutSidebar from '@app/layouts/components/AppLayoutSidebar.vue'
-import AppHeader from '@app/layouts/components/AppHeader.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { computed } from 'vue'
+import AdminLayout from '@app/layouts/AdminLayout.vue'
 import { useInteriorismoAppLayout } from '../composables/useInteriorismoAppLayout'
+/**
+ * InteriorismoLayout — shell de TailAdmin (`AdminLayout`) con los menús de la BD por slug `interiorismo`.
+ * Notificaciones: filtradas a esta app en el header.
+ */
+
 const { application, menus, menusLoading } = useInteriorismoAppLayout()
-
-const isSidebarCollapsed = ref(false)
-const isMobileSidebarOpen = ref(false)
-
-const toggleSidebar = () => {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value
-}
-
-const toggleMobileSidebar = () => {
-  isMobileSidebarOpen.value = !isMobileSidebarOpen.value
-}
-
-const closeMobileSidebar = () => {
-  isMobileSidebarOpen.value = false
-}
 
 const applicationInfo = computed(() =>
   application.value
@@ -29,60 +17,19 @@ const applicationInfo = computed(() =>
         icon: application.value.icon,
         color: application.value.color,
       }
-    : {
-        name: 'Carolina Zavala Interiorismo',
-        slug: 'interiorismo',
-        icon: 'palette',
-        color: '#E5533D',
-      },
+    : { name: 'Carolina Zavala Interiorismo', slug: 'interiorismo', icon: 'palette', color: '#E5533D' },
 )
 </script>
 
 <template>
-  <div class="min-h-screen" style="background-color: var(--color-background);">
-    <AppLayoutSidebar
-      :menus="menus"
-      :application="applicationInfo"
-      back-url="/applications"
-      :is-collapsed="isSidebarCollapsed"
-      :is-mobile-open="isMobileSidebarOpen"
-      @close-mobile="closeMobileSidebar"
-    />
-
-    <div
-      :class="[
-        'transition-all duration-300 ease-in-out',
-        isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64',
-      ]"
-    >
-      <AppHeader
-        :is-sidebar-collapsed="isSidebarCollapsed"
-        minimal-user-menu
-        profile-to="/interiorismo/perfil"
-        notifications-application-slug="interiorismo"
-        @toggle-sidebar="toggleSidebar"
-        @toggle-mobile-sidebar="toggleMobileSidebar"
-      />
-
-      <main class="p-4 lg:p-6 mt-16">
-        <div v-if="menusLoading" class="flex justify-center py-12">
-          <AppIcon icon="line-md:loading-loop" :size="32" color="var(--color-primary)" />
-        </div>
-        <router-view v-else />
-      </main>
-    </div>
-
-    <Transition
-      enter-active-class="transition-opacity duration-300"
-      leave-active-class="transition-opacity duration-200"
-      enter-from-class="opacity-0"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="isMobileSidebarOpen"
-        class="fixed inset-0 bg-black/50 z-30 lg:hidden"
-        @click="closeMobileSidebar"
-      />
-    </Transition>
-  </div>
+  <AdminLayout
+    :menus="menus"
+    :application="applicationInfo"
+    :loading="menusLoading"
+    minimal-user-menu
+    profile-to="/interiorismo/perfil"
+    notifications-application-slug="interiorismo"
+  >
+    <router-view />
+  </AdminLayout>
 </template>

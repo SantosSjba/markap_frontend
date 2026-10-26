@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
@@ -56,15 +59,18 @@ function goDetail(r: ProduccionOrderListItem) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div>
-      <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Pedidos</h1>
-      <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+  <div class="space-y-6">
+    <PageHeader
+      title="Pedidos"
+    >
+      <template #actions>
+        <p class="text-sm mt-0.5 text-gray-500 dark:text-gray-400">
         Pedidos confirmados — producción y entrega.
       </p>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin pedidos." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -79,14 +85,7 @@ function goDetail(r: ProduccionOrderListItem) {
         </template>
         <template #row="{ row }">
           <td class="py-3 px-4">
-            <button
-              type="button"
-              class="font-mono text-sm font-medium hover:underline"
-              :style="{ color: 'var(--color-primary)' }"
-              @click="goDetail(row as ProduccionOrderListItem)"
-            >
-              {{ (row as ProduccionOrderListItem).code }}
-            </button>
+            <BaseButton @click="goDetail(row as ProduccionOrderListItem)" variant="link" class="font-mono font-medium">{{ (row as ProduccionOrderListItem).code }}</BaseButton>
           </td>
           <td class="py-3 px-4 text-sm">{{ (row as ProduccionOrderListItem).clientName }}</td>
           <td class="py-3 px-4 text-sm font-medium" :class="orderStatusClass((row as ProduccionOrderListItem).status)">
@@ -97,6 +96,6 @@ function goDetail(r: ProduccionOrderListItem) {
           <td class="py-3 px-4 text-sm font-medium">{{ formatSol((row as ProduccionOrderListItem).totalAmount) }}</td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
   </div>
 </template>

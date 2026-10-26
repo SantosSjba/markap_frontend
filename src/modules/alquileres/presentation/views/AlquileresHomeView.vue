@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import { computed, ref } from 'vue'
 import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
 import { useRentalStats } from '../../features/alquileres/presentation/composables/useRentals'
@@ -9,7 +12,7 @@ import {
   useMonthlyMetrics,
   useRentalsByMonth,
 } from '../../features/reportes/presentation/composables/useReportes'
-import DashboardKpiCard from '../components/DashboardKpiCard.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import DashboardAlertasList from '../components/DashboardAlertasList.vue'
 import DashboardBarChart from '../components/DashboardBarChart.vue'
 import DashboardAccionesRapidas from '../components/DashboardAccionesRapidas.vue'
@@ -80,21 +83,15 @@ function formatPercent(val: number) {
 </script>
 
 <template>
-  <div class="space-y-6 animate-fade-in">
+  <div class="space-y-6">
 
     <!-- ── Greeting header ── -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          {{ greeting }}, {{ firstName }} 👋
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Resumen de tu cartera de alquileres
-        </p>
-      </div>
-
-      <!-- Fecha -->
-      <p class="text-sm shrink-0" :style="{ color: 'var(--color-text-muted)' }">
+    <PageHeader
+      :title="`${greeting}, ${firstName} 👋`"
+      subtitle="Resumen de tu cartera de alquileres"
+    >
+      <template #actions>
+        <p class="text-sm shrink-0 text-gray-400 dark:text-gray-500">
         {{
           formatDate(new Date(), {
             weekday: 'long',
@@ -104,94 +101,87 @@ function formatPercent(val: number) {
           })
         }}
       </p>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- ── KPI row ── -->
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Contratos totales -->
-      <DashboardKpiCard
+      <StatsCard
         title="Contratos Totales"
         :value="stats.total"
         :loading="loading"
-        accent="primary"
       >
         <template #icon><AppIcon icon="lucide:file-text" :size="20" /></template>
-      </DashboardKpiCard>
+      </StatsCard>
 
       <!-- Vigentes -->
-      <DashboardKpiCard
+      <StatsCard
         title="Vigentes"
         :value="stats.vigentes"
         :loading="loading"
-        accent="success"
       >
         <template #icon><AppIcon icon="lucide:circle-check" :size="20" /></template>
-      </DashboardKpiCard>
+      </StatsCard>
 
       <!-- Por vencer -->
-      <DashboardKpiCard
+      <StatsCard
         title="Por Vencer (30 días)"
         :value="stats.porVencer"
         :loading="loading"
-        accent="warning"
       >
         <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" /></template>
-      </DashboardKpiCard>
+      </StatsCard>
 
       <!-- Tasa de ocupación -->
-      <DashboardKpiCard
+      <StatsCard
         title="Tasa de Ocupación"
         :value="formatPercent(metrics.tasaOcupacion)"
         :loading="loading"
-        accent="gold"
       >
         <template #icon><AppIcon icon="lucide:home" :size="20" /></template>
-      </DashboardKpiCard>
+      </StatsCard>
     </div>
 
     <!-- ── KPI row 2 (métricas operativas) ── -->
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Tasa de cobranza -->
-      <DashboardKpiCard
+      <StatsCard
         title="Tasa de Cobranza"
         :value="formatPercent(metrics.tasaCobranza)"
         subtitle="mes actual"
         :loading="loading"
-        accent="success"
       >
         <template #icon><AppIcon icon="lucide:circle-dollar-sign" :size="20" /></template>
-      </DashboardKpiCard>
+      </StatsCard>
 
       <!-- Clientes activos -->
-      <DashboardKpiCard
+      <StatsCard
         title="Clientes Activos"
         :value="summary.clientesActivos"
         :loading="loading"
-        accent="primary"
       >
         <template #icon><AppIcon icon="lucide:users" :size="20" /></template>
-      </DashboardKpiCard>
+      </StatsCard>
 
       <!-- Propiedades sin contrato -->
-      <DashboardKpiCard
+      <StatsCard
         title="Propiedades Libres"
         :value="summary.propiedadesSinContrato"
         subtitle="sin contrato activo"
         :loading="loading"
-        accent="warning"
       >
         <template #icon><AppIcon icon="lucide:door-open" :size="20" /></template>
-      </DashboardKpiCard>
+      </StatsCard>
 
       <!-- Contratos renovados -->
-      <DashboardKpiCard
+      <StatsCard
         title="Renovados este mes"
         :value="metrics.contratosRenovados"
         :loading="loading"
-        accent="gold"
       >
         <template #icon><AppIcon icon="lucide:refresh-cw" :size="20" /></template>
-      </DashboardKpiCard>
+      </StatsCard>
     </div>
 
     <!-- ── Acciones rápidas ── -->
@@ -211,21 +201,7 @@ function formatPercent(val: number) {
       <!-- Gráfico: 3/5 -->
       <div class="lg:col-span-3 flex flex-col gap-3">
         <!-- Tabs selector -->
-        <div class="flex items-center gap-1 p-1 rounded-lg self-start" :style="{ backgroundColor: 'var(--color-background)' }">
-          <button
-            v-for="tab in chartTabs"
-            :key="tab.id"
-            class="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150"
-            :style="{
-              backgroundColor: chartMode === tab.id ? 'var(--color-surface)' : 'transparent',
-              color: chartMode === tab.id ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              boxShadow: chartMode === tab.id ? 'var(--shadow-sm)' : 'none',
-            }"
-            @click="chartMode = tab.id"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
+        <BaseTabs v-model="chartMode" :tabs="chartTabs" variant="segmented" class="self-start" />
 
         <DashboardBarChart
           :data="rentalsByMonth"
@@ -238,76 +214,64 @@ function formatPercent(val: number) {
     </div>
 
     <!-- ── Estado de contratos (donut visual simple) ── -->
-    <div
-      class="rounded-xl border p-5"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-        boxShadow: 'var(--shadow-card)',
-      }"
+    <FormSectionCard
+      title="Estado de Contratos"
+      dense
     >
-      <h3 class="text-sm font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
-        Estado de Contratos
-      </h3>
       <div v-if="loading" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div
           v-for="i in 4"
           :key="i"
-          class="h-16 rounded-lg animate-pulse"
-          :style="{ backgroundColor: 'var(--color-border)' }"
+          class="h-16 rounded-lg animate-pulse bg-gray-200 dark:bg-gray-800"
         />
       </div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <!-- Vigentes -->
         <div
-          class="flex flex-col items-center p-4 rounded-xl gap-1"
-          :style="{ backgroundColor: 'var(--color-success-light)' }"
+          class="flex flex-col items-center p-4 rounded-xl gap-1 bg-success-50 dark:bg-success-500/15"
         >
-          <span class="text-2xl font-bold" :style="{ color: 'var(--color-success)' }">
+          <span class="text-2xl font-bold text-success-600 dark:text-success-500">
             {{ contractStatusQuery.data.value?.vigentes ?? 0 }}
           </span>
-          <span class="text-xs font-medium text-center" :style="{ color: 'var(--color-success)' }">
+          <span class="text-xs font-medium text-center text-success-600 dark:text-success-500">
             Vigentes (90+ días)
           </span>
         </div>
         <!-- Por vencer (61-90d) -->
         <div
-          class="flex flex-col items-center p-4 rounded-xl gap-1"
-          :style="{ backgroundColor: 'var(--color-info-light, #EFF6FF)' }"
+          class="flex flex-col items-center p-4 rounded-xl gap-1 bg-blue-light-50 dark:bg-blue-light-500/15"
         >
-          <span class="text-2xl font-bold" :style="{ color: 'var(--color-info, #3B82F6)' }">
+          <span class="text-2xl font-bold text-blue-light-500">
             {{ contractStatusQuery.data.value?.porVencer ?? 0 }}
           </span>
-          <span class="text-xs font-medium text-center" :style="{ color: 'var(--color-info, #3B82F6)' }">
+          <span class="text-xs font-medium text-center text-blue-light-500">
             Por Vencer (61-90d)
           </span>
         </div>
         <!-- Próximos (31-60d) -->
         <div
-          class="flex flex-col items-center p-4 rounded-xl gap-1"
-          :style="{ backgroundColor: 'var(--color-warning-light)' }"
+          class="flex flex-col items-center p-4 rounded-xl gap-1 bg-warning-50 dark:bg-warning-500/15"
         >
-          <span class="text-2xl font-bold" :style="{ color: 'var(--color-warning)' }">
+          <span class="text-2xl font-bold text-warning-600 dark:text-orange-400">
             {{ contractStatusQuery.data.value?.proximos ?? 0 }}
           </span>
-          <span class="text-xs font-medium text-center" :style="{ color: '#92600E' }">
+          <span class="text-xs font-medium text-center text-warning-600 dark:text-orange-400">
             Próximos (31-60d)
           </span>
         </div>
         <!-- Urgentes (0-30d) -->
         <div
-          class="flex flex-col items-center p-4 rounded-xl gap-1"
-          :style="{ backgroundColor: 'var(--color-error-light)' }"
+          class="flex flex-col items-center p-4 rounded-xl gap-1 bg-error-50 dark:bg-error-500/15"
         >
-          <span class="text-2xl font-bold" :style="{ color: 'var(--color-error)' }">
+          <span class="text-2xl font-bold text-error-500 dark:text-error-400">
             {{ contractStatusQuery.data.value?.urgentes ?? 0 }}
           </span>
-          <span class="text-xs font-medium text-center" :style="{ color: 'var(--color-error)' }">
+          <span class="text-xs font-medium text-center text-error-500 dark:text-error-400">
             Urgentes (0-30d)
           </span>
         </div>
       </div>
-    </div>
+    </FormSectionCard>
 
   </div>
 </template>

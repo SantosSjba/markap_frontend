@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
 import { computed } from 'vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -73,27 +75,23 @@ const busy = computed(() => initializing.value || loading.value)
 
 <template>
   <section class="space-y-4 w-full">
-    <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+    <p class="text-sm text-gray-500 dark:text-gray-400">
       Empresa (RUC) y periodo contable activo para todas las operaciones del módulo: asientos,
       compras, ventas, tributos, libros y reportes.
     </p>
 
     <div
       v-if="initError"
-      class="flex flex-col gap-2 rounded-lg border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-      :style="{ borderColor: 'var(--color-danger)', backgroundColor: 'var(--color-danger-soft)' }"
+      class="flex flex-col gap-2 rounded-lg border px-4 py-3 sm:flex-row sm:items-center sm:justify-between border-error-500 bg-error-50 dark:bg-error-500/15"
     >
-      <p class="text-sm" :style="{ color: 'var(--color-danger)' }">
+      <p class="text-sm text-error-500 dark:text-error-400">
         No se pudo inicializar: {{ initError }}
       </p>
       <BaseButton variant="secondary" size="sm" @click="retryInit">Reintentar</BaseButton>
     </div>
 
-    <div
-      class="rounded-xl border p-4 sm:p-5 space-y-5 w-full"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <div class="flex items-center gap-2" :style="{ color: 'var(--color-text-secondary)' }">
+    <BaseCard padding="sm" class="block space-y-5 w-full">
+      <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
         <AppIcon icon="lucide:settings-2" :size="18" color="var(--color-primary)" />
         <span class="font-medium">Contexto contable</span>
         <AppIcon
@@ -106,7 +104,7 @@ const busy = computed(() => initializing.value || loading.value)
 
       <div class="grid gap-5 lg:grid-cols-3">
         <div class="space-y-1.5 lg:col-span-1">
-          <span class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">
+          <span class="text-xs font-medium text-gray-400 dark:text-gray-500">
             Empresa / RUC
           </span>
           <FormSelect
@@ -118,15 +116,14 @@ const busy = computed(() => initializing.value || loading.value)
           />
           <span
             v-if="activeEntity"
-            class="text-xs font-mono block"
-            :style="{ color: 'var(--color-text-muted)' }"
+            class="text-xs font-mono block text-gray-400 dark:text-gray-500"
           >
             Código interno: {{ activeEntity.code }}
           </span>
         </div>
 
         <div class="space-y-1.5">
-          <span class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">Año</span>
+          <span class="text-xs font-medium text-gray-400 dark:text-gray-500">Año</span>
           <FormSelect
             v-model="selectedYear"
             :options="yearOptions"
@@ -136,7 +133,7 @@ const busy = computed(() => initializing.value || loading.value)
         </div>
 
         <div class="space-y-1.5">
-          <span class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">
+          <span class="text-xs font-medium text-gray-400 dark:text-gray-500">
             Periodo (mes)
           </span>
           <FormSelect
@@ -146,22 +143,9 @@ const busy = computed(() => initializing.value || loading.value)
             :disabled="busy || !periods.length"
             :loading="busy"
           />
-          <span
-            v-if="activePeriod"
-            class="inline-flex text-xs px-2 py-0.5 rounded-full"
-            :style="{
-              backgroundColor:
-                activePeriod.status === 'OPEN'
-                  ? 'var(--color-primary-soft)'
-                  : 'var(--color-surface-elevated)',
-              color:
-                activePeriod.status === 'OPEN' ? 'var(--color-primary)' : 'var(--color-text-muted)',
-            }"
-          >
-            {{ CONTABILIDAD_PERIOD_STATUS_LABELS[activePeriod.status] }}
-          </span>
+          <Badge v-if="activePeriod" :variant="activePeriod.status === 'OPEN' ? 'primary' : 'neutral'">{{ CONTABILIDAD_PERIOD_STATUS_LABELS[activePeriod.status] }}</Badge>
         </div>
       </div>
-    </div>
+    </BaseCard>
   </section>
 </template>

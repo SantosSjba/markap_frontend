@@ -131,17 +131,17 @@ function formatPeriodLabel(row: ContabilidadSunatDeclarationLogDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:file-badge"
       title="Declaraciones SUNAT (SOL)"
       subtitle="Wizard PDT 621 por periodo: preparar paquete, carga manual o envío sandbox."
     />
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </p>
-    <p v-else-if="activeEntity" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+    <p v-else-if="activeEntity" class="text-sm text-gray-400 dark:text-gray-500">
       Periodo {{ activePeriod.year }}-{{ String(activePeriod.month).padStart(2, '0') }} ·
       Entidad {{ activeEntity.code }} (RUC {{ activeEntity.ruc }})
     </p>
@@ -173,7 +173,7 @@ function formatPeriodLabel(row: ContabilidadSunatDeclarationLogDTO) {
     <FormSectionCard title="2. PDT 621 — IGV mensual" icon="lucide:file-spreadsheet">
       <div class="space-y-4">
         <div v-if="latest" class="flex flex-wrap items-center gap-3">
-          <span class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Última declaración del periodo:</span>
+          <span class="text-sm text-gray-400 dark:text-gray-500">Última declaración del periodo:</span>
           <Badge :variant="solStatusVariant(latest.status)">
             {{ statusLabels[latest.status] ?? latest.status }}
           </Badge>
@@ -212,13 +212,12 @@ function formatPeriodLabel(row: ContabilidadSunatDeclarationLogDTO) {
 
         <div
           v-if="preparedPackage"
-          class="rounded-lg border p-4 text-xs font-mono overflow-auto max-h-64"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-muted)' }"
+          class="rounded-lg border p-4 text-xs font-mono overflow-auto max-h-64 border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-950"
         >
           <pre>{{ JSON.stringify(preparedPackage, null, 2) }}</pre>
         </div>
 
-        <ol class="list-decimal list-inside text-sm space-y-1" :style="{ color: 'var(--color-text-muted)' }">
+        <ol class="list-decimal list-inside text-sm space-y-1 text-gray-400 dark:text-gray-500">
           <li v-for="(step, i) in manualInstructions" :key="i">{{ step }}</li>
         </ol>
       </div>

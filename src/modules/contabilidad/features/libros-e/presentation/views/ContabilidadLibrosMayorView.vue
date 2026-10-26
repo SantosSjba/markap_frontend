@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { computed, ref } from 'vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
@@ -34,7 +36,7 @@ function toggleExpand(id: string) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:book-marked"
       title="Libro mayor"
@@ -45,17 +47,10 @@ function toggleExpand(id: string) {
       <FormSelect v-model="accountFilter" label="Filtrar cuenta" :options="accountOptions" />
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
     <div v-else class="space-y-4">
-      <div
-        v-for="acc in accounts"
-        :key="acc.accountId"
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
+      <BaseCard v-for="acc in accounts" :key="acc.accountId" padding="none" class="block overflow-hidden">
         <button
           type="button"
           class="w-full flex items-center justify-between gap-4 p-4 text-left"
@@ -69,35 +64,28 @@ function toggleExpand(id: string) {
             D {{ formatPen(acc.totalDebit) }} · H {{ formatPen(acc.totalCredit) }} · Saldo {{ formatPen(acc.balance) }}
           </div>
         </button>
-        <table v-if="expanded.has(acc.accountId)" class="w-full text-sm border-t" :style="{ borderColor: 'var(--color-border)' }">
-          <thead>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="text-left py-2 px-4">Fecha</th>
-              <th class="text-left py-2 px-4">N°</th>
-              <th class="text-left py-2 px-4">Glosa</th>
-              <th class="text-right py-2 px-4">Debe</th>
-              <th class="text-right py-2 px-4">Haber</th>
-              <th class="text-right py-2 px-4">Saldo</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(line, idx) in (acc as ContabilidadLibroMayorAccountDTO).lines"
-              :key="idx"
-              class="border-b last:border-b-0"
-              :style="{ borderColor: 'var(--color-border)' }"
-            >
+        <DataTable
+          :columns="[
+            { key: 'c0', label: 'Fecha' },
+            { key: 'c1', label: 'N°' },
+            { key: 'c2', label: 'Glosa' },
+            { key: 'c3', label: 'Debe', align: 'right' },
+            { key: 'c4', label: 'Haber', align: 'right' },
+            { key: 'c5', label: 'Saldo', align: 'right' },
+          ]"
+          :data="(acc as ContabilidadLibroMayorAccountDTO).lines"
+        >
+          <template #row="{ row: line }">
               <td class="py-2 px-4">{{ line.entryDate }}</td>
               <td class="py-2 px-4 font-mono">{{ line.entryNumber }}</td>
               <td class="py-2 px-4">{{ line.description }}</td>
               <td class="py-2 px-4 text-right font-mono">{{ formatPen(line.debit) }}</td>
               <td class="py-2 px-4 text-right font-mono">{{ formatPen(line.credit) }}</td>
               <td class="py-2 px-4 text-right font-mono">{{ formatPen(line.runningBalance) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p v-if="!accounts.length" class="text-center py-8 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+          </template>
+        </DataTable>
+      </BaseCard>
+      <p v-if="!accounts.length" class="text-center py-8 text-sm text-gray-400 dark:text-gray-500">
         Sin movimientos publicados en el periodo.
       </p>
     </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed } from 'vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import type { RentalsByMonthItem } from '../../features/reportes/domain/reportes.types'
@@ -103,24 +104,16 @@ const totalWidth = 480
 </script>
 
 <template>
-  <div
-    class="rounded-xl border overflow-hidden"
-    :style="{
-      backgroundColor: 'var(--color-surface)',
-      borderColor: 'var(--color-border)',
-      boxShadow: 'var(--shadow-card)',
-    }"
-  >
+  <BaseCard padding="none" class="block overflow-hidden">
     <!-- Header -->
     <div
-      class="flex items-center justify-between px-5 py-4 border-b"
-      :style="{ borderColor: 'var(--color-border)' }"
+      class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800"
     >
       <div>
-        <h3 class="font-semibold text-sm" :style="{ color: 'var(--color-text-primary)' }">
+        <h3 class="font-semibold text-sm text-gray-800 dark:text-white/90">
           {{ title }}
         </h3>
-        <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+        <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
           {{ seriesConfig[mode].label }} por mes
         </p>
       </div>
@@ -131,7 +124,7 @@ const totalWidth = 480
           class="w-2.5 h-2.5 rounded-sm"
           :style="{ backgroundColor: seriesConfig[mode].color }"
         />
-        <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+        <span class="text-xs text-gray-500 dark:text-gray-400">
           {{ seriesConfig[mode].label }}
         </span>
       </div>
@@ -159,7 +152,7 @@ const totalWidth = 480
       <template v-else-if="data.length === 0">
         <div class="flex flex-col items-center justify-center py-10 gap-2">
           <AppIcon icon="lucide:chart-column" :size="32" color="var(--color-text-muted)" />
-          <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Sin datos disponibles</p>
+          <p class="text-sm text-gray-400 dark:text-gray-500">Sin datos disponibles</p>
         </div>
       </template>
 
@@ -248,5 +241,5 @@ const totalWidth = 480
         </svg>
       </template>
     </div>
-  </div>
+  </BaseCard>
 </template>

@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import ActionCard from '@shared/presentation/components/ui/ActionCard.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
@@ -98,21 +103,17 @@ const dashboardErrorDetail = computed(() =>
 </script>
 
 <template>
-  <div class="space-y-8 animate-fade-in">
-    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold" style="color: var(--color-text-primary)">
-          Interiorismo
-        </h1>
-        <p class="text-sm mt-1" style="color: var(--color-text-secondary)">
-          Resumen operativo y financiero
-        </p>
-        <p class="text-sm mt-3 font-medium" style="color: var(--color-text-primary)">
-          {{ greeting }}, {{ firstName }}
-        </p>
-      </div>
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
-        <p class="text-sm" style="color: var(--color-text-muted)">
+  <div class="space-y-6">
+    <PageHeader
+      title="Interiorismo"
+    >
+      <template #subtitle>
+        Resumen operativo y financiero
+<span class="mt-2 block">{{ greeting }}, {{ firstName }}</span>
+      </template>
+      <template #actions>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
+        <p class="text-sm text-gray-400 dark:text-gray-500">
           {{
             formatDate(new Date(), {
               weekday: 'long',
@@ -127,31 +128,26 @@ const dashboardErrorDetail = computed(() =>
           Reportes detallados
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <p class="text-xs font-medium -mt-4" style="color: var(--color-text-muted)">
+    <p class="text-xs font-medium -mt-4 text-gray-400 dark:text-gray-500">
       Datos del período: {{ periodLabel }} · mismo rango que puedes ajustar en Reportes.
     </p>
 
-    <div v-if="dashboardQuery.isLoading.value" class="flex justify-center py-20">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="dashboardQuery.isLoading.value" class="py-20" />
 
-    <div
-      v-else-if="dashboardQuery.isError.value"
-      class="rounded-xl border p-8 text-center"
-      style="border-color: var(--color-border); background: var(--color-surface)"
-    >
-      <p class="text-sm font-medium" style="color: var(--color-text-primary)">
+    <BaseCard v-else-if="dashboardQuery.isError.value" padding="lg" class="block text-center">
+      <p class="text-sm font-medium text-gray-800 dark:text-white/90">
         No se pudo cargar el dashboard
       </p>
-      <p class="text-xs mt-2 max-w-md mx-auto" style="color: var(--color-text-secondary)">
+      <p class="text-xs mt-2 max-w-md mx-auto text-gray-500 dark:text-gray-400">
         {{ dashboardErrorDetail || 'Comprueba tu conexión e inténtalo de nuevo.' }}
       </p>
       <BaseButton class="mt-4" type="button" @click="() => dashboardQuery.refetch()">
         Reintentar
       </BaseButton>
-    </div>
+    </BaseCard>
 
     <template v-else-if="d">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -178,81 +174,62 @@ const dashboardErrorDetail = computed(() =>
       </div>
 
       <div class="grid lg:grid-cols-2 gap-6">
-        <div
-          class="rounded-xl border p-5 lg:p-6"
-          :style="{
-            backgroundColor: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-            boxShadow: 'var(--shadow-card)',
-          }"
+        <FormSectionCard
+          title="Ventas y cobranzas (período)"
+          subtitle="Movimiento registrado en el rango seleccionado para reportes"
+          dense
         >
-          <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
-            Ventas y cobranzas (período)
-          </h2>
-          <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-            Movimiento registrado en el rango seleccionado para reportes
-          </p>
           <dl class="space-y-4">
             <div class="flex justify-between gap-4 text-sm">
-              <dt style="color: var(--color-text-secondary)">Cobranzas</dt>
-              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+              <dt class="text-gray-500 dark:text-gray-400">Cobranzas</dt>
+              <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
                 {{ formatPen(d.ventas.cobranzasPeriodo) }}
               </dd>
             </div>
             <div class="flex justify-between gap-4 text-sm">
-              <dt style="color: var(--color-text-secondary)">Pagos registrados</dt>
-              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+              <dt class="text-gray-500 dark:text-gray-400">Pagos registrados</dt>
+              <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
                 {{ formatPenDec(d.ventas.pagosRegistradosPeriodo) }}
               </dd>
             </div>
             <div class="flex justify-between gap-4 text-sm">
-              <dt style="color: var(--color-text-secondary)">Proyectos con cobro en período</dt>
-              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+              <dt class="text-gray-500 dark:text-gray-400">Proyectos con cobro en período</dt>
+              <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
                 {{ d.ventas.proyectosConCobroEnPeriodo }}
               </dd>
             </div>
             <div
-              class="flex justify-between gap-4 text-sm pt-3 border-t"
-              style="border-color: var(--color-border)"
+              class="flex justify-between gap-4 text-sm pt-3 border-t border-gray-200 dark:border-gray-800"
             >
-              <dt style="color: var(--color-text-secondary)">Cartera pendiente (cuotas)</dt>
-              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+              <dt class="text-gray-500 dark:text-gray-400">Cartera pendiente (cuotas)</dt>
+              <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
                 {{ formatPenDec(d.ventas.carteraPendienteCuotas) }}
               </dd>
             </div>
           </dl>
-        </div>
+        </FormSectionCard>
 
-        <div
-          class="rounded-xl border p-5 lg:p-6"
-          :style="{
-            backgroundColor: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-            boxShadow: 'var(--shadow-card)',
-          }"
+        <FormSectionCard
+          title="Conversión y rentabilidad"
+          subtitle="Presupuestos y proyectos en el período"
+          dense
         >
-          <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
-            Conversión y rentabilidad
-          </h2>
-          <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-            Presupuestos y proyectos en el período
-          </p>
           <dl class="space-y-4">
             <div class="flex justify-between gap-4 text-sm">
-              <dt style="color: var(--color-text-secondary)">Proyectos nuevos</dt>
-              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+              <dt class="text-gray-500 dark:text-gray-400">Proyectos nuevos</dt>
+              <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
                 {{ d.conversion.proyectosNuevosPeriodo }}
               </dd>
             </div>
             <div class="flex justify-between gap-4 text-sm">
-              <dt style="color: var(--color-text-secondary)">Presupuestos aprobados</dt>
-              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+              <dt class="text-gray-500 dark:text-gray-400">Presupuestos aprobados</dt>
+              <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
                 {{ d.conversion.presupuestosAprobadosPeriodo }}
               </dd>
             </div>
             <div class="flex justify-between gap-4 text-sm">
-              <dt style="color: var(--color-text-secondary)">Tasa cierre presupuesto</dt>
-              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+              <dt class="text-gray-500 dark:text-gray-400">Tasa cierre presupuesto</dt>
+              <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
                 {{
                   d.conversion.tasaCierrePresupuestoPct != null
                     ? `${d.conversion.tasaCierrePresupuestoPct.toFixed(1)} %`
@@ -261,53 +238,44 @@ const dashboardErrorDetail = computed(() =>
               </dd>
             </div>
             <div
-              class="flex justify-between gap-4 text-sm pt-3 border-t"
-              style="border-color: var(--color-border)"
+              class="flex justify-between gap-4 text-sm pt-3 border-t border-gray-200 dark:border-gray-800"
             >
-              <dt style="color: var(--color-text-secondary)">Margen bruto estimado</dt>
-              <dd class="font-semibold tabular-nums" style="color: var(--color-text-primary)">
+              <dt class="text-gray-500 dark:text-gray-400">Margen bruto estimado</dt>
+              <dd class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
                 {{ formatPenDec(d.rentabilidad.margenBrutoEstimado) }}
                 <span
                   v-if="d.rentabilidad.margenBrutoPct != null"
-                  class="text-xs font-normal ml-1"
-                  style="color: var(--color-text-muted)"
+                  class="text-xs font-normal ml-1 text-gray-400 dark:text-gray-500"
                 >
                   ({{ d.rentabilidad.margenBrutoPct.toFixed(1) }} %)
                 </span>
               </dd>
             </div>
           </dl>
-        </div>
+        </FormSectionCard>
       </div>
 
-      <div
-        class="rounded-xl border p-5 lg:p-6"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-card)',
-        }"
-      >
+      <BaseCard class="block">
         <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
           <div>
-            <h2 class="text-lg font-semibold" style="color: var(--color-text-primary)">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">
               Productividad y costos
             </h2>
-            <p class="text-xs mt-0.5" style="color: var(--color-text-muted)">
+            <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
               Obra y gastos del período
             </p>
           </div>
         </div>
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="rounded-lg border p-4" style="border-color: var(--color-border)">
-            <p class="text-xs font-medium" style="color: var(--color-text-muted)">Tareas completadas</p>
-            <p class="text-xl font-bold tabular-nums mt-1" style="color: var(--color-text-primary)">
+          <div class="rounded-lg border p-4 border-gray-200 dark:border-gray-800">
+            <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Tareas completadas</p>
+            <p class="text-xl font-bold tabular-nums mt-1 text-gray-800 dark:text-white/90">
               {{ d.productividad.tareasCompletadasPeriodo }}
             </p>
           </div>
-          <div class="rounded-lg border p-4" style="border-color: var(--color-border)">
-            <p class="text-xs font-medium" style="color: var(--color-text-muted)">Avance tareas</p>
-            <p class="text-xl font-bold tabular-nums mt-1" style="color: var(--color-text-primary)">
+          <div class="rounded-lg border p-4 border-gray-200 dark:border-gray-800">
+            <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Avance tareas</p>
+            <p class="text-xl font-bold tabular-nums mt-1 text-gray-800 dark:text-white/90">
               {{
                 d.productividad.pctAvanceTareas != null
                   ? `${d.productividad.pctAvanceTareas.toFixed(0)} %`
@@ -315,61 +283,37 @@ const dashboardErrorDetail = computed(() =>
               }}
             </p>
           </div>
-          <div class="rounded-lg border p-4" style="border-color: var(--color-border)">
-            <p class="text-xs font-medium" style="color: var(--color-text-muted)">Costos totales período</p>
-            <p class="text-xl font-bold tabular-nums mt-1" style="color: var(--color-text-primary)">
+          <div class="rounded-lg border p-4 border-gray-200 dark:border-gray-800">
+            <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Costos totales período</p>
+            <p class="text-xl font-bold tabular-nums mt-1 text-gray-800 dark:text-white/90">
               {{ formatPenDec(d.costos.totalCostosPeriodo) }}
             </p>
           </div>
-          <div class="rounded-lg border p-4" style="border-color: var(--color-border)">
-            <p class="text-xs font-medium" style="color: var(--color-text-muted)">Incidencias abiertas</p>
-            <p class="text-xl font-bold tabular-nums mt-1" style="color: var(--color-text-primary)">
+          <div class="rounded-lg border p-4 border-gray-200 dark:border-gray-800">
+            <p class="text-xs font-medium text-gray-400 dark:text-gray-500">Incidencias abiertas</p>
+            <p class="text-xl font-bold tabular-nums mt-1 text-gray-800 dark:text-white/90">
               {{ d.productividad.incidenciasAbiertas }}
             </p>
           </div>
         </div>
-      </div>
+      </BaseCard>
 
-      <div
-        class="rounded-xl border p-5 lg:p-6"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-card)',
-        }"
+      <FormSectionCard
+        title="Acciones rápidas"
+        subtitle="Tareas frecuentes"
+        dense
       >
-        <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
-          Acciones rápidas
-        </h2>
-        <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-          Tareas frecuentes
-        </p>
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <button
+          <ActionCard
             v-for="ac in acciones"
             :key="ac.to"
-            type="button"
-            class="flex items-start gap-3 rounded-xl border p-4 text-left transition-all hover-surface"
-            :style="{ borderColor: 'var(--color-border)' }"
+            :icon="ac.icon"
+            :title="ac.label"
+            :description="ac.sub"
             @click="router.push(ac.to)"
-          >
-            <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-              style="background-color: var(--color-primary-light); color: var(--color-primary)"
-            >
-              <AppIcon :icon="ac.icon" :size="20" />
-            </div>
-            <div class="min-w-0">
-              <p class="text-sm font-semibold" style="color: var(--color-text-primary)">
-                {{ ac.label }}
-              </p>
-              <p class="text-xs mt-0.5" style="color: var(--color-text-muted)">
-                {{ ac.sub }}
-              </p>
-            </div>
-          </button>
+          />
         </div>
-      </div>
+      </FormSectionCard>
     </template>
   </div>
 </template>

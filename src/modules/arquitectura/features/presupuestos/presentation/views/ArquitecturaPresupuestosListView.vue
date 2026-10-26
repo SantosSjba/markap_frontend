@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { formatDateTime } from '@shared/utils/formatters'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -119,21 +122,18 @@ const rowActions = (row: ArquitecturaBudgetSummaryListItem) => [
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1200px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Presupuestos
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Vista transversal por proyecto. Cada presupuesto se edita en el detalle del proyecto.
-        </p>
-      </div>
-      <BaseButton variant="primary" @click="goNew">
+  <div class="max-w-[1200px] mx-auto space-y-6">
+    <PageHeader
+      title="Presupuestos"
+      subtitle="Vista transversal por proyecto. Cada presupuesto se edita en el detalle del proyecto."
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="goNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo presupuesto
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
     <div class="flex flex-wrap items-center gap-3">
       <SearchInput
@@ -152,17 +152,11 @@ const rowActions = (row: ArquitecturaBudgetSummaryListItem) => [
       />
     </div>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-20">
-        <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" class="py-20" />
       <div
         v-else-if="isError"
-        class="text-center py-16 text-sm space-y-3"
-        :style="{ color: 'var(--color-text-secondary)' }"
+        class="text-center py-16 text-sm space-y-3 text-gray-500 dark:text-gray-400"
       >
         No se pudo cargar el listado.
         <div>
@@ -180,7 +174,7 @@ const rowActions = (row: ArquitecturaBudgetSummaryListItem) => [
             <td class="py-2.5 px-3 text-sm font-medium">{{ (row as ArquitecturaBudgetSummaryListItem).projectCode }}</td>
             <td class="py-2.5 px-3 text-sm">
               <div>{{ (row as ArquitecturaBudgetSummaryListItem).projectName }}</div>
-              <div class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+              <div class="text-xs text-gray-400 dark:text-gray-500">
                 {{ PROJECT_TYPE_LABELS[(row as ArquitecturaBudgetSummaryListItem).projectType as keyof typeof PROJECT_TYPE_LABELS] ?? (row as ArquitecturaBudgetSummaryListItem).projectType }}
               </div>
             </td>
@@ -198,9 +192,9 @@ const rowActions = (row: ArquitecturaBudgetSummaryListItem) => [
               <span v-if="(row as ArquitecturaBudgetSummaryListItem).hasBudget">
                 {{ formatMoney(row as ArquitecturaBudgetSummaryListItem) }}
               </span>
-              <span v-else :style="{ color: 'var(--color-text-muted)' }">Sin armar</span>
+              <span class="text-gray-400 dark:text-gray-500" v-else>Sin armar</span>
             </td>
-            <td class="py-2.5 px-3 text-sm text-xs" :style="{ color: 'var(--color-text-muted)' }">
+            <td class="py-2.5 px-3 text-sm text-xs text-gray-400 dark:text-gray-500">
               {{
                 (row as ArquitecturaBudgetSummaryListItem).budgetUpdatedAt
                   ? formatDateTime((row as ArquitecturaBudgetSummaryListItem).budgetUpdatedAt!)
@@ -212,7 +206,7 @@ const rowActions = (row: ArquitecturaBudgetSummaryListItem) => [
             </td>
           </template>
         </DataTable>
-        <div v-if="total > 0" class="p-4 border-t" :style="{ borderColor: 'var(--color-border)' }">
+        <div v-if="total > 0" class="p-4 border-t border-gray-200 dark:border-gray-800">
           <BasePagination
             v-bind="paginationProps"
             :show-page-size="true"
@@ -221,6 +215,6 @@ const rowActions = (row: ArquitecturaBudgetSummaryListItem) => [
           />
         </div>
       </template>
-    </div>
+    </BaseCard>
   </div>
 </template>

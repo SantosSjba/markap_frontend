@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import ActionCard from '@shared/presentation/components/ui/ActionCard.vue'
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
 /**
@@ -20,33 +23,18 @@ const stats = [
 <template>
   <div class="space-y-6">
     <!-- Welcome message -->
-    <div class="mb-8">
-      <h1 class="text-2xl font-bold text-gray-900">
-        Bienvenido, {{ authStore.user?.firstName || 'Usuario' }}
-      </h1>
-      <p class="text-gray-600 mt-1">
-        Aquí tienes un resumen de tu actividad reciente.
-      </p>
-    </div>
+    <PageHeader
+      :title="`Bienvenido, ${authStore.user?.firstName || 'Usuario'}`"
+      subtitle="Aquí tienes un resumen de tu actividad reciente."
+    />
 
     <!-- Stats grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <BaseCard
-        v-for="stat in stats"
-        :key="stat.label"
-        padding="lg"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-500">{{ stat.label }}</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.value }}</p>
-            <p class="text-sm text-green-500 mt-1">{{ stat.change }}</p>
-          </div>
-          <div class="w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center text-primary-500">
-            <AppIcon icon="lucide:users" :size="24" color="currentColor" />
-          </div>
-        </div>
-      </BaseCard>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
+      <StatsCard v-for="stat in stats" :key="stat.label" :title="stat.label" :value="stat.value">
+        <template #icon>
+          <AppIcon icon="lucide:users" />
+        </template>
+      </StatsCard>
     </div>
 
     <!-- Content sections -->
@@ -54,17 +42,17 @@ const stats = [
       <!-- Recent activity -->
       <BaseCard padding="lg">
         <template #header>
-          <h3 class="text-lg font-semibold text-gray-900">Actividad Reciente</h3>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Actividad Reciente</h3>
         </template>
 
         <div class="space-y-4">
-          <div v-for="i in 5" :key="i" class="flex items-center gap-4 py-2 border-b border-gray-100 last:border-0">
-            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
+          <div v-for="i in 5" :key="i" class="flex items-center gap-4 border-b border-gray-100 py-2 last:border-0 dark:border-gray-800">
+            <div class="flex size-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
               <AppIcon icon="lucide:clipboard-list" :size="20" color="currentColor" />
             </div>
             <div class="flex-1">
-              <p class="text-sm font-medium text-gray-900">Nueva actividad #{{ i }}</p>
-              <p class="text-xs text-gray-500">Hace {{ i }} hora{{ i > 1 ? 's' : '' }}</p>
+              <p class="text-sm font-medium text-gray-800 dark:text-white/90">Nueva actividad #{{ i }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Hace {{ i }} hora{{ i > 1 ? 's' : '' }}</p>
             </div>
           </div>
         </div>
@@ -73,18 +61,11 @@ const stats = [
       <!-- Quick actions -->
       <BaseCard padding="lg">
         <template #header>
-          <h3 class="text-lg font-semibold text-gray-900">Acciones Rápidas</h3>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Acciones Rápidas</h3>
         </template>
 
         <div class="grid grid-cols-2 gap-4">
-          <button
-            v-for="action in ['Nuevo Usuario', 'Nuevo Producto', 'Ver Reportes', 'Configuración']"
-            :key="action"
-            class="p-4 border border-[var(--color-border)] rounded-lg hover-surface text-left"
-          >
-            <p class="font-medium text-gray-900">{{ action }}</p>
-            <p class="text-sm text-gray-500 mt-1">Acceso rápido</p>
-          </button>
+          <ActionCard v-for="action in ['Nuevo Usuario', 'Nuevo Producto', 'Ver Reportes', 'Configuración']" :key="action" :title="action" description="Acceso rápido" />
         </div>
       </BaseCard>
     </div>

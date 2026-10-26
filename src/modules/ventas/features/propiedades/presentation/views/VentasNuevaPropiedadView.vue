@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ventasPropertiesRepositoryKey } from '../../application/ports/ventas-properties.port'
 import { useService } from '@shared/presentation/di/services'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -370,34 +372,16 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
-    <div class="flex items-center gap-3 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg transition-colors hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        title="Volver"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <AppIcon icon="lucide:plus-circle" :size="18" color="var(--color-primary)" />
-          <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-            Nueva propiedad (venta)
-          </h1>
-        </div>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Registro en inventario Ventas
-        </p>
-      </div>
-    </div>
+  <div >
+    <PageHeader
+      title="Nueva propiedad (venta)"
+      subtitle="Registro en inventario Ventas"
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
-    <div v-if="loading" class="flex flex-col items-center justify-center py-24 gap-3">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando opciones...</p>
-    </div>
+    <LoadingState v-if="loading" text="Cargando opciones..." class="py-24" />
 
     <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">
       <div class="xl:col-span-2 space-y-5">
@@ -540,15 +524,11 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           <div v-for="(row, idx) in mediaRows" :key="idx" class="mb-4 space-y-2">
             <div class="flex flex-wrap gap-2 items-end">
               <div class="w-36">
-                <label class="text-xs mb-1 block" :style="{ color: 'var(--color-text-muted)' }">Tipo</label>
-                <select
+                <FormSelect
                   v-model="row.kind"
-                  class="w-full rounded-lg border px-3 py-2 text-sm"
-                  :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-                >
-                  <option value="photo">Foto</option>
-                  <option value="plan">Plano</option>
-                </select>
+                  :options="[{ value: 'photo', label: 'Foto' }, { value: 'plan', label: 'Plano' }]"
+                  label="Tipo"
+                />
               </div>
               <BaseButton type="button" variant="ghost" @click="removeMediaRow(idx)">
                 <AppIcon icon="lucide:trash-2" :size="16" />
@@ -660,27 +640,26 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
       </div>
 
       <div class="xl:col-span-1">
-        <div
-          class="p-5 rounded-xl border sticky top-4"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        <FormSectionCard
+          title="Resumen"
+          dense
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">Resumen</h2>
           <dl class="space-y-2 text-sm">
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Código</dt>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Código</dt>
               <dd class="font-semibold">{{ values.code || '—' }}</dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Tipo</dt>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Tipo</dt>
               <dd>{{ selectedTypeLabel }}</dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Propietario</dt>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Propietario</dt>
               <dd>{{ selectedOwnerLabel }}</dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Precio</dt>
-              <dd class="font-bold text-[var(--color-primary)]">
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Precio</dt>
+              <dd class="font-bold text-brand-500 dark:text-brand-400">
                 {{
                   values.salePrice !== '' && values.salePrice != null
                     ? `${selectedCurrencySymbol} ${Number(values.salePrice).toLocaleString('es-PE')}`
@@ -704,7 +683,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               Cancelar
             </BaseButton>
           </div>
-        </div>
+        </FormSectionCard>
       </div>
     </form>
   </div>

@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import { useService } from '@shared/presentation/di/services'
 import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
 import { toCalendarDateString } from '@shared/utils/formatters'
@@ -8,7 +13,6 @@ import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import {
@@ -296,14 +300,7 @@ const hasPaymentEvidence = computed(
 <template>
   <div class="space-y-6 pb-24">
     <div class="flex items-start gap-3">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)] shrink-0 mt-1"
-        aria-label="Volver a cierres"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
+      <IconButton @click="goBack" icon="lucide:arrow-left" label="Volver a cierres" />
       <PageHeader
         class="flex-1 min-w-0"
         title="Cumplimiento legal del cierre"
@@ -312,16 +309,12 @@ const hasPaymentEvidence = computed(
       />
     </div>
 
-    <div
-      v-if="!hasRequiredQuery"
-      class="rounded-xl border px-4 py-8 text-center space-y-3"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <p class="text-sm" style="color: var(--color-error)">
+    <BaseCard v-if="!hasRequiredQuery" class="block px-4 py-8 text-center space-y-3">
+      <p class="text-sm text-error-500 dark:text-error-400">
         Faltan datos de la operación (inmueble o comprador). Abra el cumplimiento desde la lista de cierres.
       </p>
       <BaseButton variant="outline" icon="lucide:arrow-left" @click="goBack">Volver a cierres</BaseButton>
-    </div>
+    </BaseCard>
 
     <template v-else>
       <FormSectionCard
@@ -332,13 +325,13 @@ const hasPaymentEvidence = computed(
       >
         <p v-if="loadingReadiness" class="text-sm">Validando...</p>
         <div v-else-if="readinessQueryError" class="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
-          <span style="color: var(--color-error)">{{ getApiErrorMessage(readinessFetchError) }}</span>
+          <span class="text-error-500 dark:text-error-400">{{ getApiErrorMessage(readinessFetchError) }}</span>
           <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="self-start sm:ml-auto shrink-0" @click="() => refetchReadiness()">
             Reintentar
           </BaseButton>
         </div>
         <template v-else>
-          <p class="text-sm" :style="{ color: readinessData?.ok ? 'var(--color-success)' : 'var(--color-warning)' }">
+          <p :class="(readinessData?.ok) ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-orange-400'" class="text-sm">
             {{ readinessData?.ok ? 'Listo para cierre.' : 'Pendiente de requisitos.' }}
           </p>
           <ul v-if="!readinessData?.ok && readinessData?.missing?.length" class="list-disc pl-5 text-sm mt-2">
@@ -347,17 +340,11 @@ const hasPaymentEvidence = computed(
         </template>
       </FormSectionCard>
 
-      <div v-if="loadingChecklist" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
-      <div
-        v-else-if="checklistQueryError"
-        class="flex flex-col items-center justify-center gap-3 py-16 rounded-xl border px-4 text-center"
-        :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-      >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(checklistFetchError) }}</p>
+      <LoadingState v-if="loadingChecklist" />
+      <BaseCard v-else-if="checklistQueryError" class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center">
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(checklistFetchError) }}</p>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchChecklist()">Reintentar checklist</BaseButton>
-      </div>
+      </BaseCard>
 
       <template v-else>
         <FormSectionCard title="Checklist legal" icon="lucide:list-checks" dense>
@@ -387,72 +374,42 @@ const hasPaymentEvidence = computed(
                 { value: 'REGISTERED', label: 'Inscrito' },
               ]"
             />
-            <div>
-              <label class="text-sm font-medium">Presentado SUNARP</label>
-              <input v-model="complianceForm.sunarpSubmittedAt" type="date" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
-            <div>
-              <label class="text-sm font-medium">Inscrito SUNARP</label>
-              <input v-model="complianceForm.sunarpRegisteredAt" type="date" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
+            <FormInput v-model="complianceForm.sunarpSubmittedAt" type="date" label="Presentado SUNARP" />
+            <FormInput v-model="complianceForm.sunarpRegisteredAt" type="date" label="Inscrito SUNARP" />
           </div>
-          <div class="mt-3">
-            <label class="text-sm font-medium">Observación SUNARP</label>
-            <textarea v-model="complianceForm.sunarpObservationNotes" rows="2" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-          </div>
+          <FormTextarea class="mt-3" v-model="complianceForm.sunarpObservationNotes" :rows="2" label="Observación SUNARP" />
         </FormSectionCard>
 
         <FormSectionCard title="Tributos" icon="lucide:receipt" dense>
           <div class="grid sm:grid-cols-3 gap-3">
             <FormCheckbox v-model="complianceForm.alcabalaApplicable" label="Alcabala aplicable" />
             <FormCheckbox v-model="complianceForm.rent2Applicable" label="Renta 2da aplicable" />
-            <div>
-              <label class="text-sm font-medium">Costo adquisición (S/)</label>
-              <input v-model.number="acquisitionCost" type="number" min="0" step="0.01" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
+            <FormInput v-model="acquisitionCost" type="number" min="0" step="0.01" label="Costo adquisición (S/)" />
           </div>
           <div class="grid sm:grid-cols-2 gap-3 mt-3">
-            <div>
-              <label class="text-sm font-medium">Alcabala (S/)</label>
-              <input v-model.number="complianceForm.alcabalaAmount" type="number" min="0" step="0.01" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
-            <div>
-              <label class="text-sm font-medium">Renta 2da (S/)</label>
-              <input v-model.number="complianceForm.rent2Amount" type="number" min="0" step="0.01" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
+            <FormInput v-model="complianceForm.alcabalaAmount" type="number" min="0" step="0.01" label="Alcabala (S/)" />
+            <FormInput v-model="complianceForm.rent2Amount" type="number" min="0" step="0.01" label="Renta 2da (S/)" />
           </div>
           <div class="flex flex-wrap items-center gap-2 mt-3">
             <BaseButton variant="secondary" icon="lucide:sparkles" :disabled="loadingTaxPreview" @click="applyTaxSuggestion">
               Aplicar estimado tributario
             </BaseButton>
-            <span v-if="taxPreview" class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+            <span v-if="taxPreview" class="text-xs text-gray-500 dark:text-gray-400">
               Alcabala: S/ {{ taxPreview.alcabala.amount.toLocaleString('es-PE') }} · Renta 2da: S/ {{ taxPreview.rent2.amount.toLocaleString('es-PE') }}
             </span>
           </div>
           <div v-if="taxPreviewQueryError" class="flex flex-wrap items-center gap-2 text-xs mt-2">
-            <span style="color: var(--color-error)">{{ getApiErrorMessage(taxPreviewFetchError) }}</span>
+            <span class="text-error-500 dark:text-error-400">{{ getApiErrorMessage(taxPreviewFetchError) }}</span>
             <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchTaxPreview()">Reintentar estimado</BaseButton>
           </div>
         </FormSectionCard>
 
         <FormSectionCard title="Pago y KYC" icon="lucide:shield-check" dense>
           <div class="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label class="text-sm font-medium">Método de pago</label>
-              <input v-model="complianceForm.paymentMethod" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
-            <div>
-              <label class="text-sm font-medium">N° operación bancaria</label>
-              <input v-model="complianceForm.bankOperationNumber" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
-            <div>
-              <label class="text-sm font-medium">Banco</label>
-              <input v-model="complianceForm.bankName" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
-            <div>
-              <label class="text-sm font-medium">Titular cuenta</label>
-              <input v-model="complianceForm.bankAccountHolder" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
+            <FormInput v-model="complianceForm.paymentMethod" label="Método de pago" />
+            <FormInput v-model="complianceForm.bankOperationNumber" label="N° operación bancaria" />
+            <FormInput v-model="complianceForm.bankName" label="Banco" />
+            <FormInput v-model="complianceForm.bankAccountHolder" label="Titular cuenta" />
             <FormSelect
               v-model="complianceForm.kycRiskLevel"
               label="Riesgo KYC"
@@ -463,10 +420,7 @@ const hasPaymentEvidence = computed(
                 { value: 'HIGH', label: 'Alto' },
               ]"
             />
-            <div>
-              <label class="text-sm font-medium">Notas compliance</label>
-              <textarea v-model="complianceForm.complianceNotes" rows="2" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
+            <FormTextarea v-model="complianceForm.complianceNotes" :rows="2" label="Notas compliance" />
           </div>
           <div class="mt-4 space-y-2">
             <p class="text-sm font-medium">Evidencia de pago</p>
@@ -515,10 +469,7 @@ const hasPaymentEvidence = computed(
                 { value: 'OTRO', label: 'Otro' },
               ]"
             />
-            <div class="sm:col-span-2">
-              <label class="text-sm font-medium">Notas documento</label>
-              <input v-model="docNotes" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm" :style="{ borderColor: 'var(--color-border)' }" />
-            </div>
+            <FormInput class="sm:col-span-2" v-model="docNotes" label="Notas documento" />
           </div>
           <FileDropzone
             v-model="docFile"
@@ -536,7 +487,7 @@ const hasPaymentEvidence = computed(
 
           <div v-if="loadingDocuments" class="text-sm opacity-70 mt-4">Cargando documentos...</div>
           <div v-else-if="documentsQueryError" class="flex flex-col sm:flex-row sm:items-center gap-2 text-sm py-4">
-            <span style="color: var(--color-error)">{{ getApiErrorMessage(documentsFetchError) }}</span>
+            <span class="text-error-500 dark:text-error-400">{{ getApiErrorMessage(documentsFetchError) }}</span>
             <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="self-start shrink-0" @click="() => refetchDocuments()">
               Reintentar lista
             </BaseButton>
@@ -549,8 +500,7 @@ const hasPaymentEvidence = computed(
                 :href="resolveFileDownloadUrl(d)"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="text-sm shrink-0"
-                :style="{ color: 'var(--color-primary)' }"
+                class="text-sm shrink-0 text-brand-500 dark:text-brand-400"
               >
                 Ver archivo
               </a>
@@ -561,11 +511,7 @@ const hasPaymentEvidence = computed(
       </template>
 
       <div
-        class="fixed bottom-0 left-0 right-0 z-20 border-t px-4 py-3 flex justify-end gap-2"
-        :style="{
-          borderColor: 'var(--color-border)',
-          backgroundColor: 'var(--color-surface)',
-        }"
+        class="fixed bottom-0 left-0 right-0 z-20 border-t px-4 py-3 flex justify-end gap-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-dark"
       >
         <BaseButton variant="outline" icon="lucide:arrow-left" @click="goBack">Volver</BaseButton>
         <BaseButton variant="primary" icon="lucide:clipboard-check" :loading="savingChecklist" @click="onSaveChecklist">

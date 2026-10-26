@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import { formatDateTime, formatShortDate } from '@shared/utils/formatters'
 import { computed, ref } from 'vue'
 import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
@@ -152,45 +154,20 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
 
 <template>
   <div>
-    <div v-if="!processId" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+    <div v-if="!processId" class="text-sm text-gray-400 dark:text-gray-500">
       Seleccione un proceso para el seguimiento.
     </div>
 
-    <div v-else-if="isLoading" class="flex justify-center py-10">
-      <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-else-if="isLoading" class="py-10" />
 
-    <div
-      v-else-if="detailQueryError"
-      class="flex flex-col items-center justify-center gap-3 py-10 px-4 text-center rounded-xl border"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(detailFetchError) }}</p>
+    <BaseCard v-else-if="detailQueryError" class="flex flex-col items-center justify-center gap-3 py-10 px-4 text-center">
+      <p class="text-sm font-medium max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(detailFetchError) }}</p>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchProcDetail()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
 
     <template v-else-if="proc">
       <!-- Pestañas (pipeline / modal) -->
-      <div
-        v-if="layout === 'tabs'"
-        class="flex flex-wrap gap-1 border-b pb-2 mb-4"
-        :style="{ borderColor: 'var(--color-border)' }"
-      >
-        <button
-          v-for="t in tabItems"
-          :key="t.id"
-          type="button"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-          :style="{
-            color: tab === t.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-            backgroundColor: tab === t.id ? 'var(--color-hover)' : 'transparent',
-          }"
-          @click="tab = t.id"
-        >
-          <AppIcon :icon="t.icon" :size="16" />
-          {{ t.label }}
-        </button>
-      </div>
+      <BaseTabs v-if="layout === 'tabs'" v-model="tab" :tabs="tabItems" variant="segmented" class="mb-4" />
 
       <div :class="layout === 'grid' ? 'grid lg:grid-cols-3 gap-6' : 'space-y-0'">
         <FormSectionCard
@@ -204,18 +181,16 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
             <div
               v-for="n in proc.notes ?? []"
               :key="n.id"
-              class="text-sm p-2 rounded-lg"
-              :style="{ background: 'var(--color-hover)' }"
+              class="text-sm p-2 rounded-lg bg-gray-100 dark:bg-white/5"
             >
               <p class="whitespace-pre-wrap">{{ n.body }}</p>
-              <p class="text-[11px] mt-1" :style="{ color: 'var(--color-text-muted)' }">
+              <p class="text-[11px] mt-1 text-gray-400 dark:text-gray-500">
                 {{ formatDateTime(n.createdAt) }}
               </p>
             </div>
             <p
               v-if="!(proc.notes ?? []).length"
-              class="text-sm"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="text-sm text-gray-400 dark:text-gray-500"
             >
               Sin notas aún.
             </p>
@@ -242,15 +217,14 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
           <div class="space-y-2 overflow-y-auto mb-3 text-sm" :class="listMaxClass">
             <div v-for="a in proc.activities ?? []" :key="a.id" class="flex flex-wrap gap-2 items-baseline">
               <Badge variant="neutral">{{ a.activityType }}</Badge>
-              <span :style="{ color: 'var(--color-text-primary)' }">{{ a.title }}</span>
-              <span v-if="a.description" class="w-full text-xs" :style="{ color: 'var(--color-text-secondary)' }">{{
+              <span class="text-gray-800 dark:text-white/90">{{ a.title }}</span>
+              <span v-if="a.description" class="w-full text-xs text-gray-500 dark:text-gray-400">{{
                 a.description
               }}</span>
             </div>
             <p
               v-if="!(proc.activities ?? []).length"
-              class="text-sm"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="text-sm text-gray-400 dark:text-gray-500"
             >
               Sin actividades registradas.
             </p>
@@ -290,12 +264,11 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
             <li
               v-for="r in proc.reminders ?? []"
               :key="r.id"
-              class="flex justify-between gap-2 items-start py-1 border-b last:border-0"
-              :style="{ borderColor: 'var(--color-border)' }"
+              class="flex justify-between gap-2 items-start py-1 border-b last:border-0 border-gray-200 dark:border-gray-800"
             >
               <div>
-                <span :style="{ color: 'var(--color-text-primary)' }">{{ r.title }}</span>
-                <span class="block text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">{{
+                <span class="text-gray-800 dark:text-white/90">{{ r.title }}</span>
+                <span class="block text-xs mt-0.5 text-gray-400 dark:text-gray-500">{{
                   formatShortDate(r.dueAt)
                 }}</span>
               </div>
@@ -311,7 +284,7 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
               </BaseButton>
               <Badge v-else variant="success" class="shrink-0">Listo</Badge>
             </li>
-            <li v-if="!(proc.reminders ?? []).length" :style="{ color: 'var(--color-text-muted)' }">
+            <li class="text-gray-400 dark:text-gray-500" v-if="!(proc.reminders ?? []).length">
               Sin recordatorios.
             </li>
           </ul>

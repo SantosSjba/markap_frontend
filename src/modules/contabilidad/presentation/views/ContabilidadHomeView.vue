@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import ActionCard from '@shared/presentation/components/ui/ActionCard.vue'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
@@ -81,27 +85,23 @@ const acciones = [
 ]
 
 const toneBorder = (tone: string) => {
-  if (tone === 'success') return 'var(--color-success, #16a34a)'
-  if (tone === 'primary') return 'var(--color-primary)'
-  return 'var(--color-border)'
+  if (tone === 'success') return 'border-l-success-500'
+  if (tone === 'primary') return 'border-l-brand-500'
+  return 'border-l-gray-200 dark:border-l-gray-800'
 }
 </script>
 
 <template>
-  <div class="space-y-8 animate-fade-in">
-    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold" style="color: var(--color-text-primary)">
-          Sistema contable
-        </h1>
-        <p class="text-sm mt-1" style="color: var(--color-text-secondary)">
-          Finanzas, reportes y gestión tributaria
-        </p>
-        <p class="text-sm mt-3 font-medium" style="color: var(--color-text-primary)">
-          {{ greeting }}, {{ firstName }}
-        </p>
-      </div>
-      <p class="text-sm shrink-0" style="color: var(--color-text-muted)">
+  <div class="space-y-6">
+    <PageHeader
+      title="Sistema contable"
+    >
+      <template #subtitle>
+        Finanzas, reportes y gestión tributaria
+<span class="mt-2 block">{{ greeting }}, {{ firstName }}</span>
+      </template>
+      <template #actions>
+        <p class="text-sm shrink-0 text-gray-400 dark:text-gray-500">
         {{
           formatDate(new Date(), {
             weekday: 'long',
@@ -111,129 +111,84 @@ const toneBorder = (tone: string) => {
           })
         }}
       </p>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <div v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración → Contexto contable para ver indicadores.
     </div>
 
-    <div v-else-if="isLoading" class="flex justify-center py-12">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-else-if="isLoading" class="py-12" />
 
     <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <div
         v-for="k in displayKpis"
         :key="k.key"
-        class="rounded-xl border p-4 transition-shadow hover:shadow-md"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-sm)',
-        }"
+        class="rounded-xl border p-4 transition-shadow hover:shadow-md bg-white dark:bg-gray-dark border-gray-200 dark:border-gray-800 shadow-theme-xs"
       >
         <div class="flex items-center justify-between gap-2 mb-3">
-          <span class="text-xs font-medium line-clamp-2" style="color: var(--color-text-muted)">
+          <span class="text-xs font-medium line-clamp-2 text-gray-400 dark:text-gray-500">
             {{ k.label }}
           </span>
           <div
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-            style="background-color: var(--color-primary-light); color: var(--color-primary)"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-500/12 text-brand-500 dark:text-brand-400"
           >
             <AppIcon :icon="kpiIcons[k.key] ?? 'lucide:activity'" :size="18" />
           </div>
         </div>
-        <p class="text-2xl font-bold tabular-nums font-mono" style="color: var(--color-text-primary)">
+        <p class="text-2xl font-bold tabular-nums font-mono text-gray-800 dark:text-white/90">
           {{ formatKpi(k) }}
         </p>
-        <p v-if="k.hint" class="text-xs mt-1" style="color: var(--color-text-muted)">{{ k.hint }}</p>
+        <p v-if="k.hint" class="text-xs mt-1 text-gray-400 dark:text-gray-500">{{ k.hint }}</p>
       </div>
     </div>
 
     <div class="grid lg:grid-cols-2 gap-6">
-      <div
-        class="rounded-xl border p-5 lg:p-6"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-card)',
-        }"
+      <FormSectionCard
+        title="Actividad reciente"
+        subtitle="Últimos asientos publicados del periodo"
+        dense
       >
-        <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
-          Actividad reciente
-        </h2>
-        <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-          Últimos asientos publicados del periodo
-        </p>
         <ul v-if="dashboard?.recentActivity?.length" class="space-y-3">
           <li
             v-for="a in dashboard.recentActivity"
             :key="a.id"
-            class="flex gap-3 rounded-lg border p-3"
-            :style="{
-              borderColor: 'var(--color-border)',
-              borderLeftWidth: '3px',
-              borderLeftColor: toneBorder(a.tone),
-            }"
+            class="flex gap-3 rounded-lg border p-3 border-gray-200 dark:border-gray-800 border-l-3" :class="toneBorder(a.tone)"
           >
             <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium" style="color: var(--color-text-primary)">
+              <p class="text-sm font-medium text-gray-800 dark:text-white/90">
                 {{ a.title }}
               </p>
-              <p class="text-xs mt-0.5 truncate" style="color: var(--color-text-secondary)">
+              <p class="text-xs mt-0.5 truncate text-gray-500 dark:text-gray-400">
                 {{ a.detail }}
               </p>
             </div>
-            <span class="text-[11px] shrink-0 self-start" style="color: var(--color-text-muted)">
+            <span class="text-[11px] shrink-0 self-start text-gray-400 dark:text-gray-500">
               {{ formatActivityTime(a.occurredAt) }}
             </span>
           </li>
         </ul>
-        <p v-else class="text-sm" style="color: var(--color-text-muted)">
+        <p v-else class="text-sm text-gray-400 dark:text-gray-500">
           Sin actividad publicada en este periodo.
         </p>
-      </div>
+      </FormSectionCard>
 
-      <div
-        class="rounded-xl border p-5 lg:p-6"
-        :style="{
-          backgroundColor: 'var(--color-surface)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-card)',
-        }"
+      <FormSectionCard
+        title="Acciones rápidas"
+        subtitle="Tareas frecuentes"
+        dense
       >
-        <h2 class="text-lg font-semibold mb-1" style="color: var(--color-text-primary)">
-          Acciones rápidas
-        </h2>
-        <p class="text-xs mb-5" style="color: var(--color-text-muted)">
-          Tareas frecuentes
-        </p>
         <div class="grid sm:grid-cols-2 gap-3">
-          <button
+          <ActionCard
             v-for="ac in acciones"
             :key="ac.to"
-            type="button"
-            class="flex items-start gap-3 rounded-xl border p-4 text-left transition-all hover-surface"
-            :style="{ borderColor: 'var(--color-border)' }"
+            :icon="ac.icon"
+            :title="ac.label"
+            :description="ac.sub"
             @click="router.push(ac.to)"
-          >
-            <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-              style="background-color: var(--color-primary-light); color: var(--color-primary)"
-            >
-              <AppIcon :icon="ac.icon" :size="20" />
-            </div>
-            <div class="min-w-0">
-              <p class="text-sm font-semibold" style="color: var(--color-text-primary)">
-                {{ ac.label }}
-              </p>
-              <p class="text-xs mt-0.5" style="color: var(--color-text-muted)">
-                {{ ac.sub }}
-              </p>
-            </div>
-          </button>
+          />
         </div>
-      </div>
+      </FormSectionCard>
     </div>
   </div>
 </template>

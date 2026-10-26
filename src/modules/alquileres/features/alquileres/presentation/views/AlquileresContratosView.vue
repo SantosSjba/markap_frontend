@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { rentalsRepositoryKey } from '../../application/ports/rentals.port'
 import { useService } from '@shared/presentation/di/services'
 import { ref, computed, watch } from 'vue'
@@ -311,24 +313,14 @@ async function handleExport() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
+  <div class="space-y-6">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1
-          class="text-xl sm:text-2xl font-bold"
-          :style="{ color: 'var(--color-text-primary)' }"
-        >
-          Alquileres
-        </h1>
-        <p
-          class="text-sm mt-1"
-          :style="{ color: 'var(--color-text-secondary)' }"
-        >
-          Gestión de contratos de alquiler
-        </p>
-      </div>
-      <div class="flex gap-2 w-full sm:w-auto">
+    <PageHeader
+      title="Alquileres"
+      subtitle="Gestión de contratos de alquiler"
+    >
+      <template #actions>
+        <div class="flex gap-2 w-full sm:w-auto">
         <BaseButton
           variant="outline"
           class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
@@ -344,7 +336,8 @@ async function handleExport() {
           Nuevo Alquiler
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Stats -->
     <div
@@ -353,10 +346,9 @@ async function handleExport() {
     />
     <div
       v-else-if="statsQueryError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
       <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
     </div>
     <div
@@ -378,19 +370,13 @@ async function handleExport() {
     </div>
 
     <!-- Table -->
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-      }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <div class="overflow-x-auto">
         <div
           v-if="listQueryError"
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
-          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
           <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
@@ -417,29 +403,25 @@ async function handleExport() {
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
                   <span
-                    class="w-2 h-2 rounded-full shrink-0"
-                    :style="{
-                      backgroundColor:
-                        getDisplayStatus(row as RentalListItem) === 'vencido'
-                          ? 'var(--color-error, #dc2626)'
-                          : getDisplayStatus(row as RentalListItem) === 'porVencer'
-                            ? 'var(--color-warning, #d97706)'
-                            : getDisplayStatus(row as RentalListItem) === 'proximo'
-                              ? 'var(--color-info, #2563eb)'
-                              : 'var(--color-success, #16a34a)',
+                    class="size-2 shrink-0 rounded-full"
+                    :class="{
+                      'bg-error-500': getDisplayStatus(row as RentalListItem) === 'vencido',
+                      'bg-warning-500': getDisplayStatus(row as RentalListItem) === 'porVencer',
+                      'bg-blue-light-500': getDisplayStatus(row as RentalListItem) === 'proximo',
+                      'bg-success-500': !['vencido', 'porVencer', 'proximo'].includes(getDisplayStatus(row as RentalListItem)),
                     }"
                   />
                   <div>
                     <div class="flex items-center gap-2">
                       <AppIcon icon="lucide:file-text" :size="16" color="var(--color-text-muted)" class="shrink-0" />
-                      <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                      <span class="font-medium text-gray-800 dark:text-white/90">
                         {{ (row as RentalListItem).code }}
                       </span>
                     </div>
-                    <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+                    <p class="text-sm mt-0.5 text-gray-500 dark:text-gray-400">
                       {{ (row as RentalListItem).propertyAddress }}
                     </p>
-                    <p v-if="(row as RentalListItem).hasContract" class="text-xs mt-1 flex items-center gap-1" :style="{ color: 'var(--color-text-muted)' }">
+                    <p v-if="(row as RentalListItem).hasContract" class="text-xs mt-1 flex items-center gap-1 text-gray-400 dark:text-gray-500">
                       <AppIcon icon="lucide:paperclip" :size="14" />
                       PDF Adjunto
                     </p>
@@ -448,38 +430,32 @@ async function handleExport() {
               </td>
               <td class="py-3 px-4">
                 <div class="flex flex-col gap-1 text-sm">
-                  <span class="flex items-center gap-1.5" :style="{ color: 'var(--color-text-primary)' }">
+                  <span class="flex items-center gap-1.5 text-gray-800 dark:text-white/90">
                     <AppIcon icon="lucide:user" :size="16" color="var(--color-text-muted)" class="shrink-0" />
                     {{ (row as RentalListItem).tenantName }}
                   </span>
-                  <span class="flex items-center gap-1.5 text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                  <span class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                     Inquilino
                   </span>
-                  <span class="flex items-center gap-1.5 mt-1" :style="{ color: 'var(--color-text-primary)' }">
+                  <span class="flex items-center gap-1.5 mt-1 text-gray-800 dark:text-white/90">
                     <AppIcon icon="lucide:building-2" :size="16" color="var(--color-text-muted)" class="shrink-0" />
                     {{ (row as RentalListItem).ownerName }}
                   </span>
-                  <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">Propietario</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">Propietario</span>
                 </div>
               </td>
               <td class="py-3 px-4">
                 <div class="flex flex-col gap-0.5">
-                  <span class="flex items-center gap-1.5 text-sm" :style="{ color: 'var(--color-text-primary)' }">
+                  <span class="flex items-center gap-1.5 text-sm text-gray-800 dark:text-white/90">
                     <AppIcon icon="lucide:calendar" :size="16" color="var(--color-text-muted)" class="shrink-0" />
                     {{ formatDate((row as RentalListItem).startDate) }} - {{ formatDate((row as RentalListItem).endDate) }}
                   </span>
-                  <span
-                    class="text-xs font-medium"
-                    :style="{
-                      color:
-                        getDisplayStatus(row as RentalListItem) === 'vencido'
+                  <span :class="(getDisplayStatus(row as RentalListItem) === 'vencido'
                           ? 'var(--color-error)'
                           : getDisplayStatus(row as RentalListItem) === 'porVencer'
                             ? 'var(--color-warning)'
-                            : getDisplayStatus(row as RentalListItem) === 'proximo'
-                              ? 'var(--color-info, #3B82F6)'
-                              : 'var(--color-success)',
-                    }"
+                            : getDisplayStatus(row as RentalListItem) === 'proximo') ? 'text-blue-light-500' : 'text-success-600 dark:text-success-500'"
+                    class="text-xs font-medium"
                   >
                     {{ getDaysLabel(row as RentalListItem) }}
                   </span>
@@ -492,10 +468,10 @@ async function handleExport() {
               </td>
               <td class="py-3 px-4">
                 <div class="flex flex-col gap-0.5 text-sm">
-                  <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                  <span class="font-medium text-gray-800 dark:text-white/90">
                     {{ formatMoney(row as RentalListItem) }}
                   </span>
-                  <span v-if="formatGuarantee(row as RentalListItem)" class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                  <span v-if="formatGuarantee(row as RentalListItem)" class="text-xs text-gray-500 dark:text-gray-400">
                     {{ formatGuarantee(row as RentalListItem) }}
                   </span>
                 </div>
@@ -505,7 +481,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div v-if="!listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!listQueryError" class="border-t border-gray-200 dark:border-gray-800">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"
@@ -515,30 +491,30 @@ async function handleExport() {
           </div>
         </template>
       </div>
-    </div>
+    </BaseCard>
   </div>
 
   <!-- Confirm Cancel Rental Modal -->
   <BaseModal v-model="showCancelModal" :closable="true" size="sm" @close="closeCancelModal">
     <template #title>
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
-          <AppIcon icon="lucide:x-circle" :size="16" style="color: var(--color-error);" />
+        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15">
+          <AppIcon class="text-error-500 dark:text-error-400" icon="lucide:x-circle" :size="16" />
         </div>
-        <span class="text-base font-semibold" style="color: var(--color-text-primary);">Cancelar contrato</span>
+        <span class="text-base font-semibold text-gray-800 dark:text-white/90">Cancelar contrato</span>
       </div>
     </template>
     <div class="p-4 space-y-3">
-      <p class="text-sm" style="color: var(--color-text-secondary);">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
         ¿Estás seguro de que deseas cancelar el contrato de
-        <span class="font-semibold" style="color: var(--color-text-primary);">{{ rentalToCancel?.tenantName }}</span>
-        en <span class="font-semibold" style="color: var(--color-text-primary);">{{ rentalToCancel?.propertyAddress }}</span>?
+        <span class="font-semibold text-gray-800 dark:text-white/90">{{ rentalToCancel?.tenantName }}</span>
+        en <span class="font-semibold text-gray-800 dark:text-white/90">{{ rentalToCancel?.propertyAddress }}</span>?
       </p>
-      <p class="text-xs px-3 py-2 rounded-lg" style="background: var(--color-warning-subtle); color: var(--color-warning);">
+      <p class="text-xs px-3 py-2 rounded-lg bg-warning-50 dark:bg-warning-500/15 text-warning-600 dark:text-orange-400">
         El contrato quedará marcado como <strong>Cancelado</strong>. Esta acción no se puede deshacer. El historial de pagos se conservará.
       </p>
     </div>
-    <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
       <BaseButton variant="ghost" @click="closeCancelModal">Cancelar</BaseButton>
       <BaseButton variant="danger" :loading="isCancellingRental" @click="executeCancelRental">
         <AppIcon icon="lucide:x-circle" :size="16" class="mr-1" />

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
 import { ventasPropertiesRepositoryKey } from '../../../propiedades/application/ports/ventas-properties.port'
 import { useService } from '@shared/presentation/di/services'
@@ -7,7 +11,6 @@ import { ref, computed } from 'vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
@@ -224,27 +227,21 @@ async function openReceipt(row: SaleSeparationRow) {
 
     <div
       v-if="newModalLoadError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span class="max-w-xl" style="color: var(--color-error)">{{ newModalLoadError }}</span>
+      <span class="max-w-xl text-error-500 dark:text-error-400">{{ newModalLoadError }}</span>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" :loading="loadingNewModalData" @click="openModal">
         Reintentar
       </BaseButton>
     </div>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <div
         v-else-if="listQueryError"
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <DataTable v-else :columns="columns" :data="rows" row-key="id" empty-text="Sin separaciones.">
@@ -287,7 +284,7 @@ async function openReceipt(row: SaleSeparationRow) {
           </td>
         </template>
       </DataTable>
-      <div v-if="!isLoading && !listQueryError" class="border-t p-2" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="!isLoading && !listQueryError" class="border-t p-2 border-gray-200 dark:border-gray-800">
         <BasePagination
           v-bind="paginationProps"
           :show-page-size="true"
@@ -295,41 +292,15 @@ async function openReceipt(row: SaleSeparationRow) {
           @update:page-size="(s: number) => { listParams.limit = s; listParams.page = 1 }"
         />
       </div>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showNew" title="Nueva separación" size="lg">
       <div class="p-4 space-y-3">
         <FormSelect v-model="form.buyerClientId" label="Cliente comprador" :options="buyerOptions" required />
         <FormSelect v-model="form.propertyId" label="Inmueble disponible" :options="propertyOptions" required />
-        <div>
-          <label class="text-sm font-medium">Monto (S/)</label>
-          <input
-            v-model.number="form.amount"
-            type="number"
-            min="0"
-            step="0.01"
-            class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-            :style="{ borderColor: 'var(--color-border)' }"
-          />
-        </div>
-        <div>
-          <label class="text-sm font-medium">Fecha</label>
-          <input
-            v-model="form.separationDate"
-            type="date"
-            class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-            :style="{ borderColor: 'var(--color-border)' }"
-          />
-        </div>
-        <div>
-          <label class="text-sm font-medium">Notas</label>
-          <textarea
-            v-model="form.notes"
-            rows="2"
-            class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-            :style="{ borderColor: 'var(--color-border)' }"
-          />
-        </div>
+        <FormInput v-model="form.amount" type="number" min="0" step="0.01" label="Monto (S/)" />
+        <FormInput v-model="form.separationDate" type="date" label="Fecha" />
+        <FormTextarea v-model="form.notes" :rows="2" label="Notas" />
         <FileDropzone
           v-model="receiptFile"
           label="Comprobante de separación"

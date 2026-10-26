@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -42,7 +44,7 @@ function goJournal(line: ContabilidadInventoryKardexLineDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:scroll-text"
       title="Kardex valorizado"
@@ -63,37 +65,27 @@ function goJournal(line: ContabilidadInventoryKardexLineDTO) {
       <StatsCard title="Valor total" :value="formatPen(item.valuedBalance)" />
     </div>
 
-    <div
-      v-if="selectedItemId"
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <div v-if="isLoading" class="p-10 text-center text-sm" :style="{ color: 'var(--color-text-muted)' }">
+    <BaseCard v-if="selectedItemId" padding="none" class="block overflow-hidden">
+      <div v-if="isLoading" class="p-10 text-center text-sm text-gray-400 dark:text-gray-500">
         Cargando kardex…
       </div>
-      <div v-else-if="!lines.length" class="p-10 text-center text-sm" :style="{ color: 'var(--color-text-muted)' }">
+      <div v-else-if="!lines.length" class="p-10 text-center text-sm text-gray-400 dark:text-gray-500">
         Sin movimientos para este ítem.
       </div>
-      <table v-else class="w-full text-sm">
-        <thead>
-          <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <th class="text-left py-3 px-4 font-medium">Fecha</th>
-            <th class="text-left py-3 px-4 font-medium">Tipo</th>
-            <th class="text-right py-3 px-4 font-medium">Cant.</th>
-            <th class="text-right py-3 px-4 font-medium">C.U.</th>
-            <th class="text-right py-3 px-4 font-medium">Importe</th>
-            <th class="text-right py-3 px-4 font-medium">Saldo cant.</th>
-            <th class="text-right py-3 px-4 font-medium">Saldo S/</th>
-            <th class="py-3 px-4 w-20" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="line in lines"
-            :key="line.id"
-            class="border-b last:border-0"
-            :style="{ borderColor: 'var(--color-border)' }"
-          >
+      <DataTable
+        :columns="[
+          { key: 'c0', label: 'Fecha' },
+          { key: 'c1', label: 'Tipo' },
+          { key: 'c2', label: 'Cant.', align: 'right' },
+          { key: 'c3', label: 'C.U.', align: 'right' },
+          { key: 'c4', label: 'Importe', align: 'right' },
+          { key: 'c5', label: 'Saldo cant.', align: 'right' },
+          { key: 'c6', label: 'Saldo S/', align: 'right' },
+          { key: 'c7', label: '' },
+        ]"
+        :data="lines"
+      >
+        <template #row="{ row: line }">
             <td class="py-2.5 px-4 whitespace-nowrap">{{ line.movementDate }}</td>
             <td class="py-2.5 px-4">{{ typeLabel(line.movementType) }}</td>
             <td class="py-2.5 px-4 text-right font-mono">{{ line.quantity }}</td>
@@ -104,9 +96,8 @@ function goJournal(line: ContabilidadInventoryKardexLineDTO) {
             <td class="py-2.5 px-4 text-right">
               <BaseButton v-if="line.journalEntryId" variant="ghost" size="sm" @click="goJournal(line)">Asiento</BaseButton>
             </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        </template>
+      </DataTable>
+    </BaseCard>
   </div>
 </template>

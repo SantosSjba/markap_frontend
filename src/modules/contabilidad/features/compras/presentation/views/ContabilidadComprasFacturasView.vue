@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -221,7 +222,7 @@ function goJournal(row: ContabilidadPurchaseInvoiceDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:file-input"
       title="Facturas de compra"
@@ -235,14 +236,11 @@ function goJournal(row: ContabilidadPurchaseInvoiceDTO) {
       </template>
     </PageHeader>
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -272,13 +270,13 @@ function goJournal(row: ContabilidadPurchaseInvoiceDTO) {
             >
               {{ (row as ContabilidadPurchaseInvoiceDTO).currencyCode }}
             </Badge>
-            <div class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+            <div class="text-xs text-gray-400 dark:text-gray-500">
               {{ docTypeLabel((row as ContabilidadPurchaseInvoiceDTO).documentType) }}
             </div>
           </td>
           <td class="py-3 px-4 text-sm">
             <div>{{ (row as ContabilidadPurchaseInvoiceDTO).supplierName }}</div>
-            <div class="text-xs font-mono" :style="{ color: 'var(--color-text-muted)' }">
+            <div class="text-xs font-mono text-gray-400 dark:text-gray-500">
               {{ (row as ContabilidadPurchaseInvoiceDTO).supplierRuc }}
             </div>
           </td>
@@ -315,7 +313,7 @@ function goJournal(row: ContabilidadPurchaseInvoiceDTO) {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" title="Registrar factura de compra" size="lg">
       <form class="space-y-4" @submit.prevent="submitInvoice">

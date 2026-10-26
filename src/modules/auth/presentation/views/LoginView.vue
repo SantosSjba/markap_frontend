@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import * as yup from 'yup'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import { useRouter } from 'vue-router'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
@@ -61,7 +61,7 @@ const onSubmit = handleSubmit(async (values) => {
     </div>
 
     <!-- Title -->
-    <p class="text-sm mb-8" style="color: var(--color-text-secondary);">Sistema Integral de Gestión Empresarial</p>
+    <p class="text-sm mb-8 text-gray-500 dark:text-gray-400">Sistema Integral de Gestión Empresarial</p>
 
     <!-- Form -->
     <form @submit.prevent="onSubmit" class="space-y-5 text-left">
@@ -87,25 +87,14 @@ const onSubmit = handleSubmit(async (values) => {
       <div class="text-right">
         <router-link
           to="/auth/forgot-password"
-          class="text-sm transition-colors"
-          style="color: var(--color-primary);"
+          class="text-sm transition-colors text-brand-500 dark:text-brand-400"
         >
           ¿Olvidaste tu contraseña?
         </router-link>
       </div>
 
       <!-- Submit button -->
-      <button
-        type="submit"
-        :disabled="authStore.isLoading"
-        class="btn-primary w-full py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <span v-if="authStore.isLoading" class="flex items-center justify-center gap-2">
-          <AppIcon icon="line-md:loading-loop" :size="20" color="currentColor" />
-          Ingresando...
-        </span>
-        <span v-else>Ingresar</span>
-      </button>
+      <BaseButton type="submit" :disabled="authStore.isLoading" size="lg" block :loading="authStore.isLoading" loading-text="Ingresando...">Ingresar</BaseButton>
     </form>
   </div>
 </template>

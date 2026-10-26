@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import { computed, onMounted } from 'vue'
 import * as yup from 'yup'
 import { getApiErrorMessage, getApiErrorStatus } from '@shared/utils/apiErrorMessage'
@@ -113,8 +114,7 @@ const goToLogin = () => {
     <!-- Icon -->
     <div class="flex justify-center mb-6">
       <div
-        class="w-16 h-16 rounded-xl flex items-center justify-center"
-        style="background-color: var(--color-primary-light); border: 1px solid var(--color-primary);"
+        class="w-16 h-16 rounded-xl flex items-center justify-center bg-brand-50 dark:bg-brand-500/12 border border-brand-500"
       >
         <AppIcon icon="lucide:key-round" :size="32" color="var(--color-primary)" />
       </div>
@@ -123,32 +123,25 @@ const goToLogin = () => {
     <!-- Success state -->
     <div v-if="isSuccess" class="text-center">
       <div
-        class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-        style="background-color: var(--color-success-light); border: 1px solid var(--color-success);"
+        class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-success-500 bg-success-50 dark:bg-success-500/15"
       >
         <AppIcon icon="lucide:check" :size="32" color="var(--color-success)" />
       </div>
-      <h2 class="text-xl font-bold mb-2" style="color: var(--color-text-primary);">
+      <h2 class="text-xl font-semibold mb-2 text-gray-800 dark:text-white/90">
         Contraseña actualizada
       </h2>
-      <p class="mb-6" style="color: var(--color-text-secondary);">
+      <p class="mb-6 text-gray-500 dark:text-gray-400">
         Ya puedes iniciar sesión con tu nueva contraseña.
       </p>
-      <button
-        type="button"
-        @click="goToLogin"
-        class="btn-primary inline-block py-3 px-6 rounded-lg font-medium"
-      >
-        Ir a iniciar sesión
-      </button>
+      <BaseButton @click="goToLogin" size="lg">Ir a iniciar sesión</BaseButton>
     </div>
 
     <!-- Form -->
     <template v-else>
-      <h1 class="text-2xl font-bold tracking-wide mb-2" style="color: var(--color-text-primary);">
+      <h1 class="mb-2 text-title-sm font-semibold text-gray-800 dark:text-white/90">
         Restablecer Contraseña
       </h1>
-      <p class="text-sm mb-8" style="color: var(--color-text-secondary);">
+      <p class="text-sm mb-8 text-gray-500 dark:text-gray-400">
         Ingresa el código de 6 dígitos que recibiste por correo y tu nueva contraseña
       </p>
 
@@ -194,32 +187,20 @@ const goToLogin = () => {
         />
 
         <!-- Submit -->
-        <button
-          type="submit"
-          :disabled="isLoading"
-          class="btn-primary w-full py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span v-if="isLoading" class="flex items-center justify-center gap-2">
-            <AppIcon icon="line-md:loading-loop" :size="20" color="currentColor" />
-            Restableciendo...
-          </span>
-          <span v-else>Restablecer contraseña</span>
-        </button>
+        <BaseButton type="submit" :disabled="isLoading" size="lg" block :loading="isLoading" loading-text="Restableciendo...">Restablecer contraseña</BaseButton>
 
         <!-- Back links -->
         <p class="text-center space-x-2">
           <router-link
             to="/auth/forgot-password"
-            class="text-sm"
-            style="color: var(--color-primary);"
+            class="text-sm text-brand-500 dark:text-brand-400"
           >
             Solicitar nuevo código
           </router-link>
-          <span style="color: var(--color-text-muted);">|</span>
+          <span class="text-gray-400 dark:text-gray-500">|</span>
           <router-link
             to="/auth/login"
-            class="text-sm"
-            style="color: var(--color-primary);"
+            class="text-sm text-brand-500 dark:text-brand-400"
           >
             Volver al login
           </router-link>

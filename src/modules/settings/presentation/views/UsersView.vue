@@ -1,7 +1,14 @@
 <script setup lang="ts">
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import Avatar from '@shared/presentation/components/ui/Avatar.vue'
 import { ref, computed, watch } from 'vue'
 import * as yup from 'yup'
-import { Icon } from '@iconify/vue'
 import {
   useUsers,
   useRoles,
@@ -283,172 +290,90 @@ const paginationProps = computed(() => ({
 
 <template>
   <div>
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold" style="color: var(--color-text-primary);">Usuarios</h2>
-      <button
-        @click="openCreateModal"
-        class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"
-      >
-        <Icon icon="lucide:plus" class="w-5 h-5" />
-        Nuevo Usuario
-      </button>
-    </div>
+    <PageHeader title="Usuarios" class="mb-6">
+      <template #actions>
+        <BaseButton icon="lucide:plus" @click="openCreateModal">Nuevo Usuario</BaseButton>
+      </template>
+    </PageHeader>
 
     <!-- Search -->
-      <div class="card p-4 mb-6">
-      <div class="relative">
-        <Icon
-          icon="lucide:search"
-          class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none"
-          :style="{ color: 'var(--color-text-muted)' }"
-        />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Buscar usuarios..."
-          class="w-full"
-          style="padding-left: 2.75rem;"
-        />
-      </div>
+    <div class="card mb-6 p-4">
+      <SearchInput v-model="searchQuery" placeholder="Buscar usuarios..." />
     </div>
 
     <!-- Loading -->
-    <div v-if="isLoading" class="flex justify-center py-12">
-      <Icon icon="svg-spinners:ring-resize" class="w-10 h-10" :style="{ color: 'var(--color-primary)' }" />
-    </div>
+    <LoadingState v-if="isLoading" class="py-12" />
 
     <!-- Error -->
     <div v-else-if="error" class="text-center py-12">
-      <p style="color: var(--color-error);">Error al cargar los datos</p>
-      <button
-        type="button"
-        :disabled="isFetching"
-        class="btn-primary mt-4 px-6 py-2 rounded-lg inline-flex items-center justify-center gap-2 disabled:opacity-60"
-        @click="() => refetch()"
-      >
-        <Icon
-          v-if="isFetching"
-          icon="svg-spinners:ring-resize"
-          class="w-5 h-5"
-        />
-        Reintentar
-      </button>
+      <p class="text-error-500 dark:text-error-400">Error al cargar los datos</p>
+      <BaseButton :disabled="isFetching" @click="() => refetch()" size="sm" :loading="isFetching" class="mt-4">Reintentar</BaseButton>
     </div>
 
     <!-- Users table -->
     <div v-else class="card overflow-hidden">
       <div
         v-if="isRolesError"
-        class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b text-sm"
-        style="border-color: var(--color-border); background-color: var(--color-warning-light)"
+        class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b text-sm border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
       >
-        <span style="color: var(--color-text-primary)">
+        <span class="text-gray-800 dark:text-white/90">
           No se pudieron cargar los roles para asignar:
-          <span style="color: var(--color-error)">{{ getApiErrorMessage(rolesError) }}</span>
+          <span class="text-error-500 dark:text-error-400">{{ getApiErrorMessage(rolesError) }}</span>
         </span>
-        <button
-          type="button"
-          class="btn-primary px-4 py-2 rounded-lg text-sm shrink-0"
-          @click="() => refetchRoles()"
-        >
-          Reintentar roles
-        </button>
+        <BaseButton @click="() => refetchRoles()" size="sm" class="shrink-0">Reintentar roles</BaseButton>
       </div>
       <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Usuario</th>
-              <th>Roles</th>
-              <th>Estado</th>
-              <th class="text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="user in paginatedUsers" :key="user.id">
+        <DataTable
+          :columns="[
+            { key: 'c0', label: 'Usuario' },
+            { key: 'c1', label: 'Roles' },
+            { key: 'c2', label: 'Estado' },
+            { key: 'c3', label: 'Acciones', align: 'right' },
+          ]"
+          :data="paginatedUsers"
+        >
+          <template #row="{ row: user }">
               <td>
                 <div class="flex items-center gap-3">
-                  <div 
-                    class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium text-white flex-shrink-0"
-                    style="background-color: var(--color-primary);"
-                  >
-                    {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
-                  </div>
+                  <Avatar :name="`${user.firstName} ${user.lastName}`" />
                   <div>
-                    <p class="font-medium" style="color: var(--color-text-primary);">{{ user.fullName }}</p>
-                    <p class="text-sm" style="color: var(--color-text-muted);">{{ user.email }}</p>
+                    <p class="font-medium text-gray-800 dark:text-white/90">{{ user.fullName }}</p>
+                    <p class="text-sm text-gray-400 dark:text-gray-500">{{ user.email }}</p>
                   </div>
                 </div>
               </td>
               <td>
                 <div class="flex flex-wrap gap-1">
-                  <span
-                    v-for="role in user.roles"
-                    :key="role.id"
-                    class="badge badge-info text-xs"
-                  >
-                    {{ role.name }}
-                  </span>
-                  <span v-if="user.roles.length === 0" class="text-sm" style="color: var(--color-text-muted);">
+                  <Badge v-for="role in user.roles" :key="role.id" variant="info">{{ role.name }}</Badge>
+                  <span v-if="user.roles.length === 0" class="text-sm text-gray-400 dark:text-gray-500">
                     Sin roles
                   </span>
                 </div>
               </td>
               <td>
-                <span :class="user.isActive ? 'badge-success' : 'badge-error'" class="badge">
-                  {{ user.isActive ? 'Activo' : 'Inactivo' }}
-                </span>
+                <Badge :variant="user.isActive ? 'success' : 'error'">{{ user.isActive ? 'Activo' : 'Inactivo' }}</Badge>
               </td>
               <td>
                 <div class="flex items-center justify-end gap-2">
-                  <button
-                    type="button"
+                  <IconButton :disabled="isUserRowBusy(user.id)" @click="openRolesModal(user)" icon="lucide:shield-check" label="Gestionar roles" />
+                  <IconButton :disabled="isUserRowBusy(user.id)" @click="openEditModal(user)" icon="lucide:pencil" label="Editar" />
+                  <IconButton
                     :disabled="isUserRowBusy(user.id)"
-                    class="p-2 rounded-lg hover-surface disabled:opacity-50 disabled:pointer-events-none"
-                    title="Gestionar roles"
-                    @click="openRolesModal(user)"
-                  >
-                    <Icon icon="lucide:shield-check" class="w-5 h-5" :style="{ color: 'var(--color-text-muted)' }" />
-                  </button>
-                  <button
-                    type="button"
-                    :disabled="isUserRowBusy(user.id)"
-                    class="p-2 rounded-lg hover-surface disabled:opacity-50 disabled:pointer-events-none"
-                    title="Editar"
-                    @click="openEditModal(user)"
-                  >
-                    <Icon icon="lucide:pencil" class="w-5 h-5" :style="{ color: 'var(--color-text-muted)' }" />
-                  </button>
-                  <button
-                    type="button"
-                    :disabled="isUserRowBusy(user.id)"
-                    class="p-2 rounded-lg hover-surface disabled:opacity-50 disabled:pointer-events-none"
-                    :title="user.isActive ? 'Desactivar' : 'Activar'"
+                    :loading="isTogglingActive(user.id)"
+                    :icon="user.isActive ? 'lucide:circle-x' : 'lucide:circle-check'"
+                    :label="user.isActive ? 'Desactivar' : 'Activar'"
+                    :danger="user.isActive"
+                    :class="user.isActive ? undefined : 'text-success-600 dark:text-success-500'"
                     @click="toggleUserActive(user)"
-                  >
-                    <Icon
-                      v-if="isTogglingActive(user.id)"
-                      icon="svg-spinners:ring-resize"
-                      class="w-5 h-5"
-                      :style="{ color: 'var(--color-text-muted)' }"
-                    />
-                    <Icon
-                      v-else
-                      :icon="user.isActive ? 'lucide:circle-x' : 'lucide:circle-check'"
-                      class="w-5 h-5"
-                      :style="{ color: user.isActive ? 'var(--color-error)' : 'var(--color-success)' }"
-                    />
-                  </button>
+                  />
                 </div>
               </td>
-            </tr>
-          </tbody>
-        </table>
+          </template>
+        </DataTable>
       </div>
 
       <!-- Pagination -->
-<div class="border-t" style="border-color: var(--color-border);">
+<div class="border-t border-gray-200 dark:border-gray-800">
         <BasePagination
           :current-page="paginationProps.currentPage"
           :total-pages="paginationProps.totalPages"
@@ -555,41 +480,18 @@ const paginationProps = computed(() => ({
       title="Gestionar Roles"
       @update:model-value="(open) => !open && closeRolesModal()"
     >
-      <p class="text-sm mb-4" style="color: var(--color-text-secondary);">{{ selectedUser?.fullName }}</p>
+      <p class="text-sm mb-4 text-gray-500 dark:text-gray-400">{{ selectedUser?.fullName }}</p>
       <div class="space-y-2">
-        <button
+        <FormCheckbox
           v-for="role in (roles ?? [])"
           :key="role.id"
-          type="button"
+          class="rounded-lg border border-gray-200 p-3 has-data-checked:border-brand-500 has-data-checked:bg-brand-500/5 dark:border-gray-800"
+          :model-value="hasRole(role.id)"
+          :label="role.name"
+          :description="role.code"
           :disabled="isRoleRowSaving(role.id)"
-          :aria-pressed="hasRole(role.id)"
-          :class="[
-            'w-full flex items-center justify-between p-3 rounded-lg border transition-colors disabled:opacity-60',
-            hasRole(role.id) ? 'border-2' : 'hover-surface',
-          ]"
-          :style="{
-            borderColor: hasRole(role.id) ? 'var(--color-primary)' : 'var(--color-border)',
-            backgroundColor: hasRole(role.id) ? 'var(--color-primary-light)' : '',
-          }"
-          @click="toggleRole(role.id)"
-        >
-          <div>
-            <p class="font-medium text-left" style="color: var(--color-text-primary);">{{ role.name }}</p>
-            <p class="text-sm text-left" style="color: var(--color-text-muted);">{{ role.code }}</p>
-          </div>
-          <Icon
-            v-if="isRoleRowSaving(role.id)"
-            icon="svg-spinners:ring-resize"
-            class="w-5 h-5 shrink-0"
-            :style="{ color: 'var(--color-primary)' }"
-          />
-          <Icon
-            v-else-if="hasRole(role.id)"
-            icon="lucide:circle-check"
-            class="w-5 h-5 shrink-0"
-            :style="{ color: 'var(--color-primary)' }"
-          />
-        </button>
+          @update:model-value="toggleRole(role.id)"
+        />
       </div>
       <template #footer>
         <div class="flex justify-end">

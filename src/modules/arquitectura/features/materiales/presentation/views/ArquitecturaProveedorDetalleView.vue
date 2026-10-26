@@ -1,4 +1,6 @@
 ﻿<script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -215,20 +217,14 @@ const purchaseRows = computed(() =>
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1100px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start gap-3 justify-between">
-      <div>
-        <p class="text-xs font-medium uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">
-          Proveedor
-        </p>
-        <h1 class="text-xl font-bold mt-0.5" :style="{ color: 'var(--color-text-primary)' }">
-          {{ detail?.companyName ?? '…' }}
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          RUC {{ detail?.ruc ?? '…' }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="max-w-[1100px] mx-auto space-y-6">
+    <PageHeader
+      :title="detail?.companyName ?? '…'"
+      :subtitle="`RUC ${detail?.ruc ?? '…'}`"
+      eyebrow="Proveedor"
+    >
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton variant="ghost" type="button" @click="goBack">
           <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1.5" />
           Listado
@@ -237,18 +233,16 @@ const purchaseRows = computed(() =>
           Eliminar
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando…</div>
+    <div v-if="isLoading" class="text-sm text-gray-500 dark:text-gray-400">Cargando…</div>
 
     <template v-else-if="detail">
       <BaseTabs v-model="activeTab" :tabs="tabs" />
 
       <div v-show="activeTab === 'datos'" class="space-y-4 pt-4">
-        <div
-          class="space-y-4 p-4 sm:p-6 rounded-xl border max-w-[640px]"
-          :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-        >
+        <BaseCard class="block space-y-4 max-w-[640px]">
           <FormInput v-model="companyName" label="Empresa" required />
           <FormInput v-model="ruc" label="RUC" required />
           <FormInput v-model="contactName" label="Contacto" />
@@ -261,7 +255,7 @@ const purchaseRows = computed(() =>
               Guardar datos
             </BaseButton>
           </div>
-        </div>
+        </BaseCard>
       </div>
 
       <div v-show="activeTab === 'vinculos'" class="space-y-4 pt-4">
@@ -276,10 +270,7 @@ const purchaseRows = computed(() =>
             Vincular material
           </BaseButton>
         </div>
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-        >
+        <BaseCard padding="none" class="block overflow-hidden">
           <DataTable
             empty-text="Este proveedor aún no tiene materiales del catálogo vinculados."
             :columns="linkColumns"
@@ -288,10 +279,10 @@ const purchaseRows = computed(() =>
           >
             <template #row="{ row }">
               <td class="py-3 px-4 text-sm">{{ (row as ArquitecturaSupplierCatalogLinkDto).materialCode }}</td>
-              <td class="py-3 px-4 text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+              <td class="py-3 px-4 text-sm font-medium text-gray-800 dark:text-white/90">
                 {{ (row as ArquitecturaSupplierCatalogLinkDto).materialName }}
               </td>
-              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+              <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
                 {{ (row as ArquitecturaSupplierCatalogLinkDto).category }}
               </td>
               <td class="py-3 px-4 text-sm">{{ (row as ArquitecturaSupplierCatalogLinkDto).supplierSku ?? '—' }}</td>
@@ -299,13 +290,13 @@ const purchaseRows = computed(() =>
                 {{ (row as ArquitecturaSupplierCatalogLinkDto).notes ?? '—' }}
               </td>
               <td class="py-3 px-4 text-right">
-                <BaseButton variant="ghost" type="button" class="text-red-600" @click="unlinkRow(row as ArquitecturaSupplierCatalogLinkDto)">
+                <BaseButton variant="ghost" type="button" class="text-error-600 dark:text-error-500" @click="unlinkRow(row as ArquitecturaSupplierCatalogLinkDto)">
                   Quitar
                 </BaseButton>
               </td>
             </template>
           </DataTable>
-        </div>
+        </BaseCard>
       </div>
 
       <div v-show="activeTab === 'compras'" class="space-y-4 pt-4">
@@ -315,10 +306,7 @@ const purchaseRows = computed(() =>
             Registrar compra
           </BaseButton>
         </div>
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-        >
+        <BaseCard padding="none" class="block overflow-hidden">
           <DataTable empty-text="Sin compras registradas." :columns="purchaseColumns" :data="purchaseRows" row-key="id">
             <template #row="{ row }">
               <td class="py-3 px-4 text-sm">{{ (row as { when: string }).when }}</td>
@@ -329,13 +317,13 @@ const purchaseRows = computed(() =>
               <td class="py-3 px-4 text-sm">{{ (row as { inv: string }).inv }}</td>
             </template>
           </DataTable>
-        </div>
+        </BaseCard>
       </div>
     </template>
 
     <BaseModal v-model="showLinkModal" title="Vincular material del catálogo" size="md">
       <div class="space-y-4">
-        <p v-if="catalogLinkOptions.length === 0" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p v-if="catalogLinkOptions.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
           No hay más materiales disponibles para vincular (o el catálogo está vacío).
         </p>
         <template v-else>

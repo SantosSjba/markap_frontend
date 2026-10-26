@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed } from 'vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
@@ -25,16 +26,13 @@ const columns = [
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:wallet"
       title="Libro caja"
       subtitle="Movimientos de caja del periodo (consulta 1.1)."
     />
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin movimientos de caja." row-key="id">
         <template #row="{ row }">
           <td class="py-3 px-4 text-sm">{{ (row as ContabilidadTreasuryMovementDTO).movementDate }}</td>
@@ -45,6 +43,6 @@ const columns = [
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
   </div>
 </template>

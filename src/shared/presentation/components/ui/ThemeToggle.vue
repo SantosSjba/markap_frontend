@@ -1,37 +1,42 @@
 <script setup lang="ts">
+import { Button } from '../../ui/button'
 import { useTheme } from '../../composables/useTheme'
-import AppIcon from './AppIcon.vue'
+import { MoonIcon, SunIcon } from '../../icons/layout'
 /**
- * ThemeToggle Component
- * Button to switch between light and dark mode
+ * ThemeToggle — botón de tema de TailAdmin.
+ * `default`: botón outline del header. `floating`: botón redondo de las pantallas de acceso.
  */
 
 interface Props {
-  /** Use light color for dark backgrounds (e.g. login gradient) */
-  variant?: 'default' | 'light'
+  variant?: 'default' | 'floating'
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   variant: 'default',
 })
 
-const { isDark, toggleTheme } = useTheme()
+const { isDarkMode, toggleTheme } = useTheme()
 </script>
 
 <template>
-  <button
-    type="button"
-    :aria-label="isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
-    :class="[
-      'p-2.5 rounded-lg transition-all duration-200 border-2',
-      variant === 'light'
-        ? 'border-white/40 hover:bg-white/20 hover:border-white/60 text-white'
-        : 'border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-hover)]',
-    ]"
-    :style="variant === 'default' ? { color: 'var(--color-text-secondary)' } : {}"
+  <Button
+    v-if="variant === 'floating'"
+    class="size-14 rounded-full"
+    :aria-label="isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
     @click="toggleTheme"
   >
-    <AppIcon v-if="isDark" icon="lucide:sun" :size="20" color="currentColor" />
-    <AppIcon v-else icon="lucide:moon" :size="20" color="currentColor" />
-  </button>
+    <MoonIcon class="block dark:hidden" />
+    <SunIcon class="hidden dark:block" />
+  </Button>
+  <Button
+    v-else
+    variant="outline"
+    size="icon-lg"
+    class="relative"
+    :aria-label="isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+    @click="toggleTheme"
+  >
+    <SunIcon v-if="isDarkMode" />
+    <MoonIcon v-else />
+  </Button>
 </template>

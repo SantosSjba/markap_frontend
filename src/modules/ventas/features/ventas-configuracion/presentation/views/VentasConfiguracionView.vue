@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import ActionCard from '@shared/presentation/components/ui/ActionCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
 import { ref, watch, computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import * as yup from 'yup'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -151,104 +154,59 @@ const flowSteps = [
     <BaseTabs v-model="activeTab" :tabs="tabs" />
 
     <div v-if="activeTab === 'accesos'" class="space-y-4">
-      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+      <p class="text-sm text-gray-400 dark:text-gray-500">
         Accesos a pantallas de operación del módulo (asesores, comisiones y reportes).
       </p>
       <div class="grid sm:grid-cols-2 gap-3">
-        <RouterLink
-          v-for="l in quickLinks"
-          :key="l.to"
-          :to="l.to"
-          class="rounded-xl border p-4 flex gap-3 transition hover:opacity-90"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-        >
-          <div
-            class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)' }"
-          >
-            <AppIcon :icon="l.icon" :size="20" color="var(--color-primary)" />
-          </div>
-          <div>
-            <p class="font-semibold text-sm" :style="{ color: 'var(--color-text-primary)' }">{{ l.label }}</p>
-            <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">{{ l.desc }}</p>
-          </div>
-        </RouterLink>
+        <ActionCard v-for="l in quickLinks" :key="l.to" :to="l.to" :icon="l.icon" :title="l.label" :description="l.desc" />
       </div>
     </div>
 
     <div v-else-if="activeTab === 'parametros'" class="space-y-8">
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+      <LoadingState v-if="isLoading" />
 
-      <div
-        v-else-if="isError"
-        class="rounded-xl border p-8 text-center space-y-3"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+      <BaseCard v-else-if="isError" padding="lg" class="block text-center space-y-3">
+        <p class="text-sm font-medium text-gray-800 dark:text-white/90">
           No se pudo cargar la configuración
         </p>
-        <p class="text-xs max-w-lg mx-auto" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-xs max-w-lg mx-auto text-gray-500 dark:text-gray-400">
           {{ configLoadError }}
         </p>
         <BaseButton type="button" icon="lucide:settings" @click="() => refetch()">Reintentar</BaseButton>
-      </div>
+      </BaseCard>
 
       <template v-else>
         <section class="space-y-3">
-          <h2 class="text-lg font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">
             Estados del pipeline CRM
           </h2>
-          <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
             Etiquetas en español y orden de columnas en el Kanban. Los códigos técnicos (SEPARATION, ARRAS, …) no cambian.
           </p>
-          <div
-            class="rounded-xl border overflow-hidden"
-            :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-          >
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b text-left" :style="{ borderColor: 'var(--color-border)' }">
-                  <th class="py-2 px-3">Código</th>
-                  <th class="py-2 px-3">Etiqueta</th>
-                  <th class="py-2 px-3 w-24">Orden</th>
-                  <th class="py-2 px-3 w-32"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
+          <BaseCard padding="none" class="block overflow-hidden">
+            <Table class="w-full text-sm">
+              <TableHeader>
+                <TableRow class="border-b text-left border-gray-200 dark:border-gray-800">
+                  <TableCell is-header class="py-2 px-3">Código</TableCell>
+                  <TableCell is-header class="py-2 px-3">Etiqueta</TableCell>
+                  <TableCell is-header class="py-2 px-3 w-24">Orden</TableCell>
+                  <TableCell is-header class="py-2 px-3 w-32"></TableCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow
                   v-for="(row, idx) in pipelineDraft"
                   :key="row.code"
-                  class="border-b"
-                  :style="{ borderColor: 'var(--color-border)' }"
+                  class="border-b border-gray-200 dark:border-gray-800"
                 >
-                  <td class="py-2 px-3 font-mono text-xs">{{ row.code }}</td>
-                  <td class="py-2 px-3">
-                    <input
-                      v-model="row.label"
-                      type="text"
-                      class="w-full px-2 py-1.5 rounded border text-sm"
-                      :style="{
-                        borderColor: 'var(--color-border)',
-                        backgroundColor: 'var(--color-surface-elevated)',
-                        color: 'var(--color-text-primary)',
-                      }"
-                    />
-                  </td>
-                  <td class="py-2 px-3">
-                    <input
-                      v-model.number="row.sortOrder"
-                      type="number"
-                      class="w-full px-2 py-1.5 rounded border text-sm"
-                      :style="{
-                        borderColor: 'var(--color-border)',
-                        backgroundColor: 'var(--color-surface-elevated)',
-                        color: 'var(--color-text-primary)',
-                      }"
-                    />
-                  </td>
-                  <td class="py-2 px-3">
+                  <TableCell class="py-2 px-3 font-mono text-xs">{{ row.code }}</TableCell>
+                  <TableCell class="py-2 px-3">
+                    <FormInput v-model="row.label" type="text" size="sm" />
+                  </TableCell>
+                  <TableCell class="py-2 px-3">
+                    <FormInput v-model="row.sortOrder" type="number" size="sm" />
+                  </TableCell>
+                  <TableCell class="py-2 px-3">
                     <div class="flex gap-1">
                       <BaseButton type="button" variant="ghost" size="sm" icon="lucide:chevron-up" @click="reorderPipeline(idx, -1)">
                         ↑
@@ -257,58 +215,52 @@ const flowSteps = [
                         ↓
                       </BaseButton>
                     </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="p-3 border-t flex justify-end" :style="{ borderColor: 'var(--color-border)' }">
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+            <div class="p-3 border-t flex justify-end border-gray-200 dark:border-gray-800">
               <BaseButton variant="primary" icon="lucide:save" :loading="savingPipeline" @click="submitPipeline">
                 Guardar pipeline
               </BaseButton>
             </div>
-          </div>
+          </BaseCard>
         </section>
 
         <section class="space-y-3">
-          <h2 class="text-lg font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">
             Series / numeración — procesos de venta
           </h2>
-          <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
             Prefijo y último correlativo usados al crear un proceso (ej. VNT-PRC-0007). Ajuste con cuidado para no
             duplicar códigos visibles.
           </p>
-          <div
-            class="rounded-xl border p-4 space-y-3 max-w-md"
-            :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-          >
-            <p v-if="boot?.numbering.saleProcess" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+          <BaseCard padding="sm" class="block space-y-3 max-w-md">
+            <p v-if="boot?.numbering.saleProcess" class="text-sm text-gray-400 dark:text-gray-500">
               Próximo código según servidor:
-              <strong :style="{ color: 'var(--color-text-primary)' }">{{
+              <strong class="text-gray-800 dark:text-white/90">{{
                 boot.numbering.saleProcess.nextPreview
               }}</strong>
             </p>
             <form class="space-y-3" @submit.prevent="onSubmitNumbering">
               <FormInput label="Prefijo" v-bind="numBinds.prefix" />
-              <p v-if="numErrors.prefix" class="text-xs text-red-600">{{ numErrors.prefix }}</p>
+              <p v-if="numErrors.prefix" class="text-xs text-error-600 dark:text-error-500">{{ numErrors.prefix }}</p>
               <FormInput label="Último número (correlativo)" type="number" v-bind="numBinds.lastNumber" />
-              <p v-if="numErrors.lastNumber" class="text-xs text-red-600">{{ numErrors.lastNumber }}</p>
+              <p v-if="numErrors.lastNumber" class="text-xs text-error-600 dark:text-error-500">{{ numErrors.lastNumber }}</p>
               <BaseButton type="submit" variant="primary" icon="lucide:save" :loading="savingNum">Guardar numeración</BaseButton>
             </form>
-          </div>
+          </BaseCard>
         </section>
 
         <section class="space-y-3">
-          <h2 class="text-lg font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">
             Tipos de propiedad
           </h2>
-          <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
             Catálogo global compartido. La edición masiva de tipos puede hacerse desde administración de propiedades /
             catálogos según sus políticas.
           </p>
-          <div
-            class="rounded-xl border overflow-hidden"
-            :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-          >
+          <BaseCard padding="none" class="block overflow-hidden">
             <DataTable
               :columns="propColumns"
               :data="boot?.propertyTypes ?? []"
@@ -320,28 +272,18 @@ const flowSteps = [
                 <td class="py-2 px-3">{{ (row as { name: string }).name }}</td>
               </template>
             </DataTable>
-          </div>
+          </BaseCard>
         </section>
       </template>
     </div>
 
     <div v-else-if="activeTab === 'flujo'" class="space-y-4">
-      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
         Referencia del flujo real en Ventas (cada paso enlaza al módulo correspondiente).
       </p>
-      <div
-        class="flex flex-wrap items-center gap-2 p-4 rounded-xl border"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
+      <BaseCard padding="sm" class="flex flex-wrap items-center gap-2 flex-row">
         <template v-for="(s, i) in flowSteps" :key="s.path">
-          <RouterLink
-            :to="s.path"
-            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition hover:opacity-90"
-            :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }"
-          >
-            <AppIcon :icon="s.icon" :size="16" color="var(--color-primary)" />
-            {{ s.label }}
-          </RouterLink>
+          <BaseButton :to="s.path" variant="secondary" size="sm" :icon="s.icon">{{ s.label }}</BaseButton>
           <AppIcon
             v-if="i < flowSteps.length - 1"
             icon="lucide:chevron-right"
@@ -349,7 +291,7 @@ const flowSteps = [
             class="opacity-40 hidden sm:block"
           />
         </template>
-      </div>
+      </BaseCard>
     </div>
   </div>
 </template>

@@ -66,8 +66,7 @@ function goToNewTenant(index: number) {
       <div
         v-for="(tenantId, index) in rows"
         :key="index"
-        class="flex flex-wrap items-end gap-3 p-4 rounded-lg"
-        :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+        class="flex flex-wrap items-end gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
       >
         <div class="flex-1 min-w-[200px]">
           <FormSelect

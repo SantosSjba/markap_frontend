@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
@@ -205,34 +209,29 @@ const fiscalYearStartMonthModel = computed({
 
 <template>
   <div :class="CONTABILIDAD_PAGE_CLASS">
-    <div>
-      <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-        Configuración — Contabilidad
-      </h1>
-      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+    <PageHeader
+      title="Configuración — Contabilidad"
+    >
+      <template #actions>
+        <p class="text-sm mt-1 text-gray-500 dark:text-gray-400">
         Datos de la empresa, parámetros tributarios SUNAT y series de comprobantes electrónicos (Perú).
       </p>
-    </div>
+      </template>
+    </PageHeader>
 
     <BaseTabs v-model="activeTab" :tabs="tabs" />
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
-    <div
-      v-else-if="isError"
-      class="rounded-xl border p-8 text-center space-y-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+    <BaseCard v-else-if="isError" padding="lg" class="block text-center space-y-3">
+      <p class="text-sm font-medium text-gray-800 dark:text-white/90">
         No se pudo cargar la configuración
       </p>
-      <p class="text-xs max-w-lg mx-auto" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-xs max-w-lg mx-auto text-gray-500 dark:text-gray-400">
         {{ configLoadError }}
       </p>
       <BaseButton variant="secondary" @click="refetch()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
 
   <template v-else>
     <ContabilidadContextSettingsPanel v-if="activeTab === 'contexto'" />
@@ -307,75 +306,58 @@ const fiscalYearStartMonthModel = computed({
 
     <!-- Series documentales -->
     <section v-else-if="activeTab === 'series'" class="space-y-4">
-      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
         Series SUNAT para comprobantes electrónicos (ej. F001 factura, B001 boleta).
       </p>
       <div class="grid gap-4 md:grid-cols-2">
-        <div
+        <FormSectionCard
           v-for="row in documentSeriesRows"
           :key="row.seriesKey"
-          class="rounded-xl border p-4 space-y-3"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+          :title="seriesLabel(row.seriesKey)"
+          dense
         >
-          <h3 class="font-semibold text-sm" :style="{ color: 'var(--color-text-primary)' }">
-            {{ seriesLabel(row.seriesKey) }}
-          </h3>
-          <FormInput
+          <div class="space-y-3">
+            <FormInput
             v-if="seriesDraft[row.seriesKey]"
             v-model="seriesDraft[row.seriesKey]!.sunatSeries"
             label="Serie SUNAT"
             maxlength="4"
             hint="Hasta 4 caracteres (F001, B001, FC01…)"
           />
-          <FormCheckbox
+            <FormCheckbox
             v-if="seriesDraft[row.seriesKey]"
             v-model="seriesDraft[row.seriesKey]!.isActive"
             label="Serie activa"
           />
-          <div class="flex justify-end">
+            <div class="flex justify-end">
             <BaseButton variant="primary" size="sm" :loading="savingSeries" @click="saveSeriesRow(row)">
               Guardar
             </BaseButton>
           </div>
-        </div>
+          </div>
+        </FormSectionCard>
       </div>
     </section>
 
     <!-- Numeración -->
     <section v-else-if="activeTab === 'numeracion'" class="space-y-4">
-      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
         Correlativo y longitud del número para cada serie. Vista previa del próximo comprobante.
       </p>
-      <div
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">
-                Tipo
-              </th>
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">
-                Último N°
-              </th>
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">
-                Dígitos
-              </th>
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">
-                Próximo
-              </th>
-              <th class="py-3 px-4" />
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in documentSeriesRows"
-              :key="row.seriesKey"
-              class="border-b last:border-b-0"
-              :style="{ borderColor: 'var(--color-border)' }"
-            >
-              <td class="py-3 px-4" :style="{ color: 'var(--color-text-primary)' }">
+      <BaseCard padding="none" class="block overflow-hidden">
+        <DataTable
+          :columns="[
+            { key: 'c0', label: 'Tipo' },
+            { key: 'c1', label: 'Último N°' },
+            { key: 'c2', label: 'Dígitos' },
+            { key: 'c3', label: 'Próximo' },
+            { key: 'c4', label: '' },
+          ]"
+          :data="documentSeriesRows"
+          row-key="seriesKey"
+        >
+          <template #row="{ row }">
+              <td class="py-3 px-4 text-gray-800 dark:text-white/90">
                 {{ seriesLabel(row.seriesKey) }}
               </td>
               <td class="py-3 px-4">
@@ -394,7 +376,7 @@ const fiscalYearStartMonthModel = computed({
                   input-class="w-20"
                 />
               </td>
-              <td class="py-3 px-4 font-mono text-xs" :style="{ color: 'var(--color-text-muted)' }">
+              <td class="py-3 px-4 font-mono text-xs text-gray-400 dark:text-gray-500">
                 {{ row.nextPreview }}
               </td>
               <td class="py-3 px-4 text-right">
@@ -402,10 +384,9 @@ const fiscalYearStartMonthModel = computed({
                   Guardar
                 </BaseButton>
               </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          </template>
+        </DataTable>
+      </BaseCard>
     </section>
   </template>
   </div>

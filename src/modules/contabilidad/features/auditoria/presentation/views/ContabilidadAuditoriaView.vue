@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref } from 'vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
@@ -40,7 +41,7 @@ function formatDate(iso: string) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:shield-check"
       title="Auditoría contable"
@@ -68,10 +69,7 @@ function formatDate(iso: string) {
       />
     </div>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin registros." row-key="id">
         <template #row="{ row }">
           <td class="py-3 px-4 text-sm whitespace-nowrap">{{ formatDate((row as ContabilidadAuditLogDTO).createdAt) }}</td>
@@ -83,6 +81,6 @@ function formatDate(iso: string) {
           <td class="py-3 px-4 text-sm font-mono">{{ (row as ContabilidadAuditLogDTO).legalEntityRuc ?? '—' }}</td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
   </div>
 </template>

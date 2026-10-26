@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -260,7 +261,7 @@ function goJournal(row: ContabilidadDetraccionDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:landmark"
       title="Detracciones SPOT"
@@ -274,10 +275,7 @@ function goJournal(row: ContabilidadDetraccionDTO) {
       </template>
     </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -296,7 +294,7 @@ function goJournal(row: ContabilidadDetraccionDTO) {
           <td class="py-3 px-4 font-mono text-sm">{{ (row as ContabilidadDetraccionDTO).certificateNumber }}</td>
           <td class="py-3 px-4 text-sm">
             <div>{{ (row as ContabilidadDetraccionDTO).supplierName }}</div>
-            <div class="text-xs font-mono" :style="{ color: 'var(--color-text-muted)' }">
+            <div class="text-xs font-mono text-gray-400 dark:text-gray-500">
               {{ (row as ContabilidadDetraccionDTO).supplierRuc }}
             </div>
           </td>
@@ -330,7 +328,7 @@ function goJournal(row: ContabilidadDetraccionDTO) {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="createModalOpen" title="Registrar detracción SPOT" size="lg">
       <form class="space-y-4" @submit.prevent="submitCreate">

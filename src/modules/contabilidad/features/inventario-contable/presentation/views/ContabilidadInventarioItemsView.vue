@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
@@ -67,7 +68,7 @@ function submit() {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:package"
       title="Ítems de inventario"
@@ -78,10 +79,7 @@ function submit() {
       </template>
     </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin ítems." row-key="id">
         <template #toolbar>
           <SearchInput v-model="searchInput" placeholder="Buscar código o descripción…" class="flex-1 max-w-md" />
@@ -91,7 +89,7 @@ function submit() {
           <td class="py-3 px-4 text-sm">{{ (row as ContabilidadInventoryItemDTO).description }}</td>
           <td class="py-3 px-4 text-sm">
             <span class="font-mono text-xs">{{ (row as ContabilidadInventoryItemDTO).accountCode }}</span>
-            <span class="block text-xs" :style="{ color: 'var(--color-text-muted)' }">
+            <span class="block text-xs text-gray-400 dark:text-gray-500">
               {{ (row as ContabilidadInventoryItemDTO).accountName }}
             </span>
           </td>
@@ -103,7 +101,7 @@ function submit() {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" title="Nuevo ítem de inventario" size="md">
       <div class="space-y-4">

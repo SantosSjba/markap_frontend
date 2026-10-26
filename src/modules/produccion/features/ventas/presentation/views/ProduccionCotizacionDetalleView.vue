@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -10,7 +12,7 @@ import {
   useQuotationMutations,
   useOpenProduccionQuotationPdf,
 } from '../composables/useProduccionSales'
-import { formatSol, formatDate, QUOTATION_STATUS_LABELS, quotationStatusClass } from '../labels'
+import { formatSol, formatDate, QUOTATION_STATUS_LABELS } from '../labels'
 import type { ProduccionQuotationLine } from '../../domain/sales.types'
 const openProduccionQuotationPdf = useOpenProduccionQuotationPdf()
 
@@ -83,21 +85,15 @@ async function doDelete() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-center gap-3">
-      <BaseButton variant="ghost" @click="router.push({ name: 'produccion-ventas-cotizaciones' })">
-        <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />
-        Volver
-      </BaseButton>
-      <div class="flex-1 min-w-0">
-        <h1 class="text-xl font-bold font-mono" :style="{ color: 'var(--color-text-primary)' }">
-          {{ quotation?.code ?? 'Cotización' }}
-        </h1>
-        <p v-if="quotation" class="text-sm mt-0.5" :class="quotationStatusClass(quotation.status)">
-          {{ QUOTATION_STATUS_LABELS[quotation.status] }} · {{ quotation.clientName }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="space-y-6">
+    <PageHeader
+      :title="quotation?.code ?? 'Cotización'"
+      :subtitle="quotation ? `${QUOTATION_STATUS_LABELS[quotation.status]} · ${quotation.clientName}` : undefined"
+      back
+      @back="router.push({ name: 'produccion-ventas-cotizaciones' })"
+    >
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton variant="outline" @click="doExportPdf">
           <AppIcon icon="lucide:file-down" :size="16" class="mr-1" />
           Exportar PDF
@@ -115,19 +111,16 @@ async function doDelete() {
         </BaseButton>
         <BaseButton v-if="canDelete" variant="danger" @click="doDelete">Eliminar</BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      v-if="quotation"
-      class="rounded-xl border p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
+    <BaseCard v-if="quotation" padding="sm" class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
       <div><span class="text-secondary">Vigencia:</span> {{ formatDate(quotation.validUntil) }}</div>
       <div><span class="text-secondary">Enviada:</span> {{ formatDate(quotation.sentAt) }}</div>
       <div v-if="quotation.notes" class="sm:col-span-2"><span class="text-secondary">Notas:</span> {{ quotation.notes }}</div>
-    </div>
+    </BaseCard>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="lineColumns"
         :data="quotation?.lines ?? []"
@@ -144,9 +137,9 @@ async function doDelete() {
           <td class="py-3 px-4 text-sm font-medium">{{ formatSol((row as ProduccionQuotationLine).lineTotal) }}</td>
         </template>
       </DataTable>
-      <div v-if="quotation" class="px-4 py-3 border-t text-right font-semibold" :style="{ borderColor: 'var(--color-border)' }">
+      <div v-if="quotation" class="px-4 py-3 border-t text-right font-semibold border-gray-200 dark:border-gray-800">
         Total: {{ formatSol(quotation.totalAmount) }}
       </div>
-    </div>
+    </BaseCard>
   </div>
 </template>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { useService } from '@shared/presentation/di/services'
 import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
 import { ref, computed, watch, onMounted } from 'vue'
@@ -499,39 +501,23 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
-    <div class="flex items-center gap-3 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg transition-colors hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        title="Volver"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <AppIcon icon="lucide:pencil" :size="18" color="var(--color-primary)" />
-          <h1 class="text-xl font-bold truncate" :style="{ color: 'var(--color-text-primary)' }">
-            Editar propiedad {{ property?.code ? `– ${property.code}` : '' }}
-          </h1>
-        </div>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">Ventas</p>
-      </div>
-    </div>
+  <div >
+    <PageHeader
+      :title="'Editar propiedad ' + (property?.code ? `– ${property.code}` : '')"
+      subtitle="Ventas"
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
-    <div v-if="loading && !property" class="flex flex-col items-center justify-center py-24 gap-3">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando...</p>
-    </div>
+    <LoadingState v-if="loading && !property" text="Cargando..." class="py-24" />
 
     <div
       v-else-if="propertyError || (property === undefined && !loadingProperty)"
       class="flex flex-col items-center justify-center py-16 gap-3"
     >
       <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-      <p class="text-sm font-medium" :style="{ color: 'var(--color-error)' }">
+      <p class="text-sm font-medium text-error-500 dark:text-error-400">
         No se encontró la propiedad.
       </p>
       <BaseButton variant="outline" size="sm" icon="lucide:arrow-left" @click="goBack">Volver</BaseButton>
@@ -662,8 +648,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             <li
               v-for="(item, idx) in mediaItems"
               :key="`${item.url}-${idx}`"
-              class="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
-              :style="{ borderColor: 'var(--color-border)' }"
+              class="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 border-gray-200 dark:border-gray-800"
             >
               <span>{{ item.kind === 'plan' ? 'Plano' : 'Foto' }} · {{ item.url.split('/').pop() }}</span>
               <div class="flex gap-2">
@@ -679,15 +664,11 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           <p v-else class="text-sm mb-3 opacity-70">Sin archivos multimedia.</p>
           <div class="flex flex-wrap gap-2 items-end mb-2">
             <div class="w-36">
-              <label class="text-xs mb-1 block" :style="{ color: 'var(--color-text-muted)' }">Tipo</label>
-              <select
+              <FormSelect
                 v-model="newMediaKind"
-                class="w-full rounded-lg border px-3 py-2 text-sm"
-                :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-              >
-                <option value="photo">Foto</option>
-                <option value="plan">Plano</option>
-              </select>
+                :options="[{ value: 'photo', label: 'Foto' }, { value: 'plan', label: 'Plano' }]"
+                label="Tipo"
+              />
             </div>
           </div>
           <FileDropzone
@@ -794,22 +775,21 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
       </div>
 
       <div class="xl:col-span-1">
-        <div
-          class="p-5 rounded-xl border sticky top-4"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        <FormSectionCard
+          title="Resumen"
+          dense
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">Resumen</h2>
           <dl class="space-y-2 text-sm">
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Código</dt>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Código</dt>
               <dd class="font-semibold">{{ values.code || '—' }}</dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Tipo</dt>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Tipo</dt>
               <dd>{{ selectedTypeLabel }}</dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Propietario</dt>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Propietario</dt>
               <dd>{{ selectedOwnerLabel }}</dd>
             </div>
           </dl>
@@ -827,7 +807,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               Cancelar
             </BaseButton>
           </div>
-        </div>
+        </FormSectionCard>
       </div>
     </form>
   </div>

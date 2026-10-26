@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -196,7 +197,7 @@ function goJournal(row: ContabilidadPerceptionDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:shield-plus"
       title="Percepciones"
@@ -210,10 +211,7 @@ function goJournal(row: ContabilidadPerceptionDTO) {
       </template>
     </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -225,7 +223,7 @@ function goJournal(row: ContabilidadPerceptionDTO) {
           <td class="py-3 px-4 text-sm">{{ (row as ContabilidadPerceptionDTO).issueDate }}</td>
           <td class="py-3 px-4 text-sm">
             <div>{{ (row as ContabilidadPerceptionDTO).customerName }}</div>
-            <div class="text-xs font-mono" :style="{ color: 'var(--color-text-muted)' }">
+            <div class="text-xs font-mono text-gray-400 dark:text-gray-500">
               {{ (row as ContabilidadPerceptionDTO).customerRuc }}
             </div>
           </td>
@@ -247,7 +245,7 @@ function goJournal(row: ContabilidadPerceptionDTO) {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" title="Registrar percepción IGV" size="lg">
       <form class="space-y-4" @submit.prevent="submit">

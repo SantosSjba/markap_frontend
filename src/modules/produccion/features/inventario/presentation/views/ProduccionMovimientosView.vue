@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { formatDateTime } from '@shared/utils/formatters'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -128,21 +130,20 @@ function movementBadgeClass(type: ProduccionStockMovementType) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Movimientos</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Kardex de ingresos, salidas y ajustes de inventario.
-        </p>
-      </div>
-      <BaseButton variant="primary" @click="openNew">
+  <div class="space-y-6">
+    <PageHeader
+      title="Movimientos"
+      subtitle="Kardex de ingresos, salidas y ajustes de inventario."
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Registrar movimiento
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin movimientos registrados." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -161,19 +162,19 @@ function movementBadgeClass(type: ProduccionStockMovementType) {
           <td class="py-3 px-4 text-sm whitespace-nowrap">{{ formatDate((row as ProduccionStockMovement).createdAt) }}</td>
           <td class="py-3 px-4">
             <div class="font-medium text-sm">{{ (row as ProduccionStockMovement).materialName }}</div>
-            <div class="text-xs font-mono" :style="{ color: 'var(--color-text-secondary)' }">{{ (row as ProduccionStockMovement).materialCode }}</div>
+            <div class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ (row as ProduccionStockMovement).materialCode }}</div>
           </td>
           <td class="py-3 px-4 text-sm font-medium" :class="movementBadgeClass((row as ProduccionStockMovement).movementType)">
             {{ MOVEMENT_TYPE_LABELS[(row as ProduccionStockMovement).movementType] }}
           </td>
           <td class="py-3 px-4 text-sm">{{ formatQty((row as ProduccionStockMovement).quantity) }}</td>
           <td class="py-3 px-4 text-sm font-medium">{{ formatQty((row as ProduccionStockMovement).balanceAfter) }}</td>
-          <td class="py-3 px-4 text-sm truncate max-w-[160px]" :style="{ color: 'var(--color-text-secondary)' }">
+          <td class="py-3 px-4 text-sm truncate max-w-[160px] text-gray-500 dark:text-gray-400">
             {{ (row as ProduccionStockMovement).reference ?? '—' }}
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showModal" size="md">
       <template #title>Registrar movimiento</template>

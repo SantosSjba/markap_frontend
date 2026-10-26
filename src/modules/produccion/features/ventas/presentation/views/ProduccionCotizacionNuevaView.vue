@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -64,16 +67,14 @@ async function save() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex items-center gap-3">
-      <BaseButton variant="ghost" @click="router.push({ name: 'produccion-ventas-cotizaciones' })">
-        <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />
-        Volver
-      </BaseButton>
-      <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Nueva cotización</h1>
-    </div>
+  <div class="space-y-6">
+    <PageHeader
+      title="Nueva cotización"
+      back
+      @back="router.push({ name: 'produccion-ventas-cotizaciones' })"
+    />
 
-    <div class="rounded-xl border p-4 space-y-4" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="sm" class="block space-y-4">
       <FormSelect v-model="clientId" label="Cliente" :options="clientOptions" />
       <FormInput v-model="validUntil" label="Vigente hasta" type="date" />
       <FormTextarea v-model="notes" label="Notas" :rows="2" />
@@ -97,15 +98,13 @@ async function save() {
             <FormInput v-model.number="line.unitPrice" label="Precio unit. (S/)" type="number" min="0" step="0.01" />
           </div>
           <div class="sm:col-span-1 flex justify-end pb-1">
-            <button v-if="lines.length > 1" type="button" @click="removeLine(i)">
-              <AppIcon icon="lucide:trash-2" :size="18" :style="{ color: 'var(--color-error)' }" />
-            </button>
+            <IconButton v-if="lines.length > 1" @click="removeLine(i)" icon="lucide:trash-2" label="Eliminar" danger />
           </div>
         </div>
         <p class="text-sm font-medium text-right">Total: {{ formatSol(lineTotal) }}</p>
       </div>
 
       <BaseButton variant="primary" :loading="saving" @click="save">Guardar borrador</BaseButton>
-    </div>
+    </BaseCard>
   </div>
 </template>

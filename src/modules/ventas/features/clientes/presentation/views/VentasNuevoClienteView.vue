@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQueryClient } from '@tanstack/vue-query'
 import * as yup from 'yup'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
@@ -34,6 +35,7 @@ import {
   buildLocationCustomPayload,
 } from '@modules/alquileres/features/clientes/constants/ubigeo-other'
 import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
+import OptionCardGroup from '@shared/presentation/components/forms/OptionCardGroup.vue'
 /** Un solo tipo de valores: el schema dinámico valida según comprador vs propietario. */
 interface VentasClienteFormValues {
   documentTypeId: string
@@ -63,7 +65,6 @@ interface VentasClienteFormValues {
 const route = useRoute()
 const router = useRouter()
 const queryClient = useQueryClient()
-const appColor = 'var(--color-primary)'
 
 const clientKind = ref<'BUYER' | 'OWNER'>('BUYER')
 
@@ -339,29 +340,16 @@ const onSubmit = handleSubmit(async (formValues) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
-    <div class="flex items-center gap-4 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" color="currentColor" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Nuevo cliente
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Comprador / lead o propietario (inventario ventas)
-        </p>
-      </div>
-    </div>
+  <div >
+    <PageHeader
+      title="Nuevo cliente"
+      subtitle="Comprador / lead o propietario (inventario ventas)"
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <AppIcon icon="line-md:loading-loop" :size="32" :color="appColor" />
-    </div>
+    <LoadingState v-if="loading" class="py-12" />
 
     <form v-else @submit.prevent="onSubmit" class="space-y-8">
       <FormSectionCard
@@ -369,46 +357,14 @@ const onSubmit = handleSubmit(async (formValues) => {
         subtitle="Igual que en Alquileres: propietario lleva dirección fiscal; comprador lleva embudo de ventas."
         icon="lucide:users"
       >
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            type="button"
-            class="p-4 rounded-lg border-2 text-left transition-all"
-            :style="{
-              borderColor: clientKind === 'BUYER' ? appColor : 'var(--color-border)',
-              color: clientKind === 'BUYER' ? appColor : 'var(--color-text-primary)',
-            }"
-            @click="selectClientKind('BUYER')"
-          >
-            <div class="flex items-center gap-3">
-              <AppIcon icon="lucide:user-plus" :size="32" color="currentColor" class="shrink-0" />
-              <div>
-                <span class="font-medium block">Comprador / lead</span>
-                <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-                  Embudo, origen del lead y asesor
-                </span>
-              </div>
-            </div>
-          </button>
-          <button
-            type="button"
-            class="p-4 rounded-lg border-2 text-left transition-all"
-            :style="{
-              borderColor: clientKind === 'OWNER' ? appColor : 'var(--color-border)',
-              color: clientKind === 'OWNER' ? appColor : 'var(--color-text-primary)',
-            }"
-            @click="selectClientKind('OWNER')"
-          >
-            <div class="flex items-center gap-3">
-              <AppIcon icon="lucide:building-2" :size="32" color="currentColor" class="shrink-0" />
-              <div>
-                <span class="font-medium block">Propietario</span>
-                <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-                  Titular de propiedades en ventas (requiere dirección)
-                </span>
-              </div>
-            </div>
-          </button>
-        </div>
+        <OptionCardGroup
+          :model-value="clientKind"
+          :options="[
+            { value: 'BUYER', label: 'Comprador / lead', description: 'Embudo, origen del lead y asesor', icon: 'lucide:user-plus' },
+            { value: 'OWNER', label: 'Propietario', description: 'Titular de propiedades en ventas (requiere dirección)', icon: 'lucide:building-2' },
+          ]"
+          @update:model-value="selectClientKind($event as 'BUYER' | 'OWNER')"
+        />
       </FormSectionCard>
 
       <FormSectionCard

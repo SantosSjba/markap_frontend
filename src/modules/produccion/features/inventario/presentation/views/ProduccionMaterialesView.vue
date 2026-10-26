@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import { ref, computed } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
@@ -130,21 +133,20 @@ async function del(r: ProduccionMaterial) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Materiales</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Catálogo de insumos para producción. El stock se gestiona en Movimientos.
-        </p>
-      </div>
-      <BaseButton variant="primary" @click="openNew">
+  <div class="space-y-6">
+    <PageHeader
+      title="Materiales"
+      subtitle="Catálogo de insumos para producción. El stock se gestiona en Movimientos."
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo material
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin materiales registrados." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -161,12 +163,12 @@ async function del(r: ProduccionMaterial) {
           <td class="py-3 px-4 text-sm">{{ formatSol((row as ProduccionMaterial).unitCost) }}</td>
           <td class="py-3 px-4 text-sm">{{ formatQty((row as ProduccionMaterial).minStockQty, (row as ProduccionMaterial).unit) }}</td>
           <td class="py-3 px-4 text-right space-x-2">
-            <button type="button" class="text-sm hover:underline" :style="{ color: 'var(--color-primary)' }" @click="openEdit(row as ProduccionMaterial)">Editar</button>
-            <button type="button" class="text-sm hover:underline" :style="{ color: 'var(--color-error)' }" @click="del(row as ProduccionMaterial)">Eliminar</button>
+            <BaseButton @click="openEdit(row as ProduccionMaterial)" variant="link">Editar</BaseButton>
+            <BaseButton @click="del(row as ProduccionMaterial)" variant="link" class="text-error-500 dark:text-error-400">Eliminar</BaseButton>
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showModal" size="md">
       <template #title>{{ editing ? 'Editar material' : 'Nuevo material' }}</template>
@@ -182,10 +184,7 @@ async function del(r: ProduccionMaterial) {
           <FormInput v-model.number="minStockQty" label="Stock mínimo" type="number" min="0" step="0.01" />
         </div>
         <FormTextarea v-model="notes" label="Notas" :rows="2" />
-        <label class="flex items-center gap-2 text-sm">
-          <input v-model="isActive" type="checkbox" class="rounded" />
-          Activo
-        </label>
+        <FormCheckbox v-model="isActive" label="Activo" />
       </div>
       <template #footer>
         <BaseButton variant="ghost" @click="showModal = false">Cancelar</BaseButton>

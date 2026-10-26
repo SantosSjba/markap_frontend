@@ -1,17 +1,22 @@
 <script setup lang="ts">
-import AppIcon from '../ui/AppIcon.vue'
-const props = withDefaults(
+/**
+ * FormSectionCard — `ComponentCard` de TailAdmin: cabecera con título y descripción,
+ * cuerpo separado por borde. `icon`/`iconColor` se conservan por compatibilidad.
+ */
+withDefaults(
   defineProps<{
     title: string
     subtitle?: string
-    /** Nombre de icono (ej. lucide:map-pin) */
-    icon: string
+    /** Nombre de icono (ej. lucide:map-pin). No se muestra en el diseño TailAdmin. */
+    icon?: string
     iconColor?: string
-    /** Menos padding (vistas de detalle) */
+    /** Sin efecto visual: TailAdmin usa un único tamaño de tarjeta. Se conserva por compatibilidad. */
     dense?: boolean
   }>(),
   {
-    iconColor: 'var(--color-primary)',
+    subtitle: undefined,
+    icon: undefined,
+    iconColor: undefined,
     dense: false,
   },
 )
@@ -19,33 +24,23 @@ const props = withDefaults(
 
 <template>
   <section
-    class="rounded-xl"
-    :class="dense ? 'p-4' : 'p-5'"
-    :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+    class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3"
   >
-    <div class="flex items-start justify-between gap-3 mb-4">
-      <div class="flex items-center gap-2 min-w-0">
-        <div
-          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          :style="{
-            backgroundColor: `color-mix(in srgb, ${props.iconColor} 12%, transparent)`,
-          }"
-        >
-          <AppIcon :icon="icon" :size="17" :color="iconColor" />
-        </div>
-        <div class="min-w-0">
-          <h2 class="text-base font-semibold" :style="{ color: 'var(--color-text-primary)' }">
-            {{ title }}
-          </h2>
-          <p v-if="subtitle" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
-            {{ subtitle }}
-          </p>
-        </div>
+    <div class="flex items-start justify-between gap-3 px-6 py-5">
+      <div class="min-w-0">
+        <h3 class="text-base font-medium text-gray-800 dark:text-white/90">
+          {{ title }}
+        </h3>
+        <p v-if="subtitle" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          {{ subtitle }}
+        </p>
       </div>
       <div v-if="$slots.actions" class="shrink-0">
         <slot name="actions" />
       </div>
     </div>
-    <slot />
+    <div class="border-t border-gray-100 p-4 sm:p-6 dark:border-gray-800">
+      <slot />
+    </div>
   </section>
 </template>

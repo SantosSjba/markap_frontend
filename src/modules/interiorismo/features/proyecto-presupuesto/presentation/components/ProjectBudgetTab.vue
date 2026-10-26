@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
 import { ref, toRef } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
@@ -172,22 +174,22 @@ const lineCols = [
     >
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
         <div>
-          <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Ciudad</p>
-          <p :style="{ color: 'var(--color-text-primary)' }">{{ budget.city ?? '—' }}</p>
+          <p class="text-xs font-medium mb-1 text-gray-400 dark:text-gray-500">Ciudad</p>
+          <p class="text-gray-800 dark:text-white/90">{{ budget.city ?? '—' }}</p>
         </div>
         <div>
-          <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Nivel intervención</p>
-          <p :style="{ color: 'var(--color-text-primary)' }">
+          <p class="text-xs font-medium mb-1 text-gray-400 dark:text-gray-500">Nivel intervención</p>
+          <p class="text-gray-800 dark:text-white/90">
             {{ budget.interventionLevel ? (INTERVENTION_LEVEL_LABELS[budget.interventionLevel] ?? budget.interventionLevel) : '—' }}
           </p>
         </div>
         <div>
-          <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Tiempo ejecución</p>
-          <p :style="{ color: 'var(--color-text-primary)' }">{{ budget.executionTimeNote ?? '—' }}</p>
+          <p class="text-xs font-medium mb-1 text-gray-400 dark:text-gray-500">Tiempo ejecución</p>
+          <p class="text-gray-800 dark:text-white/90">{{ budget.executionTimeNote ?? '—' }}</p>
         </div>
         <div>
-          <p class="text-xs font-medium mb-1" :style="{ color: 'var(--color-text-muted)' }">Utilidad / IGV</p>
-          <p :style="{ color: 'var(--color-text-primary)' }">
+          <p class="text-xs font-medium mb-1 text-gray-400 dark:text-gray-500">Utilidad / IGV</p>
+          <p class="text-gray-800 dark:text-white/90">
             {{ budget.defaultUtilityPct }}% · IGV {{ budget.defaultIgvPct }}%
           </p>
         </div>
@@ -195,7 +197,7 @@ const lineCols = [
     </FormSectionCard>
 
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
         {{ budget.sections.length }} secciones · Vista cliente (precio final por partida)
       </p>
       <div class="flex flex-wrap items-center gap-2">
@@ -224,7 +226,7 @@ const lineCols = [
       </div>
     </div>
 
-    <div v-if="!budget.sections.length" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+    <div v-if="!budget.sections.length" class="text-center py-12 text-sm text-gray-400 dark:text-gray-500">
       Sin secciones. Agrega la primera zona del proyecto (ej. PRIMER NIVEL, Sala/comedor).
     </div>
 
@@ -241,14 +243,7 @@ const lineCols = [
           <BaseButton size="sm" variant="outline" @click="openAddLine(section.id)">
             + Partida
           </BaseButton>
-          <button
-            type="button"
-            class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-            :style="{ color: 'var(--color-text-secondary)' }"
-            @click="toggleSection(section.id)"
-          >
-            <AppIcon :icon="isExpanded(section.id) ? 'lucide:chevron-up' : 'lucide:chevron-down'" :size="18" />
-          </button>
+          <IconButton @click="toggleSection(section.id)" :icon="isExpanded(section.id) ? 'lucide:chevron-up' : 'lucide:chevron-down'" label="Expandir" />
           <ActionsDropdown
             :items="[
               {
@@ -283,21 +278,10 @@ const lineCols = [
         >
           <template #row="{ row }">
             <td class="py-2 px-3 text-sm max-w-[280px]">
-              <input
-                class="w-full bg-transparent border-b border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none py-1"
-                :value="(row as any).description"
-                @change="saveLineField((row as any).id, 'description', ($event.target as HTMLInputElement).value)"
-              />
+              <FormInput :model-value="(row as any).description" @change="saveLineField((row as any).id, 'description', ($event.target as HTMLInputElement).value)" size="sm" />
             </td>
             <td class="py-2 px-3 text-sm w-28">
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                class="w-full bg-transparent border-b border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none py-1"
-                :value="(row as any).budgetedCost"
-                @change="saveLineField((row as any).id, 'budgetedCost', Number(($event.target as HTMLInputElement).value))"
-              />
+              <FormInput type="number" min="0" step="0.01" :model-value="(row as any).budgetedCost" @change="saveLineField((row as any).id, 'budgetedCost', Number(($event.target as HTMLInputElement).value))" size="sm" />
             </td>
             <td class="py-2 px-3 text-sm">{{ formatSol((row as any).utilityAmount) }}</td>
             <td class="py-2 px-3 text-sm font-medium">{{ formatSol((row as any).price) }}</td>
@@ -325,17 +309,14 @@ const lineCols = [
       </div>
     </FormSectionCard>
 
-    <div
-      class="sticky bottom-0 z-10 p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3"
-      :style="{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <span class="text-sm font-medium" :style="{ color: 'var(--color-text-secondary)' }">
+    <BaseCard padding="sm" class="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 flex-row">
+      <span class="text-sm font-medium text-gray-500 dark:text-gray-400">
         Total presupuesto al cliente
       </span>
-      <span class="text-xl font-bold" :style="{ color: 'var(--color-primary)' }">
+      <span class="text-xl font-bold text-brand-500 dark:text-brand-400">
         {{ formatSol(budget.totals.priceTotal) }}
       </span>
-    </div>
+    </BaseCard>
 
     <ProjectBudgetAttachments :project-id="projectId" />
 
@@ -369,7 +350,7 @@ const lineCols = [
 
     <BaseModal v-model="showImportModal" title="Importar presupuesto desde Excel">
       <div class="space-y-4">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Formato esperado: columnas Descripción y Costo. Las filas sin costo se interpretan como secciones.
         </p>
         <FileDropzone v-model="importFile" accept=".xlsx,.xls" />

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -123,34 +126,26 @@ const getActions = (
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1200px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Catálogo de materiales
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Código, categoría, marca, precio y stock para usar en presupuestos y obra.
-        </p>
-      </div>
-      <BaseButton variant="primary" class="shrink-0" @click="goNew">
+  <div class="max-w-[1200px] mx-auto space-y-6">
+    <PageHeader
+      title="Catálogo de materiales"
+      subtitle="Código, categoría, marca, precio y stock para usar en presupuestos y obra."
+    >
+      <template #actions>
+        <BaseButton variant="primary" class="shrink-0" @click="goNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo material
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <div
         v-else-if="listQueryError"
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
         <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <template v-else>
@@ -163,26 +158,15 @@ const getActions = (
           </template>
           <template #row="{ row }">
             <td class="py-3 px-4">
-              <button
-                type="button"
-                class="font-medium text-left hover:underline"
-                :style="{ color: 'var(--color-primary)' }"
-                @click="goDetail(row as InteriorCatalogMaterialListItem)"
-              >
-                {{ (row as InteriorCatalogMaterialListItem).code }}
-              </button>
+              <BaseButton @click="goDetail(row as InteriorCatalogMaterialListItem)" variant="link" class="font-medium">{{ (row as InteriorCatalogMaterialListItem).code }}</BaseButton>
             </td>
             <td class="py-3 px-4">
-              <button type="button" class="text-left" @click="goDetail(row as InteriorCatalogMaterialListItem)">
-                <span class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                  {{ (row as InteriorCatalogMaterialListItem).name }}
-                </span>
-              </button>
+              <BaseButton variant="link" class="font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400" @click="goDetail(row as InteriorCatalogMaterialListItem)">{{ (row as InteriorCatalogMaterialListItem).name }}</BaseButton>
             </td>
-            <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
               {{ (row as InteriorCatalogMaterialListItem).category }}
             </td>
-            <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
               {{ (row as InteriorCatalogMaterialListItem).brand }}
             </td>
             <td class="py-3 px-4 text-sm">{{ (row as InteriorCatalogMaterialListItem).unit }}</td>
@@ -194,7 +178,7 @@ const getActions = (
             </td>
           </template>
         </DataTable>
-        <div v-if="!isLoading && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+        <div v-if="!isLoading && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
           <BasePagination
             v-bind="paginationProps"
             :show-page-size="true"
@@ -203,25 +187,25 @@ const getActions = (
           />
         </div>
       </template>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showDeleteModal" :closable="true" size="sm" @close="closeDeleteModal">
       <template #title>
         <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
-            <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error);" />
+          <div class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15">
+            <AppIcon class="text-error-500 dark:text-error-400" icon="lucide:trash-2" :size="16" />
           </div>
-          <span class="text-base font-semibold" style="color: var(--color-text-primary);">Eliminar material</span>
+          <span class="text-base font-semibold text-gray-800 dark:text-white/90">Eliminar material</span>
         </div>
       </template>
       <div class="p-4 space-y-3">
-        <p class="text-sm" style="color: var(--color-text-secondary);">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           ¿Eliminar del catálogo
-          <span class="font-semibold" style="color: var(--color-text-primary);">{{ deleteTarget?.code }}</span>
+          <span class="font-semibold text-gray-800 dark:text-white/90">{{ deleteTarget?.code }}</span>
           — {{ deleteTarget?.name }}?
         </p>
       </div>
-      <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+      <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
         <BaseButton variant="danger" :loading="isDeletingMaterial" @click="executeDelete">
           <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />

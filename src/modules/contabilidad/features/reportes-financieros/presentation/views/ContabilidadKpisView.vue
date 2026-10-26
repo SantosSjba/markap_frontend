@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
 import { computed, ref } from 'vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -60,35 +63,28 @@ const kpiIcons: Record<string, string> = {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-8">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:gauge"
       title="KPIs contables"
       subtitle="Indicadores del periodo y balance de comprobación"
     />
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
-    <div v-if="loadingDash" class="flex justify-center py-12">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="loadingDash" class="py-12" />
 
     <div v-else-if="dashboard" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div
-        v-for="kpi in dashboard.kpis"
-        :key="kpi.key"
-        class="rounded-xl border p-4"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
+      <BaseCard v-for="kpi in dashboard.kpis" :key="kpi.key" padding="sm" class="block">
         <div class="flex items-center justify-between gap-2 mb-2">
-          <span class="text-xs font-medium" :style="{ color: 'var(--color-text-muted)' }">{{ kpi.label }}</span>
+          <span class="text-xs font-medium text-gray-400 dark:text-gray-500">{{ kpi.label }}</span>
           <AppIcon :icon="kpiIcons[kpi.key] ?? 'lucide:activity'" :size="18" color="var(--color-primary)" />
         </div>
         <p class="text-xl font-bold font-mono tabular-nums">{{ formatKpi(kpi) }}</p>
-        <p v-if="kpi.hint" class="text-[11px] mt-1" :style="{ color: 'var(--color-text-secondary)' }">{{ kpi.hint }}</p>
-      </div>
+        <p v-if="kpi.hint" class="text-[11px] mt-1 text-gray-500 dark:text-gray-400">{{ kpi.hint }}</p>
+      </BaseCard>
     </div>
 
     <div class="space-y-4">
@@ -121,55 +117,48 @@ const kpiIcons: Record<string, string> = {
         </div>
       </div>
 
-      <div v-if="loadingTrial" class="flex justify-center py-12">
-        <AppIcon icon="svg-spinners:ring-resize" :size="28" color="var(--color-primary)" />
-      </div>
+      <LoadingState v-if="loadingTrial" class="py-12" />
 
       <template v-else-if="trial">
         <div
           v-if="!trial.isBalanced"
-          class="rounded-lg border px-4 py-3 text-sm"
-          :style="{ borderColor: 'var(--color-warning)', color: 'var(--color-warning)' }"
+          class="rounded-lg border px-4 py-3 text-sm border-warning-500 text-warning-600 dark:text-orange-400"
         >
           El balance de comprobación no cuadra: Debe {{ formatPen(trial.totalDebit) }} vs Haber {{ formatPen(trial.totalCredit) }}.
         </div>
 
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-                <th class="text-left py-2 px-4">Cuenta</th>
-                <th class="text-left py-2 px-4">Nombre</th>
-                <th class="text-right py-2 px-4">Debe</th>
-                <th class="text-right py-2 px-4">Haber</th>
-                <th class="text-right py-2 px-4">Saldo</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
+        <BaseCard padding="none" class="block overflow-hidden">
+          <Table class="w-full text-sm">
+            <TableHeader>
+              <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                <TableCell is-header class="text-left py-2 px-4">Cuenta</TableCell>
+                <TableCell is-header class="text-left py-2 px-4">Nombre</TableCell>
+                <TableCell is-header class="text-right py-2 px-4">Debe</TableCell>
+                <TableCell is-header class="text-right py-2 px-4">Haber</TableCell>
+                <TableCell is-header class="text-right py-2 px-4">Saldo</TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow
                 v-for="line in trial.lines"
                 :key="line.accountId"
-                class="border-b last:border-0"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="border-b last:border-0 border-gray-200 dark:border-gray-800"
               >
-                <td class="py-2 px-4 font-mono">{{ line.accountCode }}</td>
-                <td class="py-2 px-4">{{ line.accountName }}</td>
-                <td class="py-2 px-4 text-right font-mono">{{ formatPen(line.totalDebit) }}</td>
-                <td class="py-2 px-4 text-right font-mono">{{ formatPen(line.totalCredit) }}</td>
-                <td class="py-2 px-4 text-right font-mono">{{ formatPen(line.balance) }}</td>
-              </tr>
-              <tr class="font-semibold" :style="{ backgroundColor: 'var(--color-surface-muted)' }">
-                <td colspan="2" class="py-2 px-4">Totales</td>
-                <td class="py-2 px-4 text-right font-mono">{{ formatPen(trial.totalDebit) }}</td>
-                <td class="py-2 px-4 text-right font-mono">{{ formatPen(trial.totalCredit) }}</td>
-                <td class="py-2 px-4" />
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                <TableCell class="py-2 px-4 font-mono">{{ line.accountCode }}</TableCell>
+                <TableCell class="py-2 px-4">{{ line.accountName }}</TableCell>
+                <TableCell class="py-2 px-4 text-right font-mono">{{ formatPen(line.totalDebit) }}</TableCell>
+                <TableCell class="py-2 px-4 text-right font-mono">{{ formatPen(line.totalCredit) }}</TableCell>
+                <TableCell class="py-2 px-4 text-right font-mono">{{ formatPen(line.balance) }}</TableCell>
+              </TableRow>
+              <TableRow class="font-semibold bg-gray-100 dark:bg-gray-950">
+                <TableCell colspan="2" class="py-2 px-4">Totales</TableCell>
+                <TableCell class="py-2 px-4 text-right font-mono">{{ formatPen(trial.totalDebit) }}</TableCell>
+                <TableCell class="py-2 px-4 text-right font-mono">{{ formatPen(trial.totalCredit) }}</TableCell>
+                <TableCell class="py-2 px-4" />
+              </TableRow>
+            </TableBody>
+          </Table>
+        </BaseCard>
       </template>
     </div>
   </div>

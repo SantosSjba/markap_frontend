@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -12,7 +14,7 @@ import {
   useWorkOrderMutations,
 } from '../composables/useProduccionWorkOrders'
 import { useProduccionMaterialsList } from '../../../inventario/presentation/composables/useProduccionInventory'
-import { formatDate, WO_STATUS_LABELS, STAGE_STATUS_LABELS, woStatusClass } from '../labels'
+import { formatDate, WO_STATUS_LABELS, STAGE_STATUS_LABELS } from '../labels'
 import { formatQty } from '../../../inventario/presentation/labels'
 import type { ProduccionWorkOrderStage } from '../../domain/work-orders.types'
 const route = useRoute()
@@ -108,64 +110,63 @@ function stageIcon(status: string) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-center gap-3">
-      <BaseButton variant="ghost" @click="router.back()">
-        <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />
-        Volver
-      </BaseButton>
-      <div class="flex-1 min-w-0">
-        <h1 class="text-xl font-bold font-mono" :style="{ color: 'var(--color-text-primary)' }">
-          {{ order?.code ?? 'Orden de trabajo' }}
-        </h1>
-        <p v-if="order" class="text-sm" :class="woStatusClass(order.status)">
-          {{ WO_STATUS_LABELS[order.status] }} · {{ order.progressPercent }}%
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="space-y-6">
+    <PageHeader
+      :title="order?.code ?? 'Orden de trabajo'"
+      :subtitle="order ? `${WO_STATUS_LABELS[order.status]} · ${order.progressPercent}%` : undefined"
+      back
+      @back="router.back()"
+    >
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton v-if="canStart" variant="primary" @click="doStart">Iniciar</BaseButton>
         <BaseButton v-if="canConsume" variant="secondary" @click="showConsumeModal = true">Consumir material</BaseButton>
         <BaseButton v-if="canComplete" variant="primary" @click="doComplete">Terminar OT</BaseButton>
         <BaseButton v-if="canCancel" variant="secondary" @click="doCancel">Cancelar</BaseButton>
         <BaseButton v-if="canDelete" variant="danger" @click="doDelete">Eliminar</BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div v-if="isLoading" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Cargando…</div>
+    <div v-if="isLoading" class="text-sm text-gray-500 dark:text-gray-400">Cargando…</div>
 
     <template v-else-if="order">
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-        <div class="rounded-lg border p-3" :style="{ borderColor: 'var(--color-border)' }">
-          <div :style="{ color: 'var(--color-text-secondary)' }">Cliente</div>
+        <div class="rounded-lg border p-3 border-gray-200 dark:border-gray-800">
+          <div class="text-gray-500 dark:text-gray-400">Cliente</div>
           <div class="font-medium">{{ order.clientName ?? '—' }}</div>
         </div>
-        <div class="rounded-lg border p-3" :style="{ borderColor: 'var(--color-border)' }">
-          <div :style="{ color: 'var(--color-text-secondary)' }">Responsable</div>
+        <div class="rounded-lg border p-3 border-gray-200 dark:border-gray-800">
+          <div class="text-gray-500 dark:text-gray-400">Responsable</div>
           <div class="font-medium">{{ order.assignedTo ?? '—' }}</div>
         </div>
-        <div class="rounded-lg border p-3" :style="{ borderColor: 'var(--color-border)' }">
-          <div :style="{ color: 'var(--color-text-secondary)' }">Compromiso</div>
+        <div class="rounded-lg border p-3 border-gray-200 dark:border-gray-800">
+          <div class="text-gray-500 dark:text-gray-400">Compromiso</div>
           <div class="font-medium">{{ formatDate(order.scheduledEnd) }}</div>
         </div>
       </div>
 
-      <div class="rounded-xl border p-4" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
-        <h2 class="font-semibold text-sm mb-3">Muebles</h2>
+      <FormSectionCard
+        title="Muebles"
+        dense
+      >
         <ul class="space-y-2">
           <li v-for="line in order.lines" :key="line.id" class="text-sm">
-            <span class="font-mono text-xs" :style="{ color: 'var(--color-text-secondary)' }">{{ line.furnitureCode }}</span>
+            <span class="font-mono text-xs text-gray-500 dark:text-gray-400">{{ line.furnitureCode }}</span>
             {{ line.furnitureName }} × {{ line.quantity }}
           </li>
         </ul>
-      </div>
+      </FormSectionCard>
 
-      <div class="rounded-xl border p-4 space-y-3" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
-        <h2 class="font-semibold text-sm">Etapas de producción</h2>
-        <div v-for="stage in order.stages" :key="stage.id" class="flex items-start gap-3 p-3 rounded-lg" :style="{ background: 'var(--color-bg)' }">
-          <AppIcon :icon="stageIcon(stage.status)" :size="22" :class="stage.status === 'DONE' ? 'text-emerald-600' : stage.status === 'IN_PROGRESS' ? 'text-blue-600' : 'text-slate-400'" />
+      <FormSectionCard
+        title="Etapas de producción"
+        dense
+      >
+        <div v-for="stage in order.stages" :key="stage.id" class="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+          <AppIcon :icon="stageIcon(stage.status)" :size="22" :class="stage.status === 'DONE' ? 'text-success-600 dark:text-success-500' : stage.status === 'IN_PROGRESS' ? 'text-blue-light-600 dark:text-blue-light-500' : 'text-gray-400'" />
           <div class="flex-1 min-w-0">
             <div class="font-medium text-sm">{{ stage.label }}</div>
-            <div class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+            <div class="text-xs text-gray-500 dark:text-gray-400">
               {{ STAGE_STATUS_LABELS[stage.status] }}
               <span v-if="stage.assignee"> · {{ stage.assignee }}</span>
             </div>
@@ -179,22 +180,25 @@ function stageIcon(status: string) {
             Completar etapa
           </BaseButton>
         </div>
-      </div>
+      </FormSectionCard>
 
-      <div v-if="order.consumptions.length" class="rounded-xl border p-4" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
-        <h2 class="font-semibold text-sm mb-3">Consumo de materiales</h2>
+      <FormSectionCard
+        v-if="order.consumptions.length"
+        title="Consumo de materiales"
+        dense
+      >
         <ul class="space-y-1 text-sm">
           <li v-for="c in order.consumptions" :key="c.id">
             {{ c.materialCode }} — {{ formatQty(c.quantity) }} ({{ formatDate(c.consumedAt) }})
           </li>
         </ul>
-      </div>
+      </FormSectionCard>
     </template>
 
     <BaseModal v-model="showConsumeModal" size="md">
       <template #title>Consumir material</template>
       <div class="p-4 space-y-4">
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Registra salida de inventario vinculada a esta OT.
         </p>
         <FormSelect v-model="consumeMaterialId" label="Material" :options="materialOptions" />

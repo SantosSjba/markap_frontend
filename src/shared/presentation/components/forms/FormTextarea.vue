@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, useAttrs, useId } from 'vue'
+import { fieldErrorClass, fieldHintClass, fieldLabelClass, textareaClass } from './field-classes'
 /**
- * FormTextarea - Componente de textarea reutilizable con props
+ * FormTextarea — `Field` + `Textarea` de TailAdmin.
  */
 
 interface Props {
@@ -53,19 +54,15 @@ const handleInput = (event: Event) => {
 </script>
 
 <template>
-  <div class="w-full" v-bind="wrapperAttrs">
-    <label
-      v-if="label"
-      :for="textareaId"
-      class="block text-sm font-medium mb-1"
-      :style="{ color: 'var(--color-text-primary)' }"
-    >
+  <div role="group" data-slot="field" class="flex w-full flex-col gap-2" v-bind="wrapperAttrs">
+    <label v-if="label" :for="textareaId" :class="fieldLabelClass">
       {{ label }}
-      <span v-if="required" :style="{ color: 'var(--color-error)' }">*</span>
+      <span v-if="required" class="text-error-500">*</span>
     </label>
     <textarea
       v-bind="controlAttrs"
       :id="textareaId"
+      data-slot="textarea"
       :value="displayValue()"
       :placeholder="placeholder"
       :disabled="disabled"
@@ -73,21 +70,16 @@ const handleInput = (event: Event) => {
       :rows="rows"
       :aria-invalid="error ? 'true' : undefined"
       :aria-describedby="error || hint ? messageId : undefined"
-      class="w-full px-4 py-2.5 rounded-lg border resize-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--color-primary)] disabled:opacity-60 disabled:cursor-not-allowed"
-      :style="{
-        borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
-        backgroundColor: 'var(--color-surface)',
-        color: 'var(--color-text-primary)',
-        colorScheme: 'inherit',
-      }"
+      :class="textareaClass"
+      class="resize-none"
       @input="handleInput"
       @blur="emit('blur', $event)"
       @focus="emit('focus', $event)"
     />
-    <p v-if="error" :id="messageId" role="alert" class="mt-1 text-sm" :style="{ color: 'var(--color-error)' }">
+    <p v-if="error" :id="messageId" role="alert" :class="fieldErrorClass">
       {{ error }}
     </p>
-    <p v-else-if="hint" :id="messageId" class="mt-1 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+    <p v-else-if="hint" :id="messageId" :class="fieldHintClass">
       {{ hint }}
     </p>
   </div>

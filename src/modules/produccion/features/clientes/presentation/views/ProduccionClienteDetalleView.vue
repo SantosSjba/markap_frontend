@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -67,121 +72,78 @@ const addrText = computed(() => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start gap-4">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div class="flex-1 min-w-0">
-        <div class="flex flex-wrap items-center gap-2">
-          <h1 class="text-xl font-bold truncate" :style="{ color: 'var(--color-text-primary)' }">
-            {{ client?.fullName ?? 'Cliente' }}
-          </h1>
-          <Badge v-if="client" :variant="client.clientType === 'RESIDENTIAL' ? 'info' : 'success'">
+  <div class="space-y-6">
+    <PageHeader
+      :title="client?.fullName ?? 'Cliente'"
+      :subtitle="`${client?.documentType.name} ${client?.documentNumber}`"
+      back
+      @back="goBack"
+    >
+      <template #badges>
+        <Badge v-if="client" :variant="client.clientType === 'RESIDENTIAL' ? 'info' : 'success'">
             {{ typeLabel(client) }}
           </Badge>
-          <Badge v-if="client" :variant="client.isActive ? 'success' : 'error'">
+        <Badge v-if="client" :variant="client.isActive ? 'success' : 'error'">
             {{ client.isActive ? 'Activo' : 'Inactivo' }}
           </Badge>
-        </div>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          {{ client?.documentType.name }} {{ client?.documentNumber }}
-        </p>
-      </div>
-      <BaseButton v-if="client" variant="primary" size="sm" class="flex items-center gap-1.5" @click="goEdit">
+      </template>
+      <template #actions>
+        <BaseButton v-if="client" variant="primary" size="sm" class="flex items-center gap-1.5" @click="goEdit">
         <AppIcon icon="lucide:pencil" :size="15" />
         Editar
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
     <template v-else-if="client">
-      <div
-        class="flex flex-wrap gap-2 p-1 rounded-xl border"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
-        <button
-          v-for="tab in (
-            [
-              { id: 'datos' as const, label: 'Datos' },
-              { id: 'cotizaciones' as const, label: 'Cotizaciones' },
-              { id: 'pedidos' as const, label: 'Pedidos' },
-              { id: 'notas' as const, label: 'Notas internas' },
-            ]
-          )"
-          :key="tab.id"
-          type="button"
-          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          :style="{
-            background: activeTab === tab.id ? 'var(--color-primary-subtle)' : 'transparent',
-            color: activeTab === tab.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-          }"
-          @click="activeTab = tab.id"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
+      <BaseTabs v-model="activeTab" :tabs="[ { id: 'datos' as const, label: 'Datos' }, { id: 'cotizaciones' as const, label: 'Cotizaciones' }, { id: 'pedidos' as const, label: 'Pedidos' }, { id: 'notas' as const, label: 'Notas internas' } ]" />
 
-      <div
-        v-show="activeTab === 'datos'"
-        class="p-6 rounded-xl border space-y-6"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
+      <BaseCard v-show="activeTab === 'datos'" class="block space-y-6">
         <div>
-          <h3 class="text-sm font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
+          <h3 class="text-sm font-semibold mb-3 text-gray-800 dark:text-white/90">
             Contacto
           </h3>
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Teléfono</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ client.primaryPhone }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Teléfono</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ client.primaryPhone }}</dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Tel. secundario</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ client.secondaryPhone ?? '—' }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Tel. secundario</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ client.secondaryPhone ?? '—' }}</dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Email</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ client.primaryEmail }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Email</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ client.primaryEmail }}</dd>
             </div>
             <div>
-              <dt class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Email secundario</dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ client.secondaryEmail ?? '—' }}</dd>
+              <dt class="text-xs text-gray-400 dark:text-gray-500">Email secundario</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ client.secondaryEmail ?? '—' }}</dd>
             </div>
           </dl>
         </div>
         <div>
-          <h3 class="text-sm font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">
+          <h3 class="text-sm font-semibold mb-2 text-gray-800 dark:text-white/90">
             Dirección
           </h3>
-          <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ addrText }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ addrText }}</p>
         </div>
         <div v-if="client.legalRepresentativeName">
-          <h3 class="text-sm font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">
+          <h3 class="text-sm font-semibold mb-2 text-gray-800 dark:text-white/90">
             Representante legal
           </h3>
-          <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
             {{ client.legalRepresentativeName }}
             <span v-if="client.legalRepresentativePosition"> — {{ client.legalRepresentativePosition }}</span>
           </p>
         </div>
-      </div>
+      </BaseCard>
 
-      <div
-        v-show="activeTab === 'cotizaciones'"
-        class="p-6 rounded-xl border space-y-4"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
+      <BaseCard v-show="activeTab === 'cotizaciones'" class="block space-y-4">
         <div class="flex items-center justify-between gap-3">
-          <h3 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Cotizaciones</h3>
+          <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">Cotizaciones</h3>
           <BaseButton
             variant="outline"
             size="sm"
@@ -190,31 +152,27 @@ const addrText = computed(() => {
             Ver todas
           </BaseButton>
         </div>
-        <p v-if="!clientQuotations.length" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p v-if="!clientQuotations.length" class="text-sm text-gray-500 dark:text-gray-400">
           Sin cotizaciones para este cliente.
         </p>
-        <ul v-else class="divide-y" :style="{ borderColor: 'var(--color-border)' }">
+        <ul v-else class="divide-y border-gray-200 dark:border-gray-800">
           <li
             v-for="q in clientQuotations"
             :key="q.id"
             class="py-3 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:opacity-80"
             @click="router.push({ name: 'produccion-ventas-cotizacion-detalle', params: { id: q.id } })"
           >
-            <span class="font-mono text-sm font-medium" :style="{ color: 'var(--color-primary)' }">{{ q.code }}</span>
+            <span class="font-mono text-sm font-medium text-brand-500 dark:text-brand-400">{{ q.code }}</span>
             <span class="text-sm" :class="quotationStatusClass(q.status)">{{ QUOTATION_STATUS_LABELS[q.status] }}</span>
             <span class="text-sm">{{ formatDate(q.validUntil) }}</span>
             <span class="text-sm font-medium">{{ formatSol(q.totalAmount) }}</span>
           </li>
         </ul>
-      </div>
+      </BaseCard>
 
-      <div
-        v-show="activeTab === 'pedidos'"
-        class="p-6 rounded-xl border space-y-4"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
+      <BaseCard v-show="activeTab === 'pedidos'" class="block space-y-4">
         <div class="flex items-center justify-between gap-3">
-          <h3 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Pedidos</h3>
+          <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">Pedidos</h3>
           <BaseButton
             variant="outline"
             size="sm"
@@ -223,36 +181,31 @@ const addrText = computed(() => {
             Ver todos
           </BaseButton>
         </div>
-        <p v-if="!clientOrders.length" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p v-if="!clientOrders.length" class="text-sm text-gray-500 dark:text-gray-400">
           Sin pedidos para este cliente.
         </p>
-        <ul v-else class="divide-y" :style="{ borderColor: 'var(--color-border)' }">
+        <ul v-else class="divide-y border-gray-200 dark:border-gray-800">
           <li
             v-for="o in clientOrders"
             :key="o.id"
             class="py-3 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:opacity-80"
             @click="router.push({ name: 'produccion-ventas-pedido-detalle', params: { id: o.id } })"
           >
-            <span class="font-mono text-sm font-medium" :style="{ color: 'var(--color-primary)' }">{{ o.code }}</span>
+            <span class="font-mono text-sm font-medium text-brand-500 dark:text-brand-400">{{ o.code }}</span>
             <span class="text-sm" :class="orderStatusClass(o.status)">{{ ORDER_STATUS_LABELS[o.status] }}</span>
             <span class="text-sm">{{ formatDate(o.orderedAt) }}</span>
             <span class="text-sm font-medium">{{ formatSol(o.totalAmount) }}</span>
           </li>
         </ul>
-      </div>
+      </BaseCard>
 
-      <div
+      <FormSectionCard
         v-show="activeTab === 'notas'"
-        class="p-6 rounded-xl border"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
+        title="Notas internas del equipo"
+        :subtitle="client.notes?.trim() || 'Sin notas. Puedes añadirlas desde Editar cliente.'"
       >
-        <h3 class="text-sm font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">
-          Notas internas del equipo
-        </h3>
-        <p class="text-sm whitespace-pre-wrap" :style="{ color: 'var(--color-text-secondary)' }">
-          {{ client.notes?.trim() || 'Sin notas. Puedes añadirlas desde Editar cliente.' }}
-        </p>
-      </div>
+
+      </FormSectionCard>
     </template>
   </div>
 </template>

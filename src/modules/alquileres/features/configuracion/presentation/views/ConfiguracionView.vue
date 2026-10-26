@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import { ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import ConfigToggleRow from '@shared/presentation/components/ui/ConfigToggleRow.vue'
@@ -58,124 +62,95 @@ const tabs = [
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
+  <div class="space-y-6">
     <!-- Header -->
-    <div>
-      <h1 class="text-xl sm:text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-        Configuración
-      </h1>
-      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
+    <PageHeader
+      title="Configuración"
+    >
+      <template #actions>
+        <p class="text-sm mt-1 text-gray-500 dark:text-gray-400">
         Personaliza el comportamiento del módulo de alquileres
       </p>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Tabs -->
-    <div class="flex gap-1 border-b" :style="{ borderColor: 'var(--color-border)' }">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
-        :class="activeTab === tab.id ? 'border-[var(--color-primary)]' : 'border-transparent hover:bg-[var(--color-hover)]'"
-        :style="{ color: activeTab === tab.id ? 'var(--color-primary)' : 'var(--color-text-muted)' }"
-        @click="activeTab = tab.id"
-      >
-        <Icon :icon="tab.icon" class="w-4 h-4" />
-        {{ tab.label }}
-      </button>
-    </div>
+    <BaseTabs v-model="activeTab" :tabs="tabs" />
 
     <!-- Loading -->
-    <div v-if="isLoading" class="flex items-center justify-center py-16 gap-3">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando configuración...</p>
-    </div>
+    <LoadingState v-if="isLoading" text="Cargando configuración..." />
 
     <template v-else>
       <!-- ===== TAB ALERTAS ===== -->
       <div v-show="activeTab === 'alertas'" class="space-y-6">
 
         <!-- Alertas de Vencimiento -->
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <div class="flex items-center gap-3 px-5 py-4 border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center" :style="{ backgroundColor: 'var(--color-surface-elevated)' }">
+        <BaseCard padding="none" class="block overflow-hidden">
+          <div class="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-800">
               <AppIcon icon="lucide:bell-ring" :size="16" color="var(--color-primary)" />
             </div>
             <div>
-              <h3 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Alertas de Vencimiento</h3>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Configura cuándo recibir alertas sobre contratos</p>
+              <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">Alertas de Vencimiento</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500">Configura cuándo recibir alertas sobre contratos</p>
             </div>
           </div>
           <ConfigToggleRow no-border v-model="form.alert30Days" title="Alerta a 30 días" description="Notificar cuando un contrato vence en 30 días" />
           <ConfigToggleRow v-model="form.alert60Days" title="Alerta a 60 días" description="Notificar cuando un contrato vence en 60 días" />
           <ConfigToggleRow v-model="form.alert90Days" title="Alerta a 90 días" description="Notificar cuando un contrato vence en 90 días" />
-        </div>
+        </BaseCard>
 
         <!-- Alertas de Cobranza -->
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <div class="flex items-center gap-3 px-5 py-4 border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center" :style="{ backgroundColor: 'var(--color-surface-elevated)' }">
+        <BaseCard padding="none" class="block overflow-hidden">
+          <div class="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-800">
               <AppIcon icon="lucide:circle-dollar-sign" :size="16" color="#10b981" />
             </div>
             <div>
-              <h3 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Alertas de Cobranza</h3>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Configura alertas de pagos pendientes</p>
+              <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">Alertas de Cobranza</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500">Configura alertas de pagos pendientes</p>
             </div>
           </div>
           <ConfigToggleRow no-border v-model="form.alertPendingPayment" title="Pago pendiente" description="Alertar cuando hay un pago próximo a vencer" />
           <ConfigToggleRow v-model="form.alertOverduePayment" title="Pago atrasado" description="Alertar cuando un pago está vencido" />
-        </div>
+        </BaseCard>
       </div>
 
       <!-- ===== TAB NOTIFICACIONES ===== -->
       <div v-show="activeTab === 'notificaciones'" class="space-y-6">
-        <div
-          class="rounded-xl border overflow-hidden"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <div class="flex items-center gap-3 px-5 py-4 border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center" :style="{ backgroundColor: 'var(--color-surface-elevated)' }">
+        <BaseCard padding="none" class="block overflow-hidden">
+          <div class="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-800">
               <AppIcon icon="lucide:mail" :size="16" color="var(--color-primary)" />
             </div>
             <div>
-              <h3 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Canales de Notificación</h3>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Elige cómo recibir las notificaciones</p>
+              <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">Canales de Notificación</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500">Elige cómo recibir las notificaciones</p>
             </div>
           </div>
           <ConfigToggleRow no-border v-model="form.channelInApp" title="En el sistema" description="Recibir notificaciones dentro de la aplicación" />
           <ConfigToggleRow v-model="form.channelEmail" title="Email" description="Recibir notificaciones por correo electrónico (próximamente)" :disabled="true" />
           <ConfigToggleRow v-model="form.channelWhatsapp" title="WhatsApp" description="Recibir notificaciones por WhatsApp (próximamente)" :disabled="true" />
-        </div>
+        </BaseCard>
 
         <!-- Info -->
-        <div
-          class="flex items-start gap-3 p-4 rounded-xl border"
-          :style="{ borderColor: '#6366f130', backgroundColor: '#6366f108' }"
-        >
-          <AppIcon icon="lucide:info" :size="16" color="var(--color-primary)" class="mt-0.5 shrink-0" />
-          <p class="text-xs leading-relaxed" :style="{ color: 'var(--color-text-secondary)' }">
+        <BaseAlert type="info">
+          <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
             Las notificaciones en el sistema son enviadas en tiempo real cuando ocurre un evento relevante
             (nuevo contrato, pago pendiente, contrato próximo a vencer). Puedes verlas en el ícono de
             campana en la barra superior.
           </p>
-        </div>
+        </BaseAlert>
       </div>
 
       <!-- Feedback -->
-      <div v-if="saveError" class="flex items-center gap-2 p-3 rounded-lg border" :style="{ borderColor: 'var(--color-error)', backgroundColor: '#ef444410' }">
+      <div v-if="saveError" class="flex items-center gap-2 p-3 rounded-lg border border-error-500 bg-error-500/10">
         <AppIcon icon="lucide:circle-x" :size="16" color="var(--color-error)" />
-        <p class="text-sm" :style="{ color: 'var(--color-error)' }">{{ saveError }}</p>
+        <p class="text-sm text-error-500 dark:text-error-400">{{ saveError }}</p>
       </div>
-      <div v-if="saveSuccess" class="flex items-center gap-2 p-3 rounded-lg border" :style="{ borderColor: 'var(--color-success)', backgroundColor: '#10b98110' }">
-        <AppIcon icon="lucide:circle-check" :size="16" color="var(--color-success)" />
-        <p class="text-sm" :style="{ color: 'var(--color-success)' }">Configuración guardada correctamente</p>
-      </div>
+      <BaseAlert v-if="saveSuccess" type="success">
+        <p class="text-sm text-success-600 dark:text-success-500">Configuración guardada correctamente</p>
+      </BaseAlert>
 
       <!-- Guardar -->
       <div class="flex justify-end">

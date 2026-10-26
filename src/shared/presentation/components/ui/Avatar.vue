@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Avatar, AvatarFallback } from '../../ui/avatar'
 /**
- * Avatar - Iniciales en círculo (reutilizable)
+ * Avatar — `Avatar` de TailAdmin con iniciales (fondo de marca).
  */
 interface Props {
   /** Texto para mostrar (ej. nombre completo); se usan las iniciales */
@@ -14,6 +15,8 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md',
 })
 
+const sizeMap = { sm: 'sm', md: 'default', lg: 'lg' } as const
+
 const initials = computed(() => {
   const name = props.name ?? ''
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -24,20 +27,12 @@ const initials = computed(() => {
   }
   return name.slice(0, 2).toUpperCase() || '?'
 })
-
-const sizeClasses = {
-  sm: 'w-8 h-8 text-xs',
-  md: 'w-10 h-10 text-sm',
-  lg: 'w-12 h-12 text-base',
-}
 </script>
 
 <template>
-  <div
-    class="rounded-full flex items-center justify-center font-medium flex-shrink-0"
-    :class="sizeClasses[size]"
-    :style="{ backgroundColor: 'var(--color-primary)', color: 'white' }"
-  >
-    {{ initials }}
-  </div>
+  <Avatar :size="sizeMap[size]">
+    <AvatarFallback class="bg-brand-50 font-medium text-brand-500 dark:bg-brand-500/15 dark:text-brand-400">
+      {{ initials }}
+    </AvatarFallback>
+  </Avatar>
 </template>

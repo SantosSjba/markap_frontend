@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
@@ -18,9 +21,9 @@ import {
 } from '../composables/useClients'
 import type { DocumentType, UpdateArquitecturaClientPayload } from '../../domain/client.types'
 import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
+import OptionCardGroup from '@shared/presentation/components/forms/OptionCardGroup.vue'
 const route = useRoute()
 const router = useRouter()
-const appColor = 'var(--color-primary)'
 
 const id = computed(() => String(route.params.id ?? ''))
 
@@ -220,71 +223,36 @@ const onSubmit = handleSubmit(async (formValues) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
-    <div class="flex items-center gap-4 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" color="currentColor" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Editar cliente
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Actualiza datos de identificación y contacto
-        </p>
-      </div>
-    </div>
+  <div >
+    <PageHeader
+      title="Editar cliente"
+      subtitle="Actualiza datos de identificación y contacto"
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <AppIcon icon="line-md:loading-loop" :size="32" :color="appColor" />
-    </div>
+    <LoadingState v-if="loading" class="py-12" />
 
     <form v-else-if="client" @submit.prevent="onSubmit" class="space-y-8">
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Tipo de cliente"
+        dense
       >
-        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Tipo de cliente
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            type="button"
-            class="p-4 rounded-lg border-2 text-left transition-all"
-            :style="{
-              borderColor: clientType === 'RESIDENTIAL' ? appColor : 'var(--color-border)',
-              color: clientType === 'RESIDENTIAL' ? appColor : 'var(--color-text-primary)',
-            }"
-            @click="selectClientType('RESIDENTIAL')"
-          >
-            <span class="font-medium">Residencial</span>
-          </button>
-          <button
-            type="button"
-            class="p-4 rounded-lg border-2 text-left transition-all"
-            :style="{
-              borderColor: clientType === 'CORPORATE' ? appColor : 'var(--color-border)',
-              color: clientType === 'CORPORATE' ? appColor : 'var(--color-text-primary)',
-            }"
-            @click="selectClientType('CORPORATE')"
-          >
-            <span class="font-medium">Corporativo</span>
-          </button>
-        </div>
-      </section>
+        <OptionCardGroup
+          :model-value="clientType"
+          :options="[
+            { value: 'RESIDENTIAL', label: 'Residencial' },
+            { value: 'CORPORATE', label: 'Corporativo' },
+          ]"
+          @update:model-value="selectClientType($event as 'RESIDENTIAL' | 'CORPORATE')"
+        />
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Identificación"
+        dense
       >
-        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Identificación
-        </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormSelect
             v-bind="documentTypeIdBinds"
@@ -317,30 +285,24 @@ const onSubmit = handleSubmit(async (formValues) => {
             :error="errors.legalRepresentativePosition"
           />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Contacto"
+        dense
       >
-        <h2 class="text-base font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">
-          Contacto
-        </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput v-bind="primaryPhoneBinds" type="tel" label="Teléfono principal" :error="errors.primaryPhone" required />
           <FormInput v-bind="secondaryPhoneBinds" type="tel" label="Teléfono secundario" :error="errors.secondaryPhone" />
           <FormInput v-bind="primaryEmailBinds" type="email" label="Email principal" :error="errors.primaryEmail" required />
           <FormInput v-bind="secondaryEmailBinds" type="email" label="Email secundario" :error="errors.secondaryEmail" />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Dirección (opcional)"
+        dense
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Dirección (opcional)
-        </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
           <FormInput v-bind="addressLineBinds" class="md:col-span-2" label="Dirección" :error="errors.addressLine" />
           <FormSelect
@@ -366,17 +328,14 @@ const onSubmit = handleSubmit(async (formValues) => {
           />
           <FormInput v-bind="referenceBinds" class="md:col-span-2" label="Referencia" />
         </div>
-      </section>
+      </FormSectionCard>
 
-      <section
-        class="p-5 rounded-xl"
-        :style="{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }"
+      <FormSectionCard
+        title="Notas internas"
+        dense
       >
-        <h2 class="text-base font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
-          Notas internas
-        </h2>
         <FormTextarea v-bind="notesBinds" label="Observaciones" :rows="4" />
-      </section>
+      </FormSectionCard>
 
       <div class="flex justify-end gap-3">
         <BaseButton variant="outline" type="button" @click="goBack">Cancelar</BaseButton>

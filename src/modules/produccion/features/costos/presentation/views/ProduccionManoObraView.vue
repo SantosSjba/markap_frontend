@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
 import { ref, computed } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
@@ -90,21 +94,20 @@ async function del(r: ProduccionLaborRate) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Mano de obra</h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Tarifas por etapa para calcular el costeo de muebles.
-        </p>
-      </div>
-      <BaseButton variant="primary" @click="openNew">
+  <div class="space-y-6">
+    <PageHeader
+      title="Mano de obra"
+      subtitle="Tarifas por etapa para calcular el costeo de muebles."
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nueva tarifa
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="rounded-xl border overflow-hidden" :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }">
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable :columns="columns" :data="rows" :loading="isLoading" empty-text="Sin tarifas definidas." row-key="id">
         <template #toolbar>
           <div class="flex-1 min-w-0">
@@ -117,30 +120,28 @@ async function del(r: ProduccionLaborRate) {
           <td class="py-3 px-4 text-sm">{{ formatSol((row as ProduccionLaborRate).hourlyRate) }}</td>
           <td class="py-3 px-4 text-sm">{{ (row as ProduccionLaborRate).isActive ? 'Activa' : 'Inactiva' }}</td>
           <td class="py-3 px-4 text-right space-x-2">
-            <button type="button" class="text-sm hover:underline" :style="{ color: 'var(--color-primary)' }" @click="openEdit(row as ProduccionLaborRate)">Editar</button>
-            <button type="button" class="text-sm hover:underline" :style="{ color: 'var(--color-error)' }" @click="del(row as ProduccionLaborRate)">Eliminar</button>
+            <BaseButton @click="openEdit(row as ProduccionLaborRate)" variant="link">Editar</BaseButton>
+            <BaseButton @click="del(row as ProduccionLaborRate)" variant="link" class="text-error-500 dark:text-error-400">Eliminar</BaseButton>
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showModal" size="md">
       <template #title>{{ editing ? 'Editar tarifa' : 'Nueva tarifa' }}</template>
       <div class="p-4 space-y-4">
         <FormInput v-model="name" label="Nombre" required />
         <div>
-          <label class="block text-sm font-medium mb-1.5">Etapa</label>
-          <select v-model="stage" class="w-full px-3 py-2 rounded-lg border text-sm" :style="{ borderColor: 'var(--color-border)' }">
-            <option v-for="s in LABOR_STAGES" :key="s" :value="s">{{ s }}</option>
-          </select>
+          <FormSelect
+            v-model="stage"
+            :options="(LABOR_STAGES).map((x) => ({ value: x, label: x }))"
+            label="Etapa"
+          />
         </div>
         <FormInput v-model="hourlyRate" type="number" label="Tarifa por hora (S/)" required />
-        <label class="flex items-center gap-2 text-sm">
-          <input v-model="isActive" type="checkbox" class="rounded" />
-          Activa
-        </label>
+        <FormCheckbox v-model="isActive" label="Activa" />
       </div>
-      <div class="flex justify-end gap-2 p-4 border-t" :style="{ borderColor: 'var(--color-border)' }">
+      <div class="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" @click="showModal = false">Cancelar</BaseButton>
         <BaseButton variant="primary" :loading="saving" @click="save">Guardar</BaseButton>
       </div>

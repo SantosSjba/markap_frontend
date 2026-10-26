@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -141,32 +144,26 @@ const goProjects = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1400px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Ejecución</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Opera la obra real: tareas por fase, Kanban, cronograma, costos ejecutados vs presupuesto aprobado, evidencias e incidencias.
-        </p>
-      </div>
-      <BaseButton variant="outline" type="button" @click="goProjects">
+  <div class="space-y-6">
+    <PageHeader
+      title="Ejecución"
+      subtitle="Opera la obra real: tareas por fase, Kanban, cronograma, costos ejecutados vs presupuesto aprobado, evidencias e incidencias."
+    >
+      <template #actions>
+        <BaseButton variant="outline" type="button" @click="goProjects">
         <AppIcon icon="lucide:folder-kanban" :size="18" class="mr-1.5" />
         Ver todos los proyectos
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
-      <div v-if="isLoading" class="flex justify-center py-16">
-        <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-      </div>
+    <BaseCard padding="none" class="block overflow-hidden">
+      <LoadingState v-if="isLoading" />
       <div
         v-else-if="listQueryError"
         class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
       >
-        <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
         <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
       </div>
       <template v-else>
@@ -183,21 +180,12 @@ const goProjects = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
           </template>
           <template #row="{ row }">
             <td class="py-3 px-4">
-              <button
-                type="button"
-                class="font-medium hover:underline"
-                :style="{ color: 'var(--color-primary)' }"
-                @click="goDetail(row as ArquitecturaProjectListItem)"
-              >
-                {{ (row as ArquitecturaProjectListItem).code }}
-              </button>
+              <BaseButton @click="goDetail(row as ArquitecturaProjectListItem)" variant="link" class="font-medium">{{ (row as ArquitecturaProjectListItem).code }}</BaseButton>
             </td>
             <td class="py-3 px-4">
-              <button type="button" class="text-left font-medium" @click="goDetail(row as ArquitecturaProjectListItem)">
-                <span :style="{ color: 'var(--color-text-primary)' }">{{ (row as ArquitecturaProjectListItem).name }}</span>
-              </button>
+              <BaseButton variant="link" class="font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400" @click="goDetail(row as ArquitecturaProjectListItem)">{{ (row as ArquitecturaProjectListItem).name }}</BaseButton>
             </td>
-            <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
               {{ (row as ArquitecturaProjectListItem).client.fullName }}
             </td>
             <td class="py-3 px-4 text-sm">{{ Math.round((row as ArquitecturaProjectListItem).progressPct) }}%</td>
@@ -209,7 +197,7 @@ const goProjects = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
             </td>
           </template>
         </DataTable>
-        <div v-if="!isLoading && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+        <div v-if="!isLoading && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
           <BasePagination
             v-bind="paginationProps"
             :show-page-size="true"
@@ -218,25 +206,25 @@ const goProjects = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
           />
         </div>
       </template>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showCancelModal" :closable="true" size="sm" @close="closeCancelModal">
       <template #title>
         <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-error-subtle);">
-            <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error);" />
+          <div class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15">
+            <AppIcon class="text-error-500 dark:text-error-400" icon="lucide:trash-2" :size="16" />
           </div>
-          <span class="text-base font-semibold" style="color: var(--color-text-primary);">Cancelar proyecto</span>
+          <span class="text-base font-semibold text-gray-800 dark:text-white/90">Cancelar proyecto</span>
         </div>
       </template>
       <div class="p-4 space-y-3">
-        <p class="text-sm" style="color: var(--color-text-secondary);">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           ¿Marcar como cancelado el proyecto
-          <span class="font-semibold" style="color: var(--color-text-primary);">{{ cancelTarget?.code }}</span>
+          <span class="font-semibold text-gray-800 dark:text-white/90">{{ cancelTarget?.code }}</span>
           · {{ cancelTarget?.name }}?
         </p>
       </div>
-      <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+      <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" @click="closeCancelModal">Volver</BaseButton>
         <BaseButton variant="danger" :loading="isCancelPending" @click="executeCancel">
           <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />

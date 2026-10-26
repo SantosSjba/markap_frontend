@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as yup from 'yup'
@@ -25,9 +27,9 @@ import {
 import { useClientAddressUbigeo } from '../../composables/useClientAddressUbigeo'
 import { navigateAfterAlquileresSave } from '../../../../presentation/navigation/navigateAfterAlquileresSave'
 import type { DocumentType } from '../../domain/client.types'
+import OptionCardGroup from '@shared/presentation/components/forms/OptionCardGroup.vue'
 const route = useRoute()
 const router = useRouter()
-const appColor = 'var(--color-primary)'
 
 const clientType = ref<'OWNER' | 'TENANT'>('OWNER')
 
@@ -232,29 +234,16 @@ const onSubmit = handleSubmit(async (formValues) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
-    <div class="flex items-center gap-4 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" color="currentColor" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Nuevo Cliente
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Registrar un nuevo propietario o inquilino
-        </p>
-      </div>
-    </div>
+  <div >
+    <PageHeader
+      title="Nuevo Cliente"
+      subtitle="Registrar un nuevo propietario o inquilino"
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <AppIcon icon="line-md:loading-loop" :size="32" :color="appColor" />
-    </div>
+    <LoadingState v-if="loading" class="py-12" />
 
     <form v-else @submit.prevent="onSubmit" class="space-y-8">
       <FormSectionCard
@@ -262,46 +251,14 @@ const onSubmit = handleSubmit(async (formValues) => {
         subtitle="Selecciona el tipo de cliente a registrar"
         icon="lucide:users"
       >
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            type="button"
-            class="p-4 rounded-lg border-2 text-left transition-all"
-            :style="{
-              borderColor: clientType === 'OWNER' ? appColor : 'var(--color-border)',
-              color: clientType === 'OWNER' ? appColor : 'var(--color-text-primary)',
-            }"
-            @click="selectClientType('OWNER')"
-          >
-            <div class="flex items-center gap-3">
-              <AppIcon icon="lucide:building-2" :size="32" color="currentColor" class="shrink-0" />
-              <div>
-                <span class="font-medium block">Propietario</span>
-                <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-                  Dueño de propiedad en administración
-                </span>
-              </div>
-            </div>
-          </button>
-          <button
-            type="button"
-            class="p-4 rounded-lg border-2 text-left transition-all"
-            :style="{
-              borderColor: clientType === 'TENANT' ? appColor : 'var(--color-border)',
-              color: clientType === 'TENANT' ? appColor : 'var(--color-text-primary)',
-            }"
-            @click="selectClientType('TENANT')"
-          >
-            <div class="flex items-center gap-3">
-              <AppIcon icon="lucide:user" :size="32" color="currentColor" class="shrink-0" />
-              <div>
-                <span class="font-medium block">Inquilino</span>
-                <span class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-                  Persona que alquila una propiedad
-                </span>
-              </div>
-            </div>
-          </button>
-        </div>
+        <OptionCardGroup
+          :model-value="clientType"
+          :options="[
+            { value: 'OWNER', label: 'Propietario', description: 'Dueño de propiedad en administración', icon: 'lucide:building-2' },
+            { value: 'TENANT', label: 'Inquilino', description: 'Persona que alquila una propiedad', icon: 'lucide:user' },
+          ]"
+          @update:model-value="selectClientType($event as 'OWNER' | 'TENANT')"
+        />
       </FormSectionCard>
 
       <FormSectionCard

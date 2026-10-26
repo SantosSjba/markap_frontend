@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
 import { computed, ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -66,7 +69,7 @@ async function exportPdt621() {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:percent"
       title="IGV del periodo"
@@ -85,13 +88,11 @@ async function exportPdt621() {
       </template>
     </PageHeader>
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
-    <div v-else-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-else-if="isLoading" />
 
     <template v-else-if="summary">
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -109,61 +110,58 @@ async function exportPdt621() {
         </StatsCard>
       </div>
 
-      <div
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Concepto</th>
-              <th class="text-right py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Importe (S/)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <td class="py-2.5 px-4">IGV compras (crédito)</td>
-              <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(summary.purchaseCreditIgv) }}</td>
-            </tr>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <td class="py-2.5 px-4 pl-8 text-sm" :style="{ color: 'var(--color-text-muted)' }">Menos NC compras</td>
-              <td class="py-2.5 px-4 text-right font-mono text-sm">− {{ formatPen(summary.purchaseCreditNoteIgv) }}</td>
-            </tr>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <td class="py-2.5 px-4">Retenciones IGV (a favor)</td>
-              <td class="py-2.5 px-4 text-right font-mono">+ {{ formatPen(summary.retentionsIgv) }}</td>
-            </tr>
-            <tr class="border-b font-medium" :style="{ borderColor: 'var(--color-border)' }">
-              <td class="py-2.5 px-4">Crédito neto</td>
-              <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(summary.netCreditIgv) }}</td>
-            </tr>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <td class="py-2.5 px-4">IGV ventas (débito)</td>
-              <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(summary.salesDebitIgv) }}</td>
-            </tr>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <td class="py-2.5 px-4 pl-8 text-sm" :style="{ color: 'var(--color-text-muted)' }">Menos NC ventas</td>
-              <td class="py-2.5 px-4 text-right font-mono text-sm">− {{ formatPen(summary.salesCreditNoteIgv) }}</td>
-            </tr>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <td class="py-2.5 px-4">Percepciones IGV</td>
-              <td class="py-2.5 px-4 text-right font-mono">+ {{ formatPen(summary.perceptionsIgv) }}</td>
-            </tr>
-            <tr class="border-b font-medium" :style="{ borderColor: 'var(--color-border)' }">
-              <td class="py-2.5 px-4">Débito neto</td>
-              <td class="py-2.5 px-4 text-right font-mono">{{ formatPen(summary.netDebitIgv) }}</td>
-            </tr>
-            <tr>
-              <td class="py-3 px-4 font-semibold">Resultado (débito − crédito)</td>
-              <td class="py-3 px-4 text-right font-mono font-bold text-lg">
+      <BaseCard padding="none" class="block overflow-hidden">
+        <Table class="w-full text-sm">
+          <TableHeader>
+            <TableRow class="border-b border-gray-200 dark:border-gray-800">
+              <TableCell is-header class="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Concepto</TableCell>
+              <TableCell is-header class="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Importe (S/)</TableCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow class="border-b border-gray-200 dark:border-gray-800">
+              <TableCell class="py-2.5 px-4">IGV compras (crédito)</TableCell>
+              <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(summary.purchaseCreditIgv) }}</TableCell>
+            </TableRow>
+            <TableRow class="border-b border-gray-200 dark:border-gray-800">
+              <TableCell class="py-2.5 px-4 pl-8 text-sm text-gray-400 dark:text-gray-500">Menos NC compras</TableCell>
+              <TableCell class="py-2.5 px-4 text-right font-mono text-sm">− {{ formatPen(summary.purchaseCreditNoteIgv) }}</TableCell>
+            </TableRow>
+            <TableRow class="border-b border-gray-200 dark:border-gray-800">
+              <TableCell class="py-2.5 px-4">Retenciones IGV (a favor)</TableCell>
+              <TableCell class="py-2.5 px-4 text-right font-mono">+ {{ formatPen(summary.retentionsIgv) }}</TableCell>
+            </TableRow>
+            <TableRow class="border-b font-medium border-gray-200 dark:border-gray-800">
+              <TableCell class="py-2.5 px-4">Crédito neto</TableCell>
+              <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(summary.netCreditIgv) }}</TableCell>
+            </TableRow>
+            <TableRow class="border-b border-gray-200 dark:border-gray-800">
+              <TableCell class="py-2.5 px-4">IGV ventas (débito)</TableCell>
+              <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(summary.salesDebitIgv) }}</TableCell>
+            </TableRow>
+            <TableRow class="border-b border-gray-200 dark:border-gray-800">
+              <TableCell class="py-2.5 px-4 pl-8 text-sm text-gray-400 dark:text-gray-500">Menos NC ventas</TableCell>
+              <TableCell class="py-2.5 px-4 text-right font-mono text-sm">− {{ formatPen(summary.salesCreditNoteIgv) }}</TableCell>
+            </TableRow>
+            <TableRow class="border-b border-gray-200 dark:border-gray-800">
+              <TableCell class="py-2.5 px-4">Percepciones IGV</TableCell>
+              <TableCell class="py-2.5 px-4 text-right font-mono">+ {{ formatPen(summary.perceptionsIgv) }}</TableCell>
+            </TableRow>
+            <TableRow class="border-b font-medium border-gray-200 dark:border-gray-800">
+              <TableCell class="py-2.5 px-4">Débito neto</TableCell>
+              <TableCell class="py-2.5 px-4 text-right font-mono">{{ formatPen(summary.netDebitIgv) }}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell class="py-3 px-4 font-semibold">Resultado (débito − crédito)</TableCell>
+              <TableCell class="py-3 px-4 text-right font-mono font-bold text-lg">
                 {{ formatPen(summary.balanceToPay !== '0.00' ? summary.balanceToPay : `-${summary.balanceInFavor}`) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </BaseCard>
 
-      <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+      <p class="text-xs text-gray-400 dark:text-gray-500">
         Tasa IGV configurada: {{ data?.igvPercent }}%. Los montos provienen de compras/ventas registradas en el periodo.
       </p>
     </template>

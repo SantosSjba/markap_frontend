@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { propertiesRepositoryKey } from '../../application/ports/properties.port'
 import { useService } from '@shared/presentation/di/services'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -373,36 +375,18 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto">
+  <div >
     <!-- Header -->
-    <div class="flex items-center gap-3 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg transition-colors hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        title="Volver al listado"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <AppIcon icon="lucide:plus-circle" :size="18" color="var(--color-primary)" />
-          <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-            Nueva Propiedad
-          </h1>
-        </div>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Registrar un nuevo inmueble en alquiler
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Nueva Propiedad"
+      subtitle="Registrar un nuevo inmueble en alquiler"
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
     <!-- Loading -->
-    <div v-if="loading" class="flex flex-col items-center justify-center py-24 gap-3">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-      <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">Cargando opciones...</p>
-    </div>
+    <LoadingState v-if="loading" text="Cargando opciones..." class="py-24" />
 
     <form v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5" @submit.prevent="onSubmit">
       <!-- Columna principal -->
@@ -513,7 +497,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
         >
           <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div class="flex flex-col gap-1">
-              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <div class="flex items-center gap-1.5 mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:ruler" :size="13" />
                 <span class="text-xs font-medium">Área</span>
               </div>
@@ -528,7 +512,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               />
             </div>
             <div class="flex flex-col gap-1">
-              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <div class="flex items-center gap-1.5 mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:bed-double" :size="13" />
                 <span class="text-xs font-medium">Dormitorios</span>
               </div>
@@ -542,7 +526,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               />
             </div>
             <div class="flex flex-col gap-1">
-              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <div class="flex items-center gap-1.5 mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:bath" :size="13" />
                 <span class="text-xs font-medium">Baños</span>
               </div>
@@ -556,7 +540,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               />
             </div>
             <div class="flex flex-col gap-1">
-              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <div class="flex items-center gap-1.5 mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:calendar-clock" :size="13" />
                 <span class="text-xs font-medium">Antigüedad</span>
               </div>
@@ -570,7 +554,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               />
             </div>
             <div class="flex flex-col gap-1">
-              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <div class="flex items-center gap-1.5 mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:layers" :size="13" />
                 <span class="text-xs font-medium">Piso</span>
               </div>
@@ -582,7 +566,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               />
             </div>
             <div class="flex flex-col gap-1">
-              <div class="flex items-center gap-1.5 mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <div class="flex items-center gap-1.5 mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:car" :size="13" />
                 <span class="text-xs font-medium">Estacionamientos</span>
               </div>
@@ -606,15 +590,11 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           <div v-for="(row, idx) in mediaRows" :key="idx" class="mb-4 space-y-2">
             <div class="flex flex-wrap gap-2 items-end">
               <div class="w-36">
-                <label class="text-xs mb-1 block" :style="{ color: 'var(--color-text-muted)' }">Tipo</label>
-                <select
+                <FormSelect
                   v-model="row.kind"
-                  class="w-full rounded-lg border px-3 py-2 text-sm"
-                  :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-                >
-                  <option value="photo">Foto</option>
-                  <option value="plan">Plano</option>
-                </select>
+                  :options="[{ value: 'photo', label: 'Foto' }, { value: 'plan', label: 'Plano' }]"
+                  label="Tipo"
+                />
               </div>
               <BaseButton type="button" variant="ghost" @click="removeMediaRow(idx)">
                 <AppIcon icon="lucide:trash-2" :size="16" />
@@ -710,90 +690,83 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
 
       <!-- Columna lateral -->
       <div class="xl:col-span-1">
-        <div
-          class="p-5 rounded-xl border sticky top-4"
-          :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+        <FormSectionCard
+          title="Resumen de la propiedad"
+          dense
         >
-          <h2 class="text-base font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
-            Resumen de la propiedad
-          </h2>
           <dl class="space-y-3 text-sm mb-6">
             <div>
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:hash" :size="13" />
                 Código
               </dt>
-              <dd class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+              <dd class="font-semibold text-gray-800 dark:text-white/90">
                 {{ values.code || '—' }}
               </dd>
             </div>
             <div>
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:home" :size="13" />
                 Tipo
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ selectedTypeLabel }}</dd>
+              <dd class="text-gray-800 dark:text-white/90">{{ selectedTypeLabel }}</dd>
             </div>
             <div>
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:map-pin" :size="13" />
                 Dirección
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ values.addressLine || '—' }}</dd>
+              <dd class="text-gray-800 dark:text-white/90">{{ values.addressLine || '—' }}</dd>
             </div>
             <div v-if="values.departmentId">
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:globe" :size="13" />
                 Ubicación
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ locationSummary }}</dd>
+              <dd class="text-gray-800 dark:text-white/90">{{ locationSummary }}</dd>
             </div>
-            <div class="border-t pt-3" :style="{ borderColor: 'var(--color-border)' }">
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+            <div class="border-t pt-3 border-gray-200 dark:border-gray-800">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:briefcase" :size="13" />
                 Propietario
               </dt>
-              <dd :style="{ color: 'var(--color-text-primary)' }">{{ selectedOwnerLabel }}</dd>
+              <dd class="text-gray-800 dark:text-white/90">{{ selectedOwnerLabel }}</dd>
             </div>
             <div v-if="monthlyRentPreview !== null">
-              <dt class="flex items-center gap-1.5 font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">
+              <dt class="flex items-center gap-1.5 font-medium mb-0.5 text-gray-400 dark:text-gray-500">
                 <AppIcon icon="lucide:banknote" :size="13" />
                 Alquiler mensual
               </dt>
-              <dd class="font-bold" :style="{ color: 'var(--color-primary)' }">
+              <dd class="font-bold text-brand-500 dark:text-brand-400">
                 S/ {{ monthlyRentPreview!.toLocaleString('es-PE', { minimumFractionDigits: 2 }) }}
               </dd>
             </div>
           </dl>
-
-          <!-- Características resumen -->
           <div
-            class="grid grid-cols-3 gap-2 mb-6 p-3 rounded-lg"
-            :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+            class="grid grid-cols-3 gap-2 mb-6 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
           >
             <div class="flex flex-col items-center gap-1 text-center">
               <AppIcon icon="lucide:bed-double" :size="16" color="var(--color-text-muted)" />
-              <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <span class="text-sm font-bold text-gray-800 dark:text-white/90">
                 {{ formatFormStat(values.bedrooms) }}
               </span>
-              <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Dorm.</span>
+              <span class="text-xs text-gray-400 dark:text-gray-500">Dorm.</span>
             </div>
             <div class="flex flex-col items-center gap-1 text-center">
               <AppIcon icon="lucide:bath" :size="16" color="var(--color-text-muted)" />
-              <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <span class="text-sm font-bold text-gray-800 dark:text-white/90">
                 {{ formatFormStat(values.bathrooms) }}
               </span>
-              <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Baños</span>
+              <span class="text-xs text-gray-400 dark:text-gray-500">Baños</span>
             </div>
             <div class="flex flex-col items-center gap-1 text-center">
               <AppIcon icon="lucide:ruler" :size="16" color="var(--color-text-muted)" />
-              <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
+              <span class="text-sm font-bold text-gray-800 dark:text-white/90">
                 {{ formatFormArea(values.area) }}
               </span>
-              <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Área</span>
+              <span class="text-xs text-gray-400 dark:text-gray-500">Área</span>
             </div>
           </div>
-
           <div class="hidden xl:flex flex-col gap-3">
             <BaseButton
               type="submit"
@@ -809,7 +782,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               Cancelar
             </BaseButton>
           </div>
-        </div>
+        </FormSectionCard>
       </div>
     </form>
   </div>

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import IconButton from '@shared/presentation/components/ui/IconButton.vue'
 import { formatDateTime } from '@shared/utils/formatters'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -107,31 +111,20 @@ function milestoneDone(m: { completedAt: string | null }) {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1200px] mx-auto space-y-6">
+  <div class="max-w-[1200px] mx-auto space-y-6">
     <div class="flex flex-wrap items-start gap-3">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
+      <IconButton @click="goBack" icon="lucide:arrow-left" label="Volver" />
+      <PageHeader
+        :title="p?.name ?? 'Proyecto'"
+        :subtitle="p ? `Cliente: ${p.client.fullName} · ${p.client.documentNumber}` : undefined"
       >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div class="flex-1 min-w-0 flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-              {{ p?.name ?? 'Proyecto' }}
-            </h1>
-            <Badge v-if="p" variant="neutral">{{ p.code }}</Badge>
-            <Badge v-if="p" variant="info">{{ PROJECT_TYPE_LABELS[p.projectType] }}</Badge>
-            <Badge v-if="p" variant="success">{{ projectStatusLabel(p.status, stageLabelMap) }}</Badge>
-          </div>
-          <p v-if="p" class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-            Cliente: {{ p.client.fullName }} · {{ p.client.documentNumber }}
-          </p>
-        </div>
-        <BaseButton
+        <template #badges>
+          <Badge v-if="p" variant="neutral">{{ p.code }}</Badge>
+          <Badge v-if="p" variant="info">{{ PROJECT_TYPE_LABELS[p.projectType] }}</Badge>
+          <Badge v-if="p" variant="success">{{ projectStatusLabel(p.status, stageLabelMap) }}</Badge>
+        </template>
+        <template #actions>
+          <BaseButton
           v-if="p"
           variant="outline"
           type="button"
@@ -141,13 +134,12 @@ function milestoneDone(m: { completedAt: string | null }) {
           <AppIcon icon="lucide:pencil" :size="18" class="mr-1.5" />
           Editar
         </BaseButton>
-      </div>
+        </template>
+      </PageHeader>
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-20">
-      <AppIcon icon="svg-spinners:ring-resize" :size="36" color="var(--color-primary)" />
-    </div>
-    <div v-else-if="isError || !p" class="text-center py-16 text-sm" style="color: var(--color-text-secondary)">
+    <LoadingState v-if="isLoading" class="py-20" />
+    <div v-else-if="isError || !p" class="text-center py-16 text-sm text-gray-500 dark:text-gray-400">
       No se encontró el proyecto.
       <div class="mt-4">
         <BaseButton variant="outline" @click="goBack">Volver al listado</BaseButton>
@@ -155,10 +147,7 @@ function milestoneDone(m: { completedAt: string | null }) {
     </div>
 
     <template v-else>
-      <div
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-      >
+      <BaseCard padding="none" class="block overflow-hidden">
         <BaseTabs v-model="activeTab" :tabs="tabs" />
         <div class="p-5 space-y-6">
           <ProjectBudgetAlerts
@@ -184,30 +173,28 @@ function milestoneDone(m: { completedAt: string | null }) {
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div
-                class="p-4 rounded-lg border space-y-2"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="p-4 rounded-lg border space-y-2 border-gray-200 dark:border-gray-800"
               >
-                <h3 class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">Ubicación y fechas</h3>
-                <p :style="{ color: 'var(--color-text-secondary)' }">
+                <h3 class="font-semibold text-gray-800 dark:text-white/90">Ubicación y fechas</h3>
+                <p class="text-gray-500 dark:text-gray-400">
                   {{ p.addressLine ?? 'Sin dirección' }}
                 </p>
-                <p :style="{ color: 'var(--color-text-secondary)' }">
+                <p class="text-gray-500 dark:text-gray-400">
                   Inicio: {{ p.startDate ?? '—' }} · Fin est.: {{ p.estimatedEndDate ?? '—' }}
                 </p>
-                <p :style="{ color: 'var(--color-text-secondary)' }">
+                <p class="text-gray-500 dark:text-gray-400">
                   Área: {{ p.areaSqm != null ? `${p.areaSqm} m²` : '—' }} · Niveles:
                   {{ p.levelsCount ?? '—' }}
                 </p>
-                <p v-if="p.environmentsNote" :style="{ color: 'var(--color-text-secondary)' }">
+                <p class="text-gray-500 dark:text-gray-400" v-if="p.environmentsNote">
                   Ambientes: {{ p.environmentsNote }}
                 </p>
               </div>
               <div
-                class="p-4 rounded-lg border space-y-2"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="p-4 rounded-lg border space-y-2 border-gray-200 dark:border-gray-800"
               >
-                <h3 class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">Responsables</h3>
-                <ul class="space-y-1" :style="{ color: 'var(--color-text-secondary)' }">
+                <h3 class="font-semibold text-gray-800 dark:text-white/90">Responsables</h3>
+                <ul class="space-y-1 text-gray-500 dark:text-gray-400">
                   <li>Diseñador: {{ p.designerAgent?.fullName ?? '—' }}</li>
                   <li>Arquitecto Jr: {{ p.architectJrAgent?.fullName ?? '—' }}</li>
                   <li>Arquitecto Sr: {{ p.architectSrAgent?.fullName ?? '—' }}</li>
@@ -219,20 +206,16 @@ function milestoneDone(m: { completedAt: string | null }) {
           </div>
 
           <div v-show="activeTab === 'presupuesto'" class="space-y-4">
-            <div v-if="budgetLoading" class="flex justify-center py-16">
-              <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-            </div>
-            <div v-else-if="budgetError" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+            <LoadingState v-if="budgetLoading" />
+            <div v-else-if="budgetError" class="text-center py-12 text-sm text-gray-400 dark:text-gray-500">
               No se pudo cargar el presupuesto.
             </div>
             <ProjectBudgetTab v-else-if="budget" :project-id="p.id" :budget="budget" />
           </div>
 
           <div v-show="activeTab === 'compras'" class="space-y-4">
-            <div v-if="budgetLoading" class="flex justify-center py-16">
-              <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-            </div>
-            <div v-else-if="!budget?.sections.length" class="text-center py-12 text-sm" :style="{ color: 'var(--color-text-muted)' }">
+            <LoadingState v-if="budgetLoading" />
+            <div v-else-if="!budget?.sections.length" class="text-center py-12 text-sm text-gray-400 dark:text-gray-500">
               Crea partidas en la pestaña Presupuesto para gestionar compras.
             </div>
             <ProjectPurchasesTab v-else-if="budget" :project-id="p.id" :budget="budget" />
@@ -252,46 +235,40 @@ function milestoneDone(m: { completedAt: string | null }) {
               </BaseButton>
             </div>
             <div
-              class="p-4 rounded-lg border"
-              :style="{ borderColor: 'var(--color-border)' }"
+              class="p-4 rounded-lg border border-gray-200 dark:border-gray-800"
             >
-              <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="text-sm font-medium text-gray-800 dark:text-white/90">
                 Avance global del proyecto
               </p>
-              <div class="mt-2 h-3 rounded-full overflow-hidden" style="background: var(--color-border)">
+              <div class="mt-2 h-3 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800">
                 <div
-                  class="h-full rounded-full transition-all"
-                  :style="{
-                    background: 'var(--color-primary)',
-                    width: `${Math.min(100, Math.max(0, p.progressPct))}%`,
-                  }"
+                  class="h-full rounded-full transition-all bg-brand-500" :style="{ width: `${Math.min(100, Math.max(0, p.progressPct))}%` }"
                 />
               </div>
-              <p class="text-xs mt-2" :style="{ color: 'var(--color-text-muted)' }">
+              <p class="text-xs mt-2 text-gray-400 dark:text-gray-500">
                 Relacionado con obra e hitos del cronograma.
               </p>
             </div>
             <div>
-              <h3 class="text-sm font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">
+              <h3 class="text-sm font-semibold mb-2 text-gray-800 dark:text-white/90">
                 Cronograma
               </h3>
               <ul class="space-y-2">
                 <li
                   v-for="m in p.milestones"
                   :key="m.id"
-                  class="flex items-center justify-between gap-3 p-3 rounded-lg border text-sm"
-                  :style="{ borderColor: 'var(--color-border)' }"
+                  class="flex items-center justify-between gap-3 p-3 rounded-lg border text-sm border-gray-200 dark:border-gray-800"
                 >
-                  <span :style="{ color: 'var(--color-text-primary)' }">{{ m.title }}</span>
+                  <span class="text-gray-800 dark:text-white/90">{{ m.title }}</span>
                   <span class="shrink-0 flex items-center gap-2">
-                    <span :style="{ color: 'var(--color-text-muted)' }">{{ m.plannedDate }}</span>
+                    <span class="text-gray-400 dark:text-gray-500">{{ m.plannedDate }}</span>
                     <Badge :variant="milestoneDone(m) ? 'success' : 'warning'">
                       {{ milestoneDone(m) ? 'Hecho' : 'Pendiente' }}
                     </Badge>
                   </span>
                 </li>
               </ul>
-              <p v-if="!p.milestones.length" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+              <p v-if="!p.milestones.length" class="text-sm text-gray-400 dark:text-gray-500">
                 Sin hitos registrados.
               </p>
             </div>
@@ -315,26 +292,25 @@ function milestoneDone(m: { completedAt: string | null }) {
             <div
               v-for="a in p.activities"
               :key="a.id"
-              class="p-4 rounded-lg border text-sm"
-              :style="{ borderColor: 'var(--color-border)' }"
+              class="p-4 rounded-lg border text-sm border-gray-200 dark:border-gray-800"
             >
               <div class="flex flex-wrap items-center gap-2 mb-1">
                 <Badge variant="neutral">{{ activityLabel(a.activityType) }}</Badge>
-                <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+                <span class="text-xs text-gray-400 dark:text-gray-500">
                   {{ formatDateTime(a.occurredAt) }}
                 </span>
               </div>
-              <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">{{ a.title }}</p>
-              <p v-if="a.description" class="mt-1 whitespace-pre-wrap" :style="{ color: 'var(--color-text-secondary)' }">
+              <p class="font-medium text-gray-800 dark:text-white/90">{{ a.title }}</p>
+              <p v-if="a.description" class="mt-1 whitespace-pre-wrap text-gray-500 dark:text-gray-400">
                 {{ a.description }}
               </p>
             </div>
-            <p v-if="!p.activities.length" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+            <p v-if="!p.activities.length" class="text-sm text-gray-400 dark:text-gray-500">
               Sin actividad registrada.
             </p>
           </div>
         </div>
-      </div>
+      </BaseCard>
     </template>
   </div>
 </template>

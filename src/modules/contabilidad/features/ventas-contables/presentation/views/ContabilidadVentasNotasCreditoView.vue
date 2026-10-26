@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -133,7 +134,7 @@ function goJournal(row: ContabilidadSalesCreditNoteDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:file-minus-2"
       title="Notas de crédito de venta"
@@ -147,10 +148,7 @@ function goJournal(row: ContabilidadSalesCreditNoteDTO) {
       </template>
     </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -186,7 +184,7 @@ function goJournal(row: ContabilidadSalesCreditNoteDTO) {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" title="Registrar nota de crédito" size="md">
       <form class="space-y-4" @submit.prevent="submit">

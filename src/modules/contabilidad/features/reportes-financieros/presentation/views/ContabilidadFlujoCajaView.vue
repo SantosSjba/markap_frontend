@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
+import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import { computed } from 'vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { useContabilidadActivePeriod } from '../../../../presentation/composables/useContabilidadActivePeriod'
 import { formatPen } from '../../../asientos/domain/journal.utils'
@@ -12,94 +15,68 @@ const { data, isLoading, isError, refetch } = useContabilidadCashFlowTreasury(pe
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:banknote"
       title="Flujo de caja"
       subtitle="Movimientos de tesorería del periodo (método directo)"
     />
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
     <div v-else-if="isError" class="text-center py-8">
-      <button type="button" class="text-sm underline" @click="refetch()">Reintentar</button>
+      <BaseButton @click="refetch()" variant="link">Reintentar</BaseButton>
     </div>
 
     <template v-else-if="data">
       <div class="grid gap-4 sm:grid-cols-3">
-        <div
-          class="rounded-xl border p-4"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">Ingresos totales</p>
+        <BaseCard padding="sm" class="block">
+          <p class="text-xs text-gray-500 dark:text-gray-400">Ingresos totales</p>
           <p class="font-mono font-bold text-lg">{{ formatPen(data.totalIn) }}</p>
-        </div>
-        <div
-          class="rounded-xl border p-4"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">Egresos totales</p>
+        </BaseCard>
+        <BaseCard padding="sm" class="block">
+          <p class="text-xs text-gray-500 dark:text-gray-400">Egresos totales</p>
           <p class="font-mono font-bold text-lg">{{ formatPen(data.totalOut) }}</p>
-        </div>
-        <div
-          class="rounded-xl border p-4"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
-          <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">Variación neta</p>
+        </BaseCard>
+        <BaseCard padding="sm" class="block">
+          <p class="text-xs text-gray-500 dark:text-gray-400">Variación neta</p>
           <p class="font-mono font-bold text-lg">{{ formatPen(data.netChange) }}</p>
-        </div>
+        </BaseCard>
       </div>
 
-      <div
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="text-left py-2 px-4">Tipo</th>
-              <th class="text-right py-2 px-4">Ingresos</th>
-              <th class="text-right py-2 px-4">Egresos</th>
-              <th class="text-right py-2 px-4">Neto</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in data.rows"
-              :key="row.movementType"
-              class="border-b last:border-0"
-              :style="{ borderColor: 'var(--color-border)' }"
-            >
+      <BaseCard padding="none" class="block overflow-hidden">
+        <DataTable
+          :columns="[
+            { key: 'c0', label: 'Tipo' },
+            { key: 'c1', label: 'Ingresos', align: 'right' },
+            { key: 'c2', label: 'Egresos', align: 'right' },
+            { key: 'c3', label: 'Neto', align: 'right' },
+          ]"
+          :data="data.rows"
+          row-key="movementType"
+        >
+          <template #row="{ row }">
               <td class="py-2 px-4">{{ row.label }}</td>
               <td class="py-2 px-4 text-right font-mono">{{ formatPen(row.inAmount) }}</td>
               <td class="py-2 px-4 text-right font-mono">{{ formatPen(row.outAmount) }}</td>
               <td class="py-2 px-4 text-right font-mono">{{ formatPen(row.netAmount) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          </template>
+        </DataTable>
+      </BaseCard>
 
       <div class="grid gap-4 sm:grid-cols-2 text-sm">
-        <div
-          class="rounded-xl border p-4"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
+        <BaseCard padding="sm" class="block">
           <p class="font-semibold mb-2">Caja</p>
           <p>Ingresos {{ formatPen(data.cashIn) }} · Egresos {{ formatPen(data.cashOut) }}</p>
-        </div>
-        <div
-          class="rounded-xl border p-4"
-          :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-        >
+        </BaseCard>
+        <BaseCard padding="sm" class="block">
           <p class="font-semibold mb-2">Bancos</p>
           <p>Ingresos {{ formatPen(data.bankIn) }} · Egresos {{ formatPen(data.bankOut) }}</p>
-        </div>
+        </BaseCard>
       </div>
     </template>
   </div>

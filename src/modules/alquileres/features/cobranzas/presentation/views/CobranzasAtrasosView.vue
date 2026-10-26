@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { RadioGroup, RadioGroupItem } from '@shared/presentation/ui/radio-group'
 import { paymentsRepositoryKey } from '../../application/ports/payments.port'
 import { useService } from '@shared/presentation/di/services'
 import { ref, computed } from 'vue'
@@ -9,6 +14,7 @@ import Badge from '@shared/presentation/components/ui/Badge.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Avatar from '@shared/presentation/components/ui/Avatar.vue'
 import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
 import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
@@ -52,6 +58,12 @@ const criticalCount = computed(
 const showModal = ref(false)
 const selectedOverdue = ref<OverduePaymentItem | null>(null)
 const selectedPaymentId = ref<string | null>(null)
+
+function onSelectPending(paymentId: string) {
+  selectedPaymentId.value = paymentId
+  const pending = selectedRentalPendingList.value.find((p) => p.paymentId === paymentId)
+  if (pending) setPaymentField('paidAmount', pending.amount)
+}
 const modalError = ref('')
 
 const pendingParams = computed(() => ({
@@ -228,14 +240,14 @@ function getOverdueLevelBadge(level: string): {
   }
 }
 
-function getBorderColor(level: string) {
+function getBorderClass(level: string) {
   switch (level) {
     case 'critical':
-      return 'var(--color-error, #ef4444)'
+      return 'border-l-error-500'
     case 'high':
-      return '#f59e0b'
+      return 'border-l-warning-500'
     default:
-      return '#3b82f6'
+      return 'border-l-blue-light-500'
   }
 }
 
@@ -248,30 +260,7 @@ function formatDate(dateStr: string | null) {
   return formatShortDate(dateStr)
 }
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-}
 
-const avatarColors = [
-  '#6366f1',
-  '#8b5cf6',
-  '#ec4899',
-  '#f59e0b',
-  '#10b981',
-  '#14b8a6',
-  '#3b82f6',
-  '#f97316',
-]
-function getAvatarColor(name: string) {
-  let hash = 0
-  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % avatarColors.length
-  return avatarColors[Math.abs(hash)]
-}
 
 const { isExporting, exportToExcel } = useExcelExport()
 
@@ -327,21 +316,14 @@ async function handleExport() {
 <template>
   <div class="flex flex-col gap-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <button
-          class="p-2 rounded-lg hover-surface transition-colors"
-          :style="{ color: 'var(--color-text-muted)' }"
-          @click="router.push({ name: 'alquileres-cobranzas' })"
-        >
-          <AppIcon icon="lucide:chevron-left" :size="20" />
-        </button>
-        <div>
-          <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Clientes con Atraso</h1>
-          <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">Seguimiento de pagos pendientes</p>
-        </div>
-      </div>
-      <BaseButton
+    <PageHeader
+      title="Clientes con Atraso"
+      subtitle="Seguimiento de pagos pendientes"
+      back
+      @back="router.push({ name: 'alquileres-cobranzas' })"
+    >
+      <template #actions>
+        <BaseButton
           variant="outline"
           class="flex items-center gap-2"
           :loading="isExporting"
@@ -351,7 +333,8 @@ async function handleExport() {
           <ExcelIcon class="w-5 h-5" />
           Exportar
         </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- KPIs -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -383,34 +366,27 @@ async function handleExport() {
     </div>
 
     <template v-if="overdueIsError">
-      <div
-        class="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border px-4 text-center"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
+      <BaseCard class="flex flex-col items-center justify-center py-20 gap-3 px-4 text-center">
         <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
-        <p class="text-sm font-medium max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(overdueFetchError) }}</p>
+        <p class="text-sm font-medium max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(overdueFetchError) }}</p>
         <BaseButton variant="outline" size="sm" @click="() => refetchOverdue()">Reintentar</BaseButton>
-      </div>
+      </BaseCard>
     </template>
 
     <div v-if="isFetching" class="flex flex-col gap-4">
       <div
         v-for="n in 5"
         :key="n"
-        class="h-28 rounded-xl border animate-pulse"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 10%, transparent)' }"
+        class="h-28 rounded-xl border animate-pulse border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-white/5"
       />
     </div>
 
     <!-- Empty -->
     <template v-else-if="!overdueList?.length">
-      <div
-        class="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
+      <BaseCard class="flex flex-col items-center justify-center py-20 gap-3">
         <AppIcon icon="lucide:circle-check-big" :size="48" color="var(--color-text-muted)" />
-        <p class="text-sm" :style="{ color: 'var(--color-text-muted)' }">No hay clientes con pagos en atraso</p>
-      </div>
+        <p class="text-sm text-gray-400 dark:text-gray-500">No hay clientes con pagos en atraso</p>
+      </BaseCard>
     </template>
 
     <!-- Cards de atraso -->
@@ -418,97 +394,42 @@ async function handleExport() {
       <div
         v-for="item in overdueList"
         :key="item.rentalId"
-        class="rounded-xl border-l-4 p-5 transition-colors"
-        :style="{
-          borderLeftColor: getBorderColor(item.overdueLevel),
-          backgroundColor: 'var(--color-surface)',
-          border: `1px solid var(--color-border)`,
-          borderLeftWidth: '4px',
-        }"
+        class="rounded-2xl border border-l-4 border-gray-200 bg-white p-5 transition-colors dark:border-gray-800 dark:bg-gray-dark"
+        :class="getBorderClass(item.overdueLevel)"
       >
         <!-- Row 1: nombre + nivel + monto + acciones -->
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-              :style="{ backgroundColor: getAvatarColor(item.tenantName) }"
-            >
-              {{ getInitials(item.tenantName) }}
-            </div>
+            <Avatar :name="item.tenantName" />
             <div>
               <div class="flex items-center gap-2">
-                <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">{{ item.tenantName }}</p>
+                <p class="text-sm font-semibold text-gray-800 dark:text-white/90">{{ item.tenantName }}</p>
                 <Badge :variant="getOverdueLevelBadge(item.overdueLevel).variant" :label="getOverdueLevelBadge(item.overdueLevel).label" />
               </div>
               <div class="flex items-center gap-1 mt-0.5">
                 <AppIcon icon="lucide:map-pin" :size="14" color="var(--color-text-muted)" />
-                <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ item.propertyAddress }}</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500">{{ item.propertyAddress }}</span>
               </div>
-              <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">Propietario: {{ item.ownerName }}</p>
+              <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">Propietario: {{ item.ownerName }}</p>
             </div>
           </div>
 
           <!-- Monto + acciones -->
           <div class="flex items-start sm:items-center gap-3">
             <div class="text-right">
-              <p class="text-lg font-bold" :style="{ color: '#ef4444' }">{{ formatCurrency(item.totalOwed, item.currency) }}</p>
-              <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ item.monthsOverdue }} {{ item.monthsOverdue === 1 ? 'mes' : 'meses' }}</p>
+              <p class="text-lg font-bold text-error-500 dark:text-error-400">{{ formatCurrency(item.totalOwed, item.currency) }}</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500">{{ item.monthsOverdue }} {{ item.monthsOverdue === 1 ? 'mes' : 'meses' }}</p>
             </div>
             <div class="flex flex-col gap-1.5">
-              <a
-                v-if="item.tenantPhone"
-                :href="`tel:${item.tenantPhone}`"
-                target="_blank"
-                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors"
-                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)', textDecoration: 'none' }"
-              >
-                <AppIcon icon="lucide:phone" :size="14" /> Llamar
-              </a>
-              <button
-                v-else
-                disabled
-                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border opacity-40 cursor-not-allowed"
-                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }"
-                title="Sin teléfono registrado"
-              >
-                <AppIcon icon="lucide:phone" :size="14" /> Llamar
-              </button>
+              <BaseButton v-if="item.tenantPhone" :href="`tel:${item.tenantPhone}`" target="_blank" variant="secondary" size="sm" icon="lucide:phone">Llamar</BaseButton>
+              <BaseButton v-else disabled variant="secondary" size="sm" icon="lucide:phone" title="Sin teléfono registrado">Llamar</BaseButton>
 
-              <a
-                v-if="item.tenantEmail"
-                :href="`mailto:${item.tenantEmail}`"
-                target="_blank"
-                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors"
-                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)', textDecoration: 'none' }"
-              >
-                <AppIcon icon="lucide:mail" :size="14" /> Email
-              </a>
-              <button
-                v-else
-                disabled
-                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border opacity-40 cursor-not-allowed"
-                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }"
-                title="Sin email registrado"
-              >
-                <AppIcon icon="lucide:mail" :size="14" /> Email
-              </button>
+              <BaseButton v-if="item.tenantEmail" :href="`mailto:${item.tenantEmail}`" target="_blank" variant="secondary" size="sm" icon="lucide:mail">Email</BaseButton>
+              <BaseButton v-else disabled variant="secondary" size="sm" icon="lucide:mail" title="Sin email registrado">Email</BaseButton>
 
-              <button
-                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border hover-surface transition-colors"
-                :style="{ borderColor: item.lastCommunicationDate ? 'var(--color-primary)' : 'var(--color-border)', color: item.lastCommunicationDate ? 'var(--color-primary)' : 'var(--color-text-secondary)' }"
-                @click="openNoteModal(item)"
-              >
-                <AppIcon icon="lucide:pencil-line" :size="14" />
-                {{ item.lastCommunicationDate ? 'Ver nota' : 'Nota' }}
-              </button>
+              <BaseButton @click="openNoteModal(item)" variant="secondary" size="sm" icon="lucide:pencil-line">{{ item.lastCommunicationDate ? 'Ver nota' : 'Nota' }}</BaseButton>
               <div class="flex items-center gap-1">
-                <button
-                  class="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-colors"
-                  :style="{ backgroundColor: 'var(--color-primary)' }"
-                  @click="openModal(item)"
-                >
-                  <AppIcon icon="lucide:circle-dollar-sign" :size="14" /> Cobrar
-                </button>
+                <BaseButton @click="openModal(item)" size="sm" icon="lucide:circle-dollar-sign" class="flex-1">Cobrar</BaseButton>
                 <ActionsDropdown :items="getOverdueActions(item)" />
               </div>
             </div>
@@ -516,22 +437,22 @@ async function handleExport() {
         </div>
 
         <!-- Row 2: datos adicionales -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 pt-4 border-t" :style="{ borderColor: 'var(--color-border)' }">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
           <div>
-            <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">DNI</p>
-            <p class="text-sm font-medium mt-0.5" :style="{ color: 'var(--color-text-primary)' }">{{ item.tenantDocument ?? '—' }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">DNI</p>
+            <p class="text-sm font-medium mt-0.5 text-gray-800 dark:text-white/90">{{ item.tenantDocument ?? '—' }}</p>
           </div>
           <div>
-            <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Días de atraso</p>
-            <p class="text-sm font-medium mt-0.5" :style="{ color: '#ef4444' }">{{ item.maxDaysOverdue }} días</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">Días de atraso</p>
+            <p class="text-sm font-medium mt-0.5 text-error-500 dark:text-error-400">{{ item.maxDaysOverdue }} días</p>
           </div>
           <div>
-            <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Último pago</p>
-            <p class="text-sm font-medium mt-0.5" :style="{ color: 'var(--color-text-primary)' }">{{ formatDate(item.lastPaymentDate) }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">Último pago</p>
+            <p class="text-sm font-medium mt-0.5 text-gray-800 dark:text-white/90">{{ formatDate(item.lastPaymentDate) }}</p>
           </div>
           <div>
-            <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">Última comunicación</p>
-            <p class="text-sm font-medium mt-0.5" :style="{ color: 'var(--color-text-primary)' }">{{ formatDate(item.lastCommunicationDate) }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">Última comunicación</p>
+            <p class="text-sm font-medium mt-0.5 text-gray-800 dark:text-white/90">{{ formatDate(item.lastCommunicationDate) }}</p>
           </div>
         </div>
       </div>
@@ -550,30 +471,25 @@ async function handleExport() {
         <form id="cobranzas-atrasos-register-payment" @submit.prevent="onPaymentSubmit">
         <!-- Resumen del cliente en atraso -->
         <div
-          class="flex items-center gap-4 p-4 rounded-xl mb-5"
-          :style="{ backgroundColor: 'var(--color-surface-elevated)', borderLeft: `4px solid ${getBorderColor(selectedOverdue.overdueLevel)}`, border: '1px solid var(--color-border)' }"
+          class="mb-5 flex items-center gap-4 rounded-xl border border-l-4 border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800"
+          :class="getBorderClass(selectedOverdue.overdueLevel)"
         >
-          <div
-            class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-            :style="{ backgroundColor: getAvatarColor(selectedOverdue.tenantName) }"
-          >
-            {{ getInitials(selectedOverdue.tenantName) }}
-          </div>
+          <Avatar :name="selectedOverdue.tenantName" size="lg" />
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+              <p class="text-sm font-semibold text-gray-800 dark:text-white/90">
                 {{ selectedOverdue.tenantName }}
               </p>
               <Badge :variant="getOverdueLevelBadge(selectedOverdue.overdueLevel).variant" :label="getOverdueLevelBadge(selectedOverdue.overdueLevel).label" />
             </div>
             <div class="flex items-center gap-1.5 mt-0.5">
               <AppIcon icon="lucide:map-pin" :size="12" color="var(--color-text-muted)" />
-              <p class="text-xs truncate" :style="{ color: 'var(--color-text-muted)' }">{{ selectedOverdue.propertyAddress }}</p>
+              <p class="text-xs truncate text-gray-400 dark:text-gray-500">{{ selectedOverdue.propertyAddress }}</p>
             </div>
           </div>
           <div class="text-right shrink-0">
-            <p class="text-xs font-medium mb-0.5" :style="{ color: 'var(--color-text-muted)' }">Total adeudado</p>
-            <p class="text-lg font-bold" :style="{ color: '#ef4444' }">
+            <p class="text-xs font-medium mb-0.5 text-gray-400 dark:text-gray-500">Total adeudado</p>
+            <p class="text-lg font-bold text-error-500 dark:text-error-400">
               {{ formatCurrency(selectedOverdue.totalOwed, selectedOverdue.currency) }}
             </p>
           </div>
@@ -582,56 +498,48 @@ async function handleExport() {
         <!-- Seleccionar período a pagar -->
         <div class="flex items-center gap-2 mb-3">
           <AppIcon icon="lucide:calendar-clock" :size="15" color="var(--color-primary)" />
-          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Período a regularizar</p>
+          <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Período a regularizar</p>
         </div>
         <div
-          class="p-3 rounded-xl mb-5"
-          :style="{ backgroundColor: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+          class="p-3 rounded-xl mb-5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
         >
           <div class="flex flex-col gap-2">
             <template v-if="tenantPendError">
               <div class="flex flex-col items-center gap-2 py-4 text-center px-2">
-                <p class="text-xs" style="color: var(--color-error)">{{ getApiErrorMessage(tenantPendFetchError) }}</p>
+                <p class="text-xs text-error-500 dark:text-error-400">{{ getApiErrorMessage(tenantPendFetchError) }}</p>
                 <BaseButton variant="outline" size="sm" @click="() => refetchTenantPend()">Reintentar</BaseButton>
               </div>
             </template>
             <template v-else-if="tenantPendLoading">
-              <div class="flex items-center gap-2 py-2" :style="{ color: 'var(--color-text-muted)' }">
-                <AppIcon icon="svg-spinners:ring-resize" :size="16" color="var(--color-primary)" />
-                <span class="text-xs">Cargando períodos...</span>
-              </div>
+              <LoadingState variant="inline" text="Cargando períodos..." />
             </template>
             <template v-else>
-            <label
-              v-for="pending in selectedRentalPendingList"
-              :key="pending.paymentId"
-              class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
-              :style="selectedPaymentId === pending.paymentId
-                ? { backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, transparent)', border: '1px solid var(--color-primary)' }
-                : { border: '1px solid transparent' }"
+            <RadioGroup
+              :model-value="selectedPaymentId ?? undefined"
+              class="flex flex-col gap-2"
+              @update:model-value="onSelectPending(String($event))"
             >
-              <input
-                type="radio"
-                :value="pending.paymentId"
-                v-model="selectedPaymentId"
-                @change="setPaymentField('paidAmount', pending.amount)"
-                class="accent-primary shrink-0"
-              />
-              <div class="flex-1 min-w-0">
-                <span class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
-                  {{ pending.periodLabel }}
-                </span>
-                <span class="mx-2 text-sm" :style="{ color: 'var(--color-text-muted)' }">—</span>
-                <span class="text-sm font-bold" :style="{ color: 'var(--color-text-primary)' }">
-                  {{ formatCurrency(pending.amount, pending.currency) }}
-                </span>
-              </div>
-              <Badge variant="error" :label="`${pending.daysOverdue}d`" />
-            </label>
+              <label
+                v-for="pending in selectedRentalPendingList"
+                :key="pending.paymentId"
+                class="flex cursor-pointer items-center gap-3 rounded-lg border border-transparent p-3 transition-colors hover:bg-gray-50 has-data-checked:border-brand-500 has-data-checked:bg-brand-500/8 dark:hover:bg-white/3"
+              >
+                <RadioGroupItem :value="pending.paymentId" />
+                <div class="min-w-0 flex-1">
+                  <span class="text-sm font-medium text-gray-800 dark:text-white/90">
+                    {{ pending.periodLabel }}
+                  </span>
+                  <span class="mx-2 text-sm text-gray-400 dark:text-gray-500">—</span>
+                  <span class="text-sm font-bold text-gray-800 dark:text-white/90">
+                    {{ formatCurrency(pending.amount, pending.currency) }}
+                  </span>
+                </div>
+                <Badge variant="error" :label="`${pending.daysOverdue}d`" />
+              </label>
+            </RadioGroup>
             <div
               v-if="!selectedRentalPendingList.length"
-              class="py-2 text-xs text-center"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="py-2 text-xs text-center text-gray-400 dark:text-gray-500"
             >
               No hay períodos pendientes para este contrato.
             </div>
@@ -642,7 +550,7 @@ async function handleExport() {
         <!-- Datos del pago -->
         <div class="flex items-center gap-2 mb-3">
           <AppIcon icon="lucide:banknote" :size="15" color="var(--color-primary)" />
-          <p class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Datos del pago</p>
+          <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Datos del pago</p>
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
           <FormInput v-bind="paidDateBinds" type="date" label="Fecha de pago" :error="paymentErrors.paidDate" required />
@@ -659,14 +567,9 @@ async function handleExport() {
         />
         <FormTextarea v-bind="notesBinds" label="Notas" placeholder="Observaciones..." :error="paymentErrors.notes" :rows="2" />
 
-        <div
-          v-if="modalError"
-          class="mt-3 flex items-center gap-2 text-sm rounded-lg px-3 py-2"
-          :style="{ color: 'var(--color-error)', backgroundColor: 'rgba(239,68,68,0.1)' }"
-        >
-          <AppIcon icon="lucide:alert-circle" :size="14" />
+        <BaseAlert v-if="modalError" type="error" class="mt-3">
           {{ modalError }}
-        </div>
+        </BaseAlert>
         </form>
       </template>
 
@@ -688,12 +591,12 @@ async function handleExport() {
   <BaseModal v-model="showNoteModal" :closable="true" size="sm" @close="closeNoteModal">
     <template #title>
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background: color-mix(in srgb, var(--color-primary) 10%, transparent);">
-          <AppIcon icon="lucide:pencil-line" :size="16" style="color: var(--color-primary);" />
+        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-brand-500/10">
+          <AppIcon class="text-brand-500 dark:text-brand-400" icon="lucide:pencil-line" :size="16" />
         </div>
         <div>
-          <p class="text-base font-semibold" style="color: var(--color-text-primary);">Nota de comunicación</p>
-          <p v-if="noteItem" class="text-xs" style="color: var(--color-text-muted);">{{ noteItem.tenantName }}</p>
+          <p class="text-base font-semibold text-gray-800 dark:text-white/90">Nota de comunicación</p>
+          <p v-if="noteItem" class="text-xs text-gray-400 dark:text-gray-500">{{ noteItem.tenantName }}</p>
         </div>
       </div>
     </template>
@@ -702,16 +605,15 @@ async function handleExport() {
       <!-- Última nota guardada -->
       <div
         v-if="noteItem?.lastCommunicationDate && noteItem?.lastCommunicationNote"
-        class="px-3 py-2.5 rounded-lg text-sm space-y-1"
-        :style="{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }"
+        class="px-3 py-2.5 rounded-lg text-sm space-y-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
       >
         <div class="flex items-center gap-1.5">
-          <AppIcon icon="lucide:history" :size="13" style="color: var(--color-text-muted);" />
-          <span class="text-xs font-medium" style="color: var(--color-text-muted);">
+          <AppIcon class="text-gray-400 dark:text-gray-500" icon="lucide:history" :size="13" />
+          <span class="text-xs font-medium text-gray-400 dark:text-gray-500">
             Última nota — {{ formatDate(noteItem.lastCommunicationDate) }}
           </span>
         </div>
-        <p class="text-sm" style="color: var(--color-text-secondary);">{{ noteItem.lastCommunicationNote }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ noteItem.lastCommunicationNote }}</p>
       </div>
 
       <FormTextarea
@@ -723,7 +625,7 @@ async function handleExport() {
       />
     </form>
 
-    <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border);">
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
       <BaseButton variant="ghost" @click="closeNoteModal">Cancelar</BaseButton>
       <BaseButton
         variant="primary"

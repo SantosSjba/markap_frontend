@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import {
   useProduccionDeliveryDetail,
   useDeliveryMutations,
 } from '../composables/useProduccionSales'
-import { formatDate, DELIVERY_STATUS_LABELS, deliveryStatusClass } from '../labels'
+import { formatDate, DELIVERY_STATUS_LABELS } from '../labels'
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
@@ -52,43 +53,27 @@ async function doDelete() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex flex-wrap items-center gap-3">
-      <BaseButton variant="ghost" @click="router.push({ name: 'produccion-ventas-entregas' })">
-        <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1" />
-        Volver
-      </BaseButton>
-      <div class="flex-1 min-w-0">
-        <h1 class="text-xl font-bold font-mono" :style="{ color: 'var(--color-text-primary)' }">
-          {{ delivery?.code ?? 'Entrega' }}
-        </h1>
-        <p v-if="delivery" class="text-sm mt-0.5" :class="deliveryStatusClass(delivery.status)">
-          {{ DELIVERY_STATUS_LABELS[delivery.status] }} · {{ delivery.clientName }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="space-y-6">
+    <PageHeader
+      :title="delivery?.code ?? 'Entrega'"
+      :subtitle="delivery ? `${DELIVERY_STATUS_LABELS[delivery.status]} · ${delivery.clientName}` : undefined"
+      back
+      @back="router.push({ name: 'produccion-ventas-entregas' })"
+    >
+      <template #actions>
+        <div class="flex flex-wrap gap-2">
         <BaseButton v-if="canComplete" variant="primary" @click="doComplete">Confirmar entrega</BaseButton>
         <BaseButton v-if="canCancel" variant="danger" @click="doCancel">Cancelar</BaseButton>
         <BaseButton v-if="canDelete" variant="danger" @click="doDelete">Eliminar</BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div
-      v-if="delivery && !isLoading"
-      class="rounded-xl border p-4 space-y-3 text-sm"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
+    <BaseCard v-if="delivery && !isLoading" padding="sm" class="block space-y-3 text-sm">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <span class="text-secondary">Pedido:</span>
-          <button
-            type="button"
-            class="ml-1 font-mono hover:underline"
-            :style="{ color: 'var(--color-primary)' }"
-            @click="router.push({ name: 'produccion-ventas-pedido-detalle', params: { id: delivery.orderId } })"
-          >
-            {{ delivery.orderCode }}
-          </button>
+          <BaseButton @click="router.push({ name: 'produccion-ventas-pedido-detalle', params: { id: delivery.orderId } })" variant="link" class="font-mono ml-1">{{ delivery.orderCode }}</BaseButton>
         </div>
         <div><span class="text-secondary">Programada:</span> {{ formatDate(delivery.scheduledAt) }}</div>
         <div><span class="text-secondary">Entregada:</span> {{ formatDate(delivery.deliveredAt) }}</div>
@@ -96,6 +81,6 @@ async function doDelete() {
       </div>
       <div v-if="delivery.address"><span class="text-secondary">Dirección:</span> {{ delivery.address }}</div>
       <div v-if="delivery.notes"><span class="text-secondary">Notas:</span> {{ delivery.notes }}</div>
-    </div>
+    </BaseCard>
   </div>
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref, watch } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -136,7 +137,7 @@ watch(modalOpen, (open) => {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:layout-template"
       title="Plantillas de asiento"
@@ -150,10 +151,7 @@ watch(modalOpen, (open) => {
       </template>
     </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -181,7 +179,7 @@ watch(modalOpen, (open) => {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal
       v-model="modalOpen"
@@ -209,11 +207,10 @@ watch(modalOpen, (open) => {
           <div
             v-for="(line, index) in lines"
             :key="line.key"
-            class="rounded-lg border p-3 space-y-3"
-            :style="{ borderColor: 'var(--color-border)' }"
+            class="rounded-lg border p-3 space-y-3 border-gray-200 dark:border-gray-800"
           >
             <div class="flex items-center justify-between">
-              <span class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
                 Línea {{ index + 1 }}
               </span>
               <BaseButton type="button" variant="ghost" size="sm" @click="removeLine(index)">

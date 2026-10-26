@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ventasAgentsRepositoryKey } from '../../application/ports/ventas-agents.port'
 import { useService } from '@shared/presentation/di/services'
 import { toCalendarDateString } from '@shared/utils/formatters'
@@ -254,7 +256,7 @@ async function handleExport() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
+  <div class="space-y-6">
     <PageHeader
       title="Agentes"
       subtitle="Agentes de ventas: internos (usuarios del sistema) y externos (terceros)"
@@ -279,19 +281,14 @@ async function handleExport() {
       </template>
     </PageHeader>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <div class="overflow-x-auto">
-        <div v-if="loadingList" class="flex justify-center py-16 px-4">
-          <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-        </div>
+        <LoadingState v-if="loadingList" class="px-4" />
         <div
           v-else-if="listQueryError"
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
-          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
           <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
@@ -319,11 +316,8 @@ async function handleExport() {
             <template #row="{ row }">
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
-                  <div
+                  <div :class="((row as VentasAgentListItem).isActive) ? 'bg-brand-500/10' : 'bg-gray-50 dark:bg-gray-800'"
                     class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                    :style="{
-                      backgroundColor: (row as VentasAgentListItem).isActive ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)' : 'var(--color-surface-elevated)',
-                    }"
                   >
                     <AppIcon
                       :icon="(row as VentasAgentListItem).type === 'INTERNAL' ? 'lucide:user-check' : 'lucide:user-round-cog'"
@@ -332,10 +326,10 @@ async function handleExport() {
                     />
                   </div>
                   <div>
-                    <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                    <p class="font-medium text-gray-800 dark:text-white/90">
                       {{ displayName(row as VentasAgentListItem) }}
                     </p>
-                    <p v-if="(row as VentasAgentListItem).documentType" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+                    <p v-if="(row as VentasAgentListItem).documentType" class="text-xs text-gray-400 dark:text-gray-500">
                       {{ (row as VentasAgentListItem).documentType?.code }}: {{ (row as VentasAgentListItem).documentNumber ?? '–' }}
                     </p>
                   </div>
@@ -346,7 +340,7 @@ async function handleExport() {
                   {{ (row as VentasAgentListItem).type === 'INTERNAL' ? 'Interno' : 'Externo' }}
                 </Badge>
               </td>
-              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+              <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
                 <div class="flex flex-col gap-0.5">
                   <span v-if="(row as VentasAgentListItem).phone" class="flex items-center gap-1.5">
                     <AppIcon icon="lucide:phone" :size="12" color="var(--color-text-muted)" />
@@ -369,7 +363,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!loadingList && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"
@@ -379,7 +373,7 @@ async function handleExport() {
           </div>
         </template>
       </div>
-    </div>
+    </BaseCard>
 
     <BaseModal
       v-model="showConfirmModal"
@@ -417,15 +411,14 @@ async function handleExport() {
       <template v-if="confirmModal">
         <div class="flex items-start gap-3">
           <div
-            class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-            :style="{
-              backgroundColor:
-                confirmModal.type === 'delete'
-                  ? 'color-mix(in srgb, var(--color-error) 8%, transparent)'
-                  : confirmModal.type === 'activate'
-                    ? 'var(--color-success-light)'
-                    : '#f59e0b15',
-            }"
+            class="flex size-10 shrink-0 items-center justify-center rounded-full"
+            :class="
+              confirmModal.type === 'delete'
+                ? 'bg-error-50 text-error-500 dark:bg-error-500/15'
+                : confirmModal.type === 'activate'
+                  ? 'bg-success-50 text-success-600 dark:bg-success-500/15'
+                  : 'bg-warning-50 text-warning-600 dark:bg-warning-500/15'
+            "
           >
             <AppIcon
               :icon="
@@ -446,10 +439,10 @@ async function handleExport() {
             />
           </div>
           <div>
-            <p class="font-semibold mb-1" :style="{ color: 'var(--color-text-primary)' }">
+            <p class="font-semibold mb-1 text-gray-800 dark:text-white/90">
               {{ confirmModal.agent.fullName }}
             </p>
-            <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
               <template v-if="confirmModal.type === 'delete'">
                 Se realizará un <strong>soft delete</strong>: el agente no se eliminará de la base de datos pero no aparecerá en ningún listado ni podrá ser seleccionado.
               </template>

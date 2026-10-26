@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { computed, ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -120,53 +124,41 @@ function submitForm() {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">Clientes</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Maestro de clientes y saldo de cuentas por cobrar (1041).
-        </p>
-      </div>
-      <BaseButton variant="primary" @click="openNew">
+  <div class="w-full space-y-6">
+    <PageHeader
+      title="Clientes"
+      subtitle="Maestro de clientes y saldo de cuentas por cobrar (1041)."
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="16" class="mr-1" />
         Nuevo cliente
       </BaseButton>
-    </div>
+      </template>
+    </PageHeader>
 
     <SearchInput v-model="searchInput" placeholder="Buscar por RUC o razón social…" class="w-full max-w-md" />
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
-    <div
-      v-else
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">RUC</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Razón social</th>
-            <th class="text-right py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Saldo CxC</th>
-            <th class="text-center py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Comprobantes</th>
-            <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Estado</th>
-            <th class="py-3 px-4 w-24" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in rows"
-            :key="row.id"
-            class="border-b last:border-b-0"
-            :style="{ borderColor: 'var(--color-border)' }"
-          >
+    <BaseCard v-else padding="none" class="block overflow-hidden">
+      <DataTable
+        :columns="[
+          { key: 'c0', label: 'RUC' },
+          { key: 'c1', label: 'Razón social' },
+          { key: 'c2', label: 'Saldo CxC', align: 'right' },
+          { key: 'c3', label: 'Comprobantes', align: 'center' },
+          { key: 'c4', label: 'Estado' },
+          { key: 'c5', label: '' },
+        ]"
+        :data="rows"
+        empty-text="Sin clientes registrados"
+      >
+        <template #row="{ row }">
             <td class="py-2.5 px-4 font-mono">{{ row.ruc }}</td>
             <td class="py-2.5 px-4">
               <div class="font-medium">{{ row.businessName }}</div>
-              <div v-if="row.tradeName" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ row.tradeName }}</div>
+              <div v-if="row.tradeName" class="text-xs text-gray-400 dark:text-gray-500">{{ row.tradeName }}</div>
             </td>
             <td class="py-2.5 px-4 text-right font-mono font-semibold">{{ formatPen(row.receivableBalance) }}</td>
             <td class="py-2.5 px-4 text-center">{{ row.invoiceCount }}</td>
@@ -176,15 +168,9 @@ function submitForm() {
             <td class="py-2.5 px-4 text-right">
               <BaseButton variant="secondary" size="sm" @click="openEdit(row)">Editar</BaseButton>
             </td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td colspan="6" class="py-8 text-center" :style="{ color: 'var(--color-text-muted)' }">
-              Sin clientes registrados
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        </template>
+      </DataTable>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" :title="editing ? 'Editar cliente' : 'Nuevo cliente'" size="md">
       <form class="space-y-4" @submit.prevent="submitForm">

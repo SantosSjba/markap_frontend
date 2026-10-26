@@ -4,10 +4,13 @@ const openModals: symbol[] = []
 
 <script setup lang="ts">
 import { onBeforeUnmount, useId, watch } from 'vue'
-import AppIcon from './AppIcon.vue'
+import { Button } from '../../ui/button'
+import { XIcon } from '../../icons/layout'
 /**
- * BaseModal — modal genérico (título, cuerpo, pie opcional con slot `footer`).
- * Para flujos con Cancelar / Guardar, usa el slot `footer` con `BaseButton`.
+ * BaseModal — modal genérico con el aspecto del `Dialog` de TailAdmin
+ * (título, cuerpo con scroll, pie opcional con slot `footer`).
+ * Mantiene su propia pila de apertura en lugar de Reka `Dialog`: así no atrapa el foco
+ * ni bloquea los SweetAlert (con inputs) que se abren encima del modal.
  */
 
 interface Props {
@@ -31,11 +34,11 @@ const emit = defineEmits<{
 }>()
 
 const sizeClasses = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
-  full: 'max-w-full mx-4',
+  sm: 'sm:max-w-md',
+  md: 'sm:max-w-lg',
+  lg: 'sm:max-w-2xl',
+  xl: 'sm:max-w-4xl',
+  full: 'sm:max-w-[calc(100%-2rem)]',
 }
 
 const close = () => {
@@ -95,72 +98,80 @@ onBeforeUnmount(release)
 <template>
   <Teleport to="body">
     <Transition
-      enter-active-class="transition-opacity duration-300"
-      leave-active-class="transition-opacity duration-200"
+      enter-active-class="transition-opacity duration-100"
+      leave-active-class="transition-opacity duration-100"
       enter-from-class="opacity-0"
       leave-to-class="opacity-0"
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+        class="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto p-4"
       >
-        <!-- Backdrop -->
+        <!-- Backdrop (DialogOverlay de TailAdmin) -->
         <div
-          class="absolute inset-0 bg-black/50"
+          data-slot="dialog-overlay"
+          class="fixed inset-0 bg-black/50 supports-backdrop-filter:backdrop-blur-xs dark:bg-black/70"
           @click="handleBackdropClick"
         />
 
-        <!-- Modal content -->
+        <!-- Contenido (DialogContent de TailAdmin) -->
         <Transition
-          enter-active-class="transition-all duration-300"
-          leave-active-class="transition-all duration-200"
+          enter-active-class="transition-all duration-100"
+          leave-active-class="transition-all duration-100"
           enter-from-class="opacity-0 scale-95"
           leave-to-class="opacity-0 scale-95"
+          appear
         >
           <div
             v-if="modelValue"
             role="dialog"
             aria-modal="true"
+            data-slot="dialog-content"
             :aria-labelledby="title ? titleId : undefined"
             :class="[
-              'relative w-full rounded-xl shadow-xl flex flex-col max-h-[min(90dvh,calc(100vh-2rem))] overflow-hidden',
+              'relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white text-sm text-gray-700 shadow-theme-lg outline-none dark:border-gray-800 dark:bg-[#1E2635] dark:text-gray-300',
               sizeClasses[size],
             ]"
-            style="background-color: var(--color-surface);"
           >
             <!-- Header -->
             <div
               v-if="title || $slots.title || closable"
-              class="flex shrink-0 items-center justify-between p-4 border-b"
-              style="border-color: var(--color-border);"
+              data-slot="dialog-header"
+              class="flex shrink-0 items-start gap-2 px-6 pt-6 pb-4"
+              :class="closable ? 'pe-14' : undefined"
             >
               <slot name="title">
-                <h3 v-if="title" :id="titleId" class="text-lg font-semibold" style="color: var(--color-text-primary);">
+                <h3
+                  v-if="title"
+                  :id="titleId"
+                  data-slot="dialog-title"
+                  class="text-lg font-semibold text-gray-800 dark:text-white/90"
+                >
                   {{ title }}
                 </h3>
               </slot>
-              <button
+              <Button
                 v-if="closable"
-                type="button"
-                class="p-1 rounded hover-surface transition-colors ml-auto"
+                variant="ghost"
+                size="icon-sm"
+                class="absolute end-3 top-3 rounded-full text-gray-400 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
                 aria-label="Cerrar"
-                style="color: var(--color-text-muted);"
                 @click="close"
               >
-                <AppIcon icon="lucide:x" :size="20" color="currentColor" />
-              </button>
+                <XIcon />
+              </Button>
             </div>
 
-            <!-- Body (scroll when content is taller than viewport) -->
-            <div class="min-h-0 flex-1 overflow-y-auto p-4">
+            <!-- Body (scroll cuando el contenido supera el alto de la ventana) -->
+            <div class="min-h-0 flex-1 overflow-y-auto px-6 pb-6" :class="title || $slots.title || closable ? undefined : 'pt-6'">
               <slot />
             </div>
 
-            <!-- Footer -->
+            <!-- Footer (DialogFooter de TailAdmin) -->
             <div
               v-if="$slots.footer"
-              class="shrink-0 p-4 border-t rounded-b-xl"
-              style="border-color: var(--color-border); background-color: var(--color-background);"
+              data-slot="dialog-footer"
+              class="shrink-0 border-t border-gray-100 px-6 py-4 dark:border-gray-800"
             >
               <slot name="footer" />
             </div>

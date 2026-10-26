@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ventasPropertiesRepositoryKey } from '../../application/ports/ventas-properties.port'
 import { useService } from '@shared/presentation/di/services'
 import { toCalendarDateString } from '@shared/utils/formatters'
@@ -399,7 +401,7 @@ async function handleExport() {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto">
+  <div class="space-y-6">
     <PageHeader
       title="Propiedades en venta"
       subtitle="Inventario inmobiliario — aplicación Ventas"
@@ -427,10 +429,9 @@ async function handleExport() {
     <div v-if="loadingStats" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20" />
     <div
       v-else-if="statsQueryError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <span class="max-w-xl" style="color: var(--color-error)">{{ getApiErrorMessage(statsFetchError) }}</span>
+      <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
     </div>
     <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -455,44 +456,35 @@ async function handleExport() {
         provincesQueryError ||
         districtsQueryError
       "
-      class="rounded-xl border px-4 py-3 space-y-2 text-sm"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-warning-light)' }"
+      class="rounded-xl border px-4 py-3 space-y-2 text-sm border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">Algunos datos de filtros no cargaron</p>
+      <p class="font-medium text-gray-800 dark:text-white/90">Algunos datos de filtros no cargaron</p>
       <div v-if="propertyTypesQueryError" class="flex flex-wrap items-center gap-2">
-        <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(propertyTypesFetchError) }}</span>
+        <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(propertyTypesFetchError) }}</span>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchPropertyTypes()">Tipos</BaseButton>
       </div>
       <div v-if="departmentsQueryError" class="flex flex-wrap items-center gap-2">
-        <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(departmentsFetchError) }}</span>
+        <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(departmentsFetchError) }}</span>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchDepartments()">Departamentos</BaseButton>
       </div>
       <div v-if="provincesQueryError" class="flex flex-wrap items-center gap-2">
-        <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(provincesFetchError) }}</span>
+        <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(provincesFetchError) }}</span>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchProvinces()">Provincias</BaseButton>
       </div>
       <div v-if="districtsQueryError" class="flex flex-wrap items-center gap-2">
-        <span class="text-xs max-w-md" style="color: var(--color-error)">{{ getApiErrorMessage(districtsFetchError) }}</span>
+        <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(districtsFetchError) }}</span>
         <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchDistricts()">Distritos</BaseButton>
       </div>
     </div>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-      }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <div class="overflow-x-auto">
-        <div v-if="loadingList" class="flex justify-center py-16 px-4">
-          <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-        </div>
+        <LoadingState v-if="loadingList" class="px-4" />
         <div
           v-else-if="listQueryError"
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
-          <p class="text-sm font-medium" style="color: var(--color-error)">{{ getApiErrorMessage(listFetchError) }}</p>
+          <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
           <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
@@ -508,8 +500,7 @@ async function handleExport() {
               <div class="w-full min-w-0 space-y-5">
                 <div>
                   <p
-                    class="text-xs font-semibold uppercase tracking-wider mb-2"
-                    :style="{ color: 'var(--color-text-secondary)' }"
+                    class="text-xs font-semibold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400"
                   >
                     Búsqueda
                   </p>
@@ -521,8 +512,7 @@ async function handleExport() {
 
                 <div>
                   <p
-                    class="text-xs font-semibold uppercase tracking-wider mb-2"
-                    :style="{ color: 'var(--color-text-secondary)' }"
+                    class="text-xs font-semibold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400"
                   >
                     Filtros del listado
                   </p>
@@ -559,12 +549,10 @@ async function handleExport() {
                 </div>
 
                 <div
-                  class="pt-4 border-t"
-                  :style="{ borderColor: 'var(--color-border)' }"
+                  class="pt-4 border-t border-gray-200 dark:border-gray-800"
                 >
                   <p
-                    class="text-xs font-semibold uppercase tracking-wider mb-2"
-                    :style="{ color: 'var(--color-text-secondary)' }"
+                    class="text-xs font-semibold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400"
                   >
                     Ubicación
                   </p>
@@ -601,32 +589,31 @@ async function handleExport() {
                 <div class="flex items-center gap-3">
                   <AppIcon icon="lucide:building-2" :size="20" color="var(--color-text-muted)" class="shrink-0" />
                   <div>
-                    <p class="font-medium" :style="{ color: 'var(--color-text-primary)' }">
+                    <p class="font-medium text-gray-800 dark:text-white/90">
                       {{ (row as VentasPropertyListItem).code }}
                     </p>
-                    <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+                    <p class="text-xs text-gray-400 dark:text-gray-500">
                       {{ (row as VentasPropertyListItem).addressLine }}, {{ (row as VentasPropertyListItem).districtName }}
                     </p>
                     <p
                       v-if="(row as VentasPropertyListItem).area != null"
-                      class="text-xs mt-0.5"
-                      :style="{ color: 'var(--color-text-secondary)' }"
+                      class="text-xs mt-0.5 text-gray-500 dark:text-gray-400"
                     >
                       {{ (row as VentasPropertyListItem).area }} m²
                     </p>
                   </div>
                 </div>
               </td>
-              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-primary)' }">
+              <td class="py-3 px-4 text-sm text-gray-800 dark:text-white/90">
                 {{ (row as VentasPropertyListItem).projectName || '—' }}
               </td>
               <td class="py-3 px-4">
-                <span class="inline-flex items-center gap-1.5 text-sm" :style="{ color: 'var(--color-text-primary)' }">
+                <span class="inline-flex items-center gap-1.5 text-sm text-gray-800 dark:text-white/90">
                   <AppIcon icon="lucide:user" :size="16" color="var(--color-text-muted)" class="shrink-0" />
                   {{ (row as VentasPropertyListItem).ownerFullName }}
                 </span>
               </td>
-              <td class="py-3 px-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+              <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
                 {{ (row as VentasPropertyListItem).propertyTypeName }}
               </td>
               <td class="py-3 px-4">
@@ -634,7 +621,7 @@ async function handleExport() {
                   {{ listingStatusLabel((row as VentasPropertyListItem).listingStatus) }}
                 </Badge>
               </td>
-              <td class="py-3 px-4 text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+              <td class="py-3 px-4 text-sm font-medium text-gray-800 dark:text-white/90">
                 {{
                   formatSalePrice(
                     (row as VentasPropertyListItem).salePrice,
@@ -647,7 +634,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div v-if="!loadingList && !listQueryError" class="border-t" :style="{ borderColor: 'var(--color-border)' }">
+          <div v-if="!loadingList && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"
@@ -657,17 +644,16 @@ async function handleExport() {
           </div>
         </template>
       </div>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="showStatusModal" title="Estado comercial" size="sm">
       <template v-if="propertyForStatus">
-        <p class="text-sm mb-4" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm mb-4 text-gray-500 dark:text-gray-400">
           {{ propertyForStatus.code }} – {{ propertyForStatus.addressLine }}
         </p>
         <p
           v-if="statusModalError"
-          class="text-sm mb-3 px-3 py-2 rounded-lg"
-          :style="{ color: 'var(--color-error)', backgroundColor: 'var(--color-error-light)' }"
+          class="text-sm mb-3 px-3 py-2 rounded-lg text-error-500 dark:text-error-400 bg-error-50 dark:bg-error-500/15"
         >
           {{ statusModalError }}
         </p>
@@ -695,21 +681,20 @@ async function handleExport() {
       <template #title>
         <div class="flex items-center gap-2">
           <div
-            class="w-8 h-8 rounded-full flex items-center justify-center"
-            style="background: var(--color-error-subtle)"
+            class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15"
           >
-            <AppIcon icon="lucide:trash-2" :size="16" style="color: var(--color-error)" />
+            <AppIcon class="text-error-500 dark:text-error-400" icon="lucide:trash-2" :size="16" />
           </div>
-          <span class="text-base font-semibold" style="color: var(--color-text-primary)">Eliminar propiedad</span>
+          <span class="text-base font-semibold text-gray-800 dark:text-white/90">Eliminar propiedad</span>
         </div>
       </template>
       <div class="p-4 space-y-3">
-        <p class="text-sm" style="color: var(--color-text-secondary)">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           ¿Eliminar la propiedad
-          <span class="font-semibold" style="color: var(--color-text-primary)">{{ propertyToDelete?.code }}</span>?
+          <span class="font-semibold text-gray-800 dark:text-white/90">{{ propertyToDelete?.code }}</span>?
         </p>
       </div>
-      <div class="flex justify-end gap-3 p-4 border-t" style="border-color: var(--color-border)">
+      <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" icon="lucide:x" @click="closeDeleteModal">Cancelar</BaseButton>
         <BaseButton variant="danger" icon="lucide:trash-2" :loading="isDeletingProperty" @click="executeDeleteProperty">
           Eliminar

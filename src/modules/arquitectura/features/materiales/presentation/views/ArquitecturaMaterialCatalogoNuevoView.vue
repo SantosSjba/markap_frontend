@@ -1,4 +1,6 @@
 ﻿<script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { useService } from '@shared/presentation/di/services'
 import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
 import { ref } from 'vue'
@@ -6,7 +8,6 @@ import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { ARQUITECTURA_BASE_PATH } from '../../../../config/routes.constants'
 import {
   useCreateArquitecturaCatalogMaterial,
@@ -125,30 +126,16 @@ const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/materiales/catalogo`
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
-    <div class="flex items-center gap-4 mb-6">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)]"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" color="currentColor" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Nuevo material
-        </h1>
-        <p class="text-sm mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-          Defina datos base; suba ficha técnica e imágenes a MinIO.
-        </p>
-      </div>
-    </div>
+  <div class="space-y-6">
+    <PageHeader
+      title="Nuevo material"
+      subtitle="Defina datos base; suba ficha técnica e imágenes a MinIO."
+      back
+      @back="goBack"
+      class="mb-6"
+    />
 
-    <div
-      class="space-y-4 p-4 sm:p-6 rounded-xl border"
-      :style="{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }"
-    >
+    <BaseCard class="block space-y-4">
       <div class="grid sm:grid-cols-2 gap-4">
         <FormInput v-model="code" label="Código" required placeholder="MAT-..." />
         <FormInput v-model="name" label="Nombre" required placeholder="Descripción corta" />
@@ -232,6 +219,6 @@ const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/materiales/catalogo`
           Crear material
         </BaseButton>
       </div>
-    </div>
+    </BaseCard>
   </div>
 </template>

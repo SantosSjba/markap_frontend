@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
 import { ref, computed } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -36,67 +40,45 @@ async function togglePeriod(period: ContabilidadPeriodDTO) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Periodos contables
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          Apertura y cierre mensual. Los 12 meses del año se generan automáticamente.
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
+  <div class="w-full space-y-6">
+    <PageHeader
+      title="Periodos contables"
+      subtitle="Apertura y cierre mensual. Los 12 meses del año se generan automáticamente."
+    >
+      <template #actions>
+        <div class="flex items-center gap-2">
         <BaseButton variant="ghost" size="sm" @click="changeYear(-1)">
           <AppIcon icon="lucide:chevron-left" :size="18" />
         </BaseButton>
-        <span class="text-lg font-semibold min-w-[4rem] text-center" :style="{ color: 'var(--color-text-primary)' }">
+        <span class="text-lg font-semibold min-w-[4rem] text-center text-gray-800 dark:text-white/90">
           {{ selectedYear }}
         </span>
         <BaseButton variant="ghost" size="sm" @click="changeYear(1)">
           <AppIcon icon="lucide:chevron-right" :size="18" />
         </BaseButton>
       </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
-    <div
-      v-else-if="isError"
-      class="rounded-xl border p-8 text-center"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard v-else-if="isError" padding="lg" class="block text-center">
       <BaseButton variant="secondary" @click="refetch()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
 
     <div
       v-else
       class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
     >
-      <div
-        v-for="period in periods"
-        :key="period.id"
-        class="rounded-xl border p-4 flex flex-col gap-3"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
+      <BaseCard v-for="period in periods" :key="period.id" padding="sm" class="flex flex-col gap-3">
         <div class="flex items-start justify-between gap-2">
           <div>
-            <p class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">{{ period.label }}</p>
-            <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+            <p class="font-semibold text-gray-800 dark:text-white/90">{{ period.label }}</p>
+            <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
               Mes {{ period.month }} / {{ period.year }}
             </p>
           </div>
-          <span
-            class="text-xs px-2 py-0.5 rounded-full shrink-0"
-            :style="{
-              backgroundColor: period.status === 'OPEN' ? 'var(--color-primary-soft)' : 'var(--color-surface-elevated)',
-              color: period.status === 'OPEN' ? 'var(--color-primary)' : 'var(--color-text-muted)',
-            }"
-          >
-            {{ CONTABILIDAD_PERIOD_STATUS_LABELS[period.status as keyof typeof CONTABILIDAD_PERIOD_STATUS_LABELS] }}
-          </span>
+          <Badge :variant="period.status === 'OPEN' ? 'primary' : 'neutral'" class="shrink-0">{{ CONTABILIDAD_PERIOD_STATUS_LABELS[period.status as keyof typeof CONTABILIDAD_PERIOD_STATUS_LABELS] }}</Badge>
         </div>
         <BaseButton
           variant="secondary"
@@ -106,7 +88,7 @@ async function togglePeriod(period: ContabilidadPeriodDTO) {
         >
           {{ period.status === 'OPEN' ? 'Cerrar periodo' : 'Reabrir periodo' }}
         </BaseButton>
-      </div>
+      </BaseCard>
     </div>
   </div>
 </template>

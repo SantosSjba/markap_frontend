@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import { formatDateTime } from '@shared/utils/formatters'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -97,7 +100,7 @@ async function confirmReverse() {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6 print:max-w-none">
+  <div class="w-full space-y-6 print:max-w-none">
     <div class="print:hidden">
       <PageHeader
         icon="lucide:file-text"
@@ -124,89 +127,74 @@ async function confirmReverse() {
       </PageHeader>
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-16 print:hidden">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" class="print:hidden" />
 
-    <div
-      v-else-if="isError || !entry"
-      class="rounded-xl border p-8 text-center print:hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard v-else-if="isError || !entry" padding="lg" class="block text-center print:hidden">
       <BaseButton variant="secondary" @click="refetch()">Reintentar</BaseButton>
-    </div>
+    </BaseCard>
 
     <template v-else>
-      <div class="hidden print:block mb-6">
-        <h1 class="text-xl font-bold">Asiento contable N° {{ entry.entryNumber }}</h1>
-        <p class="text-sm mt-1">{{ entry.description }}</p>
-      </div>
-
-      <div
-        class="rounded-xl border p-4 sm:p-5 space-y-3 print:border-0 print:p-0"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
+      <PageHeader
+        :title="`Asiento contable N° ${entry.entryNumber}`"
+        class="mb-6"
       >
+        <template #actions>
+          <p class="text-sm mt-1">{{ entry.description }}</p>
+        </template>
+      </PageHeader>
+
+      <BaseCard padding="sm" class="block space-y-3 print:border-0 print:p-0">
         <div class="flex flex-wrap items-center gap-3">
           <Badge :variant="journalStatusVariant(entry.status)">{{ statusLabel }}</Badge>
-          <span class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-            Fecha: <strong :style="{ color: 'var(--color-text-primary)' }">{{ entry.entryDate }}</strong>
+          <span class="text-sm text-gray-500 dark:text-gray-400">
+            Fecha: <strong class="text-gray-800 dark:text-white/90">{{ entry.entryDate }}</strong>
           </span>
-          <span v-if="entry.postedAt" class="text-sm" :style="{ color: 'var(--color-text-muted)' }">
+          <span v-if="entry.postedAt" class="text-sm text-gray-400 dark:text-gray-500">
             Publicado: {{ formatDateTime(entry.postedAt) }}
           </span>
-          <span v-if="entry.reversalOfId" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+          <span v-if="entry.reversalOfId" class="text-xs text-gray-400 dark:text-gray-500">
             Reversa de otro asiento
           </span>
         </div>
 
-        <p class="text-sm" :style="{ color: 'var(--color-text-primary)' }">{{ entry.description }}</p>
-      </div>
+        <p class="text-sm text-gray-800 dark:text-white/90">{{ entry.description }}</p>
+      </BaseCard>
 
-      <div
-        class="rounded-xl border overflow-hidden print:border print:border-gray-300"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Cuenta</th>
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Centro</th>
-              <th class="text-left py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Auxiliar</th>
-              <th class="text-right py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Debe</th>
-              <th class="text-right py-3 px-4 font-medium" :style="{ color: 'var(--color-text-secondary)' }">Haber</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="line in entry.lines"
-              :key="line.id"
-              class="border-b last:border-b-0"
-              :style="{ borderColor: 'var(--color-border)' }"
-            >
+      <BaseCard padding="none" class="block overflow-hidden print:border print:border-gray-300">
+        <DataTable
+          :columns="[
+            { key: 'c0', label: 'Cuenta' },
+            { key: 'c1', label: 'Centro' },
+            { key: 'c2', label: 'Auxiliar' },
+            { key: 'c3', label: 'Debe', align: 'right' },
+            { key: 'c4', label: 'Haber', align: 'right' },
+          ]"
+          :data="entry.lines"
+        >
+          <template #row="{ row: line }">
               <td class="py-2.5 px-4">
-                <span class="font-mono text-xs" :style="{ color: 'var(--color-primary)' }">{{ line.accountCode }}</span>
+                <span class="font-mono text-xs text-brand-500 dark:text-brand-400">{{ line.accountCode }}</span>
                 <span class="block text-sm">{{ line.accountName }}</span>
-                <span v-if="line.description" class="block text-xs mt-0.5" :style="{ color: 'var(--color-text-muted)' }">
+                <span v-if="line.description" class="block text-xs mt-0.5 text-gray-400 dark:text-gray-500">
                   {{ line.description }}
                 </span>
               </td>
               <td class="py-2.5 px-4 text-sm">
                 <template v-if="line.costCenterCode">{{ line.costCenterCode }}</template>
-                <span v-else :style="{ color: 'var(--color-text-muted)' }">—</span>
+                <span class="text-gray-400 dark:text-gray-500" v-else>—</span>
               </td>
               <td class="py-2.5 px-4 text-xs">
                 <div v-if="line.auxiliaryRuc || line.auxiliaryDoc">
                   <div v-if="line.auxiliaryRuc">RUC {{ line.auxiliaryRuc }}</div>
                   <div v-if="line.auxiliaryDoc">Doc. {{ line.auxiliaryDoc }}</div>
                 </div>
-                <span v-else :style="{ color: 'var(--color-text-muted)' }">—</span>
+                <span class="text-gray-400 dark:text-gray-500" v-else>—</span>
               </td>
               <td class="py-2.5 px-4 text-right font-mono">
                 {{ formatPen(line.debit) }}
                 <div
                   v-if="line.foreignCurrency && line.foreignAmount"
-                  class="text-[11px] font-normal mt-0.5"
-                  :style="{ color: 'var(--color-text-muted)' }"
+                  class="text-[11px] font-normal mt-0.5 text-gray-400 dark:text-gray-500"
                 >
                   {{ formatMoney(line.foreignAmount, line.foreignCurrency) }}
                   <span v-if="line.exchangeRate"> · TC {{ line.exchangeRate }}</span>
@@ -216,26 +204,25 @@ async function confirmReverse() {
                 {{ formatPen(line.credit) }}
                 <div
                   v-if="line.foreignCurrency && line.foreignAmount && Number(line.credit) > 0"
-                  class="text-[11px] font-normal mt-0.5"
-                  :style="{ color: 'var(--color-text-muted)' }"
+                  class="text-[11px] font-normal mt-0.5 text-gray-400 dark:text-gray-500"
                 >
                   {{ formatMoney(line.foreignAmount, line.foreignCurrency) }}
                   <span v-if="line.exchangeRate"> · TC {{ line.exchangeRate }}</span>
                 </div>
               </td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr :style="{ backgroundColor: 'var(--color-surface-elevated)' }">
-              <td colspan="3" class="py-3 px-4 text-right font-medium" :style="{ color: 'var(--color-text-secondary)' }">
+            
+          </template>
+          <template #footer>
+            <tr class="bg-gray-50 dark:bg-gray-800">
+              <td colspan="3" class="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
                 Totales
               </td>
               <td class="py-3 px-4 text-right font-mono font-semibold">{{ formatPen(entry.totalDebit) }}</td>
               <td class="py-3 px-4 text-right font-mono font-semibold">{{ formatPen(entry.totalCredit) }}</td>
             </tr>
-          </tfoot>
-        </table>
-      </div>
+          </template>
+        </DataTable>
+      </BaseCard>
     </template>
   </div>
 </template>

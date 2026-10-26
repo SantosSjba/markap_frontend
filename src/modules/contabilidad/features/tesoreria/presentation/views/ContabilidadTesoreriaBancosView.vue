@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
 import { computed, ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -89,7 +91,7 @@ function submit() {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:landmark"
       title="Bancos"
@@ -108,51 +110,41 @@ function submit() {
       <StatsCard title="Saldo total bancos" :value="formatPen(totalBalance)" />
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="isLoading" />
 
     <div v-else class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       <div
         v-for="bank in banks"
         :key="bank.id"
-        class="rounded-xl border p-4 space-y-3"
-        :style="{
-          borderColor: 'var(--color-border)',
-          backgroundColor: 'var(--color-surface)',
-          opacity: bank.isActive ? 1 : 0.6,
-        }"
+        class="rounded-xl border p-4 space-y-3 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-dark" :style="{ opacity: bank.isActive ? 1 : 0.6 }"
       >
         <div class="flex items-start justify-between gap-2">
           <div>
-            <p class="font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+            <p class="font-semibold text-gray-800 dark:text-white/90">
               {{ (bank as ContabilidadBankAccountDTO).bankName }}
             </p>
-            <p class="text-xs font-mono mt-0.5" :style="{ color: 'var(--color-primary)' }">
+            <p class="text-xs font-mono mt-0.5 text-brand-500 dark:text-brand-400">
               {{ (bank as ContabilidadBankAccountDTO).code }}
             </p>
           </div>
-          <span class="text-xs px-2 py-0.5 rounded-full" :style="{ backgroundColor: 'var(--color-surface-elevated)' }">
-            {{ (bank as ContabilidadBankAccountDTO).currency }}
-          </span>
+          <Badge>{{ (bank as ContabilidadBankAccountDTO).currency }}</Badge>
         </div>
-        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           N° {{ (bank as ContabilidadBankAccountDTO).accountNumber }}
         </p>
-        <p v-if="(bank as ContabilidadBankAccountDTO).cci" class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+        <p v-if="(bank as ContabilidadBankAccountDTO).cci" class="text-xs text-gray-400 dark:text-gray-500">
           CCI {{ (bank as ContabilidadBankAccountDTO).cci }}
         </p>
-        <p class="text-lg font-bold font-mono" :style="{ color: 'var(--color-text-primary)' }">
+        <p class="text-lg font-bold font-mono text-gray-800 dark:text-white/90">
           {{ formatPen((bank as ContabilidadBankAccountDTO).balance) }}
         </p>
-        <p class="text-xs" :style="{ color: 'var(--color-text-muted)' }">
+        <p class="text-xs text-gray-400 dark:text-gray-500">
           Cuenta {{ (bank as ContabilidadBankAccountDTO).accountCode }} — {{ (bank as ContabilidadBankAccountDTO).accountName }}
         </p>
       </div>
       <div
         v-if="!banks.length"
-        class="md:col-span-2 xl:col-span-3 rounded-xl border p-8 text-center text-sm"
-        :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }"
+        class="md:col-span-2 xl:col-span-3 rounded-xl border p-8 text-center text-sm border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-500"
       >
         Sin cuentas bancarias registradas
       </div>

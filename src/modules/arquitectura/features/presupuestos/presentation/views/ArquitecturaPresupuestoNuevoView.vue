@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -40,25 +41,13 @@ const createProject = () => {
 </script>
 
 <template>
-  <div class="px-3 sm:px-5 py-6 sm:py-8 max-w-[720px] mx-auto space-y-6">
-    <div class="flex items-start gap-3">
-      <button
-        type="button"
-        class="p-2 rounded-lg hover:bg-[var(--color-hover)] shrink-0"
-        :style="{ color: 'var(--color-text-secondary)' }"
-        @click="goBack"
-      >
-        <AppIcon icon="lucide:arrow-left" :size="20" />
-      </button>
-      <div>
-        <h1 class="text-xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-          Nuevo presupuesto
-        </h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-          El presupuesto vive dentro de un proyecto. Elija uno existente o cree un proyecto nuevo.
-        </p>
-      </div>
-    </div>
+  <div class="max-w-[720px] mx-auto space-y-6">
+    <PageHeader
+      title="Nuevo presupuesto"
+      subtitle="El presupuesto vive dentro de un proyecto. Elija uno existente o cree un proyecto nuevo."
+      back
+      @back="goBack"
+    />
 
     <FormSectionCard
       title="Proyecto existente"

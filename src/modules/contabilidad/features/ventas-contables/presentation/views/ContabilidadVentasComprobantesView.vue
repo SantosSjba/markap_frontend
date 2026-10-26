@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { contabilidadCpeRepositoryKey } from '../../../facturacion-electronica/application/ports/contabilidad-cpe.port'
 import { useService } from '@shared/presentation/di/services'
 import { computed, ref, watch } from 'vue'
@@ -275,7 +276,7 @@ async function downloadCdr(logId: string) {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:file-output"
       :title="pageTitle"
@@ -289,14 +290,11 @@ async function downloadCdr(logId: string) {
       </template>
     </PageHeader>
 
-    <p v-if="!activePeriod" class="text-sm" :style="{ color: 'var(--color-warning)' }">
+    <p v-if="!activePeriod" class="text-sm text-warning-600 dark:text-orange-400">
       Configure el periodo activo en Configuración ? Contexto contable.
     </p>
 
-    <div
-      class="rounded-xl border overflow-hidden"
-      :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-    >
+    <BaseCard padding="none" class="block overflow-hidden">
       <DataTable
         :columns="columns"
         :data="rows"
@@ -329,7 +327,7 @@ async function downloadCdr(logId: string) {
           </td>
           <td class="py-3 px-4 text-sm">
             <div>{{ (row as ContabilidadSalesInvoiceDTO).customerName }}</div>
-            <div class="text-xs font-mono" :style="{ color: 'var(--color-text-muted)' }">
+            <div class="text-xs font-mono text-gray-400 dark:text-gray-500">
               {{ (row as ContabilidadSalesInvoiceDTO).customerRuc }}
             </div>
           </td>
@@ -337,8 +335,7 @@ async function downloadCdr(logId: string) {
             {{ formatPen((row as ContabilidadSalesInvoiceDTO).totalAmount) }}
             <div
               v-if="(row as ContabilidadSalesInvoiceDTO).foreignTaxableBase"
-              class="text-xs font-normal"
-              :style="{ color: 'var(--color-text-muted)' }"
+              class="text-xs font-normal text-gray-400 dark:text-gray-500"
             >
               {{ formatMoney((row as ContabilidadSalesInvoiceDTO).foreignTaxableBase, (row as ContabilidadSalesInvoiceDTO).currencyCode) }} + IGV
             </div>
@@ -406,7 +403,7 @@ async function downloadCdr(logId: string) {
           </td>
         </template>
       </DataTable>
-    </div>
+    </BaseCard>
 
     <BaseModal v-model="modalOpen" :title="`Registrar ${documentType === SALES_DOCUMENT_TYPE.BOLETA ? 'boleta' : 'factura'} de venta`" size="lg">
       <form class="space-y-4" @submit.prevent="submitInvoice">

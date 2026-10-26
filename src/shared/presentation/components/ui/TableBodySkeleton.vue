@@ -11,28 +11,18 @@ withDefaults(
     selectable: false,
   },
 )
-
-const barStyle = {
-  backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 14%, transparent)',
-}
 </script>
 
 <template>
-  <tbody>
-    <tr
-      v-for="row in rows"
-      :key="row"
-      class="animate-pulse"
-      :style="{ borderBottom: '1px solid var(--color-border)' }"
-    >
-      <td v-if="selectable" class="w-11 py-3 pl-4 pr-2">
-        <div class="h-4 w-4 rounded" :style="barStyle" />
+  <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+    <tr v-for="row in rows" :key="row" class="animate-pulse">
+      <td v-if="selectable" class="w-11 py-4 ps-5 pe-2 sm:ps-6">
+        <div class="size-4 rounded-md bg-gray-200 dark:bg-gray-800" />
       </td>
-      <td v-for="col in columns" :key="col" class="py-3 px-4">
+      <td v-for="col in columns" :key="col" class="px-4 py-4 first:ps-5 last:pe-5 sm:first:ps-6 sm:last:pe-6">
         <div
-          class="h-4 rounded-md"
+          class="h-4 rounded-md bg-gray-200 dark:bg-gray-800"
           :class="col === 1 ? 'max-w-[70%]' : 'max-w-[90%]'"
-          :style="barStyle"
         />
       </td>
     </tr>

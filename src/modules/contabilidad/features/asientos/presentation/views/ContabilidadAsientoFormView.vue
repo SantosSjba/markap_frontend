@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
@@ -268,7 +272,7 @@ function applySelectedTemplate() {
 </script>
 
 <template>
-  <div class="w-full px-3 sm:px-5 py-6 sm:py-8 space-y-6">
+  <div class="w-full space-y-6">
     <PageHeader
       icon="lucide:file-pen-line"
       :title="isEdit ? 'Editar asiento' : 'Nuevo asiento'"
@@ -285,15 +289,10 @@ function applySelectedTemplate() {
       </template>
     </PageHeader>
 
-    <div v-if="loadingDetail && isEdit" class="flex justify-center py-16">
-      <AppIcon icon="svg-spinners:ring-resize" :size="32" color="var(--color-primary)" />
-    </div>
+    <LoadingState v-if="loadingDetail && isEdit" />
 
     <template v-else>
-      <div
-        class="rounded-xl border p-4 sm:p-5 grid gap-4 sm:grid-cols-2"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
+      <BaseCard padding="sm" class="grid gap-4 sm:grid-cols-2">
         <FormInput v-model="form.entryDate" label="Fecha" type="date" required />
         <div class="sm:col-span-2">
           <FormTextarea v-model="form.description" label="Glosa" :rows="2" required />
@@ -315,14 +314,11 @@ function applySelectedTemplate() {
             Aplicar plantilla
           </BaseButton>
         </div>
-      </div>
+      </BaseCard>
 
-      <div
-        class="rounded-xl border overflow-hidden"
-        :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
-      >
-        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b" :style="{ borderColor: 'var(--color-border)' }">
-          <h2 class="text-sm font-semibold" :style="{ color: 'var(--color-text-primary)' }">Líneas del asiento</h2>
+      <BaseCard padding="none" class="block overflow-hidden">
+        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          <h2 class="text-sm font-semibold text-gray-800 dark:text-white/90">Líneas del asiento</h2>
           <BaseButton variant="secondary" size="sm" @click="addLine">
             <AppIcon icon="lucide:plus" :size="14" class="mr-1" />
             Agregar línea
@@ -330,35 +326,34 @@ function applySelectedTemplate() {
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-sm min-w-[1200px]">
-            <thead>
-              <tr class="border-b" :style="{ borderColor: 'var(--color-border)' }">
-                <th class="text-left py-2.5 px-3 font-medium w-[26%]" :style="{ color: 'var(--color-text-secondary)' }">Cuenta</th>
-                <th class="text-left py-2.5 px-3 font-medium w-[8%]" :style="{ color: 'var(--color-text-secondary)' }">Moneda</th>
-                <th class="text-right py-2.5 px-3 font-medium w-[9%]" :style="{ color: 'var(--color-text-secondary)' }">Importe ME</th>
-                <th class="text-right py-2.5 px-3 font-medium w-[8%]" :style="{ color: 'var(--color-text-secondary)' }">TC</th>
-                <th class="text-right py-2.5 px-3 font-medium w-[9%]" :style="{ color: 'var(--color-text-secondary)' }">Debe</th>
-                <th class="text-right py-2.5 px-3 font-medium w-[9%]" :style="{ color: 'var(--color-text-secondary)' }">Haber</th>
-                <th class="text-left py-2.5 px-3 font-medium w-[14%]" :style="{ color: 'var(--color-text-secondary)' }">Centro costo</th>
-                <th class="text-left py-2.5 px-3 font-medium w-[8%]" :style="{ color: 'var(--color-text-secondary)' }">RUC aux.</th>
-                <th class="text-left py-2.5 px-3 font-medium w-[8%]" :style="{ color: 'var(--color-text-secondary)' }">Doc. aux.</th>
-                <th class="py-2.5 px-3 w-10" />
-              </tr>
-            </thead>
-            <tbody>
-              <tr
+          <Table class="w-full text-sm min-w-[1200px]">
+            <TableHeader>
+              <TableRow class="border-b border-gray-200 dark:border-gray-800">
+                <TableCell is-header class="text-left py-2.5 px-3 font-medium w-[26%] text-gray-500 dark:text-gray-400">Cuenta</TableCell>
+                <TableCell is-header class="text-left py-2.5 px-3 font-medium w-[8%] text-gray-500 dark:text-gray-400">Moneda</TableCell>
+                <TableCell is-header class="text-right py-2.5 px-3 font-medium w-[9%] text-gray-500 dark:text-gray-400">Importe ME</TableCell>
+                <TableCell is-header class="text-right py-2.5 px-3 font-medium w-[8%] text-gray-500 dark:text-gray-400">TC</TableCell>
+                <TableCell is-header class="text-right py-2.5 px-3 font-medium w-[9%] text-gray-500 dark:text-gray-400">Debe</TableCell>
+                <TableCell is-header class="text-right py-2.5 px-3 font-medium w-[9%] text-gray-500 dark:text-gray-400">Haber</TableCell>
+                <TableCell is-header class="text-left py-2.5 px-3 font-medium w-[14%] text-gray-500 dark:text-gray-400">Centro costo</TableCell>
+                <TableCell is-header class="text-left py-2.5 px-3 font-medium w-[8%] text-gray-500 dark:text-gray-400">RUC aux.</TableCell>
+                <TableCell is-header class="text-left py-2.5 px-3 font-medium w-[8%] text-gray-500 dark:text-gray-400">Doc. aux.</TableCell>
+                <TableCell is-header class="py-2.5 px-3 w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow
                 v-for="(line, index) in lines"
                 :key="line.key"
-                class="border-b align-top"
-                :style="{ borderColor: 'var(--color-border)' }"
+                class="border-b align-top border-gray-200 dark:border-gray-800"
               >
-                <td class="py-2 px-3">
+                <TableCell class="py-2 px-3">
                   <FormSelect v-model="line.accountId" :options="accountOptions" placeholder="Cuenta de movimiento…" />
-                </td>
-                <td class="py-2 px-3">
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <FormSelect v-model="line.foreignCurrency" :options="currencyOptions" />
-                </td>
-                <td class="py-2 px-3">
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <FormInput
                     v-model="line.foreignAmount"
                     type="number"
@@ -368,8 +363,8 @@ function applySelectedTemplate() {
                     :disabled="!line.foreignCurrency"
                     @blur="onForeignBlur(line)"
                   />
-                </td>
-                <td class="py-2 px-3">
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <FormInput
                     v-model="line.exchangeRate"
                     type="number"
@@ -379,8 +374,8 @@ function applySelectedTemplate() {
                     :disabled="!line.foreignCurrency"
                     @blur="onForeignBlur(line)"
                   />
-                </td>
-                <td class="py-2 px-3">
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <FormInput
                     v-model="line.debit"
                     type="number"
@@ -389,8 +384,8 @@ function applySelectedTemplate() {
                     placeholder="0.00"
                     @input="onDebitInput(line)"
                   />
-                </td>
-                <td class="py-2 px-3">
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <FormInput
                     v-model="line.credit"
                     type="number"
@@ -399,51 +394,45 @@ function applySelectedTemplate() {
                     placeholder="0.00"
                     @input="onCreditInput(line)"
                   />
-                </td>
-                <td class="py-2 px-3">
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <FormSelect v-model="line.costCenterId" :options="costCenterOptions" />
-                </td>
-                <td class="py-2 px-3">
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <FormInput v-model="line.auxiliaryRuc" placeholder="RUC" />
-                </td>
-                <td class="py-2 px-3">
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <FormInput v-model="line.auxiliaryDoc" placeholder="Doc." />
-                </td>
-                <td class="py-2 px-3">
+                </TableCell>
+                <TableCell class="py-2 px-3">
                   <BaseButton variant="ghost" size="sm" @click="removeLine(index)">
                     <AppIcon icon="lucide:trash-2" :size="16" />
                   </BaseButton>
-                </td>
-              </tr>
-            </tbody>
+                </TableCell>
+              </TableRow>
+            </TableBody>
             <tfoot>
-              <tr :style="{ backgroundColor: 'var(--color-surface-elevated)' }">
-                <td class="py-3 px-3 text-right font-medium" :style="{ color: 'var(--color-text-secondary)' }">
+              <TableRow class="bg-gray-50 dark:bg-gray-800">
+                <TableCell class="py-3 px-3 text-right font-medium text-gray-500 dark:text-gray-400">
                   Totales
-                </td>
-                <td class="py-3 px-3 text-right font-mono font-semibold">
+                </TableCell>
+                <TableCell class="py-3 px-3 text-right font-mono font-semibold">
                   {{ formatPen(totals.totalDebit) }}
-                </td>
-                <td class="py-3 px-3 text-right font-mono font-semibold">
+                </TableCell>
+                <TableCell class="py-3 px-3 text-right font-mono font-semibold">
                   {{ formatPen(totals.totalCredit) }}
-                </td>
-                <td colspan="6" class="py-3 px-3">
-                  <span
-                    class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
-                    :style="{
-                      backgroundColor: balanced ? 'var(--color-primary-soft)' : 'color-mix(in srgb, var(--color-warning) 15%, transparent)',
-                      color: balanced ? 'var(--color-primary)' : 'var(--color-warning)',
-                    }"
-                  >
+                </TableCell>
+                <TableCell colspan="6" class="py-3 px-3">
+                  <Badge :variant="balanced ? 'success' : 'warning'">
                     <AppIcon :icon="balanced ? 'lucide:check-circle-2' : 'lucide:alert-circle'" :size="14" />
                     {{ balanced ? 'Asiento cuadrado' : `Diferencia: S/ ${difference}` }}
-                  </span>
-                </td>
-              </tr>
+                  </Badge>
+                </TableCell>
+              </TableRow>
             </tfoot>
-          </table>
+          </Table>
         </div>
-      </div>
+      </BaseCard>
     </template>
   </div>
 </template>
