@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref, computed, watch } from 'vue'
@@ -70,7 +73,7 @@ function goNew() {
       subtitle="Propuestas comerciales para clientes — borrador, envío y aceptación."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="goNew">
+        <BaseButton v-if="canWrite" variant="primary" @click="goNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nueva cotización
       </BaseButton>

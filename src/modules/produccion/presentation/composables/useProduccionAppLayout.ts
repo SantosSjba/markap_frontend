@@ -1,36 +1,15 @@
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import {
-  useMyApplications,
-  useApplicationMenus,
-} from '@modules/applications/presentation/composables/useApplications'
-import { PRODUCCION_FALLBACK_MENUS, produccionMenusLookComplete } from '../../config/fallbackMenus'
+import { useMyApplications } from '@modules/applications/presentation/composables/useApplications'
+import { PRODUCCION_MENUS } from '../../config/menu'
+/**
+ * Layout de Produccion: datos de la aplicación del usuario + menú lateral estático (`config/menu.ts`).
+ */
 export function useProduccionAppLayout() {
-  const route = useRoute()
-  const slug = computed(() => {
-    const seg = route.path.split('/').filter(Boolean)[0]
-    return seg || 'produccion'
-  })
-
-  const { data: menusFromApi, isLoading: menusLoading } = useApplicationMenus(slug)
   const { data: applications } = useMyApplications()
-  const application = computed(() => applications.value?.find((a) => a.slug === slug.value) ?? null)
-
-  const menus = computed(() => {
-    if (slug.value !== 'produccion') {
-      return menusFromApi.value ?? []
-    }
-    const api = menusFromApi.value ?? []
-    if (!menusLoading.value && produccionMenusLookComplete(api)) {
-      return api
-    }
-    return PRODUCCION_FALLBACK_MENUS
-  })
+  const application = computed(() => applications.value?.find((a) => a.slug === 'produccion') ?? null)
 
   return {
-    slug,
     application,
-    menus,
-    menusLoading,
+    menus: PRODUCCION_MENUS,
   }
 }

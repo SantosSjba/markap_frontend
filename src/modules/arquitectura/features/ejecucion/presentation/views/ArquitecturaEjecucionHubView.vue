@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import {useApplicationAccess} from '@modules/applications/presentation/composables/useApplicationAccess'
+const { filterActions } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -193,7 +196,7 @@ const goProjects = () => router.push(`${ARQUITECTURA_BASE_PATH}/proyectos`)
               <Badge variant="neutral">{{ projectStatusLabel((row as ArquitecturaProjectListItem).status, stageLabelMap) }}</Badge>
             </td>
             <td class="py-3 px-4 text-right">
-              <ActionsDropdown :items="getActions(row as ArquitecturaProjectListItem)" />
+              <ActionsDropdown :items="filterActions(getActions(row as ArquitecturaProjectListItem))" />
             </td>
           </template>
         </DataTable>

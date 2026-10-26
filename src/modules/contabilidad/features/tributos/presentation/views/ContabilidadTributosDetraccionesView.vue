@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -268,7 +271,7 @@ function goJournal(row: ContabilidadDetraccionDTO) {
       subtitle="Registro y pago de detracciones (cuenta 4018). Tasas SUNAT configurables."
     >
       <template #actions>
-        <BaseButton variant="primary" :disabled="!activePeriod" @click="openCreate">
+        <BaseButton v-if="canWrite" variant="primary" :disabled="!activePeriod" @click="openCreate">
           <AppIcon icon="lucide:plus" :size="16" class="mr-1" />
           Registrar detracción
         </BaseButton>

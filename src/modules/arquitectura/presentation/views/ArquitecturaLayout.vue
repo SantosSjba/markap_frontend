@@ -3,11 +3,11 @@ import { computed } from 'vue'
 import AdminLayout from '@app/layouts/AdminLayout.vue'
 import { useArquitecturaAppLayout } from '../composables/useArquitecturaAppLayout'
 /**
- * ArquitecturaLayout — shell de TailAdmin (`AdminLayout`) con los menús de la BD por slug `arquitectura`.
+ * ArquitecturaLayout — shell de TailAdmin (`AdminLayout`) con el menú estático de `arquitectura`.
  * Notificaciones: filtradas a esta app en el header.
  */
 
-const { application, menus, menusLoading } = useArquitecturaAppLayout()
+const { application, menus } = useArquitecturaAppLayout()
 
 const applicationInfo = computed(() =>
   application.value
@@ -25,7 +25,6 @@ const applicationInfo = computed(() =>
   <AdminLayout
     :menus="menus"
     :application="applicationInfo"
-    :loading="menusLoading"
     minimal-user-menu
     profile-to="/arquitectura/perfil"
     notifications-application-slug="arquitectura"

@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref, computed, watch } from 'vue'
@@ -229,7 +232,7 @@ const purchaseRows = computed(() =>
           <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1.5" />
           Listado
         </BaseButton>
-        <BaseButton variant="danger" type="button" :loading="deleteMut.isPending.value" @click="removeSupplier">
+        <BaseButton v-if="canAdmin" variant="danger" type="button" :loading="deleteMut.isPending.value" @click="removeSupplier">
           Eliminar
         </BaseButton>
       </div>
@@ -251,7 +254,7 @@ const purchaseRows = computed(() =>
             <FormInput v-model="email" label="Correo" type="email" />
           </div>
           <div class="flex justify-end">
-            <BaseButton variant="primary" type="button" :loading="updateMut.isPending.value" @click="saveDatos">
+            <BaseButton v-if="canWrite" variant="primary" type="button" :loading="updateMut.isPending.value" @click="saveDatos">
               Guardar datos
             </BaseButton>
           </div>
@@ -358,7 +361,7 @@ const purchaseRows = computed(() =>
         <FormTextarea v-model="purchaseNotes" label="Notas (opcional)" :rows="2" />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton variant="secondary" type="button" @click="showPurchaseModal = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="button" :loading="purchaseMut.isPending.value" @click="submitPurchase">
+          <BaseButton v-if="canWrite" variant="primary" type="button" :loading="purchaseMut.isPending.value" @click="submitPurchase">
             Guardar
           </BaseButton>
         </div>

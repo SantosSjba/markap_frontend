@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
@@ -219,7 +222,7 @@ async function openReceipt(row: SaleSeparationRow) {
       icon="lucide:bookmark"
     >
       <template #actions>
-        <BaseButton variant="primary" icon="lucide:plus" :loading="loadingNewModalData" @click="openModal">
+        <BaseButton v-if="canWrite" variant="primary" icon="lucide:plus" :loading="loadingNewModalData" @click="openModal">
           Nueva separación
         </BaseButton>
       </template>
@@ -313,7 +316,7 @@ async function openReceipt(row: SaleSeparationRow) {
         />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton variant="outline" icon="lucide:x" @click="showNew = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" icon="lucide:save" :loading="saving" @click="submit">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" variant="primary" icon="lucide:save" :loading="saving" @click="submit">Guardar</BaseButton>
         </div>
       </div>
     </BaseModal>

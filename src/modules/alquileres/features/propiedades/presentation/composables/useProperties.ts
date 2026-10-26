@@ -37,6 +37,7 @@ export const propertyKeys = {
       sk(params.maxSalePrice ?? ''),
     ] as const,
   propertyTypes: () => [...propertyKeys.all, 'property-types'] as const,
+  currencies: () => [...propertyKeys.all, 'currencies'] as const,
   departments: () => alquileresCatalogKeys.departments,
   provinces: (departmentId?: string) => alquileresCatalogKeys.provinces(departmentId),
   districts: (provinceId?: string) => alquileresCatalogKeys.districts(provinceId),
@@ -50,6 +51,16 @@ export function usePropertyTypes() {
   return useQuery({
     queryKey: propertyKeys.propertyTypes(),
     queryFn: () => propertiesRepository.getPropertyTypes(),
+  })
+}
+
+/** Monedas activas del catálogo (alquiler y mantenimiento de la propiedad). */
+export function usePropertyCurrencies() {
+  const propertiesRepository = useService(propertiesRepositoryKey)
+  return useQuery({
+    queryKey: propertyKeys.currencies(),
+    queryFn: () => propertiesRepository.getCurrencies(),
+    staleTime: Infinity,
   })
 }
 

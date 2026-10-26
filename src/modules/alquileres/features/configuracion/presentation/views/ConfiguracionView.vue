@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('alquileres')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
@@ -154,7 +157,7 @@ const tabs = [
 
       <!-- Guardar -->
       <div class="flex justify-end">
-        <BaseButton variant="primary" class="flex items-center gap-2" :loading="isSaving" @click="handleSave">
+        <BaseButton v-if="canWrite" variant="primary" class="flex items-center gap-2" :loading="isSaving" @click="handleSave">
           <AppIcon icon="lucide:save" :size="16" />
           Guardar Configuración
         </BaseButton>

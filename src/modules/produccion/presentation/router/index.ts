@@ -18,7 +18,7 @@ export const produccionRoutes: RouteRecordRaw[] = [
   {
     path: PRODUCCION_BASE_PATH,
     component: ProduccionLayout,
-    meta: { requiresAuth: true },
+    meta: { applicationSlug: 'produccion', requiresAuth: true },
     children: [
       {
         path: '',

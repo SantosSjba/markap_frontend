@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
@@ -139,7 +142,7 @@ async function del(r: ProduccionMaterial) {
       subtitle="Catálogo de insumos para producción. El stock se gestiona en Movimientos."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="openNew">
+        <BaseButton v-if="canWrite" variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo material
       </BaseButton>
@@ -163,8 +166,8 @@ async function del(r: ProduccionMaterial) {
           <td class="py-3 px-4 text-sm">{{ formatSol((row as ProduccionMaterial).unitCost) }}</td>
           <td class="py-3 px-4 text-sm">{{ formatQty((row as ProduccionMaterial).minStockQty, (row as ProduccionMaterial).unit) }}</td>
           <td class="py-3 px-4 text-right space-x-2">
-            <BaseButton @click="openEdit(row as ProduccionMaterial)" variant="link">Editar</BaseButton>
-            <BaseButton @click="del(row as ProduccionMaterial)" variant="link" class="text-error-500 dark:text-error-400">Eliminar</BaseButton>
+            <BaseButton v-if="canWrite" @click="openEdit(row as ProduccionMaterial)" variant="link">Editar</BaseButton>
+            <BaseButton v-if="canAdmin" @click="del(row as ProduccionMaterial)" variant="link" class="text-error-500 dark:text-error-400">Eliminar</BaseButton>
           </td>
         </template>
       </DataTable>
@@ -188,7 +191,7 @@ async function del(r: ProduccionMaterial) {
       </div>
       <template #footer>
         <BaseButton variant="ghost" @click="showModal = false">Cancelar</BaseButton>
-        <BaseButton variant="primary" :loading="saving" @click="save">Guardar</BaseButton>
+        <BaseButton v-if="canWrite" variant="primary" :loading="saving" @click="save">Guardar</BaseButton>
       </template>
     </BaseModal>
   </div>

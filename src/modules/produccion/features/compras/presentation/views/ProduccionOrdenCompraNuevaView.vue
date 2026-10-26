@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import IconButton from '@shared/presentation/components/ui/IconButton.vue'
@@ -108,7 +111,7 @@ async function save() {
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-sm">Líneas</h2>
-          <BaseButton variant="secondary" size="sm" @click="addLine">
+          <BaseButton v-if="canWrite" variant="secondary" size="sm" @click="addLine">
             <AppIcon icon="lucide:plus" :size="16" class="mr-1" />
             Agregar línea
           </BaseButton>
@@ -133,7 +136,7 @@ async function save() {
             <FormInput v-model.number="line.unitPrice" label="Precio unit. (S/)" type="number" min="0" step="0.01" />
           </div>
           <div class="sm:col-span-1 flex justify-end pb-1">
-            <IconButton v-if="lines.length > 1" @click="removeLine(i)" icon="lucide:trash-2" label="Eliminar" danger />
+            <IconButton v-if="(lines.length > 1) && canAdmin" @click="removeLine(i)" icon="lucide:trash-2" label="Eliminar" danger />
           </div>
         </div>
       </div>
@@ -143,7 +146,7 @@ async function save() {
         <span class="text-lg font-bold">{{ formatSol(total) }}</span>
       </div>
 
-      <BaseButton variant="primary" :loading="saving" @click="save">Crear orden (borrador)</BaseButton>
+      <BaseButton v-if="canWrite" variant="primary" :loading="saving" @click="save">Crear orden (borrador)</BaseButton>
     </BaseCard>
   </div>
 </template>

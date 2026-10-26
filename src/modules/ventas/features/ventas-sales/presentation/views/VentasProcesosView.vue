@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ref, computed } from 'vue'
@@ -117,7 +120,7 @@ function goDetail(row: SaleProcessListRow) {
         <BaseButton variant="secondary" icon="lucide:layout-grid" @click="router.push('/ventas/procesos/pipeline')">
           Pipeline
         </BaseButton>
-        <BaseButton variant="primary" icon="lucide:plus" @click="router.push('/ventas/procesos/nuevo')">
+        <BaseButton v-if="canWrite" variant="primary" icon="lucide:plus" @click="router.push('/ventas/procesos/nuevo')">
           Nuevo proceso
         </BaseButton>
       </template>

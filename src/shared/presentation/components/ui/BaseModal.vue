@@ -137,7 +137,7 @@ onBeforeUnmount(release)
             <div
               v-if="title || $slots.title || closable"
               data-slot="dialog-header"
-              class="flex shrink-0 items-start gap-2 px-6 pt-6 pb-4"
+              class="flex shrink-0 items-start gap-2 border-b border-gray-100 px-6 pt-6 pb-4 dark:border-gray-800"
               :class="closable ? 'pe-14' : undefined"
             >
               <slot name="title">
@@ -162,8 +162,8 @@ onBeforeUnmount(release)
               </Button>
             </div>
 
-            <!-- Body (scroll cuando el contenido supera el alto de la ventana) -->
-            <div class="min-h-0 flex-1 overflow-y-auto px-6 pb-6" :class="title || $slots.title || closable ? undefined : 'pt-6'">
+            <!-- Body: única zona con scroll; encabezado y pie quedan fijos -->
+            <div class="min-h-0 flex-1 overflow-y-auto px-6 pb-6" :class="title || $slots.title || closable ? 'pt-5' : 'pt-6'">
               <slot />
             </div>
 

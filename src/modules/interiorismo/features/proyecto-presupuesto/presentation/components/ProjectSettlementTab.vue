@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import {useApplicationAccess} from '@modules/applications/presentation/composables/useApplicationAccess'
+const { filterActions } = useApplicationAccess('interiorismo')
+
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { formatDateTime } from '@shared/utils/formatters'
 import { computed, ref, toRef, watch } from 'vue'
@@ -258,7 +261,7 @@ async function removePayment(id: string) {
             </td>
             <td class="py-2 px-3 text-right">
               <ActionsDropdown
-                :items="[
+                :items="filterActions([
                   {
                     label: 'Editar',
                     icon: 'lucide:pencil',
@@ -270,7 +273,7 @@ async function removePayment(id: string) {
                     danger: true,
                     onClick: () => removePayment((row as InteriorProjectPaymentDto).id),
                   },
-                ]"
+                ])"
               />
             </td>
           </template>

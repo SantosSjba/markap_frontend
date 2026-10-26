@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -96,7 +99,7 @@ async function confirmDeactivate(row: ContabilidadCostCenterDTO) {
       subtitle="Segmentación analítica para asientos y reportes por área."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="openNew">
+        <BaseButton v-if="canWrite" variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="16" class="mr-1" />
         Nuevo centro
       </BaseButton>
@@ -134,7 +137,7 @@ async function confirmDeactivate(row: ContabilidadCostCenterDTO) {
             </TableCell>
             <TableCell class="py-2.5 px-4 text-right">
               <div class="flex justify-end gap-1">
-                <BaseButton variant="ghost" size="sm" @click="openEdit(row)">
+                <BaseButton v-if="canWrite" variant="ghost" size="sm" @click="openEdit(row)">
                   <AppIcon icon="lucide:pencil" :size="16" />
                 </BaseButton>
                 <BaseButton
@@ -165,7 +168,7 @@ async function confirmDeactivate(row: ContabilidadCostCenterDTO) {
         <FormCheckbox v-if="editing" v-model="form.isActive" label="Activo" />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton type="button" variant="secondary" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" :loading="creating || updating">
+          <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="creating || updating">
             {{ editing ? 'Guardar' : 'Crear' }}
           </BaseButton>
         </div>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -244,7 +247,7 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
           <FormInput v-model="settingsDraft.igvPercent" type="number" min="0" max="100" step="0.01" label="IGV (%)" />
           <FormInput v-model="settingsDraft.woodWastePercent" type="number" min="0" max="100" step="0.1" label="% desperdicio madera" />
           <FormInput v-model="settingsDraft.quotationValidDays" type="number" min="1" label="Vigencia cotización (días)" />
-          <BaseButton variant="primary" :loading="savingSettings" @click="submitSettings">
+          <BaseButton v-if="canWrite" variant="primary" :loading="savingSettings" @click="submitSettings">
             Guardar parámetros
           </BaseButton>
         </BaseCard>
@@ -294,7 +297,7 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
           </Table>
           <div class="p-3 border-t flex justify-between border-gray-200 dark:border-gray-800">
             <BaseButton type="button" variant="ghost" @click="addCategory">+ Categoría</BaseButton>
-            <BaseButton variant="primary" :loading="savingCategories" @click="submitCategories">
+            <BaseButton v-if="canWrite" variant="primary" :loading="savingCategories" @click="submitCategories">
               Guardar categorías
             </BaseButton>
           </div>
@@ -345,7 +348,7 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
           </Table>
           <div class="p-3 border-t flex justify-between border-gray-200 dark:border-gray-800">
             <BaseButton type="button" variant="ghost" @click="addMaterialCategory">+ Categoría</BaseButton>
-            <BaseButton variant="primary" :loading="savingMaterialCategories" @click="submitMaterialCategories">
+            <BaseButton v-if="canWrite" variant="primary" :loading="savingMaterialCategories" @click="submitMaterialCategories">
               Guardar categorías
             </BaseButton>
           </div>
@@ -389,7 +392,7 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
             </TableBody>
           </Table>
           <div class="p-3 border-t flex justify-end border-gray-200 dark:border-gray-800">
-            <BaseButton variant="primary" :loading="savingStages" @click="submitStages">Guardar etapas</BaseButton>
+            <BaseButton v-if="canWrite" variant="primary" :loading="savingStages" @click="submitStages">Guardar etapas</BaseButton>
           </div>
         </BaseCard>
       </div>
@@ -438,7 +441,7 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
           </Table>
           <div class="p-3 border-t flex justify-between border-gray-200 dark:border-gray-800">
             <BaseButton type="button" variant="ghost" @click="addUnit">+ Unidad</BaseButton>
-            <BaseButton variant="primary" :loading="savingUnits" @click="submitUnits">Guardar unidades</BaseButton>
+            <BaseButton v-if="canWrite" variant="primary" :loading="savingUnits" @click="submitUnits">Guardar unidades</BaseButton>
           </div>
         </BaseCard>
       </div>
@@ -462,7 +465,7 @@ const numberingRows = computed(() => boot.value?.numbering ?? [])
             <FormInput v-model="numberingDraft[series.seriesKey]!.padLength" type="number" min="1" max="8" label="Dígitos" />
             <FormCheckbox v-model="numberingDraft[series.seriesKey]!.includeYear" label="Incluir año" />
           </div>
-          <BaseButton
+          <BaseButton v-if="canWrite"
             variant="primary"
             size="sm"
             :loading="savingNumbering"

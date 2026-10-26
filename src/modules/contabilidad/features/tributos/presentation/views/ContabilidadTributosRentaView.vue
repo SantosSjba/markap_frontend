@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
@@ -350,7 +353,7 @@ function formatDate(iso: string) {
             <strong class="ml-2 font-mono">{{ formatPen(detail.advancePaymentsYtd) }}</strong>
           </p>
           <BaseButton
-            v-if="periodOpen"
+            v-if="(periodOpen) && canWrite"
             :loading="saving"
             @click="saveDraft"
           >
@@ -469,7 +472,7 @@ function formatDate(iso: string) {
             </div>
           </div>
 
-          <BaseButton v-if="periodOpen" :loading="saving" @click="saveDraft">
+          <BaseButton v-if="(periodOpen) && canWrite" :loading="saving" @click="saveDraft">
             Guardar ajustes
           </BaseButton>
           <p v-else class="text-xs text-warning-600 dark:text-orange-400">

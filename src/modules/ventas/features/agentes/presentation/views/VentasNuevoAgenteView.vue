@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
 import { computed, watch, onMounted } from 'vue'
@@ -223,7 +226,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         </FormSectionCard>
 
         <div class="xl:hidden flex gap-3">
-          <BaseButton
+          <BaseButton v-if="canWrite"
             type="submit"
             variant="primary"
             class="flex-1 flex items-center justify-center gap-2"
@@ -287,7 +290,7 @@ const onSubmit = handleSubmit(async (formValues) => {
             </div>
           </dl>
           <div class="hidden xl:flex flex-col gap-3">
-            <BaseButton
+            <BaseButton v-if="canWrite"
               type="submit"
               variant="primary"
               class="w-full flex items-center justify-center gap-2"

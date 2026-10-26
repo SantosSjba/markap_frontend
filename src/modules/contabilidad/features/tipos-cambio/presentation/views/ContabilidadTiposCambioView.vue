@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -136,7 +139,7 @@ function submit() {
           <td class="py-3 px-4 text-sm text-right font-mono">{{ (row as ContabilidadExchangeRateDTO).sellRate }}</td>
           <td class="py-3 px-4 text-sm">{{ (row as ContabilidadExchangeRateDTO).source ?? '—' }}</td>
           <td class="py-3 px-4 text-right">
-            <BaseButton variant="secondary" size="sm" @click="openEdit(row as ContabilidadExchangeRateDTO)">
+            <BaseButton v-if="canWrite" variant="secondary" size="sm" @click="openEdit(row as ContabilidadExchangeRateDTO)">
               Editar
             </BaseButton>
           </td>
@@ -154,7 +157,7 @@ function submit() {
         </div>
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton type="button" variant="secondary" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" :loading="saving">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="saving">Guardar</BaseButton>
         </div>
       </form>
     </BaseModal>

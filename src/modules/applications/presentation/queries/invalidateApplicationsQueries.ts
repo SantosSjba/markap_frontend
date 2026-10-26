@@ -4,15 +4,13 @@ import { applicationsQueryKeys } from '../../application/applicationsQueryKeys'
 /** Presets de invalidación según qué dato cambió. */
 export type ApplicationsInvalidationPreset =
   | 'myApps'
-  | 'menus'
-  /** Permisos / asignación rol–app: refresca listado del usuario y menús de todas las apps. */
+  /** Permisos / asignación rol–app: refresca el listado de apps del usuario. */
   | 'access'
   | 'all'
 
 const PRESET_ROOTS: Record<ApplicationsInvalidationPreset, readonly QueryKey[]> = {
   myApps: [applicationsQueryKeys.myApps],
-  menus: [applicationsQueryKeys.menus],
-  access: [applicationsQueryKeys.myApps, applicationsQueryKeys.menus],
+  access: [applicationsQueryKeys.myApps],
   all: [applicationsQueryKeys.module],
 }
 

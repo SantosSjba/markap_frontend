@@ -718,6 +718,177 @@ html.dark {
   }
 }
 
+/*
+ * DataTable en vista de tarjeta (< 640px de ancho disponible).
+ * Fuera de capas a propósito: debe ganar a las utilidades que las vistas ponen en sus
+ * <td> (text-right, truncate, max-w-*, hidden md:table-cell…). Las celdas llevan
+ * data-card (title | actions | field | select | hidden) y data-label desde DataTable.vue.
+ */
+.markap-dt {
+  container: markap-dt / inline-size;
+}
+
+.markap-dt__card-bar {
+  display: none;
+}
+
+/*
+ * Vista de tabla (≥ 640px): los textos largos van en una línea con «…» y la fila no se
+ * estira. En @layer components para que una celda pueda optar por salir con utilidades
+ * (`whitespace-normal`, `max-w-none`). El texto completo aparece como tooltip (DataTable).
+ */
+@layer components {
+  @container markap-dt (min-width: 640px) {
+    /* Tope proporcional al ancho de la tabla (cqi = 1% del contenedor `markap-dt`) */
+    .markap-dt__table > tbody > tr > td {
+      max-width: min(20rem, 18cqi);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .markap-dt__table > tbody > tr > td :where(*) {
+      min-width: 0;
+    }
+
+    .markap-dt__table > tbody > tr > td :where(p, a, div, li, h3, h4, span:not([data-slot='badge'])) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+@container markap-dt (max-width: 639px) {
+  .markap-dt__card-bar {
+    display: flex;
+  }
+
+  .markap-dt__table {
+    display: block;
+    min-width: 0;
+  }
+
+  .markap-dt__table > thead {
+    display: none;
+  }
+
+  .markap-dt__table > tbody,
+  .markap-dt__table > tfoot {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 0;
+  }
+
+  .markap-dt__table > tbody:empty,
+  .markap-dt__table > tfoot:empty {
+    display: none;
+  }
+
+  /* Tarjeta: [selección] [título] [acciones] en la primera fila; el resto debajo */
+  .markap-dt__table > tbody > tr,
+  .markap-dt__table > tfoot > tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    @apply border border-gray-200 dark:border-gray-800;
+  }
+
+  .markap-dt__table > tbody > tr > td,
+  .markap-dt__table > tfoot > tr > td {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+    max-width: none;
+    width: auto;
+    padding: 0.375rem 0;
+    border: 0;
+    background: transparent;
+    text-align: end;
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+  }
+
+  .markap-dt__table > tbody > tr > td::before,
+  .markap-dt__table > tfoot > tr > td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 45%;
+    text-align: start;
+    white-space: normal;
+    @apply text-theme-xs text-gray-500 dark:text-gray-400;
+  }
+
+  .markap-dt__table td:not([data-label]) {
+    justify-content: flex-start;
+    text-align: start;
+  }
+
+  /* El contenido de la celda no puede ensanchar la tarjeta */
+  .markap-dt__table td > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .markap-dt__table td[data-label] > * {
+    justify-content: flex-end;
+  }
+
+  .markap-dt__table td [data-slot='badge'] {
+    flex-shrink: 1;
+    max-width: 100%;
+    height: auto;
+    white-space: normal;
+    text-align: start;
+  }
+
+  .markap-dt__table td:not([data-label])::before,
+  .markap-dt__table td[data-card='title']::before,
+  .markap-dt__table td[data-card='actions']::before,
+  .markap-dt__table td[data-card='select']::before {
+    content: none;
+  }
+
+  .markap-dt__table td[data-card='select'] {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 0.125rem 0.75rem 0 0;
+  }
+
+  .markap-dt__table td[data-card='title'] {
+    grid-column: 2;
+    grid-row: 1;
+    display: block;
+    padding: 0 0 0.25rem;
+    text-align: start;
+    @apply font-medium text-gray-800 dark:text-white/90;
+  }
+
+  /* Sin columna de acciones, el título usa todo el ancho */
+  .markap-dt__table tr:not(:has(> td[data-card='actions'])) > td[data-card='title'] {
+    grid-column: 2 / -1;
+  }
+
+  .markap-dt__table td[data-card='actions'] {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+    margin: -0.25rem -0.5rem 0 0.5rem;
+    padding: 0;
+  }
+
+  .markap-dt__table td[data-card='hidden'] {
+    display: none;
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

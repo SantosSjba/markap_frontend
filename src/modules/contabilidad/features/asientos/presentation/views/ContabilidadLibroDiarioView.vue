@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -69,7 +72,7 @@ function goDetail(row: ContabilidadJournalEntryListItemDTO) {
       subtitle="Asientos contables del periodo activo. Partida doble y numeración correlativa."
     >
       <template #actions>
-        <BaseButton variant="primary" :disabled="!activePeriod" @click="goNew">
+        <BaseButton v-if="canWrite" variant="primary" :disabled="!activePeriod" @click="goNew">
           <AppIcon icon="lucide:plus" :size="16" class="mr-1.5" />
           Nuevo asiento
         </BaseButton>

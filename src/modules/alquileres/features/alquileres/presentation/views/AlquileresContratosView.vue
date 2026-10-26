@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, filterActions } = useApplicationAccess('alquileres')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { rentalsRepositoryKey } from '../../application/ports/rentals.port'
@@ -18,6 +21,7 @@ import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
 import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import { useRentalsList, useRentalStats, useCancelRental } from '../composables/useRentals'
+import { useCurrencyCatalog } from '../../../../presentation/composables/useCurrencyCatalog'
 import type { RentalListItem, ListRentalsParams } from '../../domain/rental.types'
 import { ALQUILERES_APP_SLUG } from '../../../../config/app.constants'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
@@ -108,15 +112,15 @@ function formatDate(d: string): string {
   return formatShortDate(d)
 }
 
+const { format: formatAmount } = useCurrencyCatalog()
+
 function formatMoney(item: RentalListItem): string {
-  const sym = item.currency === 'USD' ? 'US$' : 'S/'
-  return `${sym} ${Number(item.monthlyAmount).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
+  return formatAmount(item.monthlyAmount, item.currency)
 }
 
 function formatGuarantee(item: RentalListItem): string {
   if (item.securityDeposit == null) return ''
-  const sym = item.currency === 'USD' ? 'US$' : 'S/'
-  return `Garantía: ${sym} ${Number(item.securityDeposit).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
+  return `Garantía: ${formatAmount(item.securityDeposit, item.currency)}`
 }
 
 const statusBadgeVariant = (
@@ -331,7 +335,7 @@ async function handleExport() {
           <ExcelIcon class="w-5 h-5" />
           Exportar
         </BaseButton>
-        <BaseButton variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
+        <BaseButton v-if="canWrite" variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
           <AppIcon icon="lucide:plus" :size="18" />
           Nuevo Alquiler
         </BaseButton>
@@ -341,11 +345,7 @@ async function handleExport() {
 
     <!-- Stats -->
     <div
-      v-if="loadingStats"
-      class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20"
-    />
-    <div
-      v-else-if="statsQueryError"
+      v-if="statsQueryError"
       class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
       <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
@@ -353,18 +353,18 @@ async function handleExport() {
     </div>
     <div
       v-else
-      class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+      class="grid grid-cols-2 sm:grid-cols-4 gap-3"
     >
-      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
+      <StatsCard compact :title="'Total'" :value="String(stats?.total ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:file-text" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Vigentes'" :value="String(stats?.vigentes ?? 0)">
+      <StatsCard compact :title="'Vigentes'" :value="String(stats?.vigentes ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="#16a34a" /></template>
       </StatsCard>
-      <StatsCard :title="'Por Vencer'" :value="String(stats?.porVencer ?? 0)">
+      <StatsCard compact :title="'Por Vencer'" :value="String(stats?.porVencer ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" color="#d97706" /></template>
       </StatsCard>
-      <StatsCard :title="'Vencidos'" :value="String(stats?.vencidos ?? 0)">
+      <StatsCard compact :title="'Vencidos'" :value="String(stats?.vencidos ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:circle-x" :size="20" color="#dc2626" /></template>
       </StatsCard>
     </div>
@@ -477,7 +477,7 @@ async function handleExport() {
                 </div>
               </td>
               <td class="py-3 px-4 text-right">
-                <ActionsDropdown :items="getActions(row as RentalListItem)" />
+                <ActionsDropdown :items="filterActions(getActions(row as RentalListItem))" />
               </td>
             </template>
           </DataTable>

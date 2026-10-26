@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed, useSlots } from 'vue'
+import { ref, watch, computed, useSlots, onMounted, onUpdated } from 'vue'
 import {
   useVueTable,
   getCoreRowModel,
@@ -16,6 +16,7 @@ import { Badge } from '../../ui/badge'
 import { Checkbox } from '../../ui/checkbox'
 import { ArrowDownIcon, ArrowUpIcon, BoxIcon, CheckIcon, ChevronUpDownIcon, SearchIcon } from '../../icons/layout'
 import TableBodySkeleton from './TableBodySkeleton.vue'
+import FormSelect from '../forms/FormSelect.vue'
 /**
  * DataTable — @tanstack/vue-table: ordenación, filtro de página, selección y estado vacío.
  *
@@ -26,6 +27,14 @@ import TableBodySkeleton from './TableBodySkeleton.vue'
  *  #row      — Cuerpo de cada fila: recibe { row, columns }.
  *  #empty    — Contenido adicional bajo el mensaje de estado vacío (p. ej. botón Reintentar).
  *  #footer   — Filas `<tr>` de totales (se renderizan en `<tfoot>`).
+ *
+ * Por debajo de 640px de ancho disponible (container query) cada fila se muestra como
+ * tarjeta: la primera columna es el título, la de acciones va a la esquina superior derecha
+ * y el resto se lista como "etiqueta: valor". El rol de cada columna se deduce
+ * (ver `cardRole`) o se fija con `card` en la columna.
+ *
+ * En vista de tabla los textos largos se recortan con «…» y muestran el texto completo
+ * como tooltip; una celda puede evitarlo con `whitespace-normal`.
  *
  * Si no hay #toolbar pero showGlobalFilter=true, muestra el filtro client-side propio.
  */
@@ -41,7 +50,11 @@ export interface DataTableColumn {
   sortable?: boolean
   sortAccessor?: DataTableSortAccessor
   sortType?: 'alphanumeric' | 'basic'
+  /** Rol en la vista de tarjeta (móvil); si se omite se deduce */
+  card?: DataTableCardRole
 }
+
+export type DataTableCardRole = 'title' | 'actions' | 'field' | 'hidden'
 
 const props = withDefaults(
   defineProps<{
@@ -190,10 +203,83 @@ function toggleAllPage(value: boolean | 'indeterminate') {
 function toggleRow(row: Row<unknown>, value: boolean | 'indeterminate') {
   row.toggleSelected(value === true)
 }
+
+// ── Vista de tarjeta ──
+const ACTION_KEYS = new Set(['actions', 'action', 'act', '_a'])
+
+function cardRole(col: DataTableColumn, index: number): DataTableCardRole {
+  if (col.card) return col.card
+  const label = col.label.trim()
+  if (ACTION_KEYS.has(col.key) || label.toLowerCase() === 'acciones') return 'actions'
+  if (!label && index === props.columns.length - 1) return 'actions'
+  return index === 0 ? 'title' : 'field'
+}
+
+const tableRef = ref<HTMLTableElement>()
+
+/**
+ * Las celdas vienen del slot #row, así que se marcan en el DOM con su etiqueta y rol
+ * (`data-label` / `data-card`) para que el CSS de tarjeta las ubique.
+ */
+function labelCells() {
+  const tableEl = tableRef.value
+  if (!tableEl) return
+  for (const tr of tableEl.querySelectorAll<HTMLTableRowElement>(':scope > tbody > tr, :scope > tfoot > tr')) {
+    let index = props.selectable && tr.parentElement?.tagName === 'TBODY' ? -1 : 0
+    for (const cell of Array.from(tr.cells)) {
+      const span = cell.colSpan || 1
+      const col = props.columns[index]
+      if (index < 0) cell.dataset.card = 'select'
+      else if (col && span === 1) {
+        cell.dataset.card = cardRole(col, index)
+        if (col.label.trim()) cell.dataset.label = col.label
+        else delete cell.dataset.label
+      } else {
+        // Celdas combinadas (totales, separadores): ancho completo y sin etiqueta
+        cell.dataset.card = 'field'
+        delete cell.dataset.label
+      }
+      index += index < 0 ? 1 : span
+    }
+  }
+}
+onMounted(labelCells)
+onUpdated(labelCells)
+
+/** Texto recortado con «…» (ver `.markap-dt__table` en main.css): muestra el contenido completo al pasar el mouse. */
+function showTruncatedTitle(event: MouseEvent) {
+  const target = event.target as HTMLElement | null
+  if (!target || target.title || !target.closest('td')) return
+  const text = target.textContent?.trim()
+  if (text && target.scrollWidth > target.clientWidth) target.title = text
+}
+
+/** Orden en tarjeta (sin cabeceras): opciones "columna:dirección" */
+const sortOptions = computed(() =>
+  table
+    .getAllLeafColumns()
+    .filter((c) => c.getCanSort())
+    .flatMap((c) => {
+      const label = String(c.columnDef.header ?? c.id)
+      return [
+        { value: `${c.id}:asc`, label: `${label} · ascendente` },
+        { value: `${c.id}:desc`, label: `${label} · descendente` },
+      ]
+    }),
+)
+const sortSelectOptions = computed(() => [{ value: '', label: 'Sin ordenar' }, ...sortOptions.value])
+const sortValue = computed(() => {
+  const s = sorting.value[0]
+  return s ? `${s.id}:${s.desc ? 'desc' : 'asc'}` : ''
+})
+function onCardSort(value: unknown) {
+  const [id, dir] = String(value ?? '').split(':')
+  sorting.value = id ? [{ id, desc: dir === 'desc' }] : []
+}
 </script>
 
 <template>
-  <div class="text-gray-800 dark:text-white/90">
+  <div class="markap-dt text-gray-800 dark:text-white/90">
     <!-- ── Toolbar (CardHeader de las tablas TailAdmin) ── -->
     <div
       v-if="showToolbar"
@@ -228,9 +314,32 @@ function toggleRow(row: Row<unknown>, value: boolean | 'indeterminate') {
       </Badge>
     </div>
 
+    <!-- ── Orden y selección en vista de tarjeta (no hay cabeceras) ── -->
+    <div
+      v-if="sortOptions.length > 0 || (selectable && table.getRowModel().rows.length > 0)"
+      class="markap-dt__card-bar items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800"
+    >
+      <Checkbox
+        v-if="selectable"
+        :model-value="headerSelectState"
+        aria-label="Seleccionar todas las filas de la página"
+        @update:model-value="toggleAllPage"
+      />
+      <FormSelect
+        v-if="sortOptions.length > 0"
+        size="sm"
+        class="ms-auto min-w-0 flex-1"
+        aria-label="Ordenar por"
+        placeholder="Ordenar por…"
+        :model-value="sortValue || null"
+        :options="sortSelectOptions"
+        @update:model-value="onCardSort"
+      />
+    </div>
+
     <!-- ── Tabla ── -->
     <div class="max-w-full overflow-x-auto custom-scrollbar">
-      <table class="w-full min-w-[600px]">
+      <table ref="tableRef" class="markap-dt__table w-full min-w-[600px]">
         <thead class="border-b border-gray-100 dark:border-gray-800">
           <tr v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <!-- Checkbox select-all -->
@@ -289,6 +398,7 @@ function toggleRow(row: Row<unknown>, value: boolean | 'indeterminate') {
         <tbody
           v-else-if="table.getRowModel().rows.length > 0"
           class="divide-y divide-gray-100 dark:divide-gray-800"
+          @mouseover="showTruncatedTitle"
         >
           <tr
             v-for="row in table.getRowModel().rows"

@@ -17,7 +17,7 @@ export const ventasRoutes: RouteRecordRaw[] = [
   {
     path: VENTAS_BASE_PATH,
     component: VentasLayout,
-    meta: { requiresAuth: true },
+    meta: { applicationSlug: 'ventas', requiresAuth: true },
     children: [
       {
         path: '',

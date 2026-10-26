@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref, computed, watch } from 'vue'
@@ -111,7 +114,7 @@ async function saveDelivery() {
       subtitle="Programación y confirmación de entregas al cliente."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="showNewModal = true">
+        <BaseButton v-if="canWrite" variant="primary" @click="showNewModal = true">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nueva entrega
       </BaseButton>
@@ -152,7 +155,7 @@ async function saveDelivery() {
         <FormInput v-model="newRecipient" label="Destinatario" />
         <FormTextarea v-model="newAddress" label="Dirección" :rows="2" />
         <FormTextarea v-model="newNotes" label="Notas" :rows="2" />
-        <BaseButton variant="primary" :loading="saving" @click="saveDelivery">Crear entrega</BaseButton>
+        <BaseButton v-if="canWrite" variant="primary" :loading="saving" @click="saveDelivery">Crear entrega</BaseButton>
       </div>
     </BaseModal>
   </div>

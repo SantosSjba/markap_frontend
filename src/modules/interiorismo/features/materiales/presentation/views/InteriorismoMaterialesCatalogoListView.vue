@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin, filterActions } = useApplicationAccess('interiorismo')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -132,7 +135,7 @@ const getActions = (
       subtitle="Código, categoría, marca, precio y stock para usar en presupuestos y obra."
     >
       <template #actions>
-        <BaseButton variant="primary" class="shrink-0" @click="goNew">
+        <BaseButton v-if="canWrite" variant="primary" class="shrink-0" @click="goNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo material
       </BaseButton>
@@ -174,7 +177,7 @@ const getActions = (
             <td class="py-3 px-4 text-sm">{{ formatQty((row as InteriorCatalogMaterialListItem).stock) }}</td>
             <td class="py-3 px-4 text-sm">{{ (row as InteriorCatalogMaterialListItem).imageCount }}</td>
             <td class="py-3 px-4 text-right">
-              <ActionsDropdown :items="getActions(row as InteriorCatalogMaterialListItem)" />
+              <ActionsDropdown :items="filterActions(getActions(row as InteriorCatalogMaterialListItem))" />
             </td>
           </template>
         </DataTable>
@@ -207,7 +210,7 @@ const getActions = (
       </div>
       <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
-        <BaseButton variant="danger" :loading="isDeletingMaterial" @click="executeDelete">
+        <BaseButton v-if="canAdmin" variant="danger" :loading="isDeletingMaterial" @click="executeDelete">
           <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
           Eliminar
         </BaseButton>

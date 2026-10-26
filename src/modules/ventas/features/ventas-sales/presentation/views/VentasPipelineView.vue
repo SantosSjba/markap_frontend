@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
 import { reactive, ref, watch, computed, nextTick } from 'vue'
@@ -270,7 +273,7 @@ const boardBusy = computed(() => savingMove.value)
         <BaseButton variant="secondary" icon="lucide:list" @click="router.push('/ventas/procesos')">
           Ver listado
         </BaseButton>
-        <BaseButton variant="primary" icon="lucide:plus" @click="goNewProcess">
+        <BaseButton v-if="canWrite" variant="primary" icon="lucide:plus" @click="goNewProcess">
           Nuevo proceso
         </BaseButton>
       </template>

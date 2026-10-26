@@ -12,7 +12,7 @@ export const alquileresRoutes: RouteRecordRaw[] = [
   {
     path: ALQUILERES_BASE_PATH,
     component: AlquileresLayout,
-    meta: { requiresAuth: true },
+    meta: { applicationSlug: 'alquileres', requiresAuth: true },
     children: [
       {
         path: '',

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -360,7 +363,7 @@ function onMarkPaid(row: BuyerPaymentRow) {
 
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton type="button" variant="secondary" icon="lucide:x" @click="showNew = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" icon="lucide:save" :loading="creating">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" type="submit" variant="primary" icon="lucide:save" :loading="creating">Guardar</BaseButton>
         </div>
       </form>
     </BaseModal>

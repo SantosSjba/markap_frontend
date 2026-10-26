@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
 import { ventasPropertiesRepositoryKey } from '../../../propiedades/application/ports/ventas-properties.port'
@@ -554,7 +557,7 @@ function submit() {
         icon="lucide:percent"
       >
         <div class="flex justify-end mb-3">
-          <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addCommissionRow">
+          <BaseButton v-if="canWrite" type="button" variant="outline" size="sm" icon="lucide:plus" @click="addCommissionRow">
             Agregar asesor
           </BaseButton>
         </div>
@@ -788,7 +791,7 @@ function submit() {
         icon="lucide:users"
       >
         <div class="flex justify-end mb-3">
-          <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addBuyer">
+          <BaseButton v-if="canWrite" type="button" variant="outline" size="sm" icon="lucide:plus" @click="addBuyer">
             Agregar comprador
           </BaseButton>
         </div>
@@ -844,7 +847,7 @@ function submit() {
 
       <div class="flex justify-end gap-2 pt-2">
         <BaseButton variant="outline" icon="lucide:x" @click="router.push('/ventas/procesos')">Cancelar</BaseButton>
-        <BaseButton variant="primary" icon="lucide:plus-circle" :loading="isPending" @click="submit">Crear proceso</BaseButton>
+        <BaseButton v-if="canWrite" variant="primary" icon="lucide:plus-circle" :loading="isPending" @click="submit">Crear proceso</BaseButton>
       </div>
     </div>
   </div>

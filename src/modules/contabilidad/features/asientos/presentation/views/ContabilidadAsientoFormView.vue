@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
@@ -280,7 +283,7 @@ function applySelectedTemplate() {
     >
       <template #actions>
         <BaseButton variant="secondary" @click="goBack">Cancelar</BaseButton>
-        <BaseButton variant="secondary" :loading="creating || updating" @click="saveDraft">
+        <BaseButton v-if="canWrite" variant="secondary" :loading="creating || updating" @click="saveDraft">
           Guardar borrador
         </BaseButton>
         <BaseButton variant="primary" :loading="creating || updating || posting" @click="saveAndPost">
@@ -319,7 +322,7 @@ function applySelectedTemplate() {
       <BaseCard padding="none" class="block overflow-hidden">
         <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-white/90">Líneas del asiento</h2>
-          <BaseButton variant="secondary" size="sm" @click="addLine">
+          <BaseButton v-if="canWrite" variant="secondary" size="sm" @click="addLine">
             <AppIcon icon="lucide:plus" :size="14" class="mr-1" />
             Agregar línea
           </BaseButton>

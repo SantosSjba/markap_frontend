@@ -5,11 +5,11 @@ import { useContabilidadAppLayout } from '../composables/useContabilidadAppLayou
 import ContabilidadContextInfoBar from '../components/ContabilidadContextInfoBar.vue'
 import { useContabilidadContext } from '../composables/useContabilidadContext'
 /**
- * ContabilidadLayout — shell de TailAdmin (`AdminLayout`) con los menús de la BD por slug `contabilidad`.
+ * ContabilidadLayout — shell de TailAdmin (`AdminLayout`) con el menú estático de `contabilidad`.
  * Notificaciones: filtradas a esta app en el header.
  */
 
-const { application, menus, menusLoading } = useContabilidadAppLayout()
+const { application, menus } = useContabilidadAppLayout()
 
 const applicationInfo = computed(() =>
   application.value
@@ -29,7 +29,6 @@ useContabilidadContext()
   <AdminLayout
     :menus="menus"
     :application="applicationInfo"
-    :loading="menusLoading"
     minimal-user-menu
     profile-to="/contabilidad/perfil"
     notifications-application-slug="contabilidad"

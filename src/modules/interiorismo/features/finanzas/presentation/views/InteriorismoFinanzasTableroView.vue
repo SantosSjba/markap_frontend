@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('interiorismo')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -419,7 +422,7 @@ function cuotaLabel(scheduleId: string | null): string {
 
           <div v-show="activeTab === 'programacion'" class="space-y-4">
             <div class="flex justify-end">
-              <BaseButton variant="primary" size="sm" type="button" @click="openCreateSchedule">
+              <BaseButton v-if="canWrite" variant="primary" size="sm" type="button" @click="openCreateSchedule">
                 Nueva línea de cobro
               </BaseButton>
             </div>
@@ -447,7 +450,7 @@ function cuotaLabel(scheduleId: string | null): string {
                 <td class="py-2 px-3 text-sm">{{ (row as any).statusLabel }}</td>
                 <td class="py-2 px-3 text-sm max-w-[200px] truncate" :title="(row as any).concept">{{ (row as any).concept }}</td>
                 <td class="py-2 px-3 text-right space-x-2 whitespace-nowrap">
-                  <BaseButton @click="openEditSchedule(row as InteriorFinanceScheduleDto)" variant="link" class="text-xs">Editar</BaseButton>
+                  <BaseButton v-if="canWrite" @click="openEditSchedule(row as InteriorFinanceScheduleDto)" variant="link" class="text-xs">Editar</BaseButton>
                   <BaseButton v-if="(row as InteriorFinanceScheduleDto).status !== 'WAIVED'" @click="openWaive(row as InteriorFinanceScheduleDto)" variant="link" class="text-warning-600 dark:text-orange-400 text-xs">Condonar</BaseButton>
                   <BaseButton @click="removeSchedule(row as InteriorFinanceScheduleDto)" variant="link" class="text-error-500 dark:text-error-400 text-xs">Quitar</BaseButton>
                 </td>
@@ -457,7 +460,7 @@ function cuotaLabel(scheduleId: string | null): string {
 
           <div v-show="activeTab === 'pagos'" class="space-y-4">
             <div class="flex justify-end">
-              <BaseButton variant="primary" size="sm" type="button" @click="openCreatePayment">Registrar pago</BaseButton>
+              <BaseButton v-if="canWrite" variant="primary" size="sm" type="button" @click="openCreatePayment">Registrar pago</BaseButton>
             </div>
             <DataTable
               empty-text="Sin pagos registrados."
@@ -481,7 +484,7 @@ function cuotaLabel(scheduleId: string | null): string {
                 <td class="py-2 px-3 text-sm">{{ (row as any).statusLabel }}</td>
                 <td class="py-2 px-3 text-xs">{{ (row as any).cuota }}</td>
                 <td class="py-2 px-3 text-right space-x-2">
-                  <BaseButton @click="openEditPayment(row as any)" variant="link" class="text-xs">Editar</BaseButton>
+                  <BaseButton v-if="canWrite" @click="openEditPayment(row as any)" variant="link" class="text-xs">Editar</BaseButton>
                   <BaseButton @click="removePayment((row as { id: string }).id)" variant="link" class="text-error-500 dark:text-error-400 text-xs">Quitar</BaseButton>
                 </td>
               </template>
@@ -619,7 +622,7 @@ function cuotaLabel(scheduleId: string | null): string {
         <FormInput v-bind="schBinds.sortOrder" type="number" label="Orden (opcional)" />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton variant="outline" type="button" @click="schModal = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="submit" :loading="createSch.isPending.value || updateSch.isPending.value">
+          <BaseButton v-if="canWrite" variant="primary" type="submit" :loading="createSch.isPending.value || updateSch.isPending.value">
             Guardar
           </BaseButton>
         </div>
@@ -635,7 +638,7 @@ function cuotaLabel(scheduleId: string | null): string {
         <FormSelect v-bind="payBinds.scheduleItemId" label="Vincular a cuota (opcional)" :options="scheduleLinkOptions" />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton variant="outline" type="button" @click="payModal = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="submit" :loading="createPay.isPending.value || updatePay.isPending.value">
+          <BaseButton v-if="canWrite" variant="primary" type="submit" :loading="createPay.isPending.value || updatePay.isPending.value">
             Guardar
           </BaseButton>
         </div>

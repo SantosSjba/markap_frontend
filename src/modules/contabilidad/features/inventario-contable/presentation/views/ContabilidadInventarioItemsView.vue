@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -75,7 +78,7 @@ function submit() {
       subtitle="Catálogo permanente valorizado — cuentas 20 y 21."
     >
       <template #actions>
-        <BaseButton @click="openModal">Nuevo ítem</BaseButton>
+        <BaseButton v-if="canWrite" @click="openModal">Nuevo ítem</BaseButton>
       </template>
     </PageHeader>
 
@@ -115,7 +118,7 @@ function submit() {
       </div>
       <template #footer>
         <BaseButton variant="secondary" @click="modalOpen = false">Cancelar</BaseButton>
-        <BaseButton :loading="saving" @click="submit">Guardar</BaseButton>
+        <BaseButton v-if="canWrite" :loading="saving" @click="submit">Guardar</BaseButton>
       </template>
     </BaseModal>
   </div>

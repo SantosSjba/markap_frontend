@@ -16,7 +16,7 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
   {
     path: INTERIORISMO_BASE_PATH,
     component: InteriorismoLayout,
-    meta: { requiresAuth: true },
+    meta: { applicationSlug: 'interiorismo', requiresAuth: true },
     children: [
       {
         path: '',

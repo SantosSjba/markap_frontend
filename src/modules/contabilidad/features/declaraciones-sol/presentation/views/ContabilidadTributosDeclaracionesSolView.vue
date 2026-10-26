@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import { contabilidadSolRepositoryKey } from '../../application/ports/contabilidad-sol.port'
 import { useService } from '@shared/presentation/di/services'
 import { computed, ref, watch } from 'vue'
@@ -165,7 +168,7 @@ function formatPeriodLabel(row: ContabilidadSunatDeclarationLogDTO) {
           <FormCheckbox v-model="credForm.isActive" label="Credenciales activas" />
         </div>
         <div class="sm:col-span-2 flex justify-end">
-          <BaseButton type="submit" variant="secondary" :loading="savingCred">Guardar credenciales</BaseButton>
+          <BaseButton v-if="canWrite" type="submit" variant="secondary" :loading="savingCred">Guardar credenciales</BaseButton>
         </div>
       </form>
     </FormSectionCard>

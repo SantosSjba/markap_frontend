@@ -35,6 +35,6 @@ export const authApiRepository: AuthRepository = {
   },
 
   logout(): void {
-    // Client-side only
+    void apiClient.post(`${AUTH_ENDPOINT}/logout`).catch(() => undefined)
   },
 }

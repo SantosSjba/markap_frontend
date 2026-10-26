@@ -7,6 +7,7 @@ import type { RentalsByMonthItem } from '../../features/reportes/domain/reportes
  * DashboardBarChart
  * Gráfico de barras SVG puro (sin dependencias externas) para contratos por mes.
  * Muestra nuevos contratos, vencidos y activos al fin de mes.
+ * Slot `actions`: reemplaza la leyenda del header (ej. selector de serie).
  */
 
 interface Props {
@@ -48,6 +49,7 @@ const seriesConfig = {
 
 const series = computed(() => props.data.map((d) => d[props.mode] as number))
 const maxVal = computed(() => Math.max(...series.value, 1))
+const seriesTotal = computed(() => series.value.reduce((acc, v) => acc + v, 0))
 
 interface Bar {
   x: number
@@ -107,27 +109,30 @@ const totalWidth = 480
   <BaseCard padding="none" class="block overflow-hidden">
     <!-- Header -->
     <div
-      class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800"
+      class="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b border-gray-200 dark:border-gray-800"
     >
       <div>
         <h3 class="font-semibold text-sm text-gray-800 dark:text-white/90">
           {{ title }}
         </h3>
         <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
-          {{ seriesConfig[mode].label }} por mes
+          {{ seriesConfig[mode].label }} por mes<template v-if="!loading && mode !== 'activeAtEndOfMonth'">
+            · {{ seriesTotal }} en el año</template>
         </p>
       </div>
 
-      <!-- Legend -->
-      <div class="flex items-center gap-1.5">
-        <span
-          class="w-2.5 h-2.5 rounded-sm"
-          :style="{ backgroundColor: seriesConfig[mode].color }"
-        />
-        <span class="text-xs text-gray-500 dark:text-gray-400">
-          {{ seriesConfig[mode].label }}
-        </span>
-      </div>
+      <!-- Selector de serie (slot) o leyenda -->
+      <slot name="actions">
+        <div class="flex items-center gap-1.5">
+          <span
+            class="w-2.5 h-2.5 rounded-sm"
+            :style="{ backgroundColor: seriesConfig[mode].color }"
+          />
+          <span class="text-xs text-gray-500 dark:text-gray-400">
+            {{ seriesConfig[mode].label }}
+          </span>
+        </div>
+      </slot>
     </div>
 
     <!-- Chart area -->

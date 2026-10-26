@@ -3,11 +3,11 @@ import { computed } from 'vue'
 import AdminLayout from '@app/layouts/AdminLayout.vue'
 import { useVentasAppLayout } from '../composables/useVentasAppLayout'
 /**
- * VentasLayout — shell de TailAdmin (`AdminLayout`) con los menús de la BD por slug `ventas`.
+ * VentasLayout — shell de TailAdmin (`AdminLayout`) con el menú estático de `ventas`.
  * Notificaciones: filtradas a esta app en el header.
  */
 
-const { application, menus, menusLoading } = useVentasAppLayout()
+const { application, menus } = useVentasAppLayout()
 
 const applicationInfo = computed(() =>
   application.value
@@ -25,7 +25,6 @@ const applicationInfo = computed(() =>
   <AdminLayout
     :menus="menus"
     :application="applicationInfo"
-    :loading="menusLoading"
     minimal-user-menu
     profile-to="/ventas/perfil"
     notifications-application-slug="ventas"

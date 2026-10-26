@@ -1,28 +1,15 @@
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import {
-  useMyApplications,
-  useApplicationMenus,
-} from '@modules/applications/presentation/composables/useApplications'
+import { useMyApplications } from '@modules/applications/presentation/composables/useApplications'
+import { ALQUILERES_MENUS } from '../../config/menu'
 /**
- * Composable de presentación: depende de Vue Router + menús por slug (Alquileres).
+ * Layout de Alquileres: datos de la aplicación del usuario + menú lateral estático (`config/menu.ts`).
  */
 export function useAlquileresAppLayout() {
-  const route = useRoute()
-  const slug = computed(() => {
-    const seg = route.path.split('/').filter(Boolean)[0]
-    return seg || 'alquileres'
-  })
-
   const { data: applications } = useMyApplications()
-  const application = computed(() => applications.value?.find((a) => a.slug === slug.value) ?? null)
-
-  const { data: menus, isLoading: menusLoading } = useApplicationMenus(slug)
+  const application = computed(() => applications.value?.find((a) => a.slug === 'alquileres') ?? null)
 
   return {
-    slug,
     application,
-    menus: computed(() => menus.value ?? []),
-    menusLoading,
+    menus: ALQUILERES_MENUS,
   }
 }

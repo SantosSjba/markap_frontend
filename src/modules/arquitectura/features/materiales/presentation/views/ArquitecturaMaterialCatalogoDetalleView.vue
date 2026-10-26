@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { useService } from '@shared/presentation/di/services'
@@ -159,10 +162,10 @@ const sortedImages = computed(() =>
           <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1.5" />
           Listado
         </BaseButton>
-        <BaseButton variant="danger" type="button" :loading="deleteMut.isPending.value" @click="remove">
+        <BaseButton v-if="canAdmin" variant="danger" type="button" :loading="deleteMut.isPending.value" @click="remove">
           Eliminar
         </BaseButton>
-        <BaseButton variant="primary" type="button" :loading="updateMut.isPending.value" @click="save">
+        <BaseButton v-if="canWrite" variant="primary" type="button" :loading="updateMut.isPending.value" @click="save">
           Guardar cambios
         </BaseButton>
       </div>
@@ -252,7 +255,7 @@ const sortedImages = computed(() =>
             :error="imageError"
             @error="(m: string) => (imageError = m)"
           />
-          <BaseButton
+          <BaseButton v-if="canWrite"
             variant="secondary"
             type="button"
             :loading="uploadMut.isPending.value"

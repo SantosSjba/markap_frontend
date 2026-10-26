@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref, computed } from 'vue'
@@ -58,7 +61,7 @@ function goNew() {
       subtitle="Pedidos a proveedores; al recibir se actualiza el inventario."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="goNew">
+        <BaseButton v-if="canWrite" variant="primary" @click="goNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nueva orden
       </BaseButton>

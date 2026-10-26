@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import { computed, ref } from 'vue'
@@ -12,10 +11,17 @@ import {
   useMonthlyMetrics,
   useRentalsByMonth,
 } from '../../features/reportes/presentation/composables/useReportes'
+import {
+  useOverduePayments,
+  usePaymentStats,
+} from '../../features/cobranzas/presentation/composables/usePayments'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import DashboardAlertasList from '../components/DashboardAlertasList.vue'
 import DashboardBarChart from '../components/DashboardBarChart.vue'
 import DashboardAccionesRapidas from '../components/DashboardAccionesRapidas.vue'
+import DashboardEstadoContratos from '../components/DashboardEstadoContratos.vue'
+import DashboardCobranzaMes from '../components/DashboardCobranzaMes.vue'
+import DashboardFinanzasCartera from '../components/DashboardFinanzasCartera.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { formatDate } from '@shared/utils/formatters'
 const authStore = useAuthStore()
@@ -26,6 +32,8 @@ const summaryQuery = useReportsSummary()
 const expiringQuery = useContractsExpiring('alquileres', 30)
 const contractStatusQuery = useContractStatusSummary()
 const monthlyMetricsQuery = useMonthlyMetrics()
+const paymentStatsQuery = usePaymentStats()
+const overdueQuery = useOverduePayments()
 const rentalsByMonthQuery = useRentalsByMonth(
   'alquileres',
   computed(() => ({ year: currentYear.value })),
@@ -35,8 +43,6 @@ const loading = computed(
   () =>
     rentalStatsQuery.isPending.value ||
     summaryQuery.isPending.value ||
-    expiringQuery.isPending.value ||
-    contractStatusQuery.isPending.value ||
     monthlyMetricsQuery.isPending.value,
 )
 
@@ -63,6 +69,7 @@ const metrics = computed(
 )
 const expiringItems = computed(() => expiringQuery.data.value ?? [])
 const rentalsByMonth = computed(() => rentalsByMonthQuery.data.value ?? [])
+const overdueItems = computed(() => overdueQuery.data.value ?? [])
 
 const greetingHour = new Date().getHours()
 const greeting =
@@ -83,7 +90,7 @@ function formatPercent(val: number) {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4">
 
     <!-- ── Greeting header ── -->
     <PageHeader
@@ -104,49 +111,40 @@ function formatPercent(val: number) {
       </template>
     </PageHeader>
 
-    <!-- ── KPI row ── -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Contratos totales -->
-      <StatsCard
-        title="Contratos Totales"
-        :value="stats.total"
-        :loading="loading"
-      >
+    <!-- ── Acciones rápidas ── -->
+    <DashboardAccionesRapidas />
+
+    <!-- ── KPIs (compactos) ── -->
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      <StatsCard compact title="Contratos Totales" :value="stats.total" :loading="loading">
         <template #icon><AppIcon icon="lucide:file-text" :size="20" /></template>
       </StatsCard>
-
-      <!-- Vigentes -->
       <StatsCard
+        compact
         title="Vigentes"
         :value="stats.vigentes"
+        :subtitle="metrics.contratosRenovados > 0 ? `${metrics.contratosRenovados} renovados este mes` : undefined"
         :loading="loading"
       >
         <template #icon><AppIcon icon="lucide:circle-check" :size="20" /></template>
       </StatsCard>
-
-      <!-- Por vencer -->
-      <StatsCard
-        title="Por Vencer (30 días)"
-        :value="stats.porVencer"
-        :loading="loading"
-      >
+      <StatsCard compact title="Por Vencer (30 días)" :value="stats.porVencer" :loading="loading">
         <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" /></template>
       </StatsCard>
-
-      <!-- Tasa de ocupación -->
+      <StatsCard compact title="Vencidos" :value="stats.vencidos" :loading="loading">
+        <template #icon><AppIcon icon="lucide:calendar-x" :size="20" /></template>
+      </StatsCard>
       <StatsCard
+        compact
         title="Tasa de Ocupación"
         :value="formatPercent(metrics.tasaOcupacion)"
+        :subtitle="`${summary.propiedadesSinContrato} libres`"
         :loading="loading"
       >
         <template #icon><AppIcon icon="lucide:home" :size="20" /></template>
       </StatsCard>
-    </div>
-
-    <!-- ── KPI row 2 (métricas operativas) ── -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Tasa de cobranza -->
       <StatsCard
+        compact
         title="Tasa de Cobranza"
         :value="formatPercent(metrics.tasaCobranza)"
         subtitle="mes actual"
@@ -154,124 +152,69 @@ function formatPercent(val: number) {
       >
         <template #icon><AppIcon icon="lucide:circle-dollar-sign" :size="20" /></template>
       </StatsCard>
-
-      <!-- Clientes activos -->
       <StatsCard
+        compact
         title="Clientes Activos"
         :value="summary.clientesActivos"
+        :subtitle="metrics.clientesNuevos > 0 ? `+${metrics.clientesNuevos} este mes` : undefined"
         :loading="loading"
       >
         <template #icon><AppIcon icon="lucide:users" :size="20" /></template>
       </StatsCard>
-
-      <!-- Propiedades sin contrato -->
       <StatsCard
-        title="Propiedades Libres"
-        :value="summary.propiedadesSinContrato"
-        subtitle="sin contrato activo"
+        compact
+        title="Clientes con Incidencias"
+        :value="summary.clientesConIncidencias"
+        subtitle="cuotas vencidas"
         :loading="loading"
       >
-        <template #icon><AppIcon icon="lucide:door-open" :size="20" /></template>
-      </StatsCard>
-
-      <!-- Contratos renovados -->
-      <StatsCard
-        title="Renovados este mes"
-        :value="metrics.contratosRenovados"
-        :loading="loading"
-      >
-        <template #icon><AppIcon icon="lucide:refresh-cw" :size="20" /></template>
+        <template #icon><AppIcon icon="lucide:user-x" :size="20" /></template>
       </StatsCard>
     </div>
 
-    <!-- ── Acciones rápidas ── -->
-    <DashboardAccionesRapidas />
-
     <!-- ── Alertas + Gráfico ── -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-      <!-- Alertas: 2/5 -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
       <div class="lg:col-span-2">
         <DashboardAlertasList
           :items="expiringItems"
           :loading="expiringQuery.isPending.value"
-          :max-visible="6"
+          :max-visible="4"
+          class="h-full"
         />
       </div>
 
-      <!-- Gráfico: 3/5 -->
-      <div class="lg:col-span-3 flex flex-col gap-3">
-        <!-- Tabs selector -->
-        <BaseTabs v-model="chartMode" :tabs="chartTabs" variant="segmented" class="self-start" />
-
+      <div class="lg:col-span-3">
         <DashboardBarChart
           :data="rentalsByMonth"
           :loading="rentalsByMonthQuery.isPending.value"
           :mode="chartMode"
           :title="`Contratos por Mes — ${currentYear}`"
-          class="flex-1"
-        />
+          class="h-full"
+        >
+          <template #actions>
+            <BaseTabs v-model="chartMode" :tabs="chartTabs" variant="segmented" />
+          </template>
+        </DashboardBarChart>
       </div>
     </div>
 
-    <!-- ── Estado de contratos (donut visual simple) ── -->
-    <FormSectionCard
-      title="Estado de Contratos"
-      dense
-    >
-      <div v-if="loading" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div
-          v-for="i in 4"
-          :key="i"
-          class="h-16 rounded-lg animate-pulse bg-gray-200 dark:bg-gray-800"
-        />
-      </div>
-      <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <!-- Vigentes -->
-        <div
-          class="flex flex-col items-center p-4 rounded-xl gap-1 bg-success-50 dark:bg-success-500/15"
-        >
-          <span class="text-2xl font-bold text-success-600 dark:text-success-500">
-            {{ contractStatusQuery.data.value?.vigentes ?? 0 }}
-          </span>
-          <span class="text-xs font-medium text-center text-success-600 dark:text-success-500">
-            Vigentes (90+ días)
-          </span>
-        </div>
-        <!-- Por vencer (61-90d) -->
-        <div
-          class="flex flex-col items-center p-4 rounded-xl gap-1 bg-blue-light-50 dark:bg-blue-light-500/15"
-        >
-          <span class="text-2xl font-bold text-blue-light-500">
-            {{ contractStatusQuery.data.value?.porVencer ?? 0 }}
-          </span>
-          <span class="text-xs font-medium text-center text-blue-light-500">
-            Por Vencer (61-90d)
-          </span>
-        </div>
-        <!-- Próximos (31-60d) -->
-        <div
-          class="flex flex-col items-center p-4 rounded-xl gap-1 bg-warning-50 dark:bg-warning-500/15"
-        >
-          <span class="text-2xl font-bold text-warning-600 dark:text-orange-400">
-            {{ contractStatusQuery.data.value?.proximos ?? 0 }}
-          </span>
-          <span class="text-xs font-medium text-center text-warning-600 dark:text-orange-400">
-            Próximos (31-60d)
-          </span>
-        </div>
-        <!-- Urgentes (0-30d) -->
-        <div
-          class="flex flex-col items-center p-4 rounded-xl gap-1 bg-error-50 dark:bg-error-500/15"
-        >
-          <span class="text-2xl font-bold text-error-500 dark:text-error-400">
-            {{ contractStatusQuery.data.value?.urgentes ?? 0 }}
-          </span>
-          <span class="text-xs font-medium text-center text-error-500 dark:text-error-400">
-            Urgentes (0-30d)
-          </span>
-        </div>
-      </div>
-    </FormSectionCard>
+    <!-- ── Estado, cobranza y finanzas ── -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <DashboardEstadoContratos
+        :data="contractStatusQuery.data.value"
+        :loading="contractStatusQuery.isPending.value"
+      />
+      <DashboardCobranzaMes
+        :stats="paymentStatsQuery.data.value"
+        :overdue="overdueItems"
+        :loading="paymentStatsQuery.isPending.value || overdueQuery.isPending.value"
+      />
+      <DashboardFinanzasCartera
+        :data="rentalsByMonth"
+        :loading="rentalsByMonthQuery.isPending.value"
+        class="md:col-span-2 xl:col-span-1"
+      />
+    </div>
 
   </div>
 </template>

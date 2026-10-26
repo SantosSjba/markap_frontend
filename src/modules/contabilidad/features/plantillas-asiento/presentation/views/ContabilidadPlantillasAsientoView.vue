@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import { computed, ref, watch } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -144,7 +147,7 @@ watch(modalOpen, (open) => {
       subtitle="Modelos reutilizables con cuentas, importes y centros de costo predefinidos."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="openNew">
+        <BaseButton v-if="canWrite" variant="primary" @click="openNew">
           <AppIcon icon="lucide:plus" :size="16" class="mr-1" />
           Nueva plantilla
         </BaseButton>
@@ -173,7 +176,7 @@ watch(modalOpen, (open) => {
             </Badge>
           </td>
           <td class="py-3 px-4 text-right">
-            <BaseButton variant="secondary" size="sm" @click="openEdit(row as ContabilidadJournalTemplateDTO)">
+            <BaseButton v-if="canWrite" variant="secondary" size="sm" @click="openEdit(row as ContabilidadJournalTemplateDTO)">
               Editar
             </BaseButton>
           </td>
@@ -231,7 +234,7 @@ watch(modalOpen, (open) => {
 
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton type="button" variant="secondary" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" :loading="creating || updating">
+          <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="creating || updating">
             {{ editing ? 'Guardar' : 'Crear' }}
           </BaseButton>
         </div>

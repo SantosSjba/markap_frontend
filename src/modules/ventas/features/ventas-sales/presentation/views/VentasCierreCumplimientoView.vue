@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import IconButton from '@shared/presentation/components/ui/IconButton.vue'
@@ -514,7 +517,7 @@ const hasPaymentEvidence = computed(
         class="fixed bottom-0 left-0 right-0 z-20 border-t px-4 py-3 flex justify-end gap-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-dark"
       >
         <BaseButton variant="outline" icon="lucide:arrow-left" @click="goBack">Volver</BaseButton>
-        <BaseButton variant="primary" icon="lucide:clipboard-check" :loading="savingChecklist" @click="onSaveChecklist">
+        <BaseButton v-if="canWrite" variant="primary" icon="lucide:clipboard-check" :loading="savingChecklist" @click="onSaveChecklist">
           Guardar checklist
         </BaseButton>
       </div>

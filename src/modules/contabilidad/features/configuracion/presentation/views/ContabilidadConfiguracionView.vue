@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
@@ -264,7 +267,7 @@ const fiscalYearStartMonthModel = computed({
           hint="Código INEI de 6 dígitos"
         />
         <div class="flex justify-end">
-          <BaseButton type="submit" variant="primary" :loading="savingCompany">Guardar empresa</BaseButton>
+          <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="savingCompany">Guardar empresa</BaseButton>
         </div>
       </form>
     </section>
@@ -299,7 +302,7 @@ const fiscalYearStartMonthModel = computed({
         </div>
 
         <div class="flex justify-end">
-          <BaseButton type="submit" variant="primary" :loading="savingSettings">Guardar tributario</BaseButton>
+          <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="savingSettings">Guardar tributario</BaseButton>
         </div>
       </form>
     </section>
@@ -330,7 +333,7 @@ const fiscalYearStartMonthModel = computed({
             label="Serie activa"
           />
             <div class="flex justify-end">
-            <BaseButton variant="primary" size="sm" :loading="savingSeries" @click="saveSeriesRow(row)">
+            <BaseButton v-if="canWrite" variant="primary" size="sm" :loading="savingSeries" @click="saveSeriesRow(row)">
               Guardar
             </BaseButton>
           </div>
@@ -380,7 +383,7 @@ const fiscalYearStartMonthModel = computed({
                 {{ row.nextPreview }}
               </td>
               <td class="py-3 px-4 text-right">
-                <BaseButton variant="ghost" size="sm" :loading="savingSeries" @click="saveNumberingRow(row)">
+                <BaseButton v-if="canWrite" variant="ghost" size="sm" :loading="savingSeries" @click="saveNumberingRow(row)">
                   Guardar
                 </BaseButton>
               </td>

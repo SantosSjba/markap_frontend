@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
@@ -149,7 +152,7 @@ async function onClose() {
             />
           </div>
           <div class="shrink-0 lg:pb-0.5">
-            <BaseButton
+            <BaseButton v-if="canWrite"
               variant="secondary"
               class="w-full lg:w-auto"
               :loading="savingStatement"

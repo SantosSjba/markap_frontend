@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin, filterActions } = useApplicationAccess('ventas')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ventasPropertiesRepositoryKey } from '../../application/ports/ventas-properties.port'
@@ -419,7 +422,7 @@ async function handleExport() {
           <ExcelIcon class="w-5 h-5" />
           Exportar
         </BaseButton>
-        <BaseButton variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
+        <BaseButton v-if="canWrite" variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
           <AppIcon icon="lucide:plus" :size="18" />
           Nueva propiedad
         </BaseButton>
@@ -630,7 +633,7 @@ async function handleExport() {
                 }}
               </td>
               <td class="py-3 px-4 text-right">
-                <ActionsDropdown :items="getActions(row as VentasPropertyListItem)" />
+                <ActionsDropdown :items="filterActions(getActions(row as VentasPropertyListItem))" />
               </td>
             </template>
           </DataTable>
@@ -665,7 +668,7 @@ async function handleExport() {
         />
         <div class="flex justify-end gap-3 mt-6">
           <BaseButton variant="outline" icon="lucide:x" @click="closeStatusModal">Cancelar</BaseButton>
-          <BaseButton
+          <BaseButton v-if="canWrite"
             variant="primary"
             icon="lucide:save"
             :loading="updateListingStatusMutation.isPending.value"
@@ -696,7 +699,7 @@ async function handleExport() {
       </div>
       <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" icon="lucide:x" @click="closeDeleteModal">Cancelar</BaseButton>
-        <BaseButton variant="danger" icon="lucide:trash-2" :loading="isDeletingProperty" @click="executeDeleteProperty">
+        <BaseButton v-if="canAdmin" variant="danger" icon="lucide:trash-2" :loading="isDeletingProperty" @click="executeDeleteProperty">
           Eliminar
         </BaseButton>
       </div>

@@ -5,6 +5,7 @@ export const settingsRoutes: RouteRecordRaw[] = [
     component: () => import('../views/SettingsLayout.vue'),
     meta: { requiresAuth: true },
     children: [
+      {path:'audit',name:'settings-audit',component:()=>import('../views/AuditLogsView.vue'),meta:{title:'Auditoría',requiresAdmin:true}},
       {
         path: '',
         redirect: '/settings/profile',

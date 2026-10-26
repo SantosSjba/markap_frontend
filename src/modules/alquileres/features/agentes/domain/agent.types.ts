@@ -54,3 +54,6 @@ export interface UpdateAgentPayload {
   documentNumber?: string | null
   isActive?: boolean
 }
+
+/** Datos que produce el formulario de agente (alta y edición comparten forma) */
+export type AgentFormPayload = Omit<CreateAgentPayload, 'applicationSlug'>

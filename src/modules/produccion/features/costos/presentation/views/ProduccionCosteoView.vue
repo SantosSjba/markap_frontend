@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
@@ -208,10 +211,10 @@ async function saveSnapshot() {
     >
       <template #actions>
         <div class="flex flex-wrap gap-2">
-        <BaseButton variant="outline" :disabled="!furnitureId" :loading="snapshotMut.isPending.value" @click="saveSnapshot">
+        <BaseButton v-if="canWrite" variant="outline" :disabled="!furnitureId" :loading="snapshotMut.isPending.value" @click="saveSnapshot">
           Guardar snapshot
         </BaseButton>
-        <BaseButton variant="primary" :disabled="!furnitureId" :loading="updateMut.isPending.value" @click="save">
+        <BaseButton v-if="canWrite" variant="primary" :disabled="!furnitureId" :loading="updateMut.isPending.value" @click="save">
           Guardar costeo
         </BaseButton>
       </div>
@@ -294,7 +297,7 @@ async function saveSnapshot() {
       <section class="rounded-xl border p-4 space-y-3 border-gray-200 dark:border-gray-800">
         <div class="flex justify-between items-center">
           <p class="text-sm font-semibold">Mano de obra</p>
-          <BaseButton variant="outline" size="sm" @click="addLabor">
+          <BaseButton v-if="canWrite" variant="outline" size="sm" @click="addLabor">
             <AppIcon icon="lucide:plus" :size="16" class="mr-1" /> Agregar
           </BaseButton>
         </div>
@@ -322,7 +325,7 @@ async function saveSnapshot() {
       <section class="rounded-xl border p-4 space-y-3 border-gray-200 dark:border-gray-800">
         <div class="flex justify-between items-center">
           <p class="text-sm font-semibold">Gastos adicionales</p>
-          <BaseButton variant="outline" size="sm" @click="addExtra">
+          <BaseButton v-if="canWrite" variant="outline" size="sm" @click="addExtra">
             <AppIcon icon="lucide:plus" :size="16" class="mr-1" /> Agregar
           </BaseButton>
         </div>

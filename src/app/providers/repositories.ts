@@ -141,6 +141,8 @@ import { ventasReportesApiRepository as ventasVentasReportesAdapter } from '@mod
 import { ventasSalesRepositoryKey as ventasVentasSalesKey } from '@modules/ventas/features/ventas-sales/application/ports/ventas-sales.port'
 import { ventasSalesApiRepository as ventasVentasSalesAdapter } from '@modules/ventas/features/ventas-sales/infrastructure/repositories/ventas-sales.api.repository'
 /** Concrete adapters are assembled here; consumers depend on feature ports. */
+import {auditLogsRepositoryKey} from '@modules/settings/application/ports/audit-logs.port'
+import {auditLogsApiRepository} from '@modules/settings/infrastructure/repositories/audit-logs.api.repository'
 export function installRepositories(app: App): void {
   provideService(app, incomeTaxRepositoryKey, incomeTaxApiRepository)
   provideService(app, alquileresAgentesKey, alquileresAgentesAdapter)
@@ -219,6 +221,7 @@ export function installRepositories(app: App): void {
   provideService(app, produccionReportesKey, produccionReportesAdapter)
   provideService(app, produccionTallerKey, produccionTallerAdapter)
   provideService(app, produccionVentasKey, produccionVentasAdapter)
+  provideService(app, auditLogsRepositoryKey, auditLogsApiRepository)
   provideService(app, settingsKey, settingsAdapter)
   provideService(app, settingsusersKey, settingsusersAdapter)
   provideService(app, ventasAgentesKey, ventasAgentesAdapter)

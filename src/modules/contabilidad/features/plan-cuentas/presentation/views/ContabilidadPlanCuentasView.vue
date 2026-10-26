@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -347,7 +350,7 @@ const codeReadonly = computed(
             <TableCell class="py-2.5 px-4 text-right">
               <div class="flex justify-end gap-1">
                 <BaseButton
-                  v-if="!row.isMovement && row.isActive"
+                  v-if="(!row.isMovement && row.isActive) && canWrite"
                   variant="ghost"
                   size="sm"
                   title="Agregar subcuenta"
@@ -355,7 +358,7 @@ const codeReadonly = computed(
                 >
                   <AppIcon icon="lucide:plus" :size="16" />
                 </BaseButton>
-                <BaseButton variant="ghost" size="sm" title="Editar" @click="openEdit(row)">
+                <BaseButton v-if="canWrite" variant="ghost" size="sm" title="Editar" @click="openEdit(row)">
                   <AppIcon icon="lucide:pencil" :size="16" />
                 </BaseButton>
                 <BaseButton
@@ -400,7 +403,7 @@ const codeReadonly = computed(
         <FormInput v-model.number="form.sortOrder" type="number" label="Orden" />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton type="button" variant="secondary" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" :loading="creating || updating">
+          <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="creating || updating">
             {{ modalMode === 'create' ? 'Crear cuenta' : 'Guardar cambios' }}
           </BaseButton>
         </div>

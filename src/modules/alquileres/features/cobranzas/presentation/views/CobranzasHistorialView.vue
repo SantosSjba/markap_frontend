@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import {useApplicationAccess} from '@modules/applications/presentation/composables/useApplicationAccess'
+const { filterActions } = useApplicationAccess('alquileres')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
@@ -324,7 +327,7 @@ async function handleExport() {
 
           <!-- Acciones -->
           <div class="flex justify-end">
-            <ActionsDropdown :items="getHistoryActions(item)" />
+            <ActionsDropdown :items="filterActions(getHistoryActions(item))" />
           </div>
         </div>
       </template>

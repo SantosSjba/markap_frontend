@@ -3,11 +3,11 @@ import { computed } from 'vue'
 import AdminLayout from '@app/layouts/AdminLayout.vue'
 import { useInteriorismoAppLayout } from '../composables/useInteriorismoAppLayout'
 /**
- * InteriorismoLayout — shell de TailAdmin (`AdminLayout`) con los menús de la BD por slug `interiorismo`.
+ * InteriorismoLayout — shell de TailAdmin (`AdminLayout`) con el menú estático de `interiorismo`.
  * Notificaciones: filtradas a esta app en el header.
  */
 
-const { application, menus, menusLoading } = useInteriorismoAppLayout()
+const { application, menus } = useInteriorismoAppLayout()
 
 const applicationInfo = computed(() =>
   application.value
@@ -25,7 +25,6 @@ const applicationInfo = computed(() =>
   <AdminLayout
     :menus="menus"
     :application="applicationInfo"
-    :loading="menusLoading"
     minimal-user-menu
     profile-to="/interiorismo/perfil"
     notifications-application-slug="interiorismo"

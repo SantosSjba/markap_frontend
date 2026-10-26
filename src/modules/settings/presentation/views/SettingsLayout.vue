@@ -11,6 +11,7 @@ import { useAuthStore } from '@modules/auth/presentation/stores/auth.store'
 const authStore = useAuthStore()
 
 const allMenuItems: (MenuItem & { adminOnly: boolean })[] = [
+  {id:'audit',label:'Auditoría',icon:'history',path:'/settings/audit',order:5,adminOnly:true},
   { id: 'profile', label: 'Mi Perfil', icon: 'user', path: '/settings/profile', order: 1, adminOnly: false },
   { id: 'users', label: 'Usuarios', icon: 'users', path: '/settings/users', order: 2, adminOnly: true },
   { id: 'roles', label: 'Roles', icon: 'shield-check', path: '/settings/roles', order: 3, adminOnly: true },

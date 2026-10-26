@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, filterActions } = useApplicationAccess('alquileres')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
@@ -430,7 +433,7 @@ async function handleExport() {
               <BaseButton @click="openNoteModal(item)" variant="secondary" size="sm" icon="lucide:pencil-line">{{ item.lastCommunicationDate ? 'Ver nota' : 'Nota' }}</BaseButton>
               <div class="flex items-center gap-1">
                 <BaseButton @click="openModal(item)" size="sm" icon="lucide:circle-dollar-sign" class="flex-1">Cobrar</BaseButton>
-                <ActionsDropdown :items="getOverdueActions(item)" />
+                <ActionsDropdown :items="filterActions(getOverdueActions(item))" />
               </div>
             </div>
           </div>
@@ -627,7 +630,7 @@ async function handleExport() {
 
     <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
       <BaseButton variant="ghost" @click="closeNoteModal">Cancelar</BaseButton>
-      <BaseButton
+      <BaseButton v-if="canWrite"
         variant="primary"
         type="submit"
         form="cobranzas-atrasos-note-form"

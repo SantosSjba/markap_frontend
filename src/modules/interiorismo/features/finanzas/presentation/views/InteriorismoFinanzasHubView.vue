@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import {useApplicationAccess} from '@modules/applications/presentation/composables/useApplicationAccess'
+const { filterActions } = useApplicationAccess('interiorismo')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -193,7 +196,7 @@ const goProjects = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)
               <Badge variant="neutral">{{ projectStatusLabel((row as InteriorProjectListItem).status, stageLabelMap) }}</Badge>
             </td>
             <td class="py-3 px-4 text-right">
-              <ActionsDropdown :items="getActions(row as InteriorProjectListItem)" />
+              <ActionsDropdown :items="filterActions(getActions(row as InteriorProjectListItem))" />
             </td>
           </template>
         </DataTable>

@@ -1,6 +1,7 @@
 import { apiClient } from '@shared/infrastructure/http/api-client'
 import type {
   CreatePropertyPayload,
+  Currency,
   Department,
   District,
   ListPropertiesParams,
@@ -16,6 +17,8 @@ import type { PropertiesRepository } from '../../domain/repositories/properties.
 export const propertiesApiRepository: PropertiesRepository = {
   getPropertyTypes: () =>
     apiClient.get<PropertyType[]>('/properties/property-types').then((r) => r.data),
+
+  getCurrencies: () => apiClient.get<Currency[]>('/properties/currencies').then((r) => r.data),
 
   getDepartments: () => apiClient.get<Department[]>('/properties/departments').then((r) => r.data),
 

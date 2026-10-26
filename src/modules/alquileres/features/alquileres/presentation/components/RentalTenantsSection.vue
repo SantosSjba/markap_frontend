@@ -1,24 +1,25 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { fieldLabelClass } from '@shared/presentation/components/forms/field-classes'
+import ClienteFormModal from '../../../clientes/presentation/components/ClienteFormModal.vue'
+/**
+ * RentalTenantsSection — inquilino principal + co-inquilinos. «Nuevo» abre el alta de
+ * inquilino en un modal y lo deja seleccionado en esa fila, sin salir del formulario.
+ */
 export type TenantOption = { value: string; label: string }
 
 const props = defineProps<{
   tenantIds: string[]
   tenantOptions: TenantOption[]
   error?: string
-  returnTo: string
 }>()
 
 const emit = defineEmits<{
   'update:tenantIds': [value: string[]]
 }>()
-
-const router = useRouter()
 
 const rows = computed(() => (props.tenantIds.length > 0 ? props.tenantIds : ['']))
 
@@ -39,76 +40,75 @@ function addTenant() {
 
 function removeAt(index: number) {
   if (rows.value.length <= 1) return
-  const next = rows.value.filter((_, i) => i !== index)
-  emit('update:tenantIds', next)
+  emit(
+    'update:tenantIds',
+    rows.value.filter((_, i) => i !== index),
+  )
 }
 
-function goToNewTenant(index: number) {
-  router.push({
-    name: 'alquileres-clientes-nuevo',
-    query: {
-      clientType: 'TENANT',
-      returnTo: props.returnTo,
-      selectedClientId: '',
-      tenantIndex: String(index),
-    },
-  })
+const modalOpen = ref(false)
+const targetIndex = ref(0)
+
+function openNewTenant(index: number) {
+  targetIndex.value = index
+  modalOpen.value = true
+}
+
+function onTenantCreated(client: { id: string }) {
+  updateAt(targetIndex.value, client.id)
 }
 </script>
 
 <template>
   <FormSectionCard
     title="Inquilinos"
-    subtitle="Puede haber uno o más inquilinos en el mismo contrato. El primero será el contacto principal en cobranzas."
-    icon="lucide:users"
+    subtitle="El primero es el inquilino principal; agrega co-inquilinos si los hay."
   >
-    <div class="space-y-3">
-      <div
-        v-for="(tenantId, index) in rows"
-        :key="index"
-        class="flex flex-wrap items-end gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
-      >
-        <div class="flex-1 min-w-[200px]">
+    <div class="space-y-4">
+      <div v-for="(tenantId, index) in rows" :key="index">
+        <label :class="fieldLabelClass">
+          {{ index === 0 ? 'Inquilino principal' : `Co-inquilino ${index}` }}
+          <span class="text-error-500">*</span>
+        </label>
+        <!-- items-start: los botones quedan a la altura del select aunque aparezca el error debajo -->
+        <div class="mt-2 flex items-start gap-2">
           <FormSelect
+            class="min-w-0 flex-1"
             :model-value="tenantId"
-            :label="index === 0 ? 'Inquilino principal' : `Inquilino ${index + 1}`"
             placeholder="Seleccionar inquilino"
             :options="optionsForIndex(index)"
             :error="index === 0 ? error : undefined"
-            required
+            :aria-label="index === 0 ? 'Inquilino principal' : `Co-inquilino ${index}`"
             @update:model-value="updateAt(index, $event)"
           />
+          <BaseButton
+            type="button"
+            variant="outline"
+            size="lg"
+            icon="lucide:user-plus"
+            class="shrink-0"
+            @click="openNewTenant(index)"
+          >
+            Nuevo
+          </BaseButton>
+          <BaseButton
+            v-if="rows.length > 1"
+            type="button"
+            variant="outline"
+            size="lg"
+            icon="lucide:trash-2"
+            class="shrink-0 px-3! text-error-500"
+            :aria-label="`Quitar co-inquilino ${index}`"
+            @click="removeAt(index)"
+          />
         </div>
-        <BaseButton
-          v-if="rows.length > 1"
-          type="button"
-          variant="outline"
-          class="shrink-0"
-          :aria-label="`Quitar inquilino ${index + 1}`"
-          @click="removeAt(index)"
-        >
-          <AppIcon icon="lucide:trash-2" :size="18" color="var(--color-error)" />
-        </BaseButton>
-        <BaseButton
-          type="button"
-          variant="outline"
-          class="flex items-center gap-2 shrink-0"
-          @click="goToNewTenant(index)"
-        >
-          <AppIcon icon="lucide:user-plus" :size="18" color="currentColor" />
-          Nuevo
-        </BaseButton>
       </div>
     </div>
 
-    <BaseButton
-      type="button"
-      variant="outline"
-      class="mt-4 flex items-center gap-2"
-      @click="addTenant"
-    >
-      <AppIcon icon="lucide:plus" :size="18" color="currentColor" />
-      Agregar inquilino
+    <BaseButton type="button" variant="ghost" size="sm" icon="lucide:plus" class="mt-4" @click="addTenant">
+      Agregar co-inquilino
     </BaseButton>
+
+    <ClienteFormModal v-model:open="modalOpen" client-type="TENANT" @created="onTenantCreated" />
   </FormSectionCard>
 </template>

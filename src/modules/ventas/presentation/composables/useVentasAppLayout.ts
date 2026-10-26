@@ -1,28 +1,15 @@
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import {
-  useMyApplications,
-  useApplicationMenus,
-} from '@modules/applications/presentation/composables/useApplications'
+import { useMyApplications } from '@modules/applications/presentation/composables/useApplications'
+import { VENTAS_MENUS } from '../../config/menu'
 /**
- * Composable de presentación: depende de Vue Router + menús por slug (Ventas).
+ * Layout de Ventas: datos de la aplicación del usuario + menú lateral estático (`config/menu.ts`).
  */
 export function useVentasAppLayout() {
-  const route = useRoute()
-  const slug = computed(() => {
-    const seg = route.path.split('/').filter(Boolean)[0]
-    return seg || 'ventas'
-  })
-
   const { data: applications } = useMyApplications()
-  const application = computed(() => applications.value?.find((a) => a.slug === slug.value) ?? null)
-
-  const { data: menus, isLoading: menusLoading } = useApplicationMenus(slug)
+  const application = computed(() => applications.value?.find((a) => a.slug === 'ventas') ?? null)
 
   return {
-    slug,
     application,
-    menus: computed(() => menus.value ?? []),
-    menusLoading,
+    menus: VENTAS_MENUS,
   }
 }

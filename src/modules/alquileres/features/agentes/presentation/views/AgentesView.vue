@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin, filterActions } = useApplicationAccess('alquileres')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { agentsRepositoryKey } from '../../application/ports/agents.port'
@@ -270,7 +273,7 @@ async function handleExport() {
           <ExcelIcon class="w-5 h-5" />
           Exportar
         </BaseButton>
-        <BaseButton variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
+        <BaseButton v-if="canWrite" variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
           <AppIcon icon="lucide:plus" :size="18" />
           Nuevo Agente
         </BaseButton>
@@ -356,7 +359,7 @@ async function handleExport() {
                 </Badge>
               </td>
               <td class="py-3 px-4 text-right">
-                <ActionsDropdown :items="getActions(row as AgentListItem)" />
+                <ActionsDropdown :items="filterActions(getActions(row as AgentListItem))" />
               </td>
             </template>
           </DataTable>
@@ -458,7 +461,7 @@ async function handleExport() {
       <template #footer>
         <div class="flex justify-end gap-3">
           <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
-          <BaseButton
+          <BaseButton v-if="canAdmin"
             :variant="
               confirmModal?.type === 'delete'
                 ? 'danger'

@@ -17,7 +17,7 @@ export const arquitecturaRoutes: RouteRecordRaw[] = [
   {
     path: ARQUITECTURA_BASE_PATH,
     component: ArquitecturaLayout,
-    meta: { requiresAuth: true },
+    meta: { applicationSlug: 'arquitectura', requiresAuth: true },
     children: [
       {
         path: '',

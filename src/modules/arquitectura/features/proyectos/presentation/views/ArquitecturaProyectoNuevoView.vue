@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('arquitectura')
+
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -413,7 +416,7 @@ const onSubmit = handleSubmit(async (v) => {
 
       <div class="flex justify-end gap-3">
         <BaseButton type="button" variant="outline" @click="goBack">Cancelar</BaseButton>
-        <BaseButton type="submit" variant="primary" :loading="createMut.isPending.value">
+        <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="createMut.isPending.value">
           Guardar proyecto
         </BaseButton>
       </div>

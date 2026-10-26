@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canAdmin } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { computed } from 'vue'
@@ -105,7 +108,7 @@ async function doDelete() {
         <BaseButton v-if="canMarkReady" variant="secondary" @click="doMarkReady">Marcar listo</BaseButton>
         <BaseButton v-if="canScheduleDelivery" variant="secondary" @click="goScheduleDelivery">Programar entrega</BaseButton>
         <BaseButton v-if="canCancel" variant="danger" @click="doCancel">Cancelar</BaseButton>
-        <BaseButton v-if="canDelete" variant="danger" @click="doDelete">Eliminar</BaseButton>
+        <BaseButton v-if="(canDelete) && canAdmin" variant="danger" @click="doDelete">Eliminar</BaseButton>
       </div>
       </template>
     </PageHeader>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
@@ -132,7 +135,7 @@ async function unlink(link: ProduccionSupplierMaterialLink) {
       @back="router.push({ name: 'produccion-compras-proveedores' })"
     >
       <template #actions>
-        <BaseButton variant="danger" @click="del">Eliminar</BaseButton>
+        <BaseButton v-if="canAdmin" variant="danger" @click="del">Eliminar</BaseButton>
       </template>
     </PageHeader>
 
@@ -153,7 +156,7 @@ async function unlink(link: ProduccionSupplierMaterialLink) {
           <FormInput v-model="email" label="Email" type="email" />
           <FormTextarea v-model="notes" label="Notas" :rows="2" />
           <FormCheckbox v-model="isActive" label="Activo" />
-          <BaseButton variant="primary" :loading="saving" @click="save">Guardar cambios</BaseButton>
+          <BaseButton v-if="canWrite" variant="primary" :loading="saving" @click="save">Guardar cambios</BaseButton>
         </div>
       </FormSectionCard>
 

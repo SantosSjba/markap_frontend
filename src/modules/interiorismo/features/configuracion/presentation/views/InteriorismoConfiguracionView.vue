@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('interiorismo')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import ActionCard from '@shared/presentation/components/ui/ActionCard.vue'
@@ -225,7 +228,7 @@ const flowSteps = [
               </TableBody>
             </Table>
             <div class="p-3 border-t flex justify-end border-gray-200 dark:border-gray-800">
-              <BaseButton variant="primary" :loading="savingStages" @click="submitPipeline">
+              <BaseButton v-if="canWrite" variant="primary" :loading="savingStages" @click="submitPipeline">
                 Guardar etapas
               </BaseButton>
             </div>
@@ -252,7 +255,7 @@ const flowSteps = [
               <p v-if="numErrors.prefix" class="text-xs text-error-600 dark:text-error-500">{{ numErrors.prefix }}</p>
               <FormInput label="Último número (correlativo)" type="number" v-bind="numBinds.lastNumber" />
               <p v-if="numErrors.lastNumber" class="text-xs text-error-600 dark:text-error-500">{{ numErrors.lastNumber }}</p>
-              <BaseButton type="submit" variant="primary" :loading="savingNum">Guardar numeración</BaseButton>
+              <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="savingNum">Guardar numeración</BaseButton>
             </form>
           </BaseCard>
         </section>

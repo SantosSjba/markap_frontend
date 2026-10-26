@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
 import { computed, ref } from 'vue'
@@ -98,7 +101,7 @@ function submit() {
       subtitle="Cuentas bancarias vinculadas al plan de cuentas (10xx)."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="openNew">
+        <BaseButton v-if="canWrite" variant="primary" @click="openNew">
           <AppIcon icon="lucide:plus" :size="16" class="mr-1.5" />
           Nueva cuenta
         </BaseButton>
@@ -165,7 +168,7 @@ function submit() {
         />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton type="button" variant="secondary" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" :loading="creating">Crear</BaseButton>
+          <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="creating">Crear</BaseButton>
         </div>
       </form>
     </BaseModal>

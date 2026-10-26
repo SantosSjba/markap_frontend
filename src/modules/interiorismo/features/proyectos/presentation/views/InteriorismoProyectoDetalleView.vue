@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('interiorismo')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -125,7 +128,7 @@ function milestoneDone(m: { completedAt: string | null }) {
         </template>
         <template #actions>
           <BaseButton
-          v-if="p"
+          v-if="(p) && canWrite"
           variant="outline"
           type="button"
           class="shrink-0"

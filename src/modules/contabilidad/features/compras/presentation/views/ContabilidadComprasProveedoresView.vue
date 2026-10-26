@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -148,7 +151,7 @@ function submitForm() {
       subtitle="Maestro de proveedores y saldo de cuentas por pagar (421)."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="openNew">
+        <BaseButton v-if="canWrite" variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="16" class="mr-1" />
         Nuevo proveedor
       </BaseButton>
@@ -189,7 +192,7 @@ function submitForm() {
               <Badge :variant="row.isActive ? 'success' : 'neutral'">{{ row.isActive ? 'Activo' : 'Inactivo' }}</Badge>
             </td>
             <td class="py-2.5 px-4 text-right">
-              <BaseButton variant="secondary" size="sm" @click="openEdit(row)">Editar</BaseButton>
+              <BaseButton v-if="canWrite" variant="secondary" size="sm" @click="openEdit(row)">Editar</BaseButton>
             </td>
         </template>
       </DataTable>
@@ -224,7 +227,7 @@ function submitForm() {
         <FormCheckbox v-if="editing" v-model="form.isActive" label="Proveedor activo" />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton type="button" variant="secondary" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" :loading="creating || updating">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="creating || updating">Guardar</BaseButton>
         </div>
       </form>
     </BaseModal>

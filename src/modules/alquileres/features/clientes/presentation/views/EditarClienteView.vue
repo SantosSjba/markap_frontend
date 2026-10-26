@@ -1,206 +1,27 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('alquileres')
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import * as yup from 'yup'
-import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
-import FormInput from '@shared/presentation/components/forms/FormInput.vue'
-import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
-import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
-import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
-import {
-  useClient,
-  useDocumentTypes,
-  useDepartments,
-  useProvinces,
-  useDistricts,
-  useUpdateClient,
-} from '../composables/useClients'
-import {
-  UBIGEO_OTHER_DEPARTMENT_ID,
-  UBIGEO_OTHER_DISTRICT_ID,
-  buildLocationCustomPayload,
-  mergeDepartmentOptions,
-} from '../../constants/ubigeo-other'
-import { useClientAddressUbigeo } from '../../composables/useClientAddressUbigeo'
+import { useClient, useUpdateClient } from '../composables/useClients'
 import { navigateAfterAlquileresSave } from '../../../../presentation/navigation/navigateAfterAlquileresSave'
-import type { DocumentType } from '../../domain/client.types'
-import OptionCardGroup from '@shared/presentation/components/forms/OptionCardGroup.vue'
+import type { ClientFormPayload } from '../../domain/client.types'
+import ClienteForm from '../components/ClienteForm.vue'
 const route = useRoute()
 const router = useRouter()
 
 const id = computed(() => String(route.params.id ?? ''))
 
-const clientType = ref<'OWNER' | 'TENANT'>('OWNER')
-const isInitializing = ref(false)
-
-const schema = yup.object({
-  documentTypeId: yup.string().required('Seleccione el tipo de documento'),
-  documentNumber: yup.string().required('El número de documento es requerido').trim(),
-  fullName: yup.string().required('El nombre es requerido').trim(),
-  legalRepresentativeName: yup.string().trim(),
-  legalRepresentativePosition: yup.string().trim(),
-  primaryPhone: yup.string().required('El teléfono principal es requerido').trim(),
-  secondaryPhone: yup.string().trim(),
-  primaryEmail: yup
-    .string()
-    .trim()
-    .transform((v) => (v === '' ? undefined : v))
-    .email('Email inválido')
-    .optional(),
-  secondaryEmail: yup
-    .string()
-    .trim()
-    .transform((v) => (v === '' ? undefined : v))
-    .email('Email inválido')
-    .optional(),
-  addressLine: yup.string().required('La dirección es requerida').trim(),
-  departmentId: yup.string().required('Seleccione el departamento').trim(),
-  provinceId: yup.string().trim(),
-  districtId: yup.string().when('departmentId', {
-    is: (v: string) => v !== UBIGEO_OTHER_DEPARTMENT_ID,
-    then: (s) => s.required('Seleccione el distrito'),
-    otherwise: (s) => s.trim(),
-  }),
-  locationCountry: yup.string().when('departmentId', {
-    is: UBIGEO_OTHER_DEPARTMENT_ID,
-    then: (s) => s.required('Indique el país').trim(),
-    otherwise: (s) => s.trim(),
-  }),
-  locationDepartment: yup.string().when('departmentId', {
-    is: UBIGEO_OTHER_DEPARTMENT_ID,
-    then: (s) => s.required('Indique departamento / estado').trim(),
-    otherwise: (s) => s.trim(),
-  }),
-  locationProvince: yup.string().when('departmentId', {
-    is: UBIGEO_OTHER_DEPARTMENT_ID,
-    then: (s) => s.required('Indique la provincia').trim(),
-    otherwise: (s) => s.trim(),
-  }),
-  locationDistrict: yup.string().when('departmentId', {
-    is: UBIGEO_OTHER_DEPARTMENT_ID,
-    then: (s) => s.required('Indique el distrito').trim(),
-    otherwise: (s) => s.trim(),
-  }),
-  reference: yup.string().trim(),
-  notes: yup.string().trim(),
-})
-
-const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } = useForm({
-  validationSchema: toTypedSchema(schema),
-  initialValues: {
-    documentTypeId: '',
-    documentNumber: '',
-    fullName: '',
-    legalRepresentativeName: '',
-    legalRepresentativePosition: '',
-    primaryPhone: '',
-    secondaryPhone: '',
-    primaryEmail: '',
-    secondaryEmail: '',
-    addressLine: '',
-    departmentId: '',
-    provinceId: '',
-    districtId: '',
-    locationCountry: '',
-    locationDepartment: '',
-    locationProvince: '',
-    locationDistrict: '',
-    reference: '',
-    notes: '',
-  },
-})
-
-const documentTypeIdBinds = defineComponentBinds('documentTypeId')
-const documentNumberBinds = defineComponentBinds('documentNumber')
-const fullNameBinds = defineComponentBinds('fullName')
-const legalRepresentativeNameBinds = defineComponentBinds('legalRepresentativeName')
-const legalRepresentativePositionBinds = defineComponentBinds('legalRepresentativePosition')
-const primaryPhoneBinds = defineComponentBinds('primaryPhone')
-const secondaryPhoneBinds = defineComponentBinds('secondaryPhone')
-const primaryEmailBinds = defineComponentBinds('primaryEmail')
-const secondaryEmailBinds = defineComponentBinds('secondaryEmail')
-const addressLineBinds = defineComponentBinds('addressLine')
-const departmentIdBinds = defineComponentBinds('departmentId')
-const provinceIdBinds = defineComponentBinds('provinceId')
-const districtIdBinds = defineComponentBinds('districtId')
-const locationCountryBinds = defineComponentBinds('locationCountry')
-const locationDepartmentBinds = defineComponentBinds('locationDepartment')
-const locationProvinceBinds = defineComponentBinds('locationProvince')
-const locationDistrictBinds = defineComponentBinds('locationDistrict')
-const notesBinds = defineComponentBinds('notes')
-
-const selectedDepartmentId = computed(() => values.departmentId || undefined)
-const selectedProvinceId = computed(() => values.provinceId || undefined)
-
-const { isOtherLocation } = useClientAddressUbigeo({
-  values,
-  setFieldValue,
-  isInitializing,
-})
-
 const { data: client, isLoading: loadingClient, isError: clientError } = useClient(id)
-const { data: documentTypes, isLoading: loadingDocs } = useDocumentTypes()
-const { data: departments, isLoading: loadingDepartments } = useDepartments()
-const { data: provinces, isLoading: loadingProvinces } = useProvinces(selectedDepartmentId)
-const { data: districts, isLoading: loadingDistricts } = useDistricts(selectedProvinceId)
 const updateMutation = useUpdateClient()
 
-const loading = computed(() => loadingClient.value || loadingDocs.value || loadingDepartments.value)
-
-const documentTypeOptions = computed(() =>
-  (documentTypes.value ?? []).map((d: DocumentType) => ({
-    value: d.id,
-    label: `${d.name} (${d.code})`,
-  })),
-)
-const departmentOptions = computed(() => mergeDepartmentOptions(departments.value))
-const provinceOptions = computed(() =>
-  (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name })),
-)
-const districtOptions = computed(() =>
-  (districts.value ?? []).map((d) => ({ value: d.id, label: d.name })),
-)
-
+// Los compradores (BUYER) pertenecen a Ventas y no se editan desde Alquileres.
 watch(
   client,
   (c) => {
-    if (!c) return
-    if (c.clientType === 'BUYER') {
-      void router.replace('/alquileres/clientes')
-      return
-    }
-    isInitializing.value = true
-    clientType.value = c.clientType
-    resetForm({
-      values: {
-        documentTypeId: c.documentTypeId,
-        documentNumber: c.documentNumber,
-        fullName: c.fullName,
-        legalRepresentativeName: c.legalRepresentativeName ?? '',
-        legalRepresentativePosition: c.legalRepresentativePosition ?? '',
-        primaryPhone: c.primaryPhone,
-        secondaryPhone: c.secondaryPhone ?? '',
-        primaryEmail: c.primaryEmail ?? '',
-        secondaryEmail: c.secondaryEmail ?? '',
-        addressLine: c.primaryAddress?.addressLine ?? '',
-        departmentId: c.primaryAddress?.district?.province?.department?.id ?? '',
-        provinceId: c.primaryAddress?.district?.province?.id ?? '',
-        districtId: c.primaryAddress?.districtId ?? '',
-        locationCountry: c.primaryAddress?.locationCustom?.country ?? '',
-        locationDepartment: c.primaryAddress?.locationCustom?.department ?? '',
-        locationProvince: c.primaryAddress?.locationCustom?.province ?? '',
-        locationDistrict: c.primaryAddress?.locationCustom?.district ?? '',
-        reference: c.primaryAddress?.reference ?? '',
-        notes: c.notes ?? '',
-      },
-    })
-    setTimeout(() => {
-      isInitializing.value = false
-    }, 0)
+    if (c?.clientType === 'BUYER') void router.replace('/alquileres/clientes')
   },
   { immediate: true },
 )
@@ -213,46 +34,10 @@ watch(
 )
 
 const goBack = () => router.push('/alquileres/clientes')
-const selectClientType = (type: 'OWNER' | 'TENANT') => {
-  clientType.value = type
-}
 
-const onSubmit = handleSubmit(async (formValues) => {
+async function onSubmit(payload: ClientFormPayload) {
   try {
-    await updateMutation.mutateAsync({
-      id: id.value,
-      data: {
-        clientType: clientType.value,
-        documentTypeId: formValues.documentTypeId,
-        documentNumber: formValues.documentNumber.trim(),
-        fullName: formValues.fullName.trim(),
-        legalRepresentativeName: formValues.legalRepresentativeName?.trim() || null,
-        legalRepresentativePosition: formValues.legalRepresentativePosition?.trim() || null,
-        primaryPhone: formValues.primaryPhone.trim(),
-        secondaryPhone: formValues.secondaryPhone?.trim() || null,
-        primaryEmail: formValues.primaryEmail?.trim() || null,
-        secondaryEmail: formValues.secondaryEmail?.trim() || null,
-        notes: formValues.notes?.trim() || null,
-        address: {
-          addressLine: formValues.addressLine.trim(),
-          districtId:
-            formValues.departmentId === UBIGEO_OTHER_DEPARTMENT_ID
-              ? UBIGEO_OTHER_DISTRICT_ID
-              : (formValues.districtId as string),
-          reference: formValues.reference?.trim() || null,
-          ...(formValues.departmentId === UBIGEO_OTHER_DEPARTMENT_ID
-            ? {
-                locationCustom: buildLocationCustomPayload({
-                  locationCountry: formValues.locationCountry ?? '',
-                  locationDepartment: formValues.locationDepartment ?? '',
-                  locationProvince: formValues.locationProvince ?? '',
-                  locationDistrict: formValues.locationDistrict ?? '',
-                }),
-              }
-            : { locationCustom: null }),
-        },
-      },
-    })
+    await updateMutation.mutateAsync({ id: id.value, data: payload })
     await navigateAfterAlquileresSave(router, {
       listPath: '/alquileres/clientes',
       invalidate: () => updateMutation.invalidateList(),
@@ -260,11 +45,11 @@ const onSubmit = handleSubmit(async (formValues) => {
   } catch {
     void 0
   }
-})
+}
 </script>
 
 <template>
-  <div >
+  <div>
     <PageHeader
       title="Editar Cliente"
       subtitle="Modificar datos del cliente"
@@ -273,209 +58,16 @@ const onSubmit = handleSubmit(async (formValues) => {
       class="mb-6"
     />
 
-    <LoadingState v-if="loading" class="py-12" />
+    <LoadingState v-if="loadingClient" class="py-12" />
 
-    <form v-else-if="client" @submit.prevent="onSubmit" class="space-y-8">
-      <FormSectionCard
-        title="Tipo de Cliente"
-        subtitle="Selecciona el tipo de cliente"
-        icon="lucide:users"
-      >
-        <OptionCardGroup
-          :model-value="clientType"
-          :options="[
-            { value: 'OWNER', label: 'Propietario', description: 'Dueño de propiedad en administración', icon: 'lucide:building-2' },
-            { value: 'TENANT', label: 'Inquilino', description: 'Persona que alquila una propiedad', icon: 'lucide:user' },
-          ]"
-          @update:model-value="selectClientType($event as 'OWNER' | 'TENANT')"
-        />
-      </FormSectionCard>
-
-      <FormSectionCard
-        title="Información Personal"
-        subtitle="Datos básicos del cliente"
-        icon="lucide:id-card"
-      >
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormSelect
-            v-bind="documentTypeIdBinds"
-            label="Tipo de Documento"
-            placeholder="Seleccionar"
-            :options="documentTypeOptions"
-            :error="errors.documentTypeId"
-            required
-          />
-          <FormInput
-            v-bind="documentNumberBinds"
-            label="Número de Documento"
-            placeholder="12345678"
-            :error="errors.documentNumber"
-            required
-          />
-          <FormInput
-            v-bind="fullNameBinds"
-            class="md:col-span-2"
-            label="Nombre Completo / Razón Social"
-            placeholder="Juan Pérez / Empresa SAC"
-            :error="errors.fullName"
-            required
-          />
-          <FormInput
-            v-bind="legalRepresentativeNameBinds"
-            label="Representante Legal (si aplica)"
-            placeholder="Nombre del representante"
-            :error="errors.legalRepresentativeName"
-          />
-          <FormInput
-            v-bind="legalRepresentativePositionBinds"
-            label="Cargo"
-            placeholder="Gerente General"
-            :error="errors.legalRepresentativePosition"
-          />
-        </div>
-      </FormSectionCard>
-
-      <FormSectionCard
-        title="Información de Contacto"
-        subtitle="Datos para comunicación"
-        icon="lucide:phone"
-      >
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput
-            v-bind="primaryPhoneBinds"
-            type="tel"
-            label="Teléfono Principal"
-            placeholder="999-888-777"
-            :error="errors.primaryPhone"
-            required
-          />
-          <FormInput
-            v-bind="secondaryPhoneBinds"
-            type="tel"
-            label="Teléfono Secundario"
-            placeholder="999-888-777"
-            :error="errors.secondaryPhone"
-          />
-          <FormInput
-            v-bind="primaryEmailBinds"
-            type="email"
-            label="Email principal (opcional)"
-            placeholder="correo@ejemplo.com"
-            :error="errors.primaryEmail"
-          />
-          <FormInput
-            v-bind="secondaryEmailBinds"
-            type="email"
-            label="Email Secundario"
-            placeholder="correo@ejemplo.com"
-            :error="errors.secondaryEmail"
-          />
-        </div>
-      </FormSectionCard>
-
-      <FormSectionCard
-        title="Dirección"
-        subtitle="Dirección de residencia o fiscal"
-        icon="lucide:map-pin"
-      >
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput
-            v-bind="addressLineBinds"
-            class="md:col-span-2"
-            label="Dirección"
-            placeholder="Av. Principal 123, Dpto 501"
-            :error="errors.addressLine"
-            required
-          />
-          <FormSelect
-            v-bind="departmentIdBinds"
-            label="Departamento"
-            placeholder="Seleccionar departamento"
-            :options="departmentOptions"
-            :loading="loadingDepartments"
-            :error="errors.departmentId"
-            required
-          />
-          <template v-if="isOtherLocation">
-            <FormInput
-              v-bind="locationCountryBinds"
-              label="País"
-              placeholder="Ej. España, Chile, Estados Unidos"
-              :error="errors.locationCountry"
-              required
-            />
-            <FormInput
-              v-bind="locationDepartmentBinds"
-              label="Departamento / Estado"
-              placeholder="Ej. Madrid, California"
-              :error="errors.locationDepartment"
-              required
-            />
-            <FormInput
-              v-bind="locationProvinceBinds"
-              label="Provincia"
-              placeholder="Ej. Madrid, Los Angeles"
-              :error="errors.locationProvince"
-              required
-            />
-            <FormInput
-              v-bind="locationDistrictBinds"
-              label="Distrito / Localidad"
-              placeholder="Ej. Centro, Beverly Hills"
-              :error="errors.locationDistrict"
-              required
-            />
-          </template>
-          <template v-else>
-            <FormSelect
-              v-bind="provinceIdBinds"
-              label="Provincia"
-              placeholder="Seleccionar provincia"
-              :options="provinceOptions"
-              :loading="loadingProvinces"
-              :disabled="!values.departmentId"
-            />
-            <FormSelect
-              v-bind="districtIdBinds"
-              label="Distrito"
-              placeholder="Seleccionar distrito"
-              :options="districtOptions"
-              :loading="loadingDistricts"
-              :disabled="!values.provinceId"
-              :error="errors.districtId"
-              required
-            />
-          </template>
-        </div>
-      </FormSectionCard>
-
-      <FormSectionCard
-        title="Notas Adicionales"
-        subtitle="Información relevante sobre el cliente"
-        icon="lucide:notebook-pen"
-      >
-        <FormTextarea
-          v-bind="notesBinds"
-          label="Notas"
-          placeholder="Notas, observaciones, preferencias del cliente..."
-          :rows="4"
-        />
-      </FormSectionCard>
-
-      <div class="flex justify-end gap-3">
-        <BaseButton variant="outline" type="button" @click="goBack">
-          Cancelar
-        </BaseButton>
-        <BaseButton type="submit" :loading="updateMutation.isPending.value" variant="primary">
-          <AppIcon
-            v-if="!updateMutation.isPending.value"
-            icon="lucide:save"
-            :size="20"
-            color="currentColor"
-          />
-          Guardar Cambios
-        </BaseButton>
-      </div>
-    </form>
+    <ClienteForm
+      v-else-if="client && client.clientType !== 'BUYER'"
+      :initial="client"
+      submit-label="Guardar Cambios"
+      :submitting="updateMutation.isPending.value"
+      :can-write="canWrite"
+      @submit="onSubmit"
+      @cancel="goBack"
+    />
   </div>
 </template>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { computed, ref, onMounted } from 'vue'
@@ -586,7 +589,7 @@ const onSubmit = handleSubmit(async (formValues) => {
 
       <div class="flex justify-end gap-3">
         <BaseButton variant="outline" type="button" icon="lucide:x" @click="goBack">Cancelar</BaseButton>
-        <BaseButton type="submit" icon="lucide:save" :loading="createMutation.isPending.value" variant="primary">
+        <BaseButton v-if="canWrite" type="submit" icon="lucide:save" :loading="createMutation.isPending.value" variant="primary">
           Guardar
         </BaseButton>
       </div>

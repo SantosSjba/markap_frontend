@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
@@ -99,7 +102,7 @@ async function del(r: ProduccionExtraCostCatalogItem) {
       subtitle="Catálogo de gastos reutilizables en el costeo (transporte, embalaje, etc.)."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="openNew">
+        <BaseButton v-if="canWrite" variant="primary" @click="openNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo concepto
       </BaseButton>
@@ -120,8 +123,8 @@ async function del(r: ProduccionExtraCostCatalogItem) {
             {{ (row as ProduccionExtraCostCatalogItem).description ?? '—' }}
           </td>
           <td class="py-3 px-4 text-right space-x-2">
-            <BaseButton @click="openEdit(row as ProduccionExtraCostCatalogItem)" variant="link">Editar</BaseButton>
-            <BaseButton @click="del(row as ProduccionExtraCostCatalogItem)" variant="link" class="text-error-500 dark:text-error-400">Eliminar</BaseButton>
+            <BaseButton v-if="canWrite" @click="openEdit(row as ProduccionExtraCostCatalogItem)" variant="link">Editar</BaseButton>
+            <BaseButton v-if="canAdmin" @click="del(row as ProduccionExtraCostCatalogItem)" variant="link" class="text-error-500 dark:text-error-400">Eliminar</BaseButton>
           </td>
         </template>
       </DataTable>
@@ -137,7 +140,7 @@ async function del(r: ProduccionExtraCostCatalogItem) {
       </div>
       <div class="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" @click="showModal = false">Cancelar</BaseButton>
-        <BaseButton variant="primary" :loading="saving" @click="save">Guardar</BaseButton>
+        <BaseButton v-if="canWrite" variant="primary" :loading="saving" @click="save">Guardar</BaseButton>
       </div>
     </BaseModal>
   </div>

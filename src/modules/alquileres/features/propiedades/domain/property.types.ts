@@ -30,6 +30,13 @@ export interface District {
   }
 }
 
+export interface Currency {
+  id: string
+  code: string
+  name: string
+  symbol: string
+}
+
 export interface OwnerOption {
   id: string
   fullName: string
@@ -79,6 +86,8 @@ export interface CreatePropertyPayload {
   /** Todos los propietarios (el primero = principal / ownerId). */
   ownerClientIds?: string[]
   monthlyRent?: number | null
+  /** Moneda del alquiler y mantenimiento (código del catálogo: PEN, USD…) */
+  rentCurrency?: string
   maintenanceAmount?: number | null
   depositMonths?: number | null
   salePrice?: number | null
@@ -121,6 +130,7 @@ export interface PropertyDetail {
   ownerId: string
   owners?: PropertyOwnerSummary[]
   monthlyRent: number | null
+  rentCurrency: string
   maintenanceAmount: number | null
   depositMonths: number | null
   salePrice: number | null
@@ -132,6 +142,9 @@ export interface PropertyDetail {
 
 export type UpdatePropertyPayload = Omit<CreatePropertyPayload, 'applicationSlug'>
 
+/** Datos que produce el formulario de propiedad (alta y edición); la multimedia la gestiona cada vista */
+export type PropertyFormPayload = Omit<UpdatePropertyPayload, 'mediaItems'>
+
 export interface PropertyListItem {
   id: string
   code: string
@@ -142,6 +155,7 @@ export interface PropertyListItem {
   ownerId: string
   ownerFullName: string
   monthlyRent: number | null
+  rentCurrency?: string
   salePrice: number | null
   projectName: string | null
   listingStatus: string | null

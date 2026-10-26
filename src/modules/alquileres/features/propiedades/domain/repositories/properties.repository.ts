@@ -1,5 +1,6 @@
 import type {
   CreatePropertyPayload,
+  Currency,
   Department,
   District,
   ListPropertiesParams,
@@ -13,6 +14,7 @@ import type {
 } from '../property.types'
 export interface PropertiesRepository {
   getPropertyTypes: () => Promise<PropertyType[]>
+  getCurrencies: () => Promise<Currency[]>
   getDepartments: () => Promise<Department[]>
   getProvinces: (departmentId?: string) => Promise<Province[]>
   getDistricts: (provinceId?: string) => Promise<District[]>

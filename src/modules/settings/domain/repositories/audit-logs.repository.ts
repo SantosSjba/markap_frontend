@@ -1,0 +1,3 @@
+export interface AuditLogItem {id:string;occurredAt:string;userName:string|null;action:string;applicationName:string|null;tableName:string|null;recordId:string|null;ip:string|null;userAgent:string|null;source:string;changes:Record<string,{before:unknown;after:unknown}>|null;snapshot:unknown;metadata:unknown}
+export interface AuditFilters {userId?:string;applicationId?:string;action?:string;tableName?:string;from?:string;to?:string;page:number;limit:number}
+export interface AuditLogsRepository {list(filters:AuditFilters):Promise<{items:AuditLogItem[];total:number;page:number;limit:number}>;get(id:string):Promise<AuditLogItem>}

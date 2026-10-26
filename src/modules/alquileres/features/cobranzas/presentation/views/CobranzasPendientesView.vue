@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import {useApplicationAccess} from '@modules/applications/presentation/composables/useApplicationAccess'
+const { filterActions } = useApplicationAccess('alquileres')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
@@ -405,7 +408,7 @@ async function handleExport() {
           <!-- Acciones -->
           <div class="flex items-center gap-2 justify-end">
             <BaseButton v-if="item.status !== 'PAID'" @click="openModal(item)" size="sm" icon="lucide:credit-card">Pagar</BaseButton>
-            <ActionsDropdown :items="getPaymentActions(item)" />
+            <ActionsDropdown :items="filterActions(getPaymentActions(item))" />
           </div>
         </div>
       </template>

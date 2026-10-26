@@ -1,42 +1,15 @@
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import {
-  useMyApplications,
-  useApplicationMenus,
-} from '@modules/applications/presentation/composables/useApplications'
-import {
-  ARQUITECTURA_FALLBACK_MENUS,
-  arquitecturaMenusLookComplete,
-} from '../../config/fallbackMenus'
+import { useMyApplications } from '@modules/applications/presentation/composables/useApplications'
+import { ARQUITECTURA_MENUS } from '../../config/menu'
 /**
- * Menús por API; fallback si el árbol de Proyectos no está en BD (sin seed o datos viejos).
+ * Layout de Arquitectura: datos de la aplicación del usuario + menú lateral estático (`config/menu.ts`).
  */
 export function useArquitecturaAppLayout() {
-  const route = useRoute()
-  const slug = computed(() => {
-    const seg = route.path.split('/').filter(Boolean)[0]
-    return seg || 'arquitectura'
-  })
-
-  const { data: menusFromApi, isLoading: menusLoading } = useApplicationMenus(slug)
   const { data: applications } = useMyApplications()
-  const application = computed(() => applications.value?.find((a) => a.slug === slug.value) ?? null)
-
-  const menus = computed(() => {
-    if (slug.value !== 'arquitectura') {
-      return menusFromApi.value ?? []
-    }
-    const api = menusFromApi.value ?? []
-    if (!menusLoading.value && arquitecturaMenusLookComplete(api)) {
-      return api
-    }
-    return ARQUITECTURA_FALLBACK_MENUS
-  })
+  const application = computed(() => applications.value?.find((a) => a.slug === 'arquitectura') ?? null)
 
   return {
-    slug,
     application,
-    menus,
-    menusLoading,
+    menus: ARQUITECTURA_MENUS,
   }
 }

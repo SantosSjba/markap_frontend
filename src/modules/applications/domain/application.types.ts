@@ -3,6 +3,7 @@
  */
 
 export interface Application {
+  accessLevel?: 'READ' | 'WRITE' | 'ADMIN'
   id: string
   name: string
   slug: string

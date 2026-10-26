@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -331,7 +334,7 @@ function commissionCalcLabel(c: SaleProcessCommission): string {
             Venta caída
           </BaseButton>
           <BaseButton
-            v-if="!isProcessLost"
+            v-if="(!isProcessLost) && canWrite"
             variant="primary"
             icon="lucide:save"
             :loading="saving"

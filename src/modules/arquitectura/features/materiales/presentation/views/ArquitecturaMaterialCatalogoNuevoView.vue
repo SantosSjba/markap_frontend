@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { useService } from '@shared/presentation/di/services'
@@ -191,7 +194,7 @@ const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/materiales/catalogo`
           :error="imageError"
           @error="(m: string) => (imageError = m)"
         />
-        <BaseButton
+        <BaseButton v-if="canWrite"
           variant="secondary"
           type="button"
           :loading="uploadMut.isPending.value"
@@ -215,7 +218,7 @@ const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/materiales/catalogo`
 
       <div class="flex justify-end gap-2 pt-2">
         <BaseButton variant="secondary" type="button" @click="goBack">Cancelar</BaseButton>
-        <BaseButton variant="primary" type="button" :loading="saving" @click="submit">
+        <BaseButton v-if="canWrite" variant="primary" type="button" :loading="saving" @click="submit">
           Crear material
         </BaseButton>
       </div>

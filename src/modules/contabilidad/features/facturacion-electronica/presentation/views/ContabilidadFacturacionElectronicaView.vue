@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import { computed, ref, watch } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
@@ -129,7 +132,7 @@ function submit() {
       </div>
 
       <div class="flex justify-end">
-        <BaseButton type="submit" variant="primary" :loading="saving">
+        <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="saving">
           <AppIcon icon="lucide:save" :size="16" class="mr-1" />
           Guardar configuración
         </BaseButton>

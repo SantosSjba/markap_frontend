@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, filterActions } = useApplicationAccess('interiorismo')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -233,7 +236,7 @@ function getDocActions(
       eyebrow="Documentos"
     >
       <template #actions>
-        <BaseButton type="button" @click="openCreate">
+        <BaseButton v-if="canWrite" type="button" @click="openCreate">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo registro
       </BaseButton>
@@ -307,7 +310,7 @@ function getDocActions(
               {{ formatDate((row as InteriorDocumentRow).createdAt) }}
             </td>
             <td class="py-3 px-4 text-right whitespace-nowrap">
-              <ActionsDropdown :items="getDocActions(row as InteriorDocumentRow)" />
+              <ActionsDropdown :items="filterActions(getDocActions(row as InteriorDocumentRow))" />
             </td>
           </template>
         </DataTable>
@@ -348,7 +351,7 @@ function getDocActions(
       <template #footer>
         <div class="flex justify-end gap-2">
           <BaseButton variant="outline" type="button" @click="showCreate = false">Cancelar</BaseButton>
-          <BaseButton type="button" :loading="uploadMut.isPending.value" @click="submitCreate">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" type="button" :loading="uploadMut.isPending.value" @click="submitCreate">Guardar</BaseButton>
         </div>
       </template>
     </BaseModal>
@@ -364,7 +367,7 @@ function getDocActions(
       <template #footer>
         <div class="flex justify-end gap-2">
           <BaseButton variant="outline" type="button" @click="showEdit = false">Cancelar</BaseButton>
-          <BaseButton type="button" :disabled="updateMut.isPending.value" @click="submitEdit">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" type="button" :disabled="updateMut.isPending.value" @click="submitEdit">Guardar</BaseButton>
         </div>
       </template>
     </BaseModal>

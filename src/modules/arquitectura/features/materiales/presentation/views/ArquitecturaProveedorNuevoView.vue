@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref } from 'vue'
@@ -62,7 +65,7 @@ const goBack = () => router.push(`${ARQUITECTURA_BASE_PATH}/materiales/proveedor
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <BaseButton variant="secondary" type="button" @click="goBack">Cancelar</BaseButton>
-        <BaseButton variant="primary" type="button" :loading="saving" @click="submit">
+        <BaseButton v-if="canWrite" variant="primary" type="button" :loading="saving" @click="submit">
           Crear proveedor
         </BaseButton>
       </div>

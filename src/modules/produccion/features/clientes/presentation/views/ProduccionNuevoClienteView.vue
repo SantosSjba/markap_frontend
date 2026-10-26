@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('produccion')
+
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -338,7 +341,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         <BaseButton variant="outline" type="button" @click="goBack">
           Cancelar
         </BaseButton>
-        <BaseButton type="submit" :loading="createMutation.isPending.value" variant="primary">
+        <BaseButton v-if="canWrite" type="submit" :loading="createMutation.isPending.value" variant="primary">
           <AppIcon
             v-if="!createMutation.isPending.value"
             icon="lucide:save"

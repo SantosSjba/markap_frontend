@@ -24,7 +24,7 @@ export const contabilidadRoutes: RouteRecordRaw[] = [
   {
     path: CONTABILIDAD_BASE_PATH,
     component: ContabilidadLayout,
-    meta: { requiresAuth: true },
+    meta: { applicationSlug: 'contabilidad', requiresAuth: true },
     children: [
       {
         path: '',

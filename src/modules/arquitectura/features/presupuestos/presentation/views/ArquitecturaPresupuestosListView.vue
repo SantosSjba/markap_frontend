@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, filterActions } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -128,7 +131,7 @@ const rowActions = (row: ArquitecturaBudgetSummaryListItem) => [
       subtitle="Vista transversal por proyecto. Cada presupuesto se edita en el detalle del proyecto."
     >
       <template #actions>
-        <BaseButton variant="primary" @click="goNew">
+        <BaseButton v-if="canWrite" variant="primary" @click="goNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo presupuesto
       </BaseButton>
@@ -202,7 +205,7 @@ const rowActions = (row: ArquitecturaBudgetSummaryListItem) => [
               }}
             </td>
             <td class="py-2.5 px-3 text-right">
-              <ActionsDropdown :items="rowActions(row as ArquitecturaBudgetSummaryListItem)" />
+              <ActionsDropdown :items="filterActions(rowActions(row as ArquitecturaBudgetSummaryListItem))" />
             </td>
           </template>
         </DataTable>

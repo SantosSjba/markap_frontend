@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, filterActions } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -438,7 +441,7 @@ const monthTitle = computed(() =>
             <AppIcon icon="lucide:chevron-right" :size="18" />
           </BaseButton>
         </div>
-        <BaseButton variant="primary" size="sm" type="button" @click="openCreate">
+        <BaseButton v-if="canWrite" variant="primary" size="sm" type="button" @click="openCreate">
           <AppIcon icon="lucide:plus" :size="18" class="mr-1" />
           Nuevo evento
         </BaseButton>
@@ -531,7 +534,7 @@ const monthTitle = computed(() =>
           <td class="py-2 px-3 text-right whitespace-nowrap">
             <ActionsDropdown
               v-if="!(row as CalendarFeedItemDto).readOnly"
-              :items="getEventActions(row as CalendarFeedItemDto)"
+              :items="filterActions(getEventActions(row as CalendarFeedItemDto))"
             />
             <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
           </td>
@@ -556,7 +559,7 @@ const monthTitle = computed(() =>
       <template #footer>
         <div class="flex justify-end gap-2">
           <BaseButton variant="outline" type="button" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton
+          <BaseButton v-if="canWrite"
             variant="primary"
             type="submit"
             :form="CAL_EVENT_FORM_ID"

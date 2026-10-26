@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canAdmin } = useApplicationAccess('produccion')
+
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ref, computed } from 'vue'
@@ -123,7 +126,7 @@ function stageIcon(status: string) {
         <BaseButton v-if="canConsume" variant="secondary" @click="showConsumeModal = true">Consumir material</BaseButton>
         <BaseButton v-if="canComplete" variant="primary" @click="doComplete">Terminar OT</BaseButton>
         <BaseButton v-if="canCancel" variant="secondary" @click="doCancel">Cancelar</BaseButton>
-        <BaseButton v-if="canDelete" variant="danger" @click="doDelete">Eliminar</BaseButton>
+        <BaseButton v-if="(canDelete) && canAdmin" variant="danger" @click="doDelete">Eliminar</BaseButton>
       </div>
       </template>
     </PageHeader>

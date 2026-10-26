@@ -1,6 +1,6 @@
 /**
  * Menu Types
- * Sincronizado con el backend
+ * Menú lateral estático de cada aplicación (`modules/<app>/config/menu.ts`)
  */
 
 export interface MenuItem {

@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -433,7 +436,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
           <BaseButton @click="goProject" variant="link" class="ml-2">Ficha proyecto</BaseButton>
       </template>
       <template #actions>
-        <BaseButton variant="primary" type="button" class="shrink-0" @click="openCreateTask">
+        <BaseButton v-if="canWrite" variant="primary" type="button" class="shrink-0" @click="openCreateTask">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nueva tarea
       </BaseButton>
@@ -472,7 +475,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
             </div>
             <div class="flex flex-wrap items-end gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-800">
               <FormInput v-model="progressDraft" type="number" label="Actualizar avance global (0–100)" class="w-40" />
-              <BaseButton variant="primary" type="button" :loading="patchProgress.isPending.value" @click="saveProgress">
+              <BaseButton v-if="canWrite" variant="primary" type="button" :loading="patchProgress.isPending.value" @click="saveProgress">
                 Guardar avance
               </BaseButton>
               <p class="text-xs flex-1 min-w-[200px] text-gray-400 dark:text-gray-500">
@@ -515,7 +518,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                       {{ PHASE_LABELS[task.phase] ?? task.phase }} · {{ task.progressPct }}%
                     </p>
                     <div class="flex gap-2 mt-2">
-                      <BaseButton @click.stop="removeTask(task)" variant="link" class="text-error-500 dark:text-error-400 text-xs">Eliminar</BaseButton>
+                      <BaseButton v-if="canAdmin" @click.stop="removeTask(task)" variant="link" class="text-error-500 dark:text-error-400 text-xs">Eliminar</BaseButton>
                     </div>
                   </li>
                 </ul>
@@ -616,7 +619,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
           <!-- Evidencias -->
           <div v-show="activeTab === 'evidencias'" class="space-y-4">
             <div class="flex justify-end">
-              <BaseButton variant="primary" type="button" size="sm" @click="openEvidence">Nueva evidencia</BaseButton>
+              <BaseButton v-if="canWrite" variant="primary" type="button" size="sm" @click="openEvidence">Nueva evidencia</BaseButton>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               <div
@@ -641,7 +644,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
                 <div class="p-2 text-xs flex-1 flex flex-col gap-1">
                   <span class="font-medium line-clamp-2">{{ e.title }}</span>
                   <span class="text-gray-400 dark:text-gray-500">{{ EVIDENCE_LABELS[e.kind] ?? e.kind }}</span>
-                  <BaseButton @click="removeEvidence(e.id)" variant="link" class="text-error-500 dark:text-error-400 mt-auto self-start">Eliminar</BaseButton>
+                  <BaseButton v-if="canAdmin" @click="removeEvidence(e.id)" variant="link" class="text-error-500 dark:text-error-400 mt-auto self-start">Eliminar</BaseButton>
                 </div>
               </div>
             </div>
@@ -725,7 +728,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
         <FormInput v-model="tProg" type="number" label="% avance tarea" />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton variant="secondary" type="button" @click="taskModal = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="button" :loading="createTask.isPending.value || updateTask.isPending.value" @click="saveTask">
+          <BaseButton v-if="canWrite" variant="primary" type="button" :loading="createTask.isPending.value || updateTask.isPending.value" @click="saveTask">
             Guardar
           </BaseButton>
         </div>
@@ -749,7 +752,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
         <FormSelect v-model="evTaskId" label="Tarea (opcional)" :options="taskOptionsForEvidence" />
         <div class="flex justify-end gap-2">
           <BaseButton variant="secondary" type="button" @click="evModal = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="button" :loading="uploadEvidence.isPending.value" @click="saveEvidence">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" variant="primary" type="button" :loading="uploadEvidence.isPending.value" @click="saveEvidence">Guardar</BaseButton>
         </div>
       </div>
     </BaseModal>
@@ -762,7 +765,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
         <FormInput v-model="incAt" type="datetime-local" label="Reportado el" />
         <div class="flex justify-end gap-2">
           <BaseButton variant="secondary" type="button" @click="incModal = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="button" :loading="createIncident.isPending.value" @click="saveIncident">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" variant="primary" type="button" :loading="createIncident.isPending.value" @click="saveIncident">Guardar</BaseButton>
         </div>
       </div>
     </BaseModal>
@@ -776,7 +779,7 @@ const kanbanOptionsModal = Object.entries(KANBAN_LABELS).map(([value, label]) =>
         <FormSelect v-model="costMatId" label="Material catálogo (opcional)" :options="catalogOptions" />
         <div class="flex justify-end gap-2">
           <BaseButton variant="secondary" type="button" @click="costModal = false">Cancelar</BaseButton>
-          <BaseButton variant="primary" type="button" :loading="createCost.isPending.value" @click="saveCost">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" variant="primary" type="button" :loading="createCost.isPending.value" @click="saveCost">Guardar</BaseButton>
         </div>
       </div>
     </BaseModal>

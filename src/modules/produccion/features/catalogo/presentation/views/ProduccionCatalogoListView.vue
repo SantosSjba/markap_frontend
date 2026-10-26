@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin, filterActions } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -196,7 +199,7 @@ async function handleExport() {
           <ExcelIcon class="w-5 h-5" />
           Exportar
         </BaseButton>
-        <BaseButton variant="primary" class="shrink-0" @click="goNew">
+        <BaseButton v-if="canWrite" variant="primary" class="shrink-0" @click="goNew">
           <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
           Nuevo mueble
         </BaseButton>
@@ -254,7 +257,7 @@ async function handleExport() {
             <td class="py-3 px-4 text-sm">{{ (row as ProduccionFurnitureListItem).bomLineCount }}</td>
             <td class="py-3 px-4 text-sm">{{ (row as ProduccionFurnitureListItem).imageCount }}</td>
             <td class="py-3 px-4 text-right">
-              <ActionsDropdown :items="getActions(row as ProduccionFurnitureListItem)" />
+              <ActionsDropdown :items="filterActions(getActions(row as ProduccionFurnitureListItem))" />
             </td>
           </template>
         </DataTable>
@@ -287,7 +290,7 @@ async function handleExport() {
       </div>
       <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
-        <BaseButton variant="danger" :loading="isDeleting" @click="executeDelete">
+        <BaseButton v-if="canAdmin" variant="danger" :loading="isDeleting" @click="executeDelete">
           <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
           Eliminar
         </BaseButton>

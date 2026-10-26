@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin, filterActions } = useApplicationAccess('alquileres')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { propertiesRepositoryKey } from '../../application/ports/properties.port'
@@ -24,6 +27,7 @@ import {
   usePropertyTypes,
   useUpdatePropertyListingStatus,
   useDeleteProperty,
+  usePropertyCurrencies,
 } from '../composables/useProperties'
 import type { PropertyListItem, ListPropertiesParams } from '../../domain/property.types'
 import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
@@ -290,9 +294,14 @@ function listingStatusLabel(status: string | null): string {
   }
 }
 
-function formatRent(monthlyRent: number | null): string {
+const { data: currencies } = usePropertyCurrencies()
+function currencySymbol(code: string | undefined): string {
+  return (currencies.value ?? []).find((c) => c.code === code)?.symbol ?? code ?? 'S/'
+}
+
+function formatRent(monthlyRent: number | null, rentCurrency?: string): string {
   if (monthlyRent == null) return '—'
-  return `S/ ${Number(monthlyRent).toLocaleString('es-PE')} mensual`
+  return `${currencySymbol(rentCurrency ?? 'PEN')} ${Number(monthlyRent).toLocaleString('es-PE')} mensual`
 }
 
 function formatDate(d: string | null | undefined): string {
@@ -329,6 +338,7 @@ async function handleExport() {
       { header: 'Inquilino activo', key: 'activeRentalTenantName', width: 26 },
       { header: 'Estado', key: 'listingStatus', width: 18 },
       { header: 'Vencimiento contrato', key: 'activeRentalEndDate', width: 20 },
+      { header: 'Moneda', key: 'rentCurrency', width: 10 },
       { header: 'Alquiler mensual', key: 'monthlyRent', width: 18 },
     ],
     rows: result.data.map((p: PropertyListItem) => ({
@@ -342,6 +352,7 @@ async function handleExport() {
       listingStatus: listingStatusLabel(p.listingStatus),
       activeRentalEndDate:
         p.hasActiveRental && p.activeRentalEndDate ? formatDate(p.activeRentalEndDate) : '—',
+      rentCurrency: p.rentCurrency ?? 'PEN',
       monthlyRent: p.monthlyRent ?? '—',
     })),
   })
@@ -367,7 +378,7 @@ async function handleExport() {
           <ExcelIcon class="w-5 h-5" />
           Exportar
         </BaseButton>
-        <BaseButton variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
+        <BaseButton v-if="canWrite" variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
           <AppIcon icon="lucide:plus" :size="18" />
           Nueva Propiedad
         </BaseButton>
@@ -377,11 +388,7 @@ async function handleExport() {
 
     <!-- Stats -->
     <div
-      v-if="loadingStats"
-      class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20"
-    />
-    <div
-      v-else-if="statsQueryError"
+      v-if="statsQueryError"
       class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
       <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
@@ -389,18 +396,18 @@ async function handleExport() {
     </div>
     <div
       v-else
-      class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+      class="grid grid-cols-2 sm:grid-cols-4 gap-3"
     >
-      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
+      <StatsCard compact :title="'Total'" :value="String(stats?.total ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:building-2" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Alquiladas'" :value="String(stats?.rented ?? 0)">
+      <StatsCard compact :title="'Alquiladas'" :value="String(stats?.rented ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="#16a34a" /></template>
       </StatsCard>
-      <StatsCard :title="'Disponibles'" :value="String(stats?.available ?? 0)">
+      <StatsCard compact :title="'Disponibles'" :value="String(stats?.available ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:door-open" :size="20" color="#2563eb" /></template>
       </StatsCard>
-      <StatsCard :title="'Por Vencer'" :value="String(stats?.expiring ?? 0)">
+      <StatsCard compact :title="'Por Vencer'" :value="String(stats?.expiring ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" color="#dc2626" /></template>
       </StatsCard>
     </div>
@@ -487,10 +494,10 @@ async function handleExport() {
                   : '—' }}
               </td>
               <td class="py-3 px-4 text-sm text-gray-800 dark:text-white/90">
-                {{ formatRent((row as PropertyListItem).monthlyRent) }}
+                {{ formatRent((row as PropertyListItem).monthlyRent, (row as PropertyListItem).rentCurrency) }}
               </td>
               <td class="py-3 px-4 text-right">
-                <ActionsDropdown :items="getActions(row as PropertyListItem)" />
+                <ActionsDropdown :items="filterActions(getActions(row as PropertyListItem))" />
               </td>
             </template>
           </DataTable>
@@ -529,7 +536,7 @@ async function handleExport() {
           <BaseButton variant="outline" @click="closeStatusModal">
             Cancelar
           </BaseButton>
-          <BaseButton
+          <BaseButton v-if="canWrite"
             variant="primary"
             :loading="updateListingStatusMutation.isPending.value"
             @click="saveListingStatus"
@@ -561,7 +568,7 @@ async function handleExport() {
     </div>
     <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
       <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
-      <BaseButton variant="danger" :loading="isDeletingProperty" @click="executeDeleteProperty">
+      <BaseButton v-if="canAdmin" variant="danger" :loading="isDeletingProperty" @click="executeDeleteProperty">
         <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
         Eliminar
       </BaseButton>

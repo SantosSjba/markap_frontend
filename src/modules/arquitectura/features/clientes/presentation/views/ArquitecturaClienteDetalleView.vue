@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
@@ -69,7 +72,7 @@ const addrText = computed(() => {
           </Badge>
       </template>
       <template #actions>
-        <BaseButton v-if="client" variant="primary" size="sm" class="flex items-center gap-1.5" @click="goEdit">
+        <BaseButton v-if="(client) && canWrite" variant="primary" size="sm" class="flex items-center gap-1.5" @click="goEdit">
         <AppIcon icon="lucide:pencil" :size="15" />
         Editar
       </BaseButton>

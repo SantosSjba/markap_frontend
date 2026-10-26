@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('ventas')
+
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseAlert from '@shared/presentation/components/ui/BaseAlert.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -332,9 +335,9 @@ const handleDelete = async () => {
                 <p class="text-xs mt-0.5 mb-3 text-gray-400 dark:text-gray-500">
                   Soft delete: no se borra de la base de datos pero se oculta de todos los listados.
                 </p>
-                <BaseButton v-if="!showDeleteConfirm" @click="showDeleteConfirm = true" variant="danger" size="sm">Eliminar agente</BaseButton>
+                <BaseButton v-if="(!showDeleteConfirm) && canAdmin" @click="showDeleteConfirm = true" variant="danger" size="sm">Eliminar agente</BaseButton>
                 <div v-else class="flex gap-2">
-                  <BaseButton :disabled="deleteMutation.isPending.value" @click="handleDelete" variant="danger" size="sm">Confirmar</BaseButton>
+                  <BaseButton v-if="canAdmin" :disabled="deleteMutation.isPending.value" @click="handleDelete" variant="danger" size="sm">Confirmar</BaseButton>
                   <BaseButton @click="showDeleteConfirm = false" variant="secondary" size="sm">Cancelar</BaseButton>
                 </div>
               </div>
@@ -343,7 +346,7 @@ const handleDelete = async () => {
         </FormSectionCard>
 
         <div class="xl:hidden flex gap-3">
-          <BaseButton
+          <BaseButton v-if="canWrite"
             type="submit"
             variant="primary"
             class="flex-1 flex items-center justify-center gap-2"
@@ -412,7 +415,7 @@ const handleDelete = async () => {
             </div>
           </dl>
           <div class="hidden xl:flex flex-col gap-3">
-            <BaseButton
+            <BaseButton v-if="canWrite"
               type="submit"
               variant="primary"
               class="w-full flex items-center justify-center gap-2"

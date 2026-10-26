@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { computed } from 'vue'
@@ -101,7 +104,7 @@ async function doDelete() {
         <BaseButton v-if="canSend" variant="primary" @click="doSend">Enviar</BaseButton>
         <BaseButton v-if="canAccept" variant="primary" @click="doAccept">Aceptar</BaseButton>
         <BaseButton v-if="canReject" variant="secondary" @click="doReject">Rechazar</BaseButton>
-        <BaseButton v-if="canConvert" variant="primary" @click="doConvert">Crear pedido</BaseButton>
+        <BaseButton v-if="(canConvert) && canWrite" variant="primary" @click="doConvert">Crear pedido</BaseButton>
         <BaseButton
           v-if="quotation?.orderId"
           variant="secondary"
@@ -109,7 +112,7 @@ async function doDelete() {
         >
           Ver pedido
         </BaseButton>
-        <BaseButton v-if="canDelete" variant="danger" @click="doDelete">Eliminar</BaseButton>
+        <BaseButton v-if="(canDelete) && canAdmin" variant="danger" @click="doDelete">Eliminar</BaseButton>
       </div>
       </template>
     </PageHeader>

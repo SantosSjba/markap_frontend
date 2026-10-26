@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('ventas')
+
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ventasPropertiesRepositoryKey } from '../../application/ports/ventas-properties.port'
@@ -544,7 +547,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
               @error="(m: string) => (row.error = m)"
             />
           </div>
-          <BaseButton type="button" variant="outline" size="sm" class="gap-1" @click="addMediaRow">
+          <BaseButton v-if="canWrite" type="button" variant="outline" size="sm" class="gap-1" @click="addMediaRow">
             <AppIcon icon="lucide:plus" :size="16" />
             Añadir archivo
           </BaseButton>
@@ -577,10 +580,10 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
           icon="lucide:user-check"
         >
           <div class="flex flex-wrap justify-end gap-2 mb-4">
-            <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addOwnerRow">
+            <BaseButton v-if="canWrite" type="button" variant="outline" size="sm" icon="lucide:plus" @click="addOwnerRow">
               Agregar propietario
             </BaseButton>
-            <BaseButton type="button" variant="outline" size="sm" class="gap-1" @click="goToNewOwner">
+            <BaseButton v-if="canWrite" type="button" variant="outline" size="sm" class="gap-1" @click="goToNewOwner">
               <AppIcon icon="lucide:user-plus" :size="15" />
               Nuevo
             </BaseButton>
@@ -626,7 +629,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
         </FormSectionCard>
 
         <div class="xl:hidden flex gap-3">
-          <BaseButton
+          <BaseButton v-if="canWrite"
             type="submit"
             variant="primary"
             class="flex-1"
@@ -669,7 +672,7 @@ const onSubmit = handleSubmit(async (formValues: PropertyFormValues) => {
             </div>
           </dl>
           <div class="hidden xl:flex flex-col gap-3 mt-6">
-            <BaseButton
+            <BaseButton v-if="canWrite"
               type="submit"
               variant="primary"
               class="w-full"

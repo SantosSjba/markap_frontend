@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin, filterActions } = useApplicationAccess('arquitectura')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
@@ -125,7 +128,7 @@ const getActions = (
       subtitle="Empresa, RUC, contacto; vínculos al catálogo e historial de compras en cada ficha."
     >
       <template #actions>
-        <BaseButton variant="primary" class="shrink-0" @click="goNew">
+        <BaseButton v-if="canWrite" variant="primary" class="shrink-0" @click="goNew">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Nuevo proveedor
       </BaseButton>
@@ -159,7 +162,7 @@ const getActions = (
             <td class="py-3 px-4 text-sm">{{ (row as ArquitecturaSupplierListItem).phone ?? '—' }}</td>
             <td class="py-3 px-4 text-sm">{{ (row as ArquitecturaSupplierListItem).linkedMaterialsCount }}</td>
             <td class="py-3 px-4 text-right">
-              <ActionsDropdown :items="getActions(row as ArquitecturaSupplierListItem)" />
+              <ActionsDropdown :items="filterActions(getActions(row as ArquitecturaSupplierListItem))" />
             </td>
           </template>
         </DataTable>
@@ -192,7 +195,7 @@ const getActions = (
       </div>
       <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
         <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
-        <BaseButton variant="danger" :loading="isDeletingSupplier" @click="executeDelete">
+        <BaseButton v-if="canAdmin" variant="danger" :loading="isDeletingSupplier" @click="executeDelete">
           <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
           Eliminar
         </BaseButton>

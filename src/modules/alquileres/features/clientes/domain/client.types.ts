@@ -58,6 +58,9 @@ export interface CreateClientPayload {
   }
 }
 
+/** Datos que produce el formulario de cliente (alta y edición comparten forma) */
+export type ClientFormPayload = Omit<CreateClientPayload, 'applicationSlug'>
+
 /** Detalle de cliente (GET /clients/:id) con documentType y primaryAddress anidados */
 export interface ClientDetail {
   id: string

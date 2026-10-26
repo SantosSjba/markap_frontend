@@ -207,7 +207,7 @@ function formatDate(dateStr: string) {
 function formatCurrency(value: number, currency: string) {
   return new Intl.NumberFormat('es-PE', {
     style: 'currency',
-    currency: currency === 'USD' ? 'USD' : 'PEN',
+    currency: currency || 'PEN',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value)

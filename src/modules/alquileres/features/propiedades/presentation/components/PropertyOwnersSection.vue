@@ -1,24 +1,25 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { fieldLabelClass } from '@shared/presentation/components/forms/field-classes'
+import ClienteFormModal from '../../../clientes/presentation/components/ClienteFormModal.vue'
+/**
+ * PropertyOwnersSection — propietario principal + copropietarios. «Nuevo» abre el alta
+ * de propietario en un modal y lo deja seleccionado en esa fila, sin salir del formulario.
+ */
 export type OwnerOption = { value: string; label: string }
 
 const props = defineProps<{
   ownerIds: string[]
   ownerOptions: OwnerOption[]
   error?: string
-  returnTo: string
 }>()
 
 const emit = defineEmits<{
   'update:ownerIds': [value: string[]]
 }>()
-
-const router = useRouter()
 
 const rows = computed(() => (props.ownerIds.length > 0 ? props.ownerIds : ['']))
 
@@ -45,80 +46,69 @@ function removeAt(index: number) {
   )
 }
 
-function goToNewOwner(index: number) {
-  router.push({
-    name: 'alquileres-clientes-nuevo',
-    query: {
-      clientType: 'OWNER',
-      returnTo: props.returnTo,
-      selectedClientId: '',
-      ownerIndex: String(index),
-    },
-  })
+const modalOpen = ref(false)
+const targetIndex = ref(0)
+
+function openNewOwner(index: number) {
+  targetIndex.value = index
+  modalOpen.value = true
+}
+
+function onOwnerCreated(client: { id: string }) {
+  updateAt(targetIndex.value, client.id)
 }
 </script>
 
 <template>
   <FormSectionCard
     title="Propietarios"
-    subtitle="Puede registrar varios copropietarios (cónyuges, herederos, etc.). El primero es el propietario principal."
-    icon="lucide:user-check"
+    subtitle="El primero es el propietario principal; agrega copropietarios si los hay."
   >
-    <div class="space-y-3">
-      <div
-        v-for="(ownerId, index) in rows"
-        :key="index"
-        class="flex flex-wrap items-end gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
-      >
-        <div class="flex-1 min-w-[200px]">
+    <div class="space-y-4">
+      <div v-for="(ownerId, index) in rows" :key="index">
+        <label :class="fieldLabelClass">
+          {{ index === 0 ? 'Propietario principal' : `Copropietario ${index}` }}
+          <span class="text-error-500">*</span>
+        </label>
+        <!-- items-start: los botones quedan a la altura del select aunque aparezca el error debajo -->
+        <div class="mt-2 flex items-start gap-2">
           <FormSelect
+            class="min-w-0 flex-1"
             :model-value="ownerId"
-            :label="index === 0 ? 'Propietario principal' : `Propietario ${index + 1}`"
             placeholder="Seleccionar propietario"
             :options="optionsForIndex(index)"
             :error="index === 0 ? error : undefined"
-            required
+            :aria-label="index === 0 ? 'Propietario principal' : `Copropietario ${index}`"
             @update:model-value="updateAt(index, $event)"
           />
+          <BaseButton
+            type="button"
+            variant="outline"
+            size="lg"
+            icon="lucide:user-plus"
+            class="shrink-0"
+            @click="openNewOwner(index)"
+          >
+            Nuevo
+          </BaseButton>
+          <BaseButton
+            v-if="rows.length > 1"
+            type="button"
+            variant="outline"
+            size="lg"
+            icon="lucide:trash-2"
+            class="shrink-0 px-3! text-error-500"
+            :aria-label="`Quitar copropietario ${index}`"
+            @click="removeAt(index)"
+          />
         </div>
-        <BaseButton
-          v-if="rows.length > 1"
-          type="button"
-          variant="outline"
-          class="shrink-0"
-          :aria-label="`Quitar propietario ${index + 1}`"
-          @click="removeAt(index)"
-        >
-          <AppIcon icon="lucide:trash-2" :size="18" color="var(--color-error)" />
-        </BaseButton>
-        <BaseButton
-          type="button"
-          variant="outline"
-          class="flex items-center gap-2 shrink-0"
-          @click="goToNewOwner(index)"
-        >
-          <AppIcon icon="lucide:user-plus" :size="18" color="currentColor" />
-          Nuevo
-        </BaseButton>
       </div>
     </div>
 
-    <BaseButton
-      type="button"
-      variant="outline"
-      class="mt-4 flex items-center gap-2"
-      @click="addOwner"
-    >
-      <AppIcon icon="lucide:plus" :size="18" color="currentColor" />
-      Agregar propietario
+    <BaseButton type="button" variant="ghost" size="sm" icon="lucide:plus" class="mt-4" @click="addOwner">
+      Agregar copropietario
     </BaseButton>
 
-    <p
-      v-if="ownerOptions.length === 0"
-      class="text-sm mt-3 flex items-center gap-2 text-gray-400 dark:text-gray-500"
-    >
-      <AppIcon icon="lucide:info" :size="14" />
-      No hay propietarios registrados. Registra un cliente tipo «Propietario» desde Clientes.
-    </p>
+    <ClienteFormModal v-model:open="modalOpen" client-type="OWNER" @created="onOwnerCreated" />
   </FormSectionCard>
 </template>

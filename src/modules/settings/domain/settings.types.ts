@@ -49,3 +49,6 @@ export interface ApplicationItem {
   color?: string | null
   order?: number
 }
+
+export type AccessLevel = 'READ' | 'WRITE' | 'ADMIN'
+export interface RoleApplicationsMatrix {roles:RoleInfo[];applications:ApplicationItem[];access:Record<string,Record<string,AccessLevel>>}

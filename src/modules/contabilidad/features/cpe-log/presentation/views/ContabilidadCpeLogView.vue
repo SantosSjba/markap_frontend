@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
@@ -164,7 +167,7 @@ function submitForm() {
         <FormTextarea v-model="form.notes" label="Notas" :rows="2" />
         <div class="flex justify-end gap-2 pt-2">
           <BaseButton type="button" variant="secondary" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary" :loading="saving">Guardar</BaseButton>
+          <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="saving">Guardar</BaseButton>
         </div>
       </form>
     </BaseModal>

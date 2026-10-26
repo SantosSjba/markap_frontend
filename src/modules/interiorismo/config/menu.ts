@@ -1,37 +1,32 @@
 import type { MenuItem } from '@shared/domain/menu.types'
-/** Retirados del sidebar: presupuesto/compras/liquidación viven en detalle de Proyecto. */
-const OBSOLETE_PARENT_LABELS = new Set(['Presupuestos', 'Finanzas'])
-
 /**
- * Menú lateral de Interiorismo cuando la API aún no tiene el árbol (sin seed / datos viejos).
- * Debe mantenerse alineado con `prisma/seed/data/menus-interiorismo.ts` y el router.
- *
- * Flujo: Cliente → Proyecto → Materiales → Ejecución → Calendario → Documentos → Reportes → Config
+ * Menú lateral de Interiorismo (estático, versionado junto al router).
+ * Para agregar o quitar una opción: editar este archivo y la ruta correspondiente.
  */
-export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
+export const INTERIORISMO_MENUS: MenuItem[] = [
   {
-    id: 'int-fb-dashboard',
+    id: 'interiorismo-dashboard',
     label: 'Dashboard',
     icon: 'layout-dashboard',
     path: '/interiorismo',
     order: 0,
   },
   {
-    id: 'int-fb-clientes',
+    id: 'interiorismo-clientes',
     label: 'Clientes',
     icon: 'users',
     path: null,
     order: 1,
     children: [
       {
-        id: 'int-fb-cli-list',
+        id: 'interiorismo-clientes-listado-de-clientes',
         label: 'Listado de clientes',
         icon: null,
         path: '/interiorismo/clientes',
         order: 0,
       },
       {
-        id: 'int-fb-cli-new',
+        id: 'interiorismo-clientes-nuevo-cliente',
         label: 'Nuevo cliente',
         icon: null,
         path: '/interiorismo/clientes/nuevo',
@@ -40,28 +35,28 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
-    id: 'int-fb-proyectos',
+    id: 'interiorismo-proyectos',
     label: 'Proyectos',
     icon: 'folder-kanban',
     path: null,
     order: 2,
     children: [
       {
-        id: 'int-fb-proy-list',
+        id: 'interiorismo-proyectos-listado-de-proyectos',
         label: 'Listado de proyectos',
         icon: null,
         path: '/interiorismo/proyectos',
         order: 0,
       },
       {
-        id: 'int-fb-proy-new',
+        id: 'interiorismo-proyectos-nuevo-proyecto',
         label: 'Nuevo proyecto',
         icon: null,
         path: '/interiorismo/proyectos/nuevo',
         order: 1,
       },
       {
-        id: 'int-fb-proy-progress',
+        id: 'interiorismo-proyectos-en-progreso',
         label: 'En progreso',
         icon: null,
         path: '/interiorismo/proyectos/en-progreso',
@@ -70,21 +65,21 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
-    id: 'int-fb-materiales',
+    id: 'interiorismo-materiales',
     label: 'Materiales',
     icon: 'layers',
     path: null,
     order: 3,
     children: [
       {
-        id: 'int-fb-mat-cat',
+        id: 'interiorismo-materiales-catalogo',
         label: 'Catálogo',
         icon: null,
         path: '/interiorismo/materiales/catalogo',
         order: 0,
       },
       {
-        id: 'int-fb-mat-prov',
+        id: 'interiorismo-materiales-proveedores',
         label: 'Proveedores',
         icon: null,
         path: '/interiorismo/materiales/proveedores',
@@ -93,63 +88,63 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
-    id: 'int-fb-ejecucion',
+    id: 'interiorismo-ejecucion',
     label: 'Ejecución',
     icon: 'flame',
     path: '/interiorismo/ejecucion',
     order: 4,
   },
   {
-    id: 'int-fb-calendario',
+    id: 'interiorismo-calendario',
     label: 'Calendario',
     icon: 'calendar',
     path: '/interiorismo/calendario',
     order: 5,
   },
   {
-    id: 'int-fb-documentos',
+    id: 'interiorismo-documentos',
     label: 'Documentos',
     icon: 'files',
     path: null,
     order: 6,
     children: [
       {
-        id: 'int-fb-doc-contratos',
+        id: 'interiorismo-documentos-contratos',
         label: 'Contratos',
         icon: null,
         path: '/interiorismo/documentos/contratos',
         order: 0,
       },
       {
-        id: 'int-fb-doc-planos',
+        id: 'interiorismo-documentos-planos',
         label: 'Planos',
         icon: null,
         path: '/interiorismo/documentos/planos',
         order: 1,
       },
       {
-        id: 'int-fb-doc-render',
+        id: 'interiorismo-documentos-renderizados',
         label: 'Renderizados',
         icon: null,
         path: '/interiorismo/documentos/renderizados',
         order: 2,
       },
       {
-        id: 'int-fb-doc-pdfs',
+        id: 'interiorismo-documentos-pdfs',
         label: 'PDFs',
         icon: null,
         path: '/interiorismo/documentos/pdfs',
         order: 3,
       },
       {
-        id: 'int-fb-doc-facturas',
+        id: 'interiorismo-documentos-facturas',
         label: 'Facturas',
         icon: null,
         path: '/interiorismo/documentos/facturas',
         order: 4,
       },
       {
-        id: 'int-fb-doc-actas',
+        id: 'interiorismo-documentos-actas',
         label: 'Actas',
         icon: null,
         path: '/interiorismo/documentos/actas',
@@ -158,26 +153,17 @@ export const INTERIORISMO_FALLBACK_MENUS: MenuItem[] = [
     ],
   },
   {
-    id: 'int-fb-reportes',
+    id: 'interiorismo-reportes',
     label: 'Reportes',
     icon: 'bar-chart',
     path: '/interiorismo/reportes',
     order: 7,
   },
   {
-    id: 'int-fb-config',
+    id: 'interiorismo-configuracion',
     label: 'Configuración',
     icon: 'settings',
     path: '/interiorismo/configuracion',
     order: 8,
   },
 ]
-
-/** El árbol de la API incluye submenús de Proyectos y Documentos y no trae ítems obsoletos del seed viejo. */
-export function interiorismoMenusLookComplete(apiMenus: MenuItem[]): boolean {
-  if (!apiMenus.length) return false
-  if (apiMenus.some((m) => OBSOLETE_PARENT_LABELS.has(m.label.trim()))) return false
-  const proyectos = apiMenus.find((m) => m.label.trim() === 'Proyectos')
-  const documentos = apiMenus.find((m) => m.label.trim() === 'Documentos')
-  return !!(proyectos?.children?.length && documentos?.children?.length)
-}

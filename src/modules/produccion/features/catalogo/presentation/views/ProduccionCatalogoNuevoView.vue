@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
@@ -124,7 +127,7 @@ const goBack = () => router.push(`${PRODUCCION_BASE_PATH}/catalogo`)
 
       <div class="flex justify-end gap-2 pt-2">
         <BaseButton variant="secondary" type="button" @click="goBack">Cancelar</BaseButton>
-        <BaseButton variant="primary" type="button" :loading="saving" @click="submit">
+        <BaseButton v-if="canWrite" variant="primary" type="button" :loading="saving" @click="submit">
           Crear mueble
         </BaseButton>
       </div>

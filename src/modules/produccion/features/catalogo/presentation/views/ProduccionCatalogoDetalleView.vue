@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('produccion')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
@@ -171,11 +174,11 @@ const onSave = () => (activeTab.value === 'bom' ? saveBom() : save())
           <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1.5" />
           Listado
         </BaseButton>
-        <BaseButton variant="danger" type="button" :loading="deleteMut.isPending.value" @click="remove">
+        <BaseButton v-if="canAdmin" variant="danger" type="button" :loading="deleteMut.isPending.value" @click="remove">
           Eliminar
         </BaseButton>
         <BaseButton
-          v-if="showSave"
+          v-if="(showSave) && canWrite"
           variant="primary"
           type="button"
           :loading="updateMut.isPending.value"

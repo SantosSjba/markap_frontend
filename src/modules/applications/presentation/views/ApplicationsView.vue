@@ -94,44 +94,59 @@ const navigateToApp = (app: Application) => {
           v-for="app in (applications ?? [])"
           :key="app.id"
           @click="navigateToApp(app)"
-          class="card group p-5 text-start transition-all duration-200 hover:border-brand-300 hover:shadow-theme-md md:p-6 dark:hover:border-brand-800"
+          class="card group flex h-full flex-col p-5 text-start transition-all duration-200 hover:border-brand-300 hover:shadow-theme-md md:p-6 dark:hover:border-brand-800"
         >
-          <div class="flex items-start justify-between mb-4">
-            <!-- Icon -->
+          <!-- Header: icono junto al título para no dejar una fila vacía arriba -->
+          <div class="mb-3 flex items-center gap-3">
             <div
-              class="w-12 h-12 rounded-xl flex items-center justify-center"
+              class="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center"
               :style="{ backgroundColor: (app.color || 'var(--color-primary)') + '20' }"
             >
               <Icon
                 :icon="getIcon(app.icon)"
-                class="w-6 h-6"
+                class="w-5 h-5"
                 :style="{ color: app.color || 'var(--color-primary)' }"
               />
             </div>
 
-            <!-- Arrow -->
+            <h3 class="flex-1 min-w-0 font-semibold leading-snug text-gray-800 dark:text-white/90">{{ app.name }}</h3>
+            <span v-if="app.accessLevel === 'READ'" class="rounded-md bg-brand-50 px-2 py-1 text-xs text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">Solo lectura</span>
+
             <Icon
               icon="lucide:chevron-right"
-              class="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 dark:text-gray-500"
+              class="w-5 h-5 shrink-0 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-brand-500 dark:text-gray-600"
             />
           </div>
 
           <!-- Content -->
-          <h3 class="font-semibold mb-1 text-gray-800 dark:text-white/90">{{ app.name }}</h3>
-          <p class="text-sm mb-4 line-clamp-2 text-gray-500 dark:text-gray-400">{{ app.description }}</p>
+          <p class="text-sm mb-4 line-clamp-2 min-h-10 text-gray-500 dark:text-gray-400">{{ app.description }}</p>
 
-          <!-- Stats -->
-          <div class="flex items-center gap-4 text-sm">
-            <span class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-success-500"></span>
-              <span class="text-success-600 dark:text-success-500">{{ app.activeCount }}</span>
-              <span class="text-gray-400 dark:text-gray-500">{{ getStatsLabels(app.slug).active }}</span>
-            </span>
-            <span v-if="app.pendingCount > 0" class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-warning-500"></span>
-              <span class="text-warning-600 dark:text-orange-400">{{ app.pendingCount }}</span>
-              <span class="text-gray-400 dark:text-gray-500">{{ getStatsLabels(app.slug).pending }}</span>
-            </span>
+          <!-- Stats: dos columnas fijas (número arriba, etiqueta abajo) para que todas las tarjetas alineen -->
+          <div class="mt-auto grid grid-cols-2 gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+            <div class="min-w-0">
+              <p
+                class="text-2xl font-semibold leading-none tabular-nums"
+                :class="app.activeCount > 0 ? 'text-success-600 dark:text-success-500' : 'text-gray-400 dark:text-gray-500'"
+              >
+                {{ app.activeCount }}
+              </p>
+              <p class="mt-1.5 flex min-h-8 items-start gap-1.5 text-xs leading-snug text-gray-500 dark:text-gray-400">
+                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-success-500"></span>
+                <span>{{ getStatsLabels(app.slug).active }}</span>
+              </p>
+            </div>
+            <div class="min-w-0">
+              <p
+                class="text-2xl font-semibold leading-none tabular-nums"
+                :class="app.pendingCount > 0 ? 'text-warning-600 dark:text-orange-400' : 'text-gray-400 dark:text-gray-500'"
+              >
+                {{ app.pendingCount }}
+              </p>
+              <p class="mt-1.5 flex min-h-8 items-start gap-1.5 text-xs leading-snug text-gray-500 dark:text-gray-400">
+                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning-500"></span>
+                <span>{{ getStatsLabels(app.slug).pending }}</span>
+              </p>
+            </div>
           </div>
         </button>
       </div>

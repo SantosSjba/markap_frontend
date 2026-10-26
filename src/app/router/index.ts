@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouterHistory, type RouteRecordRaw } from 'vue-router'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { getApiErrorMessage, SUPPORT_HINT } from '@shared/utils/apiErrorMessage'
+import { applicationAccessGuard } from './guards/application-access.guard'
 import { authGuard } from './guards/auth.guard'
 import { authRoutes } from '@modules/auth/presentation/router/index'
 import { applicationsRoutes } from '@modules/applications/presentation/router/index'
@@ -58,6 +59,7 @@ export function createAppRouter(
   })
 
   router.beforeEach(authGuard)
+  router.beforeEach(applicationAccessGuard)
 
   /**
    * Tras un despliegue, una pestaña abierta puede pedir módulos que ya no existen.

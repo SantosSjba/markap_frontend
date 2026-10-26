@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite } = useApplicationAccess('arquitectura')
+
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -77,7 +80,7 @@ const createProject = () => {
       subtitle="Registrar el proyecto y pasar directo al armado del presupuesto"
       icon="lucide:folder-plus"
     >
-      <BaseButton variant="outline" type="button" @click="createProject">
+      <BaseButton v-if="canWrite" variant="outline" type="button" @click="createProject">
         <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
         Crear proyecto y presupuesto
       </BaseButton>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin, filterActions } = useApplicationAccess('alquileres')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { clientsRepositoryKey } from '../../application/ports/clients.port'
@@ -60,14 +63,11 @@ const {
 const clients = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
 
+// `?tipo=OWNER|TENANT` preselecciona el filtro (ej. redirección desde /clientes/propietarios)
 watch(
-  () => route.name,
-  (name) => {
-    if (name === 'alquileres-clientes-propietarios') {
-      filterType.value = 'OWNER'
-    } else if (name === 'alquileres-clientes') {
-      filterType.value = 'ALL'
-    }
+  () => route.query.tipo,
+  (tipo) => {
+    filterType.value = tipo === 'OWNER' || tipo === 'TENANT' ? tipo : 'ALL'
   },
   { immediate: true },
 )
@@ -145,14 +145,6 @@ const tableColumns = [
   { key: 'actions', label: '', align: 'right' as const },
 ]
 
-const pageTitle = computed(() =>
-  route.name === 'alquileres-clientes-propietarios' ? 'Propietarios' : 'Clientes',
-)
-const pageSubtitle = computed(() =>
-  route.name === 'alquileres-clientes-propietarios'
-    ? 'Titulares con inmuebles en Alquileres (inventario y contratos de esta app)'
-    : 'Gestión de propietarios e inquilinos',
-)
 
 const goToNew = () => router.push('/alquileres/clientes/nuevo')
 const goToEdit = (client: ClientListItem) => router.push(`/alquileres/clientes/${client.id}/editar`)
@@ -256,8 +248,8 @@ async function handleExport() {
   <div class="space-y-6">
     <!-- Header -->
     <PageHeader
-      :title="pageTitle"
-      :subtitle="pageSubtitle"
+      title="Clientes"
+      subtitle="Gestión de propietarios e inquilinos"
     >
       <template #actions>
         <div class="flex gap-2 w-full sm:w-auto">
@@ -271,7 +263,7 @@ async function handleExport() {
           <ExcelIcon class="w-5 h-5" />
           Exportar
         </BaseButton>
-        <BaseButton variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
+        <BaseButton v-if="canWrite" variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
           <AppIcon icon="lucide:plus" :size="18" />
           Nuevo Cliente
         </BaseButton>
@@ -281,11 +273,7 @@ async function handleExport() {
 
     <!-- Stats -->
     <div
-      v-if="loadingStats"
-      class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20"
-    />
-    <div
-      v-else-if="statsQueryError"
+      v-if="statsQueryError"
       class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
       <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
@@ -293,18 +281,18 @@ async function handleExport() {
     </div>
     <div
       v-else
-      class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+      class="grid grid-cols-2 sm:grid-cols-4 gap-3"
     >
-      <StatsCard :title="'Total Clientes'" :value="String(stats?.total ?? 0)">
+      <StatsCard compact :title="'Total Clientes'" :value="String(stats?.total ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Propietarios'" :value="String(stats?.owners ?? 0)">
+      <StatsCard compact :title="'Propietarios'" :value="String(stats?.owners ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:building-2" :size="20" color="#2563eb" /></template>
       </StatsCard>
-      <StatsCard :title="'Inquilinos'" :value="String(stats?.tenants ?? 0)">
+      <StatsCard compact :title="'Inquilinos'" :value="String(stats?.tenants ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:user" :size="20" color="#16a34a" /></template>
       </StatsCard>
-      <StatsCard :title="'Activos'" :value="String(stats?.active ?? 0)">
+      <StatsCard compact :title="'Activos'" :value="String(stats?.active ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:trending-up" :size="20" color="#d97706" /></template>
       </StatsCard>
     </div>
@@ -339,7 +327,6 @@ async function handleExport() {
                   v-model="filterType"
                   :options="typeOptions"
                   placeholder="Todos los tipos"
-                  :disabled="route.name === 'alquileres-clientes-propietarios'"
                 />
               </div>
               <div class="w-full sm:w-[175px] min-w-0">
@@ -406,7 +393,7 @@ async function handleExport() {
               </Badge>
             </td>
             <td class="py-3 px-4 text-right">
-              <ActionsDropdown :items="getActions(row as ClientListItem)" />
+              <ActionsDropdown :items="filterActions(getActions(row as ClientListItem))" />
             </td>
           </template>
         </DataTable>
@@ -444,7 +431,7 @@ async function handleExport() {
     </div>
     <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
       <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
-      <BaseButton variant="danger" :loading="isDeletingClient" @click="executeDelete">
+      <BaseButton v-if="canAdmin" variant="danger" :loading="isDeletingClient" @click="executeDelete">
         <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
         Eliminar
       </BaseButton>

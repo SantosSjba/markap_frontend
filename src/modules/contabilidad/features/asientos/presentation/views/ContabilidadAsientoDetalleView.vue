@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
+const { canWrite, canAdmin } = useApplicationAccess('contabilidad')
+
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
@@ -113,8 +116,8 @@ async function confirmReverse() {
             <AppIcon icon="lucide:printer" :size="16" class="mr-1.5" />
             Imprimir
           </BaseButton>
-          <BaseButton v-if="isDraft" variant="secondary" @click="goEdit">Editar</BaseButton>
-          <BaseButton v-if="isDraft" variant="danger" :loading="deleting" @click="confirmDelete">
+          <BaseButton v-if="(isDraft) && canWrite" variant="secondary" @click="goEdit">Editar</BaseButton>
+          <BaseButton v-if="(isDraft) && canAdmin" variant="danger" :loading="deleting" @click="confirmDelete">
             Eliminar
           </BaseButton>
           <BaseButton v-if="isDraft" variant="primary" :loading="posting" @click="confirmPost">

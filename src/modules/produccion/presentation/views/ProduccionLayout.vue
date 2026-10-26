@@ -3,11 +3,11 @@ import { computed } from 'vue'
 import AdminLayout from '@app/layouts/AdminLayout.vue'
 import { useProduccionAppLayout } from '../composables/useProduccionAppLayout'
 /**
- * ProduccionLayout — shell de TailAdmin (`AdminLayout`) con los menús de la BD por slug `produccion`.
+ * ProduccionLayout — shell de TailAdmin (`AdminLayout`) con el menú estático de `produccion`.
  * Notificaciones: filtradas a esta app en el header.
  */
 
-const { application, menus, menusLoading } = useProduccionAppLayout()
+const { application, menus } = useProduccionAppLayout()
 
 const applicationInfo = computed(() =>
   application.value
@@ -25,7 +25,6 @@ const applicationInfo = computed(() =>
   <AdminLayout
     :menus="menus"
     :application="applicationInfo"
-    :loading="menusLoading"
     minimal-user-menu
     profile-to="/produccion/perfil"
     notifications-application-slug="produccion"

@@ -32,7 +32,7 @@ defineProps<Props>()
 </script>
 
 <template>
-  <DropdownMenu>
+  <DropdownMenu v-if="items.length">
     <DropdownMenuTrigger as-child>
       <Button
         variant="ghost"

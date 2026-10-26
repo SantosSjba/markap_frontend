@@ -34,20 +34,19 @@ const roles = computed<RoleInfo[]>(() => rolesData.value ?? [])
       <div
         v-for="role in roles"
         :key="role.id"
-        class="card p-4 flex items-center justify-between"
+        class="card p-4 flex items-center gap-4"
       >
-        <div class="flex items-center gap-4">
-          <div
-            class="w-12 h-12 rounded-lg flex items-center justify-center bg-brand-50 dark:bg-brand-500/12"
-          >
-            <Icon icon="lucide:shield-check" class="w-6 h-6 text-brand-500 dark:text-brand-400" />
-          </div>
-          <div>
-            <h3 class="font-semibold text-gray-800 dark:text-white/90">{{ role.name }}</h3>
-            <p class="text-sm text-gray-400 dark:text-gray-500">Código: {{ role.code }}</p>
-          </div>
+        <div
+          class="w-12 h-12 shrink-0 rounded-lg flex items-center justify-center bg-brand-50 dark:bg-brand-500/12"
+        >
+          <Icon icon="lucide:shield-check" class="w-6 h-6 text-brand-500 dark:text-brand-400" />
         </div>
-        <Badge variant="info">{{ role.code }}</Badge>
+        <div class="min-w-0 flex-1">
+          <h3 class="font-semibold text-gray-800 dark:text-white/90 break-words">{{ role.name }}</h3>
+          <Badge variant="info" class="mt-1 max-w-full" :title="role.code">
+            <span class="truncate">{{ role.code }}</span>
+          </Badge>
+        </div>
       </div>
     </div>
   </div>
