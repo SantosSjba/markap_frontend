@@ -26,11 +26,10 @@ import type {
   RentalsByMonthParams,
 } from '../../domain/reportes.types'
 import { formatMoney } from '../utils/report-format'
-import CommissionsBarChart from './CommissionsBarChart.vue'
 import ReportSectionHeader from './ReportSectionHeader.vue'
 /**
  * Pestaña «Comisiones de alquileres»: ingreso por intermediación en el mes de cobro,
- * con totales compactos por moneda, gráfico mes a mes opcional y detalle por mes.
+ * con totales compactos por moneda y detalle por mes (los gráficos están en «Indicadores»).
  */
 
 const reportesRepository = useService(reportesRepositoryKey)
@@ -115,24 +114,6 @@ const rentalsByMonthParams = computed<RentalsByMonthParams>(() => {
 })
 
 const rentalsByMonthQuery = useRentalsByMonth(APPLICATION_SLUG, rentalsByMonthParams)
-
-// Gráfico mes a mes: oculto por defecto; se recuerda la preferencia en este navegador
-const CHART_PREF_KEY = 'markap.alquileres.reportes.comisiones.chart'
-function readChartPref(): boolean {
-  try {
-    return localStorage.getItem(CHART_PREF_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-const showChart = ref(readChartPref())
-watch(showChart, (value) => {
-  try {
-    localStorage.setItem(CHART_PREF_KEY, value ? '1' : '0')
-  } catch {
-    /* almacenamiento no disponible: la preferencia dura la sesión */
-  }
-})
 
 /** Columnas de montos de la tabla (en orden) */
 type AmountKey =
@@ -401,6 +382,19 @@ async function handleExport() {
     p.startDate,
     p.endDate,
   )
+  // Detalle por alquiler, igual que al desplegar cada mes en la tabla
+  const range = detailDateRange.value
+  const detail = range
+    ? (
+        await reportesRepository.getFinancialDistribution(
+          APPLICATION_SLUG,
+          undefined,
+          range.startDate,
+          range.endDate,
+          'commissionPaidDate',
+        )
+      ).filter((item) => item.commissionPaidDate)
+    : []
   const fileLabel =
     filterMode.value === 'range'
       ? `${p.startDate ?? ''}_${p.endDate ?? ''}`
@@ -422,6 +416,7 @@ async function handleExport() {
       { header: 'Comisión ag. interno', key: 'totalInternalCommission', width: 22 },
       { header: RENTAL_UTILITY_NET_SHORT_LABEL, key: 'totalUtility', width: 22 },
       { header: 'Contratos nuevos', key: 'newContracts', width: 18 },
+      { header: 'Contratos vencidos', key: 'expiredContracts', width: 18 },
       { header: 'Activos al cierre', key: 'activeAtEndOfMonth', width: 18 },
     ],
     rows: data.flatMap((r: RentalsByMonthItem) =>
@@ -437,10 +432,69 @@ async function handleExport() {
           totalInternalCommission: t.totalInternalCommission,
           totalUtility: t.totalUtility,
           newContracts: r.newContracts,
+          expiredContracts: r.expiredContracts,
           activeAtEndOfMonth: r.activeAtEndOfMonth,
         }),
       ),
     ),
+    additionalSheets: [
+      {
+        sheetName: 'Detalle por alquiler',
+        columns: [
+          { header: 'Fecha de cobro', key: 'paidDate', width: 16 },
+          { header: 'Código', key: 'rentalCode', width: 34 },
+          { header: 'Propiedad', key: 'propertyAddress', width: 32 },
+          { header: 'Propietario', key: 'ownerName', width: 24 },
+          { header: 'Inquilino', key: 'tenantName', width: 24 },
+          { header: 'Moneda', key: 'currency', width: 10 },
+          { header: 'Ingreso', key: 'income', width: 16 },
+          { header: 'Gastos', key: 'expense', width: 14 },
+          { header: 'Impuestos', key: 'tax', width: 14 },
+          { header: 'Agente externo', key: 'externalAgentName', width: 24 },
+          { header: 'Comisión ag. externo', key: 'externalAgentCommission', width: 20 },
+          { header: 'Agente interno', key: 'internalAgentName', width: 24 },
+          { header: 'Comisión ag. interno', key: 'internalAgentCommission', width: 20 },
+          { header: RENTAL_UTILITY_NET_SHORT_LABEL, key: 'utility', width: 20 },
+          { header: 'Nota', key: 'note', width: 40 },
+        ],
+        rows: detail.flatMap((item) => {
+          const common = {
+            paidDate: formatDate(item.commissionPaidDate!),
+            rentalCode: item.rentalCode,
+            propertyAddress: item.propertyAddress,
+            ownerName: item.ownerName,
+            tenantName: item.tenantName,
+            externalAgentName: item.externalAgentName ?? '—',
+            internalAgentName: item.internalAgentName ?? '—',
+          }
+          return [
+            {
+              ...common,
+              currency: item.currency,
+              income: item.baseAmount,
+              expense: item.expense,
+              tax: item.tax,
+              externalAgentCommission: item.externalAgentCommission,
+              internalAgentCommission: item.internalAgentCommission,
+              utility: item.utility,
+              note: '',
+            },
+            // Montos fijos en otra moneda (p. ej. agente en S/ de un contrato en US$)
+            ...item.otherCurrencyTotals.map((line) => ({
+              ...common,
+              currency: line.currency,
+              income: line.income,
+              expense: line.expense,
+              tax: line.tax,
+              externalAgentCommission: line.externalAgentCommission,
+              internalAgentCommission: line.internalAgentCommission,
+              utility: line.utility,
+              note: `Contrato en ${currencyName(item.currency).toLowerCase()}: montos fijos en ${currencyName(line.currency).toLowerCase()}`,
+            })),
+          ]
+        }),
+      },
+    ],
   })
 }
 </script>
@@ -452,19 +506,7 @@ async function handleExport() {
     icon="lucide:bar-chart-2"
     :exporting="isExporting"
     @export="handleExport"
-  >
-    <template #actions>
-      <BaseButton
-        v-if="filterMode !== 'month'"
-        variant="outline"
-        size="sm"
-        :icon="showChart ? 'lucide:eye-off' : 'lucide:chart-column'"
-        @click="showChart = !showChart"
-      >
-        {{ showChart ? 'Ocultar gráfico' : 'Ver gráfico' }}
-      </BaseButton>
-    </template>
-  </ReportSectionHeader>
+  />
 
   <!-- Filtros -->
   <div
@@ -561,15 +603,6 @@ async function handleExport() {
       </BaseCard>
     </div>
 
-    <!-- Comparación mes a mes (activable) -->
-    <CommissionsBarChart
-      v-if="showChart && filterMode !== 'month'"
-      class="mb-4"
-      :data="rentalsByMonthRows"
-      :loading="rentalsByMonthQuery.isPending.value"
-      :format-amount="formatCurrency"
-      :currencies="viewCurrencies"
-    />
 
   <p class="text-xs mb-3 text-gray-400 dark:text-gray-500">
     Cada ingreso se ubica en el mes de su fecha de cobro (no en el inicio del contrato); las comisiones pendientes no cuentan hasta marcarlas como pagadas en

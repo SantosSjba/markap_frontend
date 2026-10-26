@@ -1,16 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
-import { useContractStatusSummary, useMonthlyMetrics } from '../composables/useReportes'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import { useContractStatusSummary, useMonthlyMetrics, useRentalsByMonth } from '../composables/useReportes'
+import { formatMoney } from '../utils/report-format'
 import ReportQueryError from './ReportQueryError.vue'
+import CommissionsBarChart from './CommissionsBarChart.vue'
+import ContractsBarChart from './ContractsBarChart.vue'
 /**
  * Pestaña «Indicadores»: distribución de los contratos vigentes por tiempo restante
  * y métricas del mes en curso. Antes vivían debajo de todas las pestañas.
+ * También la evolución mes a mes del año elegido: comisiones cobradas y contratos nuevos.
  */
 
 const statusQuery = useContractStatusSummary('alquileres')
+
+// Evolución mensual: un año completo, para ver en qué mes se cobró más y se cerraron más contratos
+const chartYear = ref(new Date().getFullYear())
+const yearOptions = computed(() => {
+  const current = new Date().getFullYear()
+  return [current - 2, current - 1, current].map((y) => ({ value: y, label: String(y) }))
+})
+const rentalsByMonthQuery = useRentalsByMonth('alquileres', () => ({ year: chartYear.value }))
+const monthlyRows = computed(() => rentalsByMonthQuery.data.value ?? [])
 const metricsQuery = useMonthlyMetrics('alquileres')
 
 const segments = computed(() => {
@@ -80,6 +94,30 @@ const metrics = computed(
         >
           <template #icon><AppIcon icon="lucide:user-plus" :size="20" /></template>
         </StatsCard>
+      </div>
+    </section>
+
+    <!-- Evolución mes a mes -->
+    <section>
+      <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-gray-800 dark:text-white/90">Evolución mensual</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Comisiones cobradas y contratos nuevos de cada mes</p>
+        </div>
+        <FormSelect v-model="chartYear" label="Año" :options="yearOptions" class="w-32" />
+      </div>
+      <ReportQueryError
+        v-if="rentalsByMonthQuery.isError.value"
+        :error="rentalsByMonthQuery.error.value"
+        @retry="() => rentalsByMonthQuery.refetch()"
+      />
+      <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <CommissionsBarChart
+          :data="monthlyRows"
+          :loading="rentalsByMonthQuery.isPending.value"
+          :format-amount="formatMoney"
+        />
+        <ContractsBarChart :data="monthlyRows" :loading="rentalsByMonthQuery.isPending.value" />
       </div>
     </section>
 

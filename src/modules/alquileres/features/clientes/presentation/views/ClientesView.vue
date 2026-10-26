@@ -27,6 +27,7 @@ import type { ClientListItem, ListClientsParams } from '../../domain/client.type
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 const clientsRepository = useService(clientsRepositoryKey)
 
 const router = useRouter()
@@ -204,15 +205,17 @@ const statusOptions = [
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  // Traer todos los clientes sin paginación
-  const result = await clientsRepository.getList({
-    applicationSlug: 'alquileres',
-    page: 1,
-    limit: 10000,
-    search: searchInput.value.trim() || undefined,
-    clientType: filterType.value === 'ALL' ? undefined : filterType.value,
-    isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
-  })
+  // Todas las páginas: el backend topa cada página en 50 filas
+  const rows = await fetchAllPages((page, limit) =>
+    clientsRepository.getList({
+      applicationSlug: 'alquileres',
+      page,
+      limit,
+      search: searchInput.value.trim() || undefined,
+      clientType: filterType.value === 'ALL' ? undefined : filterType.value,
+      isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
+    }),
+  )
   const now = toCalendarDateString()
   await exportToExcel({
     fileName: `clientes_${now}`,
@@ -229,7 +232,7 @@ async function handleExport() {
       { header: 'Alquileres', key: 'contractsCount', width: 14 },
       { header: 'Estado', key: 'isActive', width: 10 },
     ],
-    rows: result.data.map((c: ClientListItem) => ({
+    rows: rows.map((c: ClientListItem) => ({
       fullName: c.fullName,
       documentTypeCode: c.documentTypeCode,
       documentNumber: c.documentNumber,

@@ -28,6 +28,7 @@ import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@shared/utils/formatters'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 const rentalsRepository = useService(rentalsRepositoryKey)
 
 const router = useRouter()
@@ -275,13 +276,16 @@ const statusOptions = [
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await rentalsRepository.getList({
-    applicationSlug: ALQUILERES_APP_SLUG,
-    page: 1,
-    limit: 10000,
-    search: searchInput.value.trim() || undefined,
-    status: filterStatus.value === 'ALL' ? undefined : filterStatus.value,
-  })
+  // Todas las páginas: el backend topa cada página en 50 filas
+  const rows = await fetchAllPages((page, limit) =>
+    rentalsRepository.getList({
+      applicationSlug: ALQUILERES_APP_SLUG,
+      page,
+      limit,
+      search: searchInput.value.trim() || undefined,
+      status: filterStatus.value === 'ALL' ? undefined : filterStatus.value,
+    }),
+  )
   const now = toCalendarDateString()
   await exportToExcel({
     fileName: `alquileres_${now}`,
@@ -299,7 +303,7 @@ async function handleExport() {
       { header: 'Garantía', key: 'securityDeposit', width: 14 },
       { header: 'Con contrato', key: 'hasContract', width: 14 },
     ],
-    rows: result.data.map((r: RentalListItem) => ({
+    rows: rows.map((r: RentalListItem) => ({
       code: r.code,
       propertyAddress: r.propertyAddress,
       tenantName: r.tenantName,

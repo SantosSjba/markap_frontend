@@ -55,6 +55,8 @@ const columns = [
 
 const { isExporting, exportToExcel } = useExcelExport()
 async function handleExport() {
+  // Datos al momento de exportar, no los que quedaron en caché al abrir la pestaña
+  await query.refetch()
   await exportToExcel({
     fileName: `contratos_por_vencer_${days.value}d_${toCalendarDateString()}`,
     sheetName: 'Contratos por vencer',

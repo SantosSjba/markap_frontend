@@ -33,6 +33,7 @@ import type { PropertyListItem, ListPropertiesParams } from '../../domain/proper
 import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 const propertiesRepository = useService(propertiesRepositoryKey)
 
 const router = useRouter()
@@ -316,14 +317,17 @@ function formatDate(d: string | null | undefined): string {
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await propertiesRepository.getList({
-    applicationSlug: 'alquileres',
-    page: 1,
-    limit: 10000,
-    search: searchInput.value.trim() || undefined,
-    listingStatus: filterListingStatus.value || undefined,
-    propertyTypeId: filterPropertyTypeId.value || undefined,
-  })
+  // Todas las páginas: el backend topa cada página en 50 filas
+  const rows = await fetchAllPages((page, limit) =>
+    propertiesRepository.getList({
+      applicationSlug: 'alquileres',
+      page,
+      limit,
+      search: searchInput.value.trim() || undefined,
+      listingStatus: filterListingStatus.value || undefined,
+      propertyTypeId: filterPropertyTypeId.value || undefined,
+    }),
+  )
   const now = toCalendarDateString()
   await exportToExcel({
     fileName: `propiedades_${now}`,
@@ -341,7 +345,7 @@ async function handleExport() {
       { header: 'Moneda', key: 'rentCurrency', width: 10 },
       { header: 'Alquiler mensual', key: 'monthlyRent', width: 18 },
     ],
-    rows: result.data.map((p: PropertyListItem) => ({
+    rows: rows.map((p: PropertyListItem) => ({
       code: p.code,
       addressLine: p.addressLine,
       districtName: p.districtName,

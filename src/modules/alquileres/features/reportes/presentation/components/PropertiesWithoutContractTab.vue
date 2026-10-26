@@ -76,6 +76,8 @@ const columns = [
 
 const { isExporting, exportToExcel } = useExcelExport()
 async function handleExport() {
+  // Datos al momento de exportar, no los que quedaron en caché al abrir la pestaña
+  await query.refetch()
   await exportToExcel({
     fileName: `propiedades_sin_contrato_${toCalendarDateString()}`,
     sheetName: 'Sin contrato',

@@ -25,6 +25,7 @@ import { useAgentsList, useUpdateAgent, useDeleteAgent } from '../composables/us
 import type { AgentListItem, ListAgentsParams } from '../../domain/agent.types'
 import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 const agentsRepository = useService(agentsRepositoryKey)
 
 const router = useRouter()
@@ -221,14 +222,17 @@ const tableColumns = [
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await agentsRepository.list({
-    applicationSlug: 'alquileres',
-    page: 1,
-    limit: 10000,
-    search: searchInput.value.trim() || undefined,
-    type: filterType.value === 'ALL' ? undefined : filterType.value,
-    isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
-  })
+  // Todas las páginas: el backend topa cada página en 50 filas
+  const rows = await fetchAllPages((page, limit) =>
+    agentsRepository.list({
+      applicationSlug: 'alquileres',
+      page,
+      limit,
+      search: searchInput.value.trim() || undefined,
+      type: filterType.value === 'ALL' ? undefined : filterType.value,
+      isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
+    }),
+  )
   const now = toCalendarDateString()
   await exportToExcel({
     fileName: `agentes_${now}`,
@@ -242,7 +246,7 @@ async function handleExport() {
       { header: 'Teléfono', key: 'phone', width: 16 },
       { header: 'Estado', key: 'isActive', width: 10 },
     ],
-    rows: result.data.map((a: AgentListItem) => ({
+    rows: rows.map((a: AgentListItem) => ({
       fullName: displayName(a),
       type: a.type === 'INTERNAL' ? 'Interno' : 'Externo',
       documentTypeCode: a.documentType?.code ?? '—',

@@ -43,6 +43,8 @@ const columns = [
 
 const { isExporting, exportToExcel } = useExcelExport()
 async function handleExport() {
+  // Datos al momento de exportar, no los que quedaron en caché al abrir la pestaña
+  await query.refetch()
   // Una fila por contrato: el cliente se repite si tiene varios
   await exportToExcel({
     fileName: `clientes_activos_${toCalendarDateString()}`,
