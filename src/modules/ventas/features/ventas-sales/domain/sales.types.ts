@@ -256,13 +256,18 @@ export interface SaleComplianceChecklist {
   sunarpObservationNotes?: string | null
   alcabalaApplicable?: boolean
   alcabalaAmount?: number | null
+  alcabalaCurrency?: string | null
   alcabalaPaidAt?: string | null
   rent2Applicable?: boolean
   rent2Amount?: number | null
+  rent2Currency?: string | null
   rent2PaidAt?: string | null
   bankedPaymentRequired?: boolean
   bankedPaymentVerified?: boolean
+  /** Código del catálogo de bancos y medios de pago */
   paymentMethod?: string | null
+  paymentAmount?: number | null
+  paymentCurrency?: string | null
   bankOperationNumber?: string | null
   bankName?: string | null
   bankAccountHolder?: string | null
@@ -289,6 +294,9 @@ export interface SaleComplianceDocument {
 }
 
 export interface SaleTaxPreview {
+  /** Los tributos se liquidan en soles */
+  currency: string
+  exchangeRate: number
   salePrice: number
   acquisitionCost: number
   uit: number

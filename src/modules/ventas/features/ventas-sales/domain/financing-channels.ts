@@ -18,3 +18,28 @@ export function financingChannelOptions(channels: SaleFinancingChannel[]) {
   )
   return [{ value: '', label: 'Sin especificar' }, ...grouped]
 }
+
+/**
+ * Opciones por código del catálogo, filtradas por categoría (cumplimiento legal guarda el código).
+ * Un valor de texto registrado antes del catálogo se conserva como opción para no perderlo.
+ */
+export function financingChannelCodeOptions(
+  channels: SaleFinancingChannel[],
+  categories: readonly string[],
+  current?: string | null,
+) {
+  const options = CATEGORY_ORDER.filter((cat) => categories.includes(cat)).flatMap((cat) =>
+    channels
+      .filter((c) => c.category === cat)
+      .map((c) => ({
+        value: c.code,
+        label: categories.length > 1 ? `${FINANCING_CATEGORY_LABEL[cat] ?? cat}: ${c.name}` : c.name,
+      })),
+  )
+  const legacy = current?.trim()
+  const withLegacy =
+    legacy && !options.some((o) => o.value === legacy)
+      ? [...options, { value: legacy, label: `${legacy} (registrado antes del catálogo)` }]
+      : options
+  return [{ value: '', label: 'Sin especificar' }, ...withLegacy]
+}

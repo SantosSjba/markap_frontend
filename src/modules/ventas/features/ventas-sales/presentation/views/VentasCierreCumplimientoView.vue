@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { COMPLIANCE_DOCUMENT_OPTIONS, complianceDocumentLabel } from '../../domain/pipeline.constants'
+import { financingChannelCodeOptions } from '../../domain/financing-channels'
+import { useVentasCurrencyCatalog } from '../../../../presentation/composables/useVentasCurrencyCatalog'
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
 const { canWrite } = useApplicationAccess('ventas')
 
@@ -27,6 +29,7 @@ import {
   useVentasUploadComplianceDocument,
   useVentasUploadPaymentEvidence,
   useVentasTaxPreview,
+  useVentasFinancingChannels,
 } from '../composables/useVentasSales'
 import type { SaleComplianceChecklist } from '../../domain/sales.types'
 import { resolveFileDownloadUrl } from '@shared/utils/archivo-url'
@@ -91,13 +94,17 @@ const complianceForm = ref({
   sunarpObservationNotes: '',
   alcabalaApplicable: true,
   alcabalaAmount: 0,
+  alcabalaCurrency: 'PEN',
   alcabalaPaidAt: '',
   rent2Applicable: false,
   rent2Amount: 0,
+  rent2Currency: 'PEN',
   rent2PaidAt: '',
   bankedPaymentRequired: true,
   bankedPaymentVerified: false,
   paymentMethod: '',
+  paymentAmount: null as number | null,
+  paymentCurrency: '',
   bankOperationNumber: '',
   bankName: '',
   bankAccountHolder: '',
@@ -107,13 +114,34 @@ const complianceForm = ref({
   complianceNotes: '',
 })
 
+// Catálogos: monedas y bancos / medios de pago
+const { options: currencyOptions } = useVentasCurrencyCatalog()
+const { data: financingChannels, isLoading: loadingChannels } = useVentasFinancingChannels()
+const paymentMethodOptions = computed(() =>
+  financingChannelCodeOptions(
+    financingChannels.value ?? [],
+    ['PAYMENT_METHOD', 'OWN_FUNDS', 'OTHER'],
+    checklistData.value?.paymentMethod,
+  ),
+)
+const bankOptions = computed(() =>
+  financingChannelCodeOptions(financingChannels.value ?? [], ['BANK'], checklistData.value?.bankName),
+)
+const isCashPayment = computed(() => complianceForm.value.paymentMethod === 'CASH')
+
+/** Costo de adquisición en la moneda de la venta; los tributos se liquidan en soles */
 const acquisitionCost = ref<number>(0)
+const isForeignSale = computed(() => currency.value !== 'PEN')
+const exchangeRate = ref<number | null>(null)
 const taxPreviewParams = computed(() => ({
   salePrice: finalPrice.value || 0,
   acquisitionCost: acquisitionCost.value || 0,
   alcabalaApplicable: complianceForm.value.alcabalaApplicable,
   rent2Applicable: complianceForm.value.rent2Applicable,
+  ...(isForeignSale.value && exchangeRate.value ? { exchangeRate: Number(exchangeRate.value) } : {}),
 }))
+/** Sin tipo de cambio el estimado de una venta en otra moneda saldría mal (la UIT está en soles) */
+const taxPreviewReady = computed(() => !isForeignSale.value || Number(exchangeRate.value) > 0)
 const {
   data: taxPreview,
   isLoading: loadingTaxPreview,
@@ -140,13 +168,17 @@ watch(checklistData, (v) => {
     sunarpObservationNotes: String(v.sunarpObservationNotes ?? ''),
     alcabalaApplicable: v.alcabalaApplicable !== false,
     alcabalaAmount: Number(v.alcabalaAmount ?? 0),
+    alcabalaCurrency: String(v.alcabalaCurrency ?? 'PEN'),
     alcabalaPaidAt: v.alcabalaPaidAt ? toCalendarDateString(v.alcabalaPaidAt) : '',
     rent2Applicable: Boolean(v.rent2Applicable),
     rent2Amount: Number(v.rent2Amount ?? 0),
+    rent2Currency: String(v.rent2Currency ?? 'PEN'),
     rent2PaidAt: v.rent2PaidAt ? toCalendarDateString(v.rent2PaidAt) : '',
     bankedPaymentRequired: v.bankedPaymentRequired !== false,
     bankedPaymentVerified: Boolean(v.bankedPaymentVerified),
     paymentMethod: String(v.paymentMethod ?? ''),
+    paymentAmount: v.paymentAmount != null ? Number(v.paymentAmount) : null,
+    paymentCurrency: String(v.paymentCurrency ?? currency.value),
     bankOperationNumber: String(v.bankOperationNumber ?? ''),
     bankName: String(v.bankName ?? ''),
     bankAccountHolder: String(v.bankAccountHolder ?? ''),
@@ -194,9 +226,12 @@ function goBack() {
 }
 
 function applyTaxSuggestion() {
-  if (!taxPreview.value) return
+  if (!taxPreview.value || !taxPreviewReady.value) return
   complianceForm.value.alcabalaAmount = taxPreview.value.alcabala.amount
   complianceForm.value.rent2Amount = taxPreview.value.rent2.amount
+  // El estimado está en soles
+  complianceForm.value.alcabalaCurrency = 'PEN'
+  complianceForm.value.rent2Currency = 'PEN'
 }
 
 function onSaveChecklist() {
@@ -213,6 +248,10 @@ function onSaveChecklist() {
     sunarpRegisteredAt: f.sunarpRegisteredAt || null,
     alcabalaPaidAt: f.alcabalaPaidAt || null,
     rent2PaidAt: f.rent2PaidAt || null,
+    paymentMethod: f.paymentMethod || null,
+    bankName: f.bankName || null,
+    paymentAmount: f.paymentAmount != null && String(f.paymentAmount) !== '' ? Number(f.paymentAmount) : null,
+    paymentCurrency: f.paymentCurrency || currency.value,
   }
   saveChecklist(payload)
 }
@@ -388,22 +427,58 @@ const hasPaymentEvidence = computed(
           <FormTextarea class="mt-3" v-model="complianceForm.sunarpObservationNotes" :rows="2" label="Observación SUNARP" />
         </FormSectionCard>
 
-        <FormSectionCard title="Tributos" icon="lucide:receipt" dense>
+        <FormSectionCard
+          title="Tributos"
+          subtitle="Alcabala (municipal) y renta de 2da categoría; se liquidan en soles"
+          icon="lucide:receipt"
+          dense
+        >
           <div class="grid sm:grid-cols-3 gap-3">
             <FormCheckbox v-model="complianceForm.alcabalaApplicable" label="Alcabala aplicable" />
             <FormCheckbox v-model="complianceForm.rent2Applicable" label="Renta 2da aplicable" />
-            <FormInput v-model="acquisitionCost" type="number" min="0" step="0.01" label="Costo adquisición (S/)" />
+            <FormInput
+              v-model="acquisitionCost"
+              type="number"
+              min="0"
+              step="0.01"
+              :label="`Costo de adquisición (${currency})`"
+              hint="Para estimar la renta de 2da"
+            />
           </div>
-          <div class="grid sm:grid-cols-2 gap-3 mt-3">
-            <FormInput v-model="complianceForm.alcabalaAmount" type="number" min="0" step="0.01" label="Alcabala (S/)" />
-            <FormInput v-model="complianceForm.rent2Amount" type="number" min="0" step="0.01" label="Renta 2da (S/)" />
+          <div v-if="isForeignSale" class="grid sm:grid-cols-3 gap-3 mt-3">
+            <FormInput
+              v-model="exchangeRate"
+              type="number"
+              min="0"
+              step="0.001"
+              :label="`Tipo de cambio (S/ por 1 ${currency})`"
+              hint="Necesario para estimar: la UIT y los tributos están en soles"
+            />
+          </div>
+          <div class="grid sm:grid-cols-3 gap-3 mt-3">
+            <FormInput v-model="complianceForm.alcabalaAmount" type="number" min="0" step="0.01" :label="`Alcabala (${complianceForm.alcabalaCurrency})`" />
+            <FormSelect v-model="complianceForm.alcabalaCurrency" label="Moneda alcabala" :options="currencyOptions" />
+            <FormInput v-model="complianceForm.alcabalaPaidAt" type="date" label="Alcabala pagada el" :max="toCalendarDateString()" />
+            <FormInput v-model="complianceForm.rent2Amount" type="number" min="0" step="0.01" :label="`Renta 2da (${complianceForm.rent2Currency})`" />
+            <FormSelect v-model="complianceForm.rent2Currency" label="Moneda renta 2da" :options="currencyOptions" />
+            <FormInput v-model="complianceForm.rent2PaidAt" type="date" label="Renta 2da pagada el" :max="toCalendarDateString()" />
           </div>
           <div class="flex flex-wrap items-center gap-2 mt-3">
-            <BaseButton variant="secondary" icon="lucide:sparkles" :disabled="loadingTaxPreview" @click="applyTaxSuggestion">
+            <BaseButton
+              variant="secondary"
+              icon="lucide:sparkles"
+              :disabled="loadingTaxPreview || !taxPreviewReady"
+              @click="applyTaxSuggestion"
+            >
               Aplicar estimado tributario
             </BaseButton>
-            <span v-if="taxPreview" class="text-xs text-gray-500 dark:text-gray-400">
-              Alcabala: S/ {{ taxPreview.alcabala.amount.toLocaleString('es-PE') }} · Renta 2da: S/ {{ taxPreview.rent2.amount.toLocaleString('es-PE') }}
+            <span v-if="!taxPreviewReady" class="text-xs text-warning-600 dark:text-orange-400">
+              Ingrese el tipo de cambio para estimar los tributos de una venta en {{ currency }}.
+            </span>
+            <span v-else-if="taxPreview" class="text-xs text-gray-500 dark:text-gray-400">
+              Alcabala: {{ formatCurrency(taxPreview.alcabala.amount, 'PEN') }} · Renta 2da:
+              {{ formatCurrency(taxPreview.rent2.amount, 'PEN') }}
+              <template v-if="isForeignSale"> (precio en soles: {{ formatCurrency(taxPreview.salePrice, 'PEN') }})</template>
             </span>
           </div>
           <div v-if="taxPreviewQueryError" class="flex flex-wrap items-center gap-2 text-xs mt-2">
@@ -414,10 +489,21 @@ const hasPaymentEvidence = computed(
 
         <FormSectionCard title="Pago y KYC" icon="lucide:shield-check" dense>
           <div class="grid sm:grid-cols-2 gap-3">
-            <FormInput v-model="complianceForm.paymentMethod" label="Método de pago" />
+            <FormSelect
+              v-model="complianceForm.paymentMethod"
+              label="Medio de pago"
+              :options="paymentMethodOptions"
+              :loading="loadingChannels"
+            />
+            <FormSelect v-model="complianceForm.bankName" label="Banco" :options="bankOptions" :loading="loadingChannels" />
+            <FormInput v-model="complianceForm.paymentAmount" type="number" min="0" step="0.01" :label="`Monto pagado (${complianceForm.paymentCurrency || currency})`" />
+            <FormSelect
+              v-model="complianceForm.paymentCurrency"
+              :label="`Moneda del pago (venta en ${currency})`"
+              :options="currencyOptions"
+            />
             <FormInput v-model="complianceForm.bankOperationNumber" label="N° operación bancaria" />
-            <FormInput v-model="complianceForm.bankName" label="Banco" />
-            <FormInput v-model="complianceForm.bankAccountHolder" label="Titular cuenta" />
+            <FormInput v-model="complianceForm.bankAccountHolder" label="Titular de la cuenta" />
             <FormSelect
               v-model="complianceForm.kycRiskLevel"
               label="Riesgo KYC"
@@ -430,6 +516,13 @@ const hasPaymentEvidence = computed(
             />
             <FormTextarea v-model="complianceForm.complianceNotes" :rows="2" label="Notas compliance" />
           </div>
+          <p
+            v-if="isCashPayment && complianceForm.bankedPaymentRequired"
+            class="mt-3 flex items-start gap-2 text-sm text-warning-600 dark:text-orange-400"
+          >
+            El pago en efectivo no cumple la bancarización (Ley 28194): el cierre quedará pendiente hasta registrar un
+            medio bancario.
+          </p>
           <div class="mt-4 space-y-2">
             <p class="text-sm font-medium">Evidencia de pago</p>
             <FileDropzone

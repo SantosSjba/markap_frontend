@@ -162,6 +162,8 @@ export interface VentasSalesRepository {
     alcabalaApplicable?: boolean
     rent2Applicable?: boolean
     uit?: number
+    /** Soles por unidad de la moneda de la venta */
+    exchangeRate?: number
   }) => Promise<SaleTaxPreview>
 
   getCompliancePendingBoard: (params?: {

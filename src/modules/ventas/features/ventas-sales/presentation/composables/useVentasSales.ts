@@ -437,6 +437,8 @@ export function useVentasTaxPreview(
     alcabalaApplicable?: boolean
     rent2Applicable?: boolean
     uit?: number
+    /** Soles por unidad de la moneda de la venta */
+    exchangeRate?: number
   }>,
 ) {
   const ventasSalesRepository = useService(ventasSalesRepositoryKey)
