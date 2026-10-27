@@ -5,6 +5,7 @@ import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@shared/utils/invalidateQuerySubtree'
+import { invalidateVentasRelatedData } from '../../../../presentation/composables/invalidateVentasRelatedData'
 import type {
   CreateVentasClientPayload,
   ListVentasClientsParams,
@@ -103,6 +104,7 @@ export function useVentasCreateClient() {
     mutationFn: (data: CreateVentasClientPayload) => ventasClientsRepository.create(data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasClientKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       void markapAlert.toast.success(
         'Cliente registrado',
         'El registro quedó guardado en el módulo Ventas.',
@@ -122,6 +124,7 @@ export function useVentasUpdateClient() {
       ventasClientsRepository.update(id, data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasClientKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       void markapAlert.toast.success('Cliente actualizado')
     },
     onError: (err) => {
@@ -137,6 +140,7 @@ export function useVentasDeleteClient() {
     mutationFn: (id: string) => ventasClientsRepository.delete(id),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasClientKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       void markapAlert.toast.success('Cliente eliminado')
     },
     onError: (err) => {

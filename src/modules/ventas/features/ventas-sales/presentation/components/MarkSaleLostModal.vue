@@ -46,8 +46,8 @@ function submit() {
         <template v-if="processCode">
           Proceso <strong>{{ processCode }}</strong> —
         </template>
-        La oportunidad quedará como <strong>perdida</strong>. Las comisiones pendientes se anularán y no
-        podrá retroceder etapas en el pipeline.
+        La oportunidad quedará como <strong>perdida</strong>. Las comisiones pendientes se anularán, la
+        separación vigente vencerá y el inmueble volverá a estar disponible.
       </p>
       <FormTextarea
         v-model="reason"

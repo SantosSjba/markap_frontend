@@ -35,11 +35,15 @@ withDefaults(defineProps<Props>(), { subtitle: undefined, loading: false, compac
         {{ title }}
       </span>
       <div v-if="loading" class="mt-1 h-5 w-14 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
-      <div v-else class="flex items-baseline gap-1.5">
-        <span class="text-lg leading-6 font-bold text-gray-800 dark:text-white/90">
+      <!-- La cifra no se parte (montos largos): el subtítulo baja de línea si no cabe -->
+      <div v-else class="flex flex-wrap items-baseline gap-x-1.5">
+        <span
+          class="max-w-full truncate text-lg leading-6 font-bold whitespace-nowrap tabular-nums text-gray-800 dark:text-white/90"
+          :title="String(value)"
+        >
           {{ value }}
         </span>
-        <span v-if="subtitle" class="truncate text-theme-xs text-gray-400 dark:text-gray-500">
+        <span v-if="subtitle" class="max-w-full truncate text-theme-xs text-gray-400 dark:text-gray-500" :title="subtitle">
           {{ subtitle }}
         </span>
       </div>

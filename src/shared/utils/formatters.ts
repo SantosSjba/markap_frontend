@@ -104,6 +104,13 @@ export function formatCurrency(
   return `${CURRENCY_SYMBOLS[code] ?? code} ${number}`
 }
 
+/** Como `formatCurrency` pero sin decimales, para cifras grandes en tarjetas y tableros */
+export function formatCurrencyRounded(amount: number, currency: string = 'PEN'): string {
+  const code = currency || 'PEN'
+  const number = new Intl.NumberFormat(PERU_LOCALE, { maximumFractionDigits: 0 }).format(amount)
+  return `${CURRENCY_SYMBOLS[code] ?? code} ${number}`
+}
+
 /**
  * Format number with thousand separators
  */

@@ -2,6 +2,7 @@ import { apiClient } from '@shared/infrastructure/http/api-client'
 import {
   VENTAS_CONFIG_APP_SLUG,
   type VentasConfigBootstrap,
+  type VentasFinancingChannel,
   type VentasPipelineStageDTO,
 } from '../../domain/config.types'
 import type { VentasConfigRepository } from '../../domain/repositories/ventas-config.repository'
@@ -28,10 +29,21 @@ export const ventasConfigApiRepository: VentasConfigRepository = {
       })
       .then((r) => r.data),
 
-  patchSaleProcessNumbering: (body: { prefix?: string; lastNumber?: number }) =>
+  listFinancingChannels: () =>
     apiClient
-      .patch<
-        VentasConfigBootstrap['numbering']
-      >(`/ventas-config/numbering/sale-process?${qs({ ...scope })}`, body)
+      .get<VentasFinancingChannel[]>(`/ventas-config/financing-channels?${qs({ ...scope })}`)
+      .then((r) => r.data),
+
+  createFinancingChannel: (body) =>
+    apiClient
+      .post<VentasFinancingChannel>(`/ventas-config/financing-channels?${qs({ ...scope })}`, body)
+      .then((r) => r.data),
+
+  updateFinancingChannel: (id, body) =>
+    apiClient
+      .patch<VentasFinancingChannel>(
+        `/ventas-config/financing-channels/${encodeURIComponent(id)}?${qs({ ...scope })}`,
+        body,
+      )
       .then((r) => r.data),
 }

@@ -33,10 +33,13 @@ const props = withDefaults(
     layout?: 'grid' | 'tabs'
     /** Listados más bajos (modal). */
     compact?: boolean
+    /** Estilo de las pestañas: `underline` en la ficha (como Reportes), `segmented` en modales */
+    tabsVariant?: 'underline' | 'segmented'
   }>(),
   {
     layout: 'grid',
     compact: false,
+    tabsVariant: 'segmented',
   },
 )
 
@@ -55,11 +58,21 @@ const tab = ref<'notes' | 'activities' | 'reminders'>('notes')
 
 const listMaxClass = computed(() => (props.compact ? 'max-h-32' : 'max-h-44'))
 
-const tabItems = [
-  { id: 'notes' as const, label: 'Notas', icon: 'lucide:sticky-note' },
-  { id: 'activities' as const, label: 'Actividades', icon: 'lucide:calendar-clock' },
-  { id: 'reminders' as const, label: 'Recordatorios', icon: 'lucide:bell' },
-]
+/** Pestañas con contador: notas, actividades y recordatorios pendientes */
+const withCount = (label: string, n: number) => (n ? `${label} (${n})` : label)
+const tabItems = computed(() => [
+  { id: 'notes' as const, label: withCount('Notas', proc.value?.notes?.length ?? 0), icon: 'lucide:sticky-note' },
+  {
+    id: 'activities' as const,
+    label: withCount('Actividades', proc.value?.activities?.length ?? 0),
+    icon: 'lucide:calendar-clock',
+  },
+  {
+    id: 'reminders' as const,
+    label: withCount('Recordatorios', (proc.value?.reminders ?? []).filter((r) => !r.completedAt).length),
+    icon: 'lucide:bell',
+  },
+])
 
 const { mutateAsync: addNoteAsync, isPending: addingNote } = useVentasAddProcessNote()
 const { mutateAsync: addActAsync, isPending: addingAct } = useVentasAddActivity()
@@ -167,7 +180,7 @@ function showSection(id: 'notes' | 'activities' | 'reminders') {
 
     <template v-else-if="proc">
       <!-- Pestañas (pipeline / modal) -->
-      <BaseTabs v-if="layout === 'tabs'" v-model="tab" :tabs="tabItems" variant="segmented" class="mb-4" />
+      <BaseTabs v-if="layout === 'tabs'" v-model="tab" :tabs="tabItems" :variant="tabsVariant" class="mb-4" />
 
       <div :class="layout === 'grid' ? 'grid lg:grid-cols-3 gap-6' : 'space-y-0'">
         <FormSectionCard

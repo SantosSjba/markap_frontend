@@ -19,7 +19,12 @@ const sizeMap = { sm: 'sm', md: 'default', lg: 'lg' } as const
 
 const initials = computed(() => {
   const name = props.name ?? ''
-  const parts = name.trim().split(/\s+/).filter(Boolean)
+  // Solo palabras que empiezan con letra o número: «Sistemas (Ventas)» → «SV», no «S(»
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.replace(/^[^\p{L}\p{N}]+/u, ''))
+    .filter(Boolean)
   if (parts.length >= 2) {
     const first = parts[0]?.charAt(0) ?? ''
     const last = parts[parts.length - 1]?.charAt(0) ?? ''

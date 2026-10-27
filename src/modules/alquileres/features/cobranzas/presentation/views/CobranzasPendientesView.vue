@@ -497,7 +497,14 @@ async function handleExport() {
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
           <FormInput v-bind="paidDateBinds" type="date" label="Fecha de pago" :max="toCalendarDateString()" :error="paymentErrors.paidDate" required />
-          <FormInput v-bind="paidAmountBinds" type="number" label="Monto pagado" :error="paymentErrors.paidAmount" required />
+          <FormInput
+            v-bind="paidAmountBinds"
+            type="number"
+            :label="`Monto pagado (${selectedPayment.currency})`"
+            hint="En la moneda del contrato"
+            :error="paymentErrors.paidAmount"
+            required
+          />
         </div>
 
         <!-- Método de pago -->

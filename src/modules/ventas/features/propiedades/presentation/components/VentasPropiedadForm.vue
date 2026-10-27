@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useVentasCurrencyCatalog } from '../../../../presentation/composables/useVentasCurrencyCatalog'
 import { computed, ref, watch } from 'vue'
 import * as yup from 'yup'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -14,7 +15,6 @@ import { fieldLabelClass } from '@shared/presentation/components/forms/field-cla
 import { formatFormArea, formatFormStat } from '@shared/utils/format-form-stat'
 import {
   useVentasPropertyTypes,
-  useVentasPropertyCurrencies,
   useVentasPropertyDepartments,
   useVentasPropertyProvinces,
   useVentasPropertyDistricts,
@@ -56,6 +56,10 @@ interface Props {
   submitLabel: string
   submitting?: boolean
   canWrite?: boolean
+  /** `modal`: una columna sin resumen ni botones propios; el modal los pone en su pie */
+  variant?: 'page' | 'modal'
+  /** id del `<form>`, para enviarlo desde un botón externo (pie del modal) */
+  formId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -63,7 +67,11 @@ const props = withDefaults(defineProps<Props>(), {
   preselectedOwnerId: undefined,
   submitting: false,
   canWrite: true,
+  variant: 'page',
+  formId: undefined,
 })
+
+const isModal = computed(() => props.variant === 'modal')
 
 const emit = defineEmits<{
   submit: [payload: Omit<VentasCreatePropertyPayload, 'mediaItems'>]
@@ -232,7 +240,7 @@ const selectedDepartmentId = computed(() => values.departmentId || undefined)
 const selectedProvinceId = computed(() => values.provinceId || undefined)
 
 const { data: propertyTypes, isLoading: loadingTypes } = useVentasPropertyTypes()
-const { data: currencies, isLoading: loadingCurrencies } = useVentasPropertyCurrencies()
+const { currencies, options: currencyOptions, isLoading: loadingCurrencies } = useVentasCurrencyCatalog()
 const { data: departments, isLoading: loadingDepartments } = useVentasPropertyDepartments()
 const { data: provinces, isLoading: loadingProvinces } = useVentasPropertyProvinces(selectedDepartmentId)
 const { data: districts, isLoading: loadingDistricts } = useVentasPropertyDistricts(selectedProvinceId)
@@ -250,9 +258,6 @@ const propertyTypeOptions = computed(() =>
 const departmentOptions = computed(() => mergeDepartmentOptions(departments.value))
 const provinceOptions = computed(() => (provinces.value ?? []).map((p) => ({ value: p.id, label: p.name })))
 const districtOptions = computed(() => (districts.value ?? []).map((d) => ({ value: d.id, label: d.name })))
-const currencyOptions = computed(() =>
-  (currencies.value ?? []).map((c) => ({ value: c.code, label: `${c.symbol} · ${c.name}` })),
-)
 /** Símbolo de la moneda elegida para etiquetas y resumen (ej. S/, US$) */
 const currencySymbol = computed(
   () => (currencies.value ?? []).find((c) => c.code === values.saleCurrency)?.symbol ?? values.saleCurrency,
@@ -433,9 +438,15 @@ const onSubmit = handleSubmit((v: PropertyFormValues) => {
 <template>
   <LoadingState v-if="loading" text="Cargando opciones..." class="py-24" />
 
-  <form v-else class="grid grid-cols-1 items-start gap-6 xl:grid-cols-3" novalidate @submit.prevent="onSubmit">
+  <form
+    v-else
+    :id="formId"
+    :class="isModal ? 'space-y-5' : 'grid grid-cols-1 items-start gap-6 xl:grid-cols-3'"
+    novalidate
+    @submit.prevent="onSubmit"
+  >
     <!-- ── Columna principal ── -->
-    <div class="space-y-6 xl:col-span-2">
+    <div :class="isModal ? 'space-y-5' : 'space-y-6 xl:col-span-2'">
       <FormSectionCard title="Datos generales" subtitle="El código se arma con el tipo, el distrito y el propietario principal">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <FormSelect
@@ -648,7 +659,7 @@ const onSubmit = handleSubmit((v: PropertyFormValues) => {
     </div>
 
     <!-- ── Lateral: resumen + acciones (fijo en escritorio) ── -->
-    <aside class="space-y-6 xl:sticky xl:top-24">
+    <aside v-if="!isModal" class="space-y-6 xl:sticky xl:top-24">
       <FormSectionCard title="Resumen">
         <dl class="space-y-3 text-sm">
           <div>

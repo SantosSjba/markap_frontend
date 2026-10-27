@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { COMPLIANCE_DOCUMENT_OPTIONS, complianceDocumentLabel } from '../../domain/pipeline.constants'
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
 const { canWrite } = useApplicationAccess('ventas')
 
@@ -9,7 +10,7 @@ import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import { useService } from '@shared/presentation/di/services'
 import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
-import { toCalendarDateString } from '@shared/utils/formatters'
+import { formatCurrency, toCalendarDateString } from '@shared/utils/formatters'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -37,6 +38,9 @@ const route = useRoute()
 const router = useRouter()
 
 const closingId = computed(() => String(route.params.closingId ?? ''))
+/** Abierto desde la ficha del proceso (`/procesos/:id/cumplimiento`) */
+const processId = computed(() => String(route.params.id ?? ''))
+const currency = computed(() => String(route.query.currency ?? 'PEN'))
 const propertyId = computed(() => String(route.query.propertyId ?? ''))
 const buyerClientId = computed(() => String(route.query.buyerClientId ?? ''))
 const propertyCode = computed(() => String(route.query.propertyCode ?? ''))
@@ -180,12 +184,13 @@ const operationLabel = computed(() => {
   const parts: string[] = []
   if (propertyCode.value) parts.push(propertyCode.value)
   if (buyerName.value) parts.push(buyerName.value)
-  if (finalPrice.value > 0) parts.push(`S/ ${finalPrice.value.toLocaleString('es-PE')}`)
+  if (finalPrice.value > 0) parts.push(formatCurrency(finalPrice.value, currency.value))
   return parts.length ? parts.join(' — ') : closingId.value || 'Cierre de venta'
 })
 
 function goBack() {
-  router.push({ name: 'ventas-cierres' })
+  if (processId.value) router.push({ name: 'ventas-proceso-detalle', params: { id: processId.value } })
+  else router.push({ name: 'ventas-procesos' })
 }
 
 function applyTaxSuggestion() {
@@ -303,7 +308,7 @@ const hasPaymentEvidence = computed(
 <template>
   <div class="space-y-6 pb-24">
     <div class="flex items-start gap-3">
-      <IconButton @click="goBack" icon="lucide:arrow-left" label="Volver a cierres" />
+      <IconButton @click="goBack" icon="lucide:arrow-left" label="Volver al proceso" />
       <PageHeader
         class="flex-1 min-w-0"
         title="Cumplimiento legal del cierre"
@@ -316,7 +321,7 @@ const hasPaymentEvidence = computed(
       <p class="text-sm text-error-500 dark:text-error-400">
         Faltan datos de la operación (inmueble o comprador). Abra el cumplimiento desde la lista de cierres.
       </p>
-      <BaseButton variant="outline" icon="lucide:arrow-left" @click="goBack">Volver a cierres</BaseButton>
+      <BaseButton variant="outline" icon="lucide:arrow-left" @click="goBack">Volver al proceso</BaseButton>
     </BaseCard>
 
     <template v-else>
@@ -462,15 +467,7 @@ const hasPaymentEvidence = computed(
             <FormSelect
               v-model="docType"
               label="Tipo documento"
-              :options="[
-                { value: 'CRI', label: 'CRI' },
-                { value: 'MINUTA', label: 'Minuta' },
-                { value: 'ESCRITURA_PUBLICA', label: 'Escritura pública' },
-                { value: 'ALCABALA', label: 'Pago alcabala' },
-                { value: 'RENTA2', label: 'Pago renta 2da' },
-                { value: 'KYC', label: 'KYC/LAFT' },
-                { value: 'OTRO', label: 'Otro' },
-              ]"
+              :options="COMPLIANCE_DOCUMENT_OPTIONS"
             />
             <FormInput class="sm:col-span-2" v-model="docNotes" label="Notas documento" />
           </div>
@@ -497,7 +494,7 @@ const hasPaymentEvidence = computed(
           </div>
           <ul v-else class="space-y-1 text-sm mt-4">
             <li v-for="d in documentsData ?? []" :key="d.id" class="flex items-center justify-between gap-2">
-              <span>{{ d.docType }}</span>
+              <span>{{ complianceDocumentLabel(d.docType) }}</span>
               <a
                 v-if="resolveFileDownloadUrl(d) !== '#'"
                 :href="resolveFileDownloadUrl(d)"

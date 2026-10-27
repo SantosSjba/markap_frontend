@@ -1,15 +1,19 @@
 import type {
   BuyerPaymentRow,
   CommissionProfileRow,
+  CommissionListParams,
   CommissionRow,
+  CommissionStats,
   DocumentationCostRow,
   ProfitabilitySummary,
+  UpdateCommissionBody,
 } from '../finanzas.types'
 export interface VentasFinanzasRepository {
   listBuyerPayments: (params: {
     page?: number
     limit?: number
     buyerClientId?: string
+    saleClosingId?: string
     kind?: string
     displayStatus?: string
   }) => Promise<{ data: BuyerPaymentRow[]; total: number }>
@@ -22,21 +26,18 @@ export interface VentasFinanzasRepository {
     notes?: string | null
   }) => Promise<unknown>
   markBuyerPaymentPaid: (id: string, body?: { paidAt?: string | null }) => Promise<unknown>
-  listCommissions: (params: {
-    page?: number
-    limit?: number
-    status?: string
-    agentId?: string
-  }) => Promise<{
+  listCommissions: (params: Partial<CommissionListParams>) => Promise<{
     data: CommissionRow[]
     total: number
   }>
+  getCommissionStats: () => Promise<CommissionStats>
   markCommissionPaid: (id: string, body?: { paidAt?: string | null }) => Promise<unknown>
   markCommissionPaymentPartPaid: (
     partId: string,
     body?: { paidAt?: string | null },
   ) => Promise<unknown>
   recalculateCommission: (id: string) => Promise<unknown>
+  updateCommission: (id: string, body: UpdateCommissionBody) => Promise<CommissionRow>
   listCommissionProfiles: () => Promise<CommissionProfileRow[]>
   upsertCommissionProfile: (body: {
     agentId: string

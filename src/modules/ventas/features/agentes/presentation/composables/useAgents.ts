@@ -5,6 +5,7 @@ import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree, refetchQuerySubtree } from '@shared/utils/invalidateQuerySubtree'
+import { invalidateVentasRelatedData } from '../../../../presentation/composables/invalidateVentasRelatedData'
 import type {
   CreateVentasAgentPayload,
   ListVentasAgentsParams,
@@ -53,6 +54,7 @@ export function useVentasCreateAgent() {
     mutationFn: (payload: CreateVentasAgentPayload) => ventasAgentsRepository.create(payload),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasAgentKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       void markapAlert.toast.success(
         'Agente registrado',
         'Quedó asociado al módulo de ventas y ya aparece en el listado.',
@@ -76,6 +78,7 @@ export function useVentasUpdateAgent() {
       ventasAgentsRepository.update(id, data),
     onSuccess: (_, { data }) => {
       invalidateQuerySubtree(queryClient, ventasAgentKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       if (isDeactivateOnlyUpdate(data)) {
         void markapAlert.toast.success(
           'Agente desactivado',
@@ -110,6 +113,7 @@ export function useVentasDeleteAgent() {
     mutationFn: (id: string) => ventasAgentsRepository.delete(id),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasAgentKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       void markapAlert.toast.success(
         'Agente eliminado',
         'Se aplicó borrado lógico: dejará de mostrarse en el listado.',

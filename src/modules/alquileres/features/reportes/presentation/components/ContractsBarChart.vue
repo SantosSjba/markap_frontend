@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { RentalsByMonthItem } from '../../domain/reportes.types'
-import MonthlyBarChart from './MonthlyBarChart.vue'
+import MonthlyBarChart from '@shared/presentation/components/reports/MonthlyBarChart.vue'
 /**
  * ContractsBarChart
  * Contratos nuevos (iniciados) mes a mes; el tooltip agrega vencidos y activos al cierre.

@@ -2,6 +2,7 @@ import { ventasFinanzasRepositoryKey } from '../../application/ports/ventas-fina
 import { useService } from '@shared/presentation/di/services'
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
+import type { CommissionListParams, UpdateCommissionBody } from '../../domain/finanzas.types'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@shared/utils/invalidateQuerySubtree'
@@ -11,6 +12,7 @@ export const ventasFinanzasKeys = {
   buyerPayments: (params: object) =>
     [...ventasFinanzasKeys.root, 'buyer-payments', params] as const,
   commissions: (params: object) => [...ventasFinanzasKeys.root, 'commissions', params] as const,
+  commissionStats: () => [...ventasFinanzasKeys.root, 'commission-stats'] as const,
   docCosts: (params: object) => [...ventasFinanzasKeys.root, 'doc-costs', params] as const,
   profiles: () => [...ventasFinanzasKeys.root, 'profiles'] as const,
   profitability: (closingId: string) =>
@@ -35,6 +37,7 @@ export function useVentasBuyerPaymentsList(
     page: number
     limit: number
     buyerClientId?: string
+    saleClosingId?: string
     kind?: string
     displayStatus?: string
   }>,
@@ -73,13 +76,21 @@ export function useVentasMarkBuyerPaymentPaid() {
   })
 }
 
-export function useVentasCommissionsList(
-  params: Ref<{ page: number; limit: number; status?: string; agentId?: string }>,
-) {
+export function useVentasCommissionsList(params: Ref<CommissionListParams>) {
   const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
   return useQuery({
     queryKey: computed(() => ventasFinanzasKeys.commissions(params.value)),
     queryFn: () => ventasFinanzasRepository.listCommissions(params.value),
+    placeholderData: (prev) => prev,
+  })
+}
+
+/** Resumen por estado y por moneda (cada moneda por separado) */
+export function useVentasCommissionStats() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  return useQuery({
+    queryKey: ventasFinanzasKeys.commissionStats(),
+    queryFn: () => ventasFinanzasRepository.getCommissionStats(),
   })
 }
 
@@ -95,7 +106,8 @@ export function useVentasMarkCommissionPaid() {
   const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => ventasFinanzasRepository.markCommissionPaid(id),
+    mutationFn: ({ id, paidAt }: { id: string; paidAt?: string | null }) =>
+      ventasFinanzasRepository.markCommissionPaid(id, paidAt ? { paidAt } : undefined),
     onSuccess: () => {
       void invalidateVentasSalesAndFinanzas(qc)
       void markapAlert.toast.success('Comisión marcada como pagada')
@@ -108,7 +120,8 @@ export function useVentasMarkCommissionPaymentPartPaid() {
   const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (partId: string) => ventasFinanzasRepository.markCommissionPaymentPartPaid(partId),
+    mutationFn: ({ partId, paidAt }: { partId: string; paidAt?: string | null }) =>
+      ventasFinanzasRepository.markCommissionPaymentPartPaid(partId, paidAt ? { paidAt } : undefined),
     onSuccess: () => {
       void invalidateVentasSalesAndFinanzas(qc)
       void markapAlert.toast.success('Cuota marcada como pagada')
@@ -127,6 +140,20 @@ export function useVentasRecalculateCommission() {
       void markapAlert.toast.success('Comisión recalculada según perfil del asesor')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo recalcular', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasUpdateCommission() {
+  const ventasFinanzasRepository = useService(ventasFinanzasRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateCommissionBody }) =>
+      ventasFinanzasRepository.updateCommission(id, body),
+    onSuccess: () => {
+      void invalidateVentasSalesAndFinanzas(qc)
+      void markapAlert.toast.success('Comisión actualizada', 'El cambio quedó registrado en el seguimiento del proceso.')
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo actualizar la comisión', getApiErrorMessage(e)),
   })
 }
 

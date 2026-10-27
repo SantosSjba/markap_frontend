@@ -4,7 +4,11 @@ import { useQuery, type QueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { useQueryErrorToast } from '@shared/presentation/composables/useQueryErrorToast'
 import { invalidateQuerySubtree } from '@shared/utils/invalidateQuerySubtree'
-import type { VentasReportesRangeParams } from '../../domain/reportes.types'
+import type {
+  VentasReportesRangeParams,
+  VentasSummaryKind,
+  VentasSummaryParams,
+} from '../../domain/reportes.types'
 /** Opciones comunes para hooks de reportes (pantallas con varias queries en paralelo suelen desactivar el toast). */
 export type VentasReportesHookOptions = {
   toastOnLoadError?: boolean
@@ -16,6 +20,7 @@ export const ventasReportesKeys = {
   agentPerformance: (p: object) => [...ventasReportesKeys.root, 'agent-performance', p] as const,
   conversion: (p: object) => [...ventasReportesKeys.root, 'conversion', p] as const,
   financialFlow: (p: object) => [...ventasReportesKeys.root, 'financial-flow', p] as const,
+  summary: (kind: string, p: object) => [...ventasReportesKeys.root, 'summary', kind, p] as const,
 }
 
 export function invalidateVentasReportesCache(qc: QueryClient) {
@@ -136,4 +141,20 @@ export function useVentasFinancialFlowReport(
     })
   }
   return q
+}
+
+/** Resumen por moneda de una pestaña de Reportes; solo consulta la pestaña visible */
+export function useVentasReportSummary<K extends VentasSummaryKind>(
+  kind: K,
+  params: Ref<VentasSummaryParams>,
+  enabled: Ref<boolean>,
+) {
+  const ventasReportesRepository = useService(ventasReportesRepositoryKey)
+  return useQuery({
+    queryKey: computed(() => ventasReportesKeys.summary(kind, params.value)),
+    queryFn: () => ventasReportesRepository.summary(kind, params.value),
+    enabled: computed(() => enabled.value && !!params.value.startDate && !!params.value.endDate),
+    placeholderData: (prev) => prev,
+    retry: 1,
+  })
 }

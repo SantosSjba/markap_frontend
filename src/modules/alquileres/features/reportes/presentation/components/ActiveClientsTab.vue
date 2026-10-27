@@ -11,7 +11,7 @@ import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
 import { useActiveClientsReport } from '../composables/useReportes'
 import type { ActiveClientReportItem } from '../../domain/reportes.types'
 import { daysLeftLabel, daysLeftVariant, formatMoney, useLocalPagination } from '../utils/report-format'
-import ReportSectionHeader from './ReportSectionHeader.vue'
+import ReportSectionHeader from '@shared/presentation/components/reports/ReportSectionHeader.vue'
 import ReportQueryError from './ReportQueryError.vue'
 /** Pestaña «Clientes activos»: inquilinos con contrato vigente, su contacto y el detalle de cada contrato. */
 

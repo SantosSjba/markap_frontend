@@ -10,7 +10,7 @@ import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@share
 import { useContractsExpiring } from '../composables/useReportes'
 import type { ContractExpiringItem } from '../../domain/reportes.types'
 import { daysLeftLabel, daysLeftVariant, formatMoney, useLocalPagination } from '../utils/report-format'
-import ReportSectionHeader from './ReportSectionHeader.vue'
+import ReportSectionHeader from '@shared/presentation/components/reports/ReportSectionHeader.vue'
 import ReportQueryError from './ReportQueryError.vue'
 /** Pestaña «Contratos por vencer»: contratos que terminan en los próximos 30, 60 o 90 días. */
 

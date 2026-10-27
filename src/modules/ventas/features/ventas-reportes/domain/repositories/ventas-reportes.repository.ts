@@ -3,6 +3,9 @@ import type {
   VentasConversionReport,
   VentasFinancialFlowReport,
   VentasSalesByPeriodRow,
+  VentasSummaryByKind,
+  VentasSummaryKind,
+  VentasSummaryParams,
 } from '../reportes.types'
 export interface VentasReportesRepository {
   salesByPeriod: (params: {
@@ -19,4 +22,5 @@ export interface VentasReportesRepository {
     startDate?: string
     endDate?: string
   }) => Promise<VentasFinancialFlowReport>
+  summary: <K extends VentasSummaryKind>(kind: K, params: VentasSummaryParams) => Promise<VentasSummaryByKind[K]>
 }

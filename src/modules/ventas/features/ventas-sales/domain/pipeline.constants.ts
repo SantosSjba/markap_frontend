@@ -37,8 +37,10 @@ export function pipelineStageMeta(code: string | null | undefined) {
   )
 }
 
-export function processStatusBadgeVariant(status: string): 'success' | 'neutral' | 'error' {
-  if (status === 'ACTIVE') return 'success'
+/** Activo en curso (azul), ganado (verde), caído (rojo) */
+export function processStatusBadgeVariant(status: string): 'success' | 'info' | 'neutral' | 'error' {
+  if (status === 'ACTIVE') return 'info'
+  if (status === 'WON') return 'success'
   if (status === 'LOST') return 'error'
   return 'neutral'
 }
@@ -59,25 +61,34 @@ export function pipelineStageIndexIn(code: string, orderedCodes: readonly string
   return idx >= 0 ? idx : 0
 }
 
-/** Solo avance o permanecer en la misma etapa (procesos activos). */
-export function isForwardPipelineTransition(
-  fromStage: string,
-  toStage: string,
-  orderedCodes: readonly string[],
-): boolean {
-  const from = normalizePipelineStage(fromStage)
-  const to = normalizePipelineStage(toStage)
-  if (from === to) return true
-  return pipelineStageIndexIn(to, orderedCodes) >= pipelineStageIndexIn(from, orderedCodes)
+/**
+ * Movimiento entre etapas de un proceso activo: se avanza de una en una (con el documento de la
+ * etapa cargado en Cumplimiento legal) y se puede retroceder indicando el motivo.
+ */
+export type StageMove = 'same' | 'next' | 'skip' | 'backward'
+
+export function classifyStageMove(fromStage: string, toStage: string, orderedCodes: readonly string[]): StageMove {
+  const from = pipelineStageIndexIn(fromStage, orderedCodes)
+  const to = pipelineStageIndexIn(toStage, orderedCodes)
+  if (from === to) return 'same'
+  if (to < from) return 'backward'
+  return to - from === 1 ? 'next' : 'skip'
 }
 
-export function allowedForwardStageOptions(
+/** Etapas elegibles desde la actual: las anteriores (con motivo), la actual y la siguiente */
+export function allowedStageOptions(
   currentStage: string,
   options: readonly { value: string; label: string }[],
   orderedCodes: readonly string[],
 ): { value: string; label: string }[] {
-  const curIdx = pipelineStageIndexIn(currentStage, orderedCodes)
-  return options.filter((o) => pipelineStageIndexIn(o.value, orderedCodes) >= curIdx)
+  return options.filter((o) => classifyStageMove(currentStage, o.value, orderedCodes) !== 'skip')
+}
+
+/** Documento de Cumplimiento legal que exige cada etapa (mismo criterio que el servidor) */
+export const STAGE_REQUIRED_DOCUMENT: Readonly<Record<string, { docType: string; label: string }>> = {
+  ARRAS: { docType: 'ARRAS', label: 'contrato de arras' },
+  MINUTA: { docType: 'MINUTA', label: 'minuta' },
+  PUBLIC_DEED: { docType: 'ESCRITURA_PUBLICA', label: 'escritura pública' },
 }
 
 export const SEPARATION_STATUS_OPTIONS = [
@@ -94,3 +105,18 @@ export const PAYMENT_TYPE_OPTIONS = [
   { value: 'CASH', label: 'Contado' },
   { value: 'CREDIT', label: 'Crédito' },
 ] as const
+
+/** Documentos de Cumplimiento legal (docType) */
+export const COMPLIANCE_DOCUMENT_OPTIONS = [
+  { value: 'CRI', label: 'CRI' },
+  { value: 'ARRAS', label: 'Contrato de arras' },
+  { value: 'MINUTA', label: 'Minuta' },
+  { value: 'ESCRITURA_PUBLICA', label: 'Escritura pública' },
+  { value: 'ALCABALA', label: 'Pago alcabala' },
+  { value: 'RENTA2', label: 'Pago renta 2da' },
+  { value: 'KYC', label: 'KYC/LAFT' },
+  { value: 'OTRO', label: 'Otro' },
+]
+
+export const complianceDocumentLabel = (docType: string) =>
+  COMPLIANCE_DOCUMENT_OPTIONS.find((o) => o.value === docType)?.label ?? docType

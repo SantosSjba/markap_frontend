@@ -10,7 +10,9 @@ import {
   type SaleClosingRow,
   type SaleProcessDetail,
   type SaleProcessListRow,
+  type SaleProcessStats,
   type SaleSeparationRow,
+  type SaleSeparationStats,
 } from '../../domain/sales.types'
 import type { VentasSalesRepository } from '../../domain/repositories/ventas-sales.repository'
 import {
@@ -43,6 +45,11 @@ const api: VentasSalesRepository = {
         total: number
       }>(`/ventas-sales/processes?${qs({ ...scope, ...params })}`)
       .then((r) => mapSaleProcessesListPayload(r.data)),
+
+  getProcessStats: () =>
+    apiClient
+      .get<SaleProcessStats>(`/ventas-sales/processes/stats?${qs({ ...scope })}`)
+      .then((r) => r.data),
 
   getProcess: (id: string) =>
     apiClient
@@ -77,6 +84,7 @@ const api: VentasSalesRepository = {
       title?: string | null
       financingChannelId?: string | null
       lostReason?: string | null
+      stageChangeReason?: string | null
     },
   ) =>
     apiClient
@@ -123,7 +131,7 @@ const api: VentasSalesRepository = {
       )
       .then((r) => r.data),
 
-  listSeparations: (params: { page?: number; limit?: number; status?: string }) =>
+  listSeparations: (params: { page?: number; limit?: number; status?: string; search?: string }) =>
     apiClient
       .get<{
         data: SaleSeparationRow[]
@@ -155,9 +163,14 @@ const api: VentasSalesRepository = {
       .then((r) => r.data)
   },
 
+  getSeparationStats: () =>
+    apiClient
+      .get<SaleSeparationStats>(`/ventas-sales/separations/stats?${qs({ ...scope })}`)
+      .then((r) => r.data),
+
   patchSeparation: (
     id: string,
-    body: { status?: 'ACTIVE' | 'EXPIRED' | 'CLOSED'; notes?: string | null },
+    body: { status?: 'ACTIVE' | 'EXPIRED'; notes?: string | null; expiresAt?: string | null },
   ) =>
     apiClient
       .patch(`/ventas-sales/separations/${encodeURIComponent(id)}?${qs({ ...scope })}`, body)

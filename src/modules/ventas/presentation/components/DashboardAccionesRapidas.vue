@@ -25,7 +25,6 @@ const actions: Action[] = [
   { id: 'procesos', label: 'Procesos', route: { name: 'ventas-procesos' }, icon: 'lucide:handshake' },
   { id: 'clientes', label: 'Clientes', route: { name: 'ventas-clientes' }, icon: 'lucide:users' },
   { id: 'propiedades', label: 'Propiedades', route: { name: 'ventas-propiedades' }, icon: 'lucide:building-2' },
-  { id: 'cierres', label: 'Cierres', route: { name: 'ventas-cierres' }, icon: 'lucide:circle-check' },
   { id: 'comisiones', label: 'Comisiones', route: { name: 'ventas-comisiones' }, icon: 'lucide:wallet' },
   { id: 'reportes', label: 'Reportes', route: { name: 'ventas-reportes' }, icon: 'lucide:bar-chart-3' },
 ]

@@ -26,7 +26,7 @@ import type {
   RentalsByMonthParams,
 } from '../../domain/reportes.types'
 import { formatMoney } from '../utils/report-format'
-import ReportSectionHeader from './ReportSectionHeader.vue'
+import ReportSectionHeader from '@shared/presentation/components/reports/ReportSectionHeader.vue'
 /**
  * Pestaña «Comisiones de alquileres»: ingreso por intermediación en el mes de cobro,
  * con totales compactos por moneda y detalle por mes (los gráficos están en «Indicadores»).

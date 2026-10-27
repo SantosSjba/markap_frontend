@@ -13,6 +13,7 @@ import type { VentasPipelineStageDTO } from '../../domain/config.types'
 export const ventasConfigKeys = {
   root: ['ventas-config'] as const,
   bootstrap: () => [...ventasConfigKeys.root, 'bootstrap'] as const,
+  financingChannels: () => [...ventasConfigKeys.root, 'financing-channels'] as const,
 }
 
 export function invalidateVentasConfigCache(qc: QueryClient) {
@@ -68,15 +69,43 @@ export function useVentasSavePipelineStages() {
   })
 }
 
-export function useVentasSaveNumbering() {
+/** Catálogo de bancos y medios de pago (incluye inactivos) */
+export function useVentasFinancingChannelsCatalog() {
+  const ventasConfigRepository = useService(ventasConfigRepositoryKey)
+  return useQuery({
+    queryKey: ventasConfigKeys.financingChannels(),
+    queryFn: () => ventasConfigRepository.listFinancingChannels(),
+  })
+}
+
+/** Al cambiar el catálogo se refresca también el selector del proceso de venta */
+function invalidateChannels(qc: QueryClient) {
+  void invalidateVentasConfigCache(qc)
+  void invalidateQuerySubtree(qc, ['ventas-sales'])
+}
+
+export function useVentasCreateFinancingChannel() {
   const ventasConfigRepository = useService(ventasConfigRepositoryKey)
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: { prefix?: string; lastNumber?: number }) =>
-      ventasConfigRepository.patchSaleProcessNumbering(body),
+    mutationFn: ventasConfigRepository.createFinancingChannel,
+    onSuccess: (row) => {
+      invalidateChannels(qc)
+      void markapAlert.toast.success(`«${row.name}» agregado`)
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo agregar', getApiErrorMessage(e)),
+  })
+}
+
+export function useVentasUpdateFinancingChannel() {
+  const ventasConfigRepository = useService(ventasConfigRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string } & Parameters<typeof ventasConfigRepository.updateFinancingChannel>[1]) =>
+      ventasConfigRepository.updateFinancingChannel(id, body),
     onSuccess: () => {
-      void invalidateVentasConfigCache(qc)
-      void markapAlert.toast.success('Numeración actualizada')
+      invalidateChannels(qc)
+      void markapAlert.toast.success('Catálogo actualizado')
     },
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
   })

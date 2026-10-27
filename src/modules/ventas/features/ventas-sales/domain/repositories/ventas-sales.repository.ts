@@ -8,7 +8,9 @@ import type {
   SaleClosingRow,
   SaleProcessDetail,
   SaleProcessListRow,
+  SaleProcessStats,
   SaleSeparationRow,
+  SaleSeparationStats,
 } from '../sales.types'
 /**
  * Puerto (contrato) de acceso a datos de ventas — desacopla application del transporte HTTP.
@@ -21,6 +23,8 @@ export interface VentasSalesRepository {
     pipelineStage?: string
     status?: string
   }) => Promise<{ data: SaleProcessListRow[]; total: number }>
+
+  getProcessStats: () => Promise<SaleProcessStats>
 
   getProcess: (id: string) => Promise<SaleProcessDetail>
 
@@ -47,6 +51,8 @@ export interface VentasSalesRepository {
       title?: string | null
       financingChannelId?: string | null
       lostReason?: string | null
+      /** Obligatorio para regresar a una etapa anterior */
+      stageChangeReason?: string | null
     },
   ) => Promise<unknown>
 
@@ -65,7 +71,7 @@ export interface VentasSalesRepository {
 
   completeReminder: (reminderId: string) => Promise<unknown>
 
-  listSeparations: (params: { page?: number; limit?: number; status?: string }) => Promise<{
+  listSeparations: (params: { page?: number; limit?: number; status?: string; search?: string }) => Promise<{
     data: SaleSeparationRow[]
     total: number
   }>
@@ -81,11 +87,13 @@ export interface VentasSalesRepository {
     notes?: string | null
   }) => Promise<{ id: string }>
 
+  getSeparationStats: () => Promise<SaleSeparationStats>
+
   uploadSeparationReceipt: (id: string, file: File) => Promise<unknown>
 
   patchSeparation: (
     id: string,
-    body: { status?: 'ACTIVE' | 'EXPIRED' | 'CLOSED'; notes?: string | null },
+    body: { status?: 'ACTIVE' | 'EXPIRED'; notes?: string | null; expiresAt?: string | null },
   ) => Promise<unknown>
 
   listClosings: (params: { page?: number; limit?: number }) => Promise<{

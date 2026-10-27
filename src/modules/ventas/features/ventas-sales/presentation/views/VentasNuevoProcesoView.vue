@@ -1,507 +1,188 @@
 <script setup lang="ts">
+import { useVentasCurrencyCatalog } from '../../../../presentation/composables/useVentasCurrencyCatalog'
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
 const { canWrite } = useApplicationAccess('ventas')
 
-import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
-import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
-import { ventasPropertiesRepositoryKey } from '../../../propiedades/application/ports/ventas-properties.port'
-import { useService } from '@shared/presentation/di/services'
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
-import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import FormCombobox from '@shared/presentation/components/forms/FormCombobox.vue'
+import { useService } from '@shared/presentation/di/services'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
+import { formatCurrency } from '@shared/utils/formatters'
+import { ventasClientsRepositoryKey } from '../../../clientes/application/ports/ventas-clients.port'
+import { ventasClientKeys } from '../../../clientes/presentation/composables/useVentasClients'
+import { ventasPropertiesRepositoryKey } from '../../../propiedades/application/ports/ventas-properties.port'
+import {
+  ventasPropertyKeys,
+  useVentasPropertyById,
+} from '../../../propiedades/presentation/composables/useVentasProperties'
+import { useVentasAgentsList } from '../../../agentes/presentation/composables/useAgents'
 import { useVentasPipelineStages } from '../../../ventas-configuracion/presentation/composables/useVentasConfig'
 import { useVentasCreateProcess, useVentasFinancingChannels } from '../composables/useVentasSales'
-import type {
-  SaleFinancingChannel,
-  SaleCommissionCalculationType,
-  SaleCommissionDeductibleType,
-  CreateProcessCommissionInput,
-} from '../../domain/sales.types'
-import { useVentasAgentsList } from '../../../agentes/presentation/composables/useAgents'
 import { navigateAfterVentasSave } from '../../../../presentation/navigation/navigateAfterVentasSave'
-import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import {
+  buildCommissionsPayload,
+  commissionTotalsByCurrency,
+  newCommissionDraft,
+  type CommissionDraft,
+} from '../../domain/commission-draft'
+import { financingChannelOptions } from '../../domain/financing-channels'
+import PropertyOwnersSection from '@modules/alquileres/features/propiedades/presentation/components/PropertyOwnersSection.vue'
+import VentasClienteFormModal from '../../../clientes/presentation/components/VentasClienteFormModal.vue'
+import ProcessCommissionsEditor from '../components/ProcessCommissionsEditor.vue'
+import VentasPropiedadFormModal from '../../../propiedades/presentation/components/VentasPropiedadFormModal.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import SalePropertySummary from '../components/SalePropertySummary.vue'
+import SaleParticipantList from '../components/SaleParticipantList.vue'
+/**
+ * Nuevo proceso de venta: inmueble (con su precio, moneda y propietarios), compradores,
+ * datos del proceso y comisiones de asesores. Las comisiones en % toman la moneda del inmueble.
+ */
+
+const route = useRoute()
+const router = useRouter()
 const ventasClientsRepository = useService(ventasClientsRepositoryKey)
 const ventasPropertiesRepository = useService(ventasPropertiesRepositoryKey)
 
-const router = useRouter()
-const loading = ref(false)
-const loadError = ref('')
-const commissionFormError = ref('')
+// ── Catálogos (todas las páginas: el backend topa cada página en 50 filas) ──
+const buyersQuery = useQuery({
+  queryKey: [...ventasClientKeys.root, 'process-buyer-options'],
+  queryFn: () =>
+    fetchAllPages((page, limit) => ventasClientsRepository.getList({ clientType: 'BUYER', page, limit })),
+})
+const propertiesQuery = useQuery({
+  queryKey: [...ventasPropertyKeys.root, 'process-property-options'],
+  queryFn: () =>
+    fetchAllPages((page, limit) =>
+      ventasPropertiesRepository.getList({ listingStatus: 'AVAILABLE', page, limit }),
+    ),
+})
+const { data: agentsRes, isLoading: loadingAgents } = useVentasAgentsList(ref({ page: 1, limit: 50, isActive: true }))
+const { options: currencyOptions } = useVentasCurrencyCatalog()
+const { data: financingChannels, isLoading: loadingFinancing } = useVentasFinancingChannels()
+const { stageOptions, labelFor: stageLabel } = useVentasPipelineStages()
 
-const { stageOptions } = useVentasPipelineStages()
-const agentParams = ref({ page: 1, limit: 500, isActive: true })
-const { data: agentsRes } = useVentasAgentsList(agentParams)
-
-const agentSelectOptions = computed(() =>
+const buyerOptions = computed(() =>
+  (buyersQuery.data.value ?? []).map((c) => ({
+    value: c.id,
+    label: c.fullName,
+    description: `${c.documentTypeCode} ${c.documentNumber}`,
+  })),
+)
+const propertyOptions = computed(() =>
+  (propertiesQuery.data.value ?? []).map((p) => ({
+    value: p.id,
+    label: `${p.code} — ${p.addressLine}`,
+    description: [p.propertyTypeName, p.districtName, p.salePrice != null ? formatCurrency(p.salePrice, p.saleCurrency) : null]
+      .filter(Boolean)
+      .join(' · '),
+  })),
+)
+const agentOptions = computed(() =>
   (agentsRes.value?.data ?? []).map((a) => ({
     value: a.id,
     label: `${a.fullName} (${a.type === 'INTERNAL' ? 'Interno' : 'Externo'})`,
   })),
 )
+const financingOptions = computed(() => financingChannelOptions(financingChannels.value ?? []))
 
-const calculationTypeOptions = [
-  { value: 'PERCENT', label: '% del precio de venta' },
-  { value: 'FIXED', label: 'Monto fijo (S/)' },
-]
+// ── Formulario ──
+const propertyId = ref(typeof route.query.propertyId === 'string' ? route.query.propertyId : '')
+const buyerIds = ref<string[]>([''])
+const title = ref('')
+const pipelineStage = ref('SEPARATION')
+const financingChannelId = ref('')
+const commissionRows = ref<CommissionDraft[]>([newCommissionDraft()])
+const submitted = ref(false)
+const commissionError = ref('')
 
-const buyerOptions = ref<{ value: string; label: string }[]>([])
-const propertyOptions = ref<{ value: string; label: string }[]>([])
-const propertyOwners = ref<
-  { id: string; fullName: string; documentNumber: string; isPrimary: boolean }[]
->([])
-const propertySalePrice = ref<number | null>(null)
-const loadingPropertyOwners = ref(false)
-
-type PaymentPartDraft = {
-  label: string
-  percentOfNet: string
-  amount: string
-  dueDate: string
-}
-
-type DeductibleDraft = {
-  deductibleType: SaleCommissionDeductibleType
-  description: string
-  amount: string
-}
-
-type CommissionDraft = {
-  agentId: string
-  calculationType: SaleCommissionCalculationType
-  value: string
-  paymentParts: PaymentPartDraft[]
-  deductibles: DeductibleDraft[]
-}
-
-const DEDUCTIBLE_TYPE_OPTIONS = [
-  { value: 'TRAVEL', label: 'Pasajes / viáticos' },
-  { value: 'TAX', label: 'Impuestos' },
-  { value: 'NOTARY', label: 'Notaría' },
-  { value: 'REGISTRY', label: 'Registros públicos' },
-  { value: 'OTHER', label: 'Otros' },
-]
-
-const MAX_PAYMENT_PARTS = 36
-
-function paymentPartLabel(index: number, total: number): string {
-  if (total === 1) return 'Pago único'
-  return `Parte ${index}`
-}
-
-function buildEqualPaymentParts(count: number, existing?: PaymentPartDraft[]): PaymentPartDraft[] {
-  const n = Math.max(1, Math.min(MAX_PAYMENT_PARTS, Math.floor(count)))
-  const parts: PaymentPartDraft[] = []
-  let assignedPct = 0
-  for (let i = 0; i < n; i++) {
-    const pct =
-      i === n - 1 ? Math.round((100 - assignedPct) * 100) / 100 : Math.round((100 / n) * 100) / 100
-    assignedPct += pct
-    const prev = existing?.[i]
-    parts.push({
-      label: prev?.label?.trim() || paymentPartLabel(i + 1, n),
-      percentOfNet: String(pct),
-      amount: prev?.amount ?? '',
-      dueDate: prev?.dueDate ?? '',
-    })
-  }
-  return parts
-}
-
-function newCommissionRow(): CommissionDraft {
-  return {
-    agentId: '',
-    calculationType: 'PERCENT',
-    value: '',
-    paymentParts: buildEqualPaymentParts(1),
-    deductibles: [],
+// «Nuevo inmueble»: se registra en un modal y queda elegido si está disponible para la venta
+const propertyModalOpen = ref(false)
+async function onPropertyCreated(created: { id: string; code: string }) {
+  await propertiesQuery.refetch()
+  if (propertyOptions.value.some((o) => o.value === created.id)) {
+    propertyId.value = created.id
+  } else {
+    void markapAlert.toast.warning(
+      `${created.code} se registró, pero no está «Disponible», así que no puede iniciar un proceso.`,
+    )
   }
 }
 
-const form = ref({
-  propertyId: '',
-  title: '',
-  pipelineStage: 'SEPARATION',
-  financingChannelId: '',
-  buyers: [''],
+// Inmueble elegido: precio, moneda y propietarios
+const { data: property, isFetching: loadingProperty } = useVentasPropertyById(propertyId)
+const propertyListItem = computed(() => (propertiesQuery.data.value ?? []).find((p) => p.id === propertyId.value))
+const salePrice = computed(() => (propertyId.value ? (property.value?.salePrice ?? null) : null))
+const propertyCurrency = computed(() => property.value?.saleCurrency ?? 'PEN')
+const propertyOwners = computed(() =>
+  propertyId.value
+    ? (property.value?.owners ?? []).map((o) => ({ ...o, isPrimary: o.isPrimary }))
+    : [],
+)
+const propertySummary = computed(() =>
+  property.value && propertyId.value
+    ? {
+        ...property.value,
+        propertyTypeName: propertyListItem.value?.propertyTypeName ?? null,
+        locationLabel: propertyListItem.value?.districtName ?? null,
+      }
+    : null,
+)
+
+// Los montos fijos nuevos arrancan en la moneda del inmueble
+watch(propertyCurrency, (cur) => {
+  for (const row of commissionRows.value) if (!row.agentId && !row.value) row.currency = cur
 })
 
-const commissionRows = ref<CommissionDraft[]>([newCommissionRow()])
+const propertyError = computed(() => (submitted.value && !propertyId.value ? 'Seleccione el inmueble' : undefined))
+const buyerError = computed(() =>
+  submitted.value && !buyerIds.value.some(Boolean) ? 'Seleccione al menos un comprador' : undefined,
+)
+
+const selectedBuyers = computed(() =>
+  buyerIds.value.filter(Boolean).map((id) => buyerOptions.value.find((b) => b.value === id)?.label ?? '—'),
+)
+const commissionTotals = computed(() =>
+  commissionTotalsByCurrency(commissionRows.value, salePrice.value, propertyCurrency.value),
+)
 
 const { mutate: createProcess, isPending } = useVentasCreateProcess()
-const { data: financingChannels, isLoading: loadingFinancing } = useVentasFinancingChannels()
 
-const FINANCING_CATEGORY_LABEL: Record<string, string> = {
-  BANK: 'Bancos',
-  PAYMENT_METHOD: 'Medios de pago',
-  OWN_FUNDS: 'Fondos propios',
-  OTHER: 'Otros',
-}
-
-const financingOptions = computed(() => {
-  const rows = financingChannels.value ?? []
-  const order = ['BANK', 'PAYMENT_METHOD', 'OWN_FUNDS', 'OTHER']
-  const grouped = order.flatMap((cat) => {
-    const items = rows.filter((r: SaleFinancingChannel) => r.category === cat)
-    return items.map((r) => ({
-      value: r.id,
-      label: `${FINANCING_CATEGORY_LABEL[cat] ?? cat}: ${r.name}`,
-    }))
-  })
-  return [{ value: '', label: 'Sin especificar' }, ...grouped]
-})
-
-function parseNum(raw: string | number): number | null {
-  if (raw === '' || raw == null) return null
-  const n = typeof raw === 'number' ? raw : Number(String(raw).replace(',', '.'))
-  return Number.isFinite(n) ? n : null
-}
-
-function resolveCommissionAmount(row: CommissionDraft): number | null {
-  const v = parseNum(row.value)
-  if (v == null) return null
-  if (row.calculationType === 'FIXED') return v >= 0 ? Math.round(v * 100) / 100 : null
-  if (v < 0 || v > 100) return null
-  const price = propertySalePrice.value
-  if (price == null || price <= 0) return 0
-  return Math.round(price * (v / 100) * 100) / 100
-}
-
-function resolveDeductiblesTotal(row: CommissionDraft): number {
-  return row.deductibles.reduce((s, d) => {
-    const n = parseNum(d.amount)
-    return s + (n != null && n >= 0 ? n : 0)
-  }, 0)
-}
-
-function resolveCommissionNet(row: CommissionDraft): number | null {
-  const gross = resolveCommissionAmount(row)
-  if (gross == null) return null
-  return Math.max(0, Math.round((gross - resolveDeductiblesTotal(row)) * 100) / 100)
-}
-
-/** Reparte el neto en cada parte según % del neto (última parte absorbe redondeo). */
-function resolvePaymentPartAmounts(row: CommissionDraft): number[] {
-  const net = resolveCommissionNet(row)
-  if (net == null || net <= 0) return row.paymentParts.map(() => 0)
-
-  const parts = row.paymentParts
-  const amounts: number[] = []
-  let assigned = 0
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i]!
-    const pct = parseNum(part.percentOfNet) ?? 0
-    const amt =
-      i === parts.length - 1
-        ? Math.round((net - assigned) * 100) / 100
-        : Math.round(net * (pct / 100) * 100) / 100
-    amounts.push(Math.max(0, amt))
-    assigned += amounts[i]!
-  }
-  return amounts
-}
-
-function syncPartAmountsFromNet(row: CommissionDraft) {
-  const amounts = resolvePaymentPartAmounts(row)
-  row.paymentParts.forEach((part, i) => {
-    const amt = amounts[i] ?? 0
-    part.amount = amt > 0 ? String(amt) : ''
-  })
-}
-
-function syncAllCommissionPartAmounts() {
-  for (const row of commissionRows.value) {
-    syncPartAmountsFromNet(row)
-  }
-}
-
-const commissionsPreview = computed(() =>
-  commissionRows.value
-    .filter((r) => r.agentId)
-    .map((row) => {
-      const agent = agentsRes.value?.data.find((a) => a.id === row.agentId)
-      const gross = resolveCommissionAmount(row)
-      const deductiblesTotal = resolveDeductiblesTotal(row)
-      const net =
-        gross != null ? Math.max(0, Math.round((gross - deductiblesTotal) * 100) / 100) : null
-      return {
-        row,
-        agentName: agent?.fullName ?? '—',
-        agentType: agent?.type === 'INTERNAL' ? 'Interno' : 'Externo',
-        gross,
-        deductiblesTotal,
-        net,
-        invalid:
-          parseNum(row.value) == null ||
-          (row.calculationType === 'PERCENT' &&
-            (parseNum(row.value)! < 0 || parseNum(row.value)! > 100)),
-      }
-    }),
-)
-
-const commissionsTotal = computed(() =>
-  commissionsPreview.value.reduce((sum, p) => sum + (p.gross ?? 0), 0),
-)
-
-function ensureOneEmpty(items: string[]) {
-  const cleaned = items.filter((x) => !!x)
-  return cleaned.length ? cleaned : ['']
-}
-
-function addBuyer() {
-  form.value.buyers.push('')
-}
-function removeBuyer(idx: number) {
-  form.value.buyers.splice(idx, 1)
-  form.value.buyers = ensureOneEmpty(form.value.buyers)
-}
-
-function addCommissionRow() {
-  commissionRows.value.push(newCommissionRow())
-}
-function removeCommissionRow(idx: number) {
-  commissionRows.value.splice(idx, 1)
-  if (!commissionRows.value.length) {
-    commissionRows.value.push(newCommissionRow())
-  }
-}
-
-function applyPartsCount(commIdx: number, raw: string | number) {
-  const row = commissionRows.value[commIdx]
-  if (!row) return
-  const n = parseNum(raw)
-  if (n == null || n < 1) return
-  row.paymentParts = buildEqualPaymentParts(n, row.paymentParts)
-  syncPartAmountsFromNet(row)
-}
-
-function addPaymentPart(commIdx: number) {
-  const row = commissionRows.value[commIdx]
-  if (!row) return
-  if (row.paymentParts.length >= MAX_PAYMENT_PARTS) return
-  row.paymentParts = buildEqualPaymentParts(row.paymentParts.length + 1, row.paymentParts)
-  syncPartAmountsFromNet(row)
-}
-
-function removePaymentPart(commIdx: number, partIdx: number) {
-  const row = commissionRows.value[commIdx]
-  if (!row || row.paymentParts.length <= 1) return
-  const kept = row.paymentParts.filter((_, i) => i !== partIdx)
-  row.paymentParts = buildEqualPaymentParts(kept.length, kept)
-  syncPartAmountsFromNet(row)
-}
-
-function onPartPercentChange(commIdx: number) {
-  const row = commissionRows.value[commIdx]
-  if (!row) return
-  syncPartAmountsFromNet(row)
-}
-
-function paymentPartsPercentSum(row: CommissionDraft): number {
-  return row.paymentParts.reduce((s, p) => {
-    const n = parseNum(p.percentOfNet)
-    return s + (n != null && n >= 0 ? n : 0)
-  }, 0)
-}
-
-function addDeductible(idx: number) {
-  const row = commissionRows.value[idx]
-  if (!row) return
-  row.deductibles.push({
-    deductibleType: 'TRAVEL',
-    description: '',
-    amount: '',
-  })
-}
-
-function removeDeductible(commIdx: number, dedIdx: number) {
-  const row = commissionRows.value[commIdx]
-  if (!row) return
-  row.deductibles.splice(dedIdx, 1)
-}
-
-async function loadPropertyOwners(propertyId: string) {
-  if (!propertyId) {
-    propertyOwners.value = []
-    propertySalePrice.value = null
-    return
-  }
-  loadingPropertyOwners.value = true
-  try {
-    const p = await ventasPropertiesRepository.getById(propertyId)
-    propertySalePrice.value = p.salePrice ?? null
-    propertyOwners.value = (p.owners ?? []).map((o) => ({
-      id: o.id,
-      fullName: o.fullName,
-      documentNumber: o.documentNumber,
-      isPrimary: o.isPrimary,
-    }))
-    syncAllCommissionPartAmounts()
-  } catch {
-    propertyOwners.value = []
-    propertySalePrice.value = null
-  } finally {
-    loadingPropertyOwners.value = false
-  }
-}
-
-watch(
-  () => form.value.propertyId,
-  (id) => {
-    void loadPropertyOwners(id)
-  },
-)
-
-watch(
-  [propertySalePrice, commissionRows],
-  () => {
-    syncAllCommissionPartAmounts()
-  },
-  { deep: true },
-)
-
-async function loadCatalogs() {
-  loadError.value = ''
-  loading.value = true
-  try {
-    const [buyers, props] = await Promise.all([
-      ventasClientsRepository.getList({ clientType: 'BUYER', page: 1, limit: 1000 }),
-      ventasPropertiesRepository.getList({ page: 1, limit: 1000, listingStatus: 'AVAILABLE' }),
-    ])
-    buyerOptions.value = buyers.data.map((c) => ({
-      value: c.id,
-      label: `${c.fullName} (${c.documentNumber})`,
-    }))
-    propertyOptions.value = props.data.map((p) => ({
-      value: p.id,
-      label: `${p.code} — ${p.addressLine}`,
-    }))
-  } catch (e) {
-    loadError.value = getApiErrorMessage(e)
-  } finally {
-    loading.value = false
-  }
-}
-
-void loadCatalogs()
-
-function buildCommissionsPayload(): CreateProcessCommissionInput[] | null {
-  const seen = new Set<string>()
-  const out: CreateProcessCommissionInput[] = []
-
-  for (const row of commissionRows.value) {
-    if (!row.agentId) continue
-    if (seen.has(row.agentId)) {
-      commissionFormError.value = 'No repita el mismo asesor en las comisiones.'
-      return null
-    }
-    seen.add(row.agentId)
-
-    const v = parseNum(row.value)
-    if (v == null) {
-      commissionFormError.value = 'Complete el valor de cada comisión.'
-      return null
-    }
-
-    const deductibles: CreateProcessCommissionInput['deductibles'] = []
-    for (const d of row.deductibles) {
-      const amt = parseNum(d.amount)
-      if (amt == null || amt < 0) {
-        commissionFormError.value = 'Revise los montos de los deducibles.'
-        return null
-      }
-      if (amt > 0) {
-        deductibles.push({
-          deductibleType: d.deductibleType,
-          description: d.description.trim() || null,
-          amount: amt,
-        })
-      }
-    }
-
-    syncPartAmountsFromNet(row)
-    const resolvedAmounts = resolvePaymentPartAmounts(row)
-    const paymentParts = row.paymentParts.map((p, i) => {
-      const percentOfNet = p.percentOfNet.trim() ? parseNum(p.percentOfNet) : null
-      const computedAmt = resolvedAmounts[i] ?? 0
-      return {
-        label: p.label.trim() || null,
-        amount: computedAmt > 0 ? computedAmt : null,
-        percentOfNet: percentOfNet != null && percentOfNet >= 0 ? percentOfNet : null,
-        dueDate: p.dueDate.trim() || null,
-      }
-    })
-
-    const pctSum = paymentParts.reduce((s, p) => s + (p.percentOfNet ?? 0), 0)
-    const allPercent = paymentParts.every((p) => p.amount == null && p.percentOfNet != null)
-    if (allPercent && Math.abs(pctSum - 100) > 0.05) {
-      commissionFormError.value = `Las partes de pago deben sumar 100 % (actual: ${Math.round(pctSum * 100) / 100} %).`
-      return null
-    }
-
-    const base: CreateProcessCommissionInput = {
-      agentId: row.agentId,
-      calculationType: row.calculationType,
-      paymentParts,
-      deductibles,
-    }
-
-    if (row.calculationType === 'FIXED') {
-      if (v < 0) {
-        commissionFormError.value = 'El monto fijo debe ser mayor o igual a cero.'
-        return null
-      }
-      out.push({ ...base, fixedAmount: v })
-    } else {
-      if (v < 0 || v > 100) {
-        commissionFormError.value = 'El porcentaje debe estar entre 0 y 100.'
-        return null
-      }
-      out.push({ ...base, percent: v })
-    }
-  }
-  return out
-}
-
-function resetProcessForm() {
-  form.value = {
-    propertyId: '',
-    title: '',
-    pipelineStage: 'SEPARATION',
-    financingChannelId: '',
-    buyers: [''],
-  }
-  commissionRows.value = [newCommissionRow()]
-  propertyOwners.value = []
-  propertySalePrice.value = null
-  commissionFormError.value = ''
+function goBack() {
+  void router.push({ name: 'ventas-procesos' })
 }
 
 function submit() {
-  commissionFormError.value = ''
-  const buyerIds = Array.from(new Set(form.value.buyers.filter(Boolean)))
-  const primaryBuyerId = buyerIds[0]
-  if (!form.value.propertyId || !primaryBuyerId) return
-
-  const commissions = buildCommissionsPayload()
-  if (commissions === null) return
-
+  submitted.value = true
+  commissionError.value = ''
+  const buyers = Array.from(new Set(buyerIds.value.filter(Boolean)))
+  if (!propertyId.value || !buyers.length) return
+  const commissions = buildCommissionsPayload(commissionRows.value, salePrice.value, propertyCurrency.value)
+  if (!commissions.ok) {
+    commissionError.value = commissions.error
+    return
+  }
   createProcess(
     {
-      propertyId: form.value.propertyId,
-      buyerClientId: primaryBuyerId,
-      buyerClientIds: buyerIds,
-      agentId: commissions[0]?.agentId ?? null,
-      title: form.value.title || null,
-      pipelineStage: form.value.pipelineStage,
-      financingChannelId: form.value.financingChannelId || null,
-      commissions,
+      propertyId: propertyId.value,
+      buyerClientId: buyers[0]!,
+      buyerClientIds: buyers,
+      agentId: commissions.payload[0]?.agentId ?? null,
+      title: title.value.trim() || null,
+      pipelineStage: pipelineStage.value,
+      financingChannelId: financingChannelId.value || null,
+      commissions: commissions.payload,
     },
     {
       onSuccess: async () => {
-        resetProcessForm()
         await navigateAfterVentasSave(router, { listPath: '/ventas/procesos' })
       },
     },
@@ -510,345 +191,170 @@ function submit() {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div>
     <PageHeader
-      title="Nuevo proceso de venta"
-      subtitle="Configure aquí compradores, comisiones (varios asesores, % o monto fijo) y medio de pago."
+      title="Nuevo Proceso de Venta"
+      subtitle="Inmueble, compradores y comisiones de los asesores"
       back
-      @back="router.push('/ventas/procesos')"
+      class="mb-6"
+      @back="goBack"
     />
 
-    <div
-      v-if="loadError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
-    >
-      <span class="max-w-xl text-error-500 dark:text-error-400">{{ loadError }}</span>
-      <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" :loading="loading" @click="loadCatalogs">
-        Reintentar
-      </BaseButton>
-    </div>
+    <LoadingState v-if="propertiesQuery.isPending.value || buyersQuery.isPending.value" text="Cargando inmuebles y compradores..." class="py-24" />
 
-    <div class="space-y-5">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormSelect
-          v-model="form.propertyId"
-          label="Inmueble (disponible)"
-          :options="propertyOptions"
-          :loading="loading"
-          required
-        />
-        <FormSelect v-model="form.pipelineStage" label="Etapa inicial" :options="stageOptions" />
-        <FormInput
-          v-model="form.title"
-          label="Título (opcional)"
-          placeholder="Ej. Familia Pérez — Torre Vista Mar"
-        />
-        <FormSelect
-          v-model="form.financingChannelId"
-          label="Banco o medio de pago del proceso"
-          :options="financingOptions"
-          :loading="loadingFinancing"
-        />
-      </div>
-
-      <FormSectionCard
-        title="Comisiones de asesores"
-        subtitle="Asesores internos o externos. Puede usar porcentaje sobre el precio del inmueble o un monto fijo en soles."
-        icon="lucide:percent"
-      >
-        <div class="flex justify-end mb-3">
-          <BaseButton v-if="canWrite" type="button" variant="outline" size="sm" icon="lucide:plus" @click="addCommissionRow">
-            Agregar asesor
-          </BaseButton>
-        </div>
-
-        <div
-          v-for="(row, idx) in commissionRows"
-          :key="`comm-${idx}`"
-          class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end rounded-lg border p-3 border-gray-200 dark:border-gray-800"
-        >
-          <div class="md:col-span-5">
-            <FormSelect
-              v-model="row.agentId"
-              label="Asesor"
-              :options="agentSelectOptions"
-              placeholder="Seleccionar…"
-            />
-          </div>
-          <div class="md:col-span-3">
-            <FormSelect
-              v-model="row.calculationType"
-              label="Tipo"
-              :options="calculationTypeOptions"
-            />
-          </div>
-          <div class="md:col-span-3">
-            <FormInput
-              v-model="row.value"
-              :label="row.calculationType === 'FIXED' ? 'Monto (S/)' : 'Porcentaje (%)'"
-              type="number"
-              :step="row.calculationType === 'FIXED' ? '0.01' : '0.01'"
-              :min="0"
-              :max="row.calculationType === 'PERCENT' ? 100 : undefined"
-              placeholder="Ej. 3.5"
-            />
-          </div>
-          <div class="md:col-span-1 flex justify-end pb-1">
-            <BaseButton
-              v-if="commissionRows.length > 1"
-              type="button"
-              variant="ghost"
-              size="sm"
-              icon="lucide:trash-2"
-              @click="removeCommissionRow(idx)"
-            >
-              Quitar
-            </BaseButton>
-          </div>
-
-          <div
-            class="md:col-span-12 rounded-lg border px-3 py-3 space-y-3 border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
-          >
-            <div class="flex flex-wrap items-end justify-between gap-3">
-              <p class="text-sm font-medium w-full sm:w-auto text-gray-800 dark:text-white/90">
-                Plan de pago de comisión
-              </p>
-              <div class="flex flex-wrap items-end gap-2">
-                <div class="w-36">
-                  <FormInput
-                    :model-value="String(row.paymentParts.length)"
-                    label="Nº de partes"
-                    type="number"
-                    :min="1"
-                    :max="MAX_PAYMENT_PARTS"
-                    step="1"
-                    @update:model-value="(v: string | number) => applyPartsCount(idx, v)"
-                  />
-                </div>
-                <BaseButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  icon="lucide:plus"
-                  :disabled="row.paymentParts.length >= MAX_PAYMENT_PARTS"
-                  @click="addPaymentPart(idx)"
-                >
-                  Parte
-                </BaseButton>
-              </div>
-            </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500">
-              Indique cuántas cuotas tendrá el pago. Los montos se calculan del neto × % de cada parte.
-              <template v-if="resolveCommissionNet(row) != null">
-                Neto: <strong>S/ {{ resolveCommissionNet(row)!.toLocaleString('es-PE') }}</strong>
-              </template>
-            </p>
-            <p
-              v-if="Math.abs(paymentPartsPercentSum(row) - 100) > 0.05"
-              class="text-xs text-warning-600 dark:text-orange-400"
-            >
-              Los porcentajes suman {{ paymentPartsPercentSum(row).toFixed(2) }} % (deben ser 100 %).
-            </p>
-            <div
-              v-for="(part, pIdx) in row.paymentParts"
-              :key="`part-${idx}-${pIdx}`"
-              class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end"
-            >
-              <div class="md:col-span-1 text-xs pt-6 text-gray-400 dark:text-gray-500">
-                {{ pIdx + 1 }}/{{ row.paymentParts.length }}
-              </div>
-              <div class="md:col-span-3">
-                <FormInput v-model="part.label" label="Etiqueta" placeholder="Ej. 1ra cuota" />
-              </div>
-              <div class="md:col-span-2">
-                <FormInput
-                  v-model="part.percentOfNet"
-                  label="% del neto"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  @update:model-value="onPartPercentChange(idx)"
-                />
-              </div>
-              <div class="md:col-span-2">
-                <FormInput
-                  :model-value="part.amount"
-                  label="Monto (S/)"
-                  type="number"
-                  disabled
-                  :placeholder="
-                    resolveCommissionNet(row) != null ? '0' : 'Defina comisión y precio'
-                  "
-                />
-              </div>
-              <div class="md:col-span-2">
-                <FormInput v-model="part.dueDate" label="Vencimiento" type="date" />
-              </div>
-              <div class="md:col-span-2 flex justify-end pb-1">
-                <BaseButton
-                  v-if="row.paymentParts.length > 1"
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  icon="lucide:trash-2"
-                  @click="removePaymentPart(idx, pIdx)"
-                >
-                  Quitar
-                </BaseButton>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="md:col-span-12 rounded-lg border px-3 py-3 space-y-3 border-gray-200 dark:border-gray-800"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <p class="text-sm font-medium text-gray-800 dark:text-white/90">
-                Deducibles (pasajes, impuestos, etc.)
-              </p>
-              <BaseButton type="button" variant="outline" size="sm" icon="lucide:plus" @click="addDeductible(idx)">
-                Deducible
-              </BaseButton>
-            </div>
-            <p v-if="!row.deductibles.length" class="text-xs text-gray-400 dark:text-gray-500">
-              Sin deducibles. El neto a pagar será igual a la comisión bruta.
-            </p>
-            <div
-              v-for="(ded, dIdx) in row.deductibles"
-              :key="`ded-${idx}-${dIdx}`"
-              class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end"
-            >
-              <div class="md:col-span-3">
-                <FormSelect
-                  v-model="ded.deductibleType"
-                  label="Tipo"
-                  :options="DEDUCTIBLE_TYPE_OPTIONS"
-                />
-              </div>
-              <div class="md:col-span-4">
-                <FormInput v-model="ded.description" label="Descripción" placeholder="Opcional" />
-              </div>
-              <div class="md:col-span-3">
-                <FormInput v-model="ded.amount" label="Monto (S/)" type="number" min="0" step="0.01" />
-              </div>
-              <div class="md:col-span-2 flex justify-end pb-1">
-                <BaseButton type="button" variant="ghost" size="sm" icon="lucide:trash-2" @click="removeDeductible(idx, dIdx)">
-                  Quitar
-                </BaseButton>
-              </div>
-            </div>
-            <p
-              v-if="row.agentId && resolveCommissionNet(row) != null"
-              class="text-xs text-gray-500 dark:text-gray-400"
-            >
-              Neto estimado a pagar:
-              <strong>S/ {{ resolveCommissionNet(row)!.toLocaleString('es-PE') }}</strong>
-              (bruto S/ {{ (resolveCommissionAmount(row) ?? 0).toLocaleString('es-PE') }}
-              − deducibles S/ {{ resolveDeductiblesTotal(row).toLocaleString('es-PE') }})
-            </p>
-          </div>
-        </div>
-
-        <p v-if="commissionFormError" class="text-sm text-error-500 dark:text-error-400">
-          {{ commissionFormError }}
-        </p>
-
-        <div
-          v-if="commissionsPreview.length"
-          class="rounded-lg border px-4 py-3 space-y-2 text-sm border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800"
-        >
-          <p class="font-medium text-gray-800 dark:text-white/90">Vista previa</p>
-          <ul class="space-y-1">
-            <li :class="(p.invalid) ? 'text-error-500 dark:text-error-400' : 'text-gray-500 dark:text-gray-400'"
-              v-for="(p, i) in commissionsPreview"
-              :key="i"
-            >
-              {{ p.agentName }} ({{ p.agentType }}) —
-              <template v-if="p.row.calculationType === 'PERCENT'">{{ p.row.value }}%</template>
-              <template v-else>S/ {{ p.row.value }} fijo</template>
-              → bruto
-              <strong>S/ {{ (p.gross ?? 0).toLocaleString('es-PE') }}</strong>
-              <template v-if="p.deductiblesTotal > 0">
-                · neto <strong>S/ {{ (p.net ?? 0).toLocaleString('es-PE') }}</strong>
-              </template>
-              · {{ p.row.paymentParts.length }} parte(s)
-            </li>
-          </ul>
-          <p v-if="propertySalePrice != null && propertySalePrice > 0" class="text-xs text-gray-400 dark:text-gray-500">
-            Precio inmueble: S/ {{ propertySalePrice.toLocaleString('es-PE') }} · Total comisiones:
-            <strong>S/ {{ commissionsTotal.toLocaleString('es-PE') }}</strong>
-          </p>
-          <p v-else class="text-xs text-gray-400 dark:text-gray-500">
-            Sin precio en el inmueble: los montos en % se calcularán cuando haya precio o al cierre.
-          </p>
-        </div>
-      </FormSectionCard>
-
-      <FormSectionCard
-        title="Compradores"
-        subtitle="Personas que participan en la compra"
-        icon="lucide:users"
-      >
-        <div class="flex justify-end mb-3">
-          <BaseButton v-if="canWrite" type="button" variant="outline" size="sm" icon="lucide:plus" @click="addBuyer">
-            Agregar comprador
-          </BaseButton>
-        </div>
-        <div v-for="(_, idx) in form.buyers" :key="`buyer-${idx}`" class="flex gap-2 items-end">
-          <div class="flex-1">
-            <FormSelect
-              v-model="form.buyers[idx]"
-              :label="`Comprador ${idx + 1}`"
-              :options="buyerOptions"
-              :loading="loading"
+    <form v-else class="grid grid-cols-1 items-start gap-6 xl:grid-cols-3" novalidate @submit.prevent="submit">
+      <!-- ── Columna principal ── -->
+      <div class="space-y-6 xl:col-span-2">
+        <FormSectionCard title="Inmueble" subtitle="Solo inmuebles disponibles; el precio y la moneda vienen de su ficha">
+          <div class="flex items-start gap-2">
+            <FormCombobox
+              v-model="propertyId"
+              class="min-w-0 flex-1"
+              label="Inmueble"
+              placeholder="Buscar por código, dirección o distrito..."
+              :options="propertyOptions"
+              :error="propertyError"
+              empty-text="No hay inmuebles disponibles con ese texto"
               required
             />
+            <BaseButton
+              v-if="canWrite"
+              type="button"
+              variant="outline"
+              size="lg"
+              icon="lucide:plus"
+              class="mt-7 shrink-0"
+              @click="propertyModalOpen = true"
+            >
+              Nuevo
+            </BaseButton>
           </div>
-          <BaseButton
-            v-if="form.buyers.length > 1"
-            type="button"
-            variant="ghost"
-            size="sm"
-            icon="lucide:trash-2"
-            @click="removeBuyer(idx)"
-          >
-            Quitar
-          </BaseButton>
-        </div>
-      </FormSectionCard>
+          <p v-if="!propertyOptions.length" class="mt-2 text-theme-xs text-warning-600 dark:text-orange-400">
+            No hay inmuebles disponibles. Registra uno con «Nuevo» o cambia su estado a «Disponible» en Propiedades.
+          </p>
+          <VentasPropiedadFormModal v-model:open="propertyModalOpen" @created="onPropertyCreated" />
 
-      <FormSectionCard
-        v-if="form.propertyId"
-        title="Propietarios del inmueble"
-        subtitle="Titulares registrados en la ficha del inmueble"
-        icon="lucide:user-check"
-      >
-        <p v-if="loadingPropertyOwners" class="text-sm text-gray-400 dark:text-gray-500">
-          Cargando propietarios…
-        </p>
-        <ul v-else-if="propertyOwners.length" class="space-y-1 text-sm">
-          <li class="text-gray-800 dark:text-white/90"
-            v-for="o in propertyOwners"
-            :key="o.id"
-          >
-            {{ o.fullName }}
-            <span v-if="o.documentNumber"> ({{ o.documentNumber }})</span>
-            <span
-              v-if="o.isPrimary"
-              class="ml-1 text-xs text-gray-400 dark:text-gray-500"
-            >— principal</span>
-          </li>
-        </ul>
-        <p v-else class="text-sm text-gray-400 dark:text-gray-500">
-          Sin propietarios registrados en la ficha del inmueble.
-        </p>
-      </FormSectionCard>
+          <template v-if="propertyId">
+            <LoadingState v-if="loadingProperty && !propertySummary" class="py-8" />
+            <div v-else-if="propertySummary" class="mt-5 space-y-5">
+              <SalePropertySummary :property="propertySummary" />
+              <div>
+                <p class="mb-3 flex items-center gap-2 text-theme-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                  <AppIcon icon="lucide:key-round" :size="14" />
+                  Propietarios del inmueble
+                </p>
+                <SaleParticipantList
+                  :people="propertyOwners"
+                  empty-text="El inmueble no tiene propietarios registrados (edítalo en Propiedades)."
+                />
+              </div>
+            </div>
+          </template>
+        </FormSectionCard>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <BaseButton variant="outline" icon="lucide:x" @click="router.push('/ventas/procesos')">Cancelar</BaseButton>
-        <BaseButton v-if="canWrite" variant="primary" icon="lucide:plus-circle" :loading="isPending" @click="submit">Crear proceso</BaseButton>
+        <PropertyOwnersSection
+          v-model:owner-ids="buyerIds"
+          :owner-options="buyerOptions"
+          :error="buyerError"
+          title="Compradores"
+          subtitle="El primero es el comprador principal; agrega a los demás si compran en conjunto."
+          primary-label="Comprador principal"
+          secondary-label="Comprador"
+          add-label="Agregar comprador"
+          placeholder="Buscar comprador por nombre o documento..."
+          searchable
+        >
+          <template #new-owner-modal="{ open, setOpen, onCreated }">
+            <VentasClienteFormModal :open="open" client-type="BUYER" @update:open="setOpen" @created="onCreated" />
+          </template>
+        </PropertyOwnersSection>
+
+        <FormSectionCard title="Datos del proceso" subtitle="Etapa de inicio y forma de pago">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormInput
+              v-model="title"
+              class="md:col-span-2"
+              label="Título"
+              placeholder="Ej. Familia Pérez — Torre Vista Mar (opcional)"
+            />
+            <FormSelect v-model="pipelineStage" label="Etapa inicial" :options="stageOptions" />
+            <FormSelect
+              v-model="financingChannelId"
+              label="Banco o medio de pago"
+              :options="financingOptions"
+              :loading="loadingFinancing"
+            />
+          </div>
+        </FormSectionCard>
+
+        <FormSectionCard
+          title="Comisiones de asesores"
+          :subtitle="`En % sobre el precio (${propertyCurrency}) o monto fijo en cualquier moneda`"
+        >
+          <ProcessCommissionsEditor
+            v-model="commissionRows"
+            :sale-price="salePrice"
+            :property-currency="propertyCurrency"
+            :agent-options="agentOptions"
+            :currency-options="currencyOptions"
+            :can-write="canWrite"
+          />
+          <p v-if="loadingAgents" class="mt-2 text-theme-xs text-gray-400">Cargando asesores...</p>
+          <p v-if="commissionError" role="alert" class="mt-3 text-sm text-error-500 dark:text-error-400">{{ commissionError }}</p>
+        </FormSectionCard>
       </div>
-    </div>
+
+      <!-- ── Lateral: resumen + acciones (fijo en escritorio) ── -->
+      <aside class="space-y-6 xl:sticky xl:top-24">
+        <FormSectionCard title="Resumen">
+          <dl class="space-y-3 text-sm">
+            <div>
+              <dt class="text-theme-xs text-gray-400 dark:text-gray-500">Inmueble</dt>
+              <dd class="font-semibold text-gray-800 dark:text-white/90">{{ propertySummary?.code ?? '—' }}</dd>
+              <dd v-if="propertySummary" class="text-theme-xs text-gray-500 dark:text-gray-400">{{ propertySummary.addressLine }}</dd>
+            </div>
+            <div>
+              <dt class="text-theme-xs text-gray-400 dark:text-gray-500">Precio de venta</dt>
+              <dd class="font-bold text-brand-500 dark:text-brand-400">
+                {{ salePrice != null ? formatCurrency(salePrice, propertyCurrency) : '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-theme-xs text-gray-400 dark:text-gray-500">Compradores</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ selectedBuyers.length ? selectedBuyers.join(', ') : '—' }}</dd>
+            </div>
+            <div>
+              <dt class="text-theme-xs text-gray-400 dark:text-gray-500">Etapa inicial</dt>
+              <dd class="text-gray-800 dark:text-white/90">{{ stageLabel(pipelineStage) }}</dd>
+            </div>
+            <div>
+              <dt class="text-theme-xs text-gray-400 dark:text-gray-500">Comisiones (bruto)</dt>
+              <dd v-if="!commissionTotals.length" class="text-gray-800 dark:text-white/90">—</dd>
+              <dd v-for="t in commissionTotals" :key="t.currency" class="font-semibold tabular-nums text-gray-800 dark:text-white/90">
+                {{ formatCurrency(t.amount, t.currency) }}
+              </dd>
+            </div>
+          </dl>
+        </FormSectionCard>
+
+        <div class="space-y-3 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
+          <BaseButton
+            v-if="canWrite"
+            type="submit"
+            variant="primary"
+            icon="lucide:save"
+            block
+            :loading="isPending"
+            loading-text="Creando..."
+          >
+            Crear Proceso
+          </BaseButton>
+          <BaseButton variant="outline" type="button" block @click="goBack">Cancelar</BaseButton>
+          <p class="text-center text-theme-xs text-gray-400 dark:text-gray-500">
+            Los campos con <span class="text-error-500">*</span> son obligatorios
+          </p>
+        </div>
+      </aside>
+    </form>
   </div>
 </template>

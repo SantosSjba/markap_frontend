@@ -5,6 +5,7 @@ import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree, refetchQuerySubtree } from '@shared/utils/invalidateQuerySubtree'
+import { invalidateVentasRelatedData } from '../../../../presentation/composables/invalidateVentasRelatedData'
 import type {
   VentasCreatePropertyPayload,
   VentasListPropertiesParams,
@@ -139,6 +140,7 @@ export function useVentasCreateProperty() {
     mutationFn: (data: VentasCreatePropertyPayload) => ventasPropertiesRepository.create(data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       void markapAlert.toast.success('Propiedad registrada')
     },
     onError: (err) => {
@@ -159,6 +161,7 @@ export function useVentasUpdateProperty() {
       ventasPropertiesRepository.update(id, data),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       void markapAlert.toast.success('Propiedad actualizada')
     },
     onError: (err) => {
@@ -184,6 +187,7 @@ export function useVentasUpdatePropertyListingStatus() {
     }) => ventasPropertiesRepository.updateListingStatus(id, listingStatus),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       void markapAlert.toast.success('Estado comercial actualizado')
     },
     onError: (err) => {
@@ -199,6 +203,7 @@ export function useVentasDeleteProperty() {
     mutationFn: (id: string) => ventasPropertiesRepository.delete(id),
     onSuccess: () => {
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       void markapAlert.toast.success('Propiedad eliminada')
     },
     onError: (err) => {
@@ -215,6 +220,7 @@ export function useVentasUploadPropertyMedia() {
       ventasPropertiesRepository.uploadMedia(id, file, kind),
     onSuccess: (_data, vars) => {
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.root)
+      void invalidateVentasRelatedData(queryClient)
       invalidateQuerySubtree(queryClient, ventasPropertyKeys.detail(vars.id))
       void markapAlert.toast.success('Archivo multimedia subido')
     },

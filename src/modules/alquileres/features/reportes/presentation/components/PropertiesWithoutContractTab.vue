@@ -10,7 +10,7 @@ import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@share
 import { usePropertiesWithoutContract } from '../composables/useReportes'
 import type { PropertyWithoutContractItem } from '../../domain/reportes.types'
 import { formatMoney, useLocalPagination } from '../utils/report-format'
-import ReportSectionHeader from './ReportSectionHeader.vue'
+import ReportSectionHeader from '@shared/presentation/components/reports/ReportSectionHeader.vue'
 import ReportQueryError from './ReportQueryError.vue'
 /** Pestaña «Sin contrato»: propiedades activas sin contrato vigente y desde cuándo están libres. */
 

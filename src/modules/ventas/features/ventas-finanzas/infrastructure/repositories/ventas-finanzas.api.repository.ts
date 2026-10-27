@@ -3,9 +3,12 @@ import {
   VENTAS_FINANZAS_APP_SLUG,
   type BuyerPaymentRow,
   type CommissionProfileRow,
+  type CommissionListParams,
   type CommissionRow,
+  type CommissionStats,
   type DocumentationCostRow,
   type ProfitabilitySummary,
+  type UpdateCommissionBody,
 } from '../../domain/finanzas.types'
 import type { VentasFinanzasRepository } from '../../domain/repositories/ventas-finanzas.repository'
 const scope = { applicationSlug: VENTAS_FINANZAS_APP_SLUG } as const
@@ -23,6 +26,7 @@ export const ventasFinanzasApiRepository: VentasFinanzasRepository = {
     page?: number
     limit?: number
     buyerClientId?: string
+    saleClosingId?: string
     kind?: string
     displayStatus?: string
   }) =>
@@ -51,12 +55,17 @@ export const ventasFinanzasApiRepository: VentasFinanzasRepository = {
       )
       .then((r) => r.data),
 
-  listCommissions: (params: { page?: number; limit?: number; status?: string; agentId?: string }) =>
+  listCommissions: (params: Partial<CommissionListParams>) =>
     apiClient
       .get<{
         data: CommissionRow[]
         total: number
       }>(`/ventas-finanzas/commissions?${qs({ ...scope, ...params })}`)
+      .then((r) => r.data),
+
+  getCommissionStats: () =>
+    apiClient
+      .get<CommissionStats>(`/ventas-finanzas/commissions/stats?${qs({ ...scope })}`)
       .then((r) => r.data),
 
   markCommissionPaid: (id: string, body?: { paidAt?: string | null }) =>
@@ -80,6 +89,11 @@ export const ventasFinanzasApiRepository: VentasFinanzasRepository = {
       .post(
         `/ventas-finanzas/commissions/${encodeURIComponent(id)}/recalculate-from-profile?${qs({ ...scope })}`,
       )
+      .then((r) => r.data),
+
+  updateCommission: (id: string, body: UpdateCommissionBody) =>
+    apiClient
+      .patch<CommissionRow>(`/ventas-finanzas/commissions/${encodeURIComponent(id)}?${qs({ ...scope })}`, body)
       .then((r) => r.data),
 
   listCommissionProfiles: () =>

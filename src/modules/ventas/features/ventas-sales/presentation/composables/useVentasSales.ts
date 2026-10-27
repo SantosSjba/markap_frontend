@@ -6,14 +6,18 @@ import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { invalidateQuerySubtree } from '@shared/utils/invalidateQuerySubtree'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 import { ventasPropertyKeys } from '../../../propiedades/presentation/composables/useVentasProperties'
 import { ventasFinanzasKeys } from '../../../ventas-finanzas/presentation/composables/useVentasFinanzas'
 import { invalidateVentasReportesCache } from '../../../ventas-reportes/presentation/composables/useVentasReportes'
+import { invalidateVentasRelatedData } from '../../../../presentation/composables/invalidateVentasRelatedData'
 export const ventasSalesKeys = {
   root: ['ventas-sales'] as const,
   processes: (params: object) => [...ventasSalesKeys.root, 'processes', params] as const,
   processDetail: (id: string) => [...ventasSalesKeys.root, 'process', id] as const,
+  processStats: () => [...ventasSalesKeys.root, 'process-stats'] as const,
   separations: (params: object) => [...ventasSalesKeys.root, 'separations', params] as const,
+  separationStats: () => [...ventasSalesKeys.root, 'separation-stats'] as const,
   closings: (params: object) => [...ventasSalesKeys.root, 'closings', params] as const,
   closingReadiness: (propertyId: string, buyerClientId: string) =>
     [...ventasSalesKeys.root, 'closing-readiness', propertyId, buyerClientId] as const,
@@ -51,7 +55,8 @@ function afterProcessMutation(qc: QueryClient, body?: UpdateProcessBody) {
   invalidateVentasSalesCache(qc)
   touchVentasReportes(qc)
   if (body?.status === 'LOST') {
-    touchVentasFinanzas(qc)
+    // La caída anula comisiones, vence la separación y libera el inmueble
+    void invalidateVentasRelatedData(qc)
   }
 }
 
@@ -68,6 +73,15 @@ export function useVentasProcessesList(
   return useQuery({
     queryKey: computed(() => ventasSalesKeys.processes(params.value)),
     queryFn: () => ventasSalesRepository.listProcesses(params.value),
+  })
+}
+
+/** Resumen de procesos para las tarjetas del listado */
+export function useVentasProcessStats() {
+  const ventasSalesRepository = useService(ventasSalesRepositoryKey)
+  return useQuery({
+    queryKey: ventasSalesKeys.processStats(),
+    queryFn: () => ventasSalesRepository.getProcessStats(),
   })
 }
 
@@ -147,12 +161,14 @@ export function useVentasPipelineBoard() {
   const ventasSalesRepository = useService(ventasSalesRepositoryKey)
   return useQuery({
     queryKey: [...ventasSalesKeys.root, 'pipeline-board', 'active'] as const,
-    queryFn: () =>
-      ventasSalesRepository.listProcesses({
-        page: 1,
-        limit: 500,
-        status: 'ACTIVE',
-      }),
+    // Todas las páginas: el backend topa cada página en 100 filas
+    queryFn: async () => {
+      const data = await fetchAllPages(
+        (page, limit) => ventasSalesRepository.listProcesses({ page, limit, status: 'ACTIVE' }),
+        100,
+      )
+      return { data, total: data.length }
+    },
   })
 }
 
@@ -223,12 +239,43 @@ export function useVentasCompleteReminder() {
 }
 
 export function useVentasSeparationsList(
-  params: Ref<{ page: number; limit: number; status?: string }>,
+  params: Ref<{ page: number; limit: number; status?: string; search?: string }>,
 ) {
   const ventasSalesRepository = useService(ventasSalesRepositoryKey)
   return useQuery({
     queryKey: computed(() => ventasSalesKeys.separations(params.value)),
     queryFn: () => ventasSalesRepository.listSeparations(params.value),
+  })
+}
+
+/** Resumen de separaciones para las tarjetas del listado */
+export function useVentasSeparationStats() {
+  const ventasSalesRepository = useService(ventasSalesRepositoryKey)
+  return useQuery({
+    queryKey: ventasSalesKeys.separationStats(),
+    queryFn: () => ventasSalesRepository.getSeparationStats(),
+  })
+}
+
+/** Vencer, reactivar o cambiar la fecha límite de una separación (libera o reserva el inmueble) */
+export function useVentasPatchSeparation() {
+  const ventasSalesRepository = useService(ventasSalesRepositoryKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Parameters<VentasSalesRepository['patchSeparation']>[1] }) =>
+      ventasSalesRepository.patchSeparation(id, body),
+    onSuccess: (_d, vars) => {
+      invalidateVentasSalesCache(qc)
+      touchVentasProperties(qc)
+      const msg =
+        vars.body.status === 'EXPIRED'
+          ? 'Separación vencida — el inmueble vuelve a estar disponible'
+          : vars.body.status === 'ACTIVE'
+            ? 'Separación reactivada — el inmueble vuelve a estar separado'
+            : 'Separación actualizada'
+      void markapAlert.toast.success(msg)
+    },
+    onError: (e) => void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(e)),
   })
 }
 

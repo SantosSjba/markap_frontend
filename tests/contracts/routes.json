@@ -1754,7 +1754,7 @@
     "path": "/produccion",
     "name": "produccion-home",
     "meta": {
-      "title": "Producción de muebles"
+      "title": "MOCZ · Muebles Orgánicos CZ"
     },
     "redirect": null
   },
@@ -2294,14 +2294,14 @@
   {
     "path": "/ventas/cierres",
     "name": "",
-    "meta": {
-      "title": "Cierres"
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "name": "ventas-procesos"
+    }
   },
   {
     "path": "/ventas/cierres",
-    "name": "ventas-cierres",
+    "name": "",
     "meta": {
       "title": "Cierres"
     },
@@ -2349,11 +2349,14 @@
   },
   {
     "path": "/ventas/clientes/propietarios",
-    "name": "ventas-clientes-propietarios",
-    "meta": {
-      "title": "Propietarios"
-    },
-    "redirect": null
+    "name": "",
+    "meta": {},
+    "redirect": {
+      "name": "ventas-clientes",
+      "query": {
+        "tipo": "OWNER"
+      }
+    }
   },
   {
     "path": "/ventas/comisiones",
@@ -2416,6 +2419,14 @@
     "name": "ventas-proceso-detalle",
     "meta": {
       "title": "Detalle proceso"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/ventas/procesos/:id/cumplimiento",
+    "name": "ventas-proceso-cumplimiento",
+    "meta": {
+      "title": "Cumplimiento legal"
     },
     "redirect": null
   },
@@ -2486,14 +2497,14 @@
   {
     "path": "/ventas/separaciones",
     "name": "",
-    "meta": {
-      "title": "Separaciones"
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "name": "ventas-procesos"
+    }
   },
   {
     "path": "/ventas/separaciones",
-    "name": "ventas-separaciones",
+    "name": "",
     "meta": {
       "title": "Separaciones"
     },

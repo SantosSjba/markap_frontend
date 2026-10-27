@@ -5,6 +5,9 @@ import {
   type VentasConversionReport,
   type VentasFinancialFlowReport,
   type VentasSalesByPeriodRow,
+  type VentasSummaryByKind,
+  type VentasSummaryKind,
+  type VentasSummaryParams,
 } from '../../domain/reportes.types'
 import type { VentasReportesRepository } from '../../domain/repositories/ventas-reportes.repository'
 const scope = { applicationSlug: VENTAS_REPORTES_APP_SLUG } as const
@@ -42,5 +45,10 @@ export const ventasReportesApiRepository: VentasReportesRepository = {
       .get<VentasFinancialFlowReport>(
         `/ventas-reports/financial-flow?${qs({ ...scope, ...params })}`,
       )
+      .then((r) => r.data),
+
+  summary: <K extends VentasSummaryKind>(kind: K, params: VentasSummaryParams) =>
+    apiClient
+      .get<VentasSummaryByKind[K]>(`/ventas-reports/summary/${kind}?${qs({ ...scope, ...params })}`)
       .then((r) => r.data),
 }

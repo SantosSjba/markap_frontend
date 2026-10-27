@@ -24,24 +24,23 @@ export const ventasSalesProcesosRoutes: RouteRecordRaw[] = [
     component: () => import('../views/VentasProcesoDetalleView.vue'),
     meta: { title: 'Detalle proceso' },
   },
+  // Checklist legal del proceso (se completa antes de registrar el cierre)
+  {
+    path: ':id/cumplimiento',
+    name: 'ventas-proceso-cumplimiento',
+    component: () => import('../views/VentasCierreCumplimientoView.vue'),
+    meta: { title: 'Cumplimiento legal' },
+  },
 ]
 
+// Separaciones y cierres se registran y consultan desde la ficha del proceso de venta;
+// las direcciones antiguas llevan al listado de procesos.
 export const ventasSalesSeparacionesRoutes: RouteRecordRaw[] = [
-  {
-    path: '',
-    name: 'ventas-separaciones',
-    component: () => import('../views/VentasSeparacionesView.vue'),
-    meta: { title: 'Separaciones' },
-  },
+  { path: '', redirect: { name: 'ventas-procesos' } },
 ]
 
 export const ventasSalesCierresRoutes: RouteRecordRaw[] = [
-  {
-    path: '',
-    name: 'ventas-cierres',
-    component: () => import('../views/VentasCierresView.vue'),
-    meta: { title: 'Cierres' },
-  },
+  { path: '', redirect: { name: 'ventas-procesos' } },
   {
     path: ':closingId/cumplimiento',
     name: 'ventas-cierre-cumplimiento',

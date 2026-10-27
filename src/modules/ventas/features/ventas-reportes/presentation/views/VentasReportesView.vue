@@ -1,606 +1,133 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
-import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
-import { ref, computed } from 'vue'
-import * as yup from 'yup'
-import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
-import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
-import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
-import DataTable from '@shared/presentation/components/ui/DataTable.vue'
-import FormInput from '@shared/presentation/components/forms/FormInput.vue'
-import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
-import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
-import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
-import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
-import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
-import { toCalendarDateString } from '@shared/utils/formatters'
-import {
-  useVentasSalesByPeriodReport,
-  useVentasAgentPerformanceReport,
-  useVentasConversionReport,
-  useVentasFinancialFlowReport,
-} from '../composables/useVentasReportes'
-import type { VentasSalesByPeriodRow, VentasAgentPerformanceRow } from '../../domain/reportes.types'
-const PIPELINE_LABEL: Record<string, string> = {
-  SEPARATION: 'Separación',
-  ARRAS: 'Contrato de arras',
-  MINUTA: 'Minuta',
-  PUBLIC_DEED: 'Escritura pública',
-}
-
-function defaultRange() {
-  const end = new Date()
-  const start = new Date()
-  start.setDate(start.getDate() - 89)
-  return {
-    startDate: toCalendarDateString(start),
-    endDate: toCalendarDateString(end),
-  }
-}
-
-const filterSchema = toTypedSchema(
-  yup.object({
-    startDate: yup.string().required('Desde es requerido'),
-    endDate: yup.string().required('Hasta es requerido'),
-    granularity: yup.string().oneOf(['day', 'week', 'month']).required(),
-  }),
-)
-
-const { handleSubmit, errors, defineComponentBinds } = useForm({
-  validationSchema: filterSchema,
-  initialValues: {
-    ...defaultRange(),
-    granularity: 'month',
-  },
-})
-
-const filterBinds = {
-  startDate: defineComponentBinds('startDate'),
-  endDate: defineComponentBinds('endDate'),
-  granularity: defineComponentBinds('granularity'),
-}
-
-const applied = ref({ ...defaultRange(), granularity: 'month' })
-
-const rangeForReports = computed(() => ({
-  startDate: applied.value.startDate,
-  endDate: applied.value.endDate,
-}))
-
-const salesParams = computed(() => ({
-  startDate: applied.value.startDate,
-  endDate: applied.value.endDate,
-  granularity: applied.value.granularity,
-}))
-
-const salesQuery = useVentasSalesByPeriodReport(salesParams, { toastOnLoadError: false })
-const agentsQuery = useVentasAgentPerformanceReport(rangeForReports, { toastOnLoadError: false })
-const conversionQuery = useVentasConversionReport(rangeForReports, { toastOnLoadError: false })
-const financialQuery = useVentasFinancialFlowReport(rangeForReports, { toastOnLoadError: false })
-
-const applyFilters = handleSubmit((v) => {
-  applied.value = {
-    startDate: v.startDate,
-    endDate: v.endDate,
-    granularity: v.granularity,
-  }
-})
-
-const activeTab = ref('ventas-periodo')
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { formatCurrencyRounded } from '@shared/utils/formatters'
+import { useVentasReportSummary } from '../composables/useVentasReportes'
+import { PERIOD_MODE_OPTIONS, useReportPeriod } from '../utils/report-period'
+import SalesReportTab from '../components/SalesReportTab.vue'
+import AgentsReportTab from '../components/AgentsReportTab.vue'
+import ConversionReportTab from '../components/ConversionReportTab.vue'
+import FinancialReportTab from '../components/FinancialReportTab.vue'
+import IndicatorsReportTab from '../components/IndicatorsReportTab.vue'
+/**
+ * Reportes de Ventas (como en Alquileres): un periodo común (año, mes, rango o todo)
+ * y una pestaña por reporte; cada monto se muestra en su moneda.
+ */
+const route = useRoute()
+const router = useRouter()
 
 const reportTabs = [
-  { id: 'ventas-periodo', label: 'Ventas por periodo', icon: 'lucide:trending-up' },
-  { id: 'asesores', label: 'Rendimiento asesores', icon: 'lucide:user-check' },
+  { id: 'ventas', label: 'Ventas por periodo', icon: 'lucide:trending-up' },
+  { id: 'asesores', label: 'Rendimiento de asesores', icon: 'lucide:user-check' },
   { id: 'conversion', label: 'Conversión', icon: 'lucide:git-branch' },
   { id: 'flujo', label: 'Flujo financiero', icon: 'lucide:wallet' },
-]
+  { id: 'indicadores', label: 'Indicadores', icon: 'lucide:gauge' },
+] as const
+type ReportTab = (typeof reportTabs)[number]['id']
 
-const granularityOptions = [
-  { value: 'month', label: 'Por mes' },
-  { value: 'week', label: 'Por semana (inicio ISO)' },
-  { value: 'day', label: 'Por día' },
-]
-
-const salesRows = computed(() => salesQuery.data.value ?? [])
-const agentRows = computed(() => agentsQuery.data.value ?? [])
-const conversion = computed(() => conversionQuery.data.value)
-const financial = computed(() => financialQuery.data.value)
-
-const salesColumns = [
-  {
-    key: 'p',
-    label: 'Periodo',
-    sortAccessor: (r: unknown) => (r as VentasSalesByPeriodRow).period,
+const activeTab = computed<ReportTab>({
+  get() {
+    const tab = route.query.tab
+    return reportTabs.some((t) => t.id === tab) ? (tab as ReportTab) : 'ventas'
   },
-  {
-    key: 'n',
-    label: 'Cierres',
-    sortAccessor: (r: unknown) => (r as VentasSalesByPeriodRow).closingsCount,
+  set(tab) {
+    void router.replace({ query: { ...route.query, tab } })
   },
-  {
-    key: 't',
-    label: 'Monto total (S/)',
-    sortAccessor: (r: unknown) => (r as VentasSalesByPeriodRow).totalAmount,
-  },
-]
-
-const agentColumns = [
-  {
-    key: 'a',
-    label: 'Asesor',
-    sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).agentName,
-  },
-  {
-    key: 'c',
-    label: 'Cierres',
-    sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).closingsCount,
-  },
-  {
-    key: 's',
-    label: 'Volumen (S/)',
-    sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).totalSales,
-  },
-  {
-    key: 'm',
-    label: 'Comisiones (S/)',
-    sortAccessor: (r: unknown) => (r as VentasAgentPerformanceRow).totalCommissionAmount,
-  },
-]
-
-const pipelineTableRows = computed(() => {
-  const stages = conversion.value?.activePipelineByStage ?? {}
-  return Object.entries(stages).map(([stage, count]) => ({
-    stage,
-    label: PIPELINE_LABEL[stage] ?? stage,
-    count,
-  }))
 })
 
-const pipelineColumns = [
-  { key: 'l', label: 'Etapa', sortAccessor: (r: unknown) => (r as { label: string }).label },
-  { key: 'c', label: 'Activos', sortAccessor: (r: unknown) => (r as { count: number }).count },
-]
+const { mode, year, month, startDate, endDate, yearOptions, monthOptions, params, label } = useReportPeriod()
 
-const { isExportingKey, exportToExcel } = useExcelExport()
+// Resumen del periodo (mismas consultas que las pestañas: se comparten en caché)
+const salesQuery = useVentasReportSummary('sales', params, ref(true))
+const conversionQuery = useVentasReportSummary('conversion', params, ref(true))
+const financialQuery = useVentasReportSummary('financial', params, ref(true))
 
-const EXPORT_KEYS = {
-  sales: 'ventas-periodo',
-  agents: 'asesores',
-  conversion: 'conversion',
-  financial: 'flujo',
-} as const
-
-const rangeLabel = computed(() => `${applied.value.startDate}_${applied.value.endDate}`)
-
-async function exportSalesExcel() {
-  const data = salesRows.value
-  if (!data.length) {
-    void markapAlert.toast.warning('No hay filas para exportar')
-    return
+/** Una cifra por moneda: la primera como valor y el resto debajo */
+function perCurrency(list: { currency: string; amount: number }[]) {
+  const nonZero = list.filter((x) => x.amount > 0)
+  return {
+    main: nonZero[0] ? formatCurrencyRounded(nonZero[0].amount, nonZero[0].currency) : formatCurrencyRounded(0, 'PEN'),
+    rest: nonZero
+      .slice(1)
+      .map((x) => formatCurrencyRounded(x.amount, x.currency))
+      .join(' · '),
   }
-  await exportToExcel(
-    {
-      fileName: `ventas_por_periodo_${rangeLabel.value}.xlsx`,
-      sheetName: 'Ventas',
-      columns: [
-        { header: 'Periodo', key: 'period' },
-        { header: 'Cierres', key: 'closingsCount' },
-        { header: 'Monto total', key: 'totalAmount' },
-      ],
-      rows: data.map((r) => ({
-        period: r.period,
-        closingsCount: r.closingsCount,
-        totalAmount: r.totalAmount,
-      })),
-    },
-    EXPORT_KEYS.sales,
-  )
-  void markapAlert.toast.success('Excel generado')
 }
-
-async function exportAgentsExcel() {
-  const data = agentRows.value
-  if (!data.length) {
-    void markapAlert.toast.warning('No hay filas para exportar')
-    return
-  }
-  await exportToExcel(
-    {
-      fileName: `rendimiento_asesores_${rangeLabel.value}.xlsx`,
-      sheetName: 'Asesores',
-      columns: [
-        { header: 'Asesor', key: 'agentName' },
-        { header: 'Cierres', key: 'closingsCount' },
-        { header: 'Volumen', key: 'totalSales' },
-        { header: 'Comisiones', key: 'totalCommissionAmount' },
-      ],
-      rows: data.map((r) => ({
-        agentName: r.agentName,
-        closingsCount: r.closingsCount,
-        totalSales: r.totalSales,
-        totalCommissionAmount: r.totalCommissionAmount,
-      })),
-    },
-    EXPORT_KEYS.agents,
-  )
-  void markapAlert.toast.success('Excel generado')
-}
-
-async function exportConversionExcel() {
-  const c = conversion.value
-  if (!c) {
-    void markapAlert.toast.warning('Sin datos de conversión')
-    return
-  }
-  const funnelRows = pipelineTableRows.value.map((r) => ({
-    tipo: 'Embudo activo',
-    clave: r.label,
-    valor: r.count,
-  }))
-  const summaryRows = [
-    { tipo: 'Resumen', clave: 'Oportunidades creadas (periodo)', valor: c.opportunitiesCreated },
-    { tipo: 'Resumen', clave: 'Ganadas', valor: c.opportunitiesWon },
-    { tipo: 'Resumen', clave: 'Perdidas', valor: c.opportunitiesLost },
-    { tipo: 'Resumen', clave: 'Separaciones registradas', valor: c.separationsCreated },
-    { tipo: 'Resumen', clave: 'Cierres', valor: c.closingsCount },
-    { tipo: 'Resumen', clave: 'Tasa conversión %', valor: c.conversionRatePercent },
-  ]
-  await exportToExcel(
-    {
-      fileName: `conversion_leads_${rangeLabel.value}.xlsx`,
-      sheetName: 'Resumen',
-      columns: [
-        { header: 'Tipo', key: 'tipo' },
-        { header: 'Indicador', key: 'clave' },
-        { header: 'Valor', key: 'valor' },
-      ],
-      rows: [...summaryRows, ...funnelRows] as Record<string, string | number>[],
-      additionalSheets: [
-        {
-          sheetName: 'Embudo detalle',
-          columns: [
-            { header: 'Etapa', key: 'label' },
-            { header: 'Procesos activos', key: 'count' },
-          ],
-          rows: pipelineTableRows.value as unknown as Record<
-            string,
-            string | number | null | undefined
-          >[],
-        },
-      ],
-    },
-    EXPORT_KEYS.conversion,
-  )
-  void markapAlert.toast.success('Excel generado')
-}
-
-async function exportFinancialExcel() {
-  const f = financial.value
-  if (!f) {
-    void markapAlert.toast.warning('Sin datos financieros')
-    return
-  }
-  await exportToExcel(
-    {
-      fileName: `flujo_financiero_${rangeLabel.value}.xlsx`,
-      sheetName: 'Flujo',
-      columns: [
-        { header: 'Concepto', key: 'concepto' },
-        { header: 'Monto (S/)', key: 'monto' },
-      ],
-      rows: [
-        {
-          concepto: 'Cobranza comprador (pagos marcados pagados en periodo)',
-          monto: f.buyerPaymentsCollected,
-        },
-        {
-          concepto: 'Pendiente de cobro (cuotas/inicial aún PENDING)',
-          monto: f.buyerPaymentsPending,
-        },
-        { concepto: 'Costos documentación (gastos en periodo)', monto: f.documentationCostsTotal },
-        { concepto: 'Comisiones pagadas (cierres en periodo)', monto: f.commissionsPaidAmount },
-        {
-          concepto: 'Comisiones pendientes (cierres en periodo)',
-          monto: f.commissionsPendingAmount,
-        },
-        {
-          concepto: 'Neto estimado (cobranza − docs − com. pagadas)',
-          monto: f.estimatedNetAfterCosts,
-        },
-      ],
-    },
-    EXPORT_KEYS.financial,
-  )
-  void markapAlert.toast.success('Excel generado')
-}
-
-function printToPdf() {
-  void markapAlert.toast.info('En el diálogo de impresión elija «Guardar como PDF».')
-  window.print()
-}
+const soldSummary = computed(() =>
+  perCurrency((salesQuery.data.value?.byCurrency ?? []).map((t) => ({ currency: t.currency, amount: t.total }))),
+)
+const pendingCommissions = computed(() =>
+  perCurrency(
+    (financialQuery.data.value?.byCurrency ?? []).map((t) => ({ currency: t.currency, amount: t.commissionsPending })),
+  ),
+)
 </script>
 
 <template>
-  <div id="ventas-reportes-print" class="space-y-6">
-    <PageHeader
-      title="Reportes"
-      subtitle="Indicadores para decisiones: ventas, asesores, conversión y flujo financiero. Exporte a Excel o PDF."
-      icon="lucide:bar-chart-2"
-    >
+  <div class="space-y-6">
+    <PageHeader title="Reportes" subtitle="Ventas, asesores, conversión y flujo financiero en cada moneda" icon="lucide:bar-chart-3">
       <template #actions>
-        <BaseButton variant="secondary" class="flex items-center gap-2 shrink-0" @click="printToPdf">
-          <AppIcon icon="lucide:printer" :size="18" />
-          PDF / Imprimir
-        </BaseButton>
+        <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-end">
+          <FormSelect v-model="mode" :options="PERIOD_MODE_OPTIONS" class="sm:w-40" />
+          <FormSelect v-if="mode === 'year' || mode === 'month'" v-model="year" :options="yearOptions" class="sm:w-28" />
+          <FormSelect v-if="mode === 'month'" v-model="month" :options="monthOptions" class="col-span-2 sm:col-span-1 sm:w-36" />
+          <template v-if="mode === 'range'">
+            <FormInput v-model="startDate" type="date" class="sm:w-40" />
+            <FormInput v-model="endDate" type="date" class="sm:w-40" />
+          </template>
+        </div>
       </template>
     </PageHeader>
 
-    <form
-      class="rounded-2xl border p-4 space-y-4 bg-white dark:bg-gray-dark border-gray-200 dark:border-gray-800"
-      @submit.prevent="applyFilters"
-    >
-      <div class="flex items-center gap-2">
-        <div
-          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-brand-500/12"
-        >
-          <AppIcon icon="lucide:calendar-range" :size="16" color="var(--color-primary)" />
-        </div>
-        <p class="text-sm font-medium text-gray-800 dark:text-white/90">Período y agrupación</p>
-      </div>
-      <div class="flex flex-wrap gap-4 items-end">
-      <div class="min-w-[140px]">
-        <FormInput label="Desde" type="date" v-bind="filterBinds.startDate" />
-        <p v-if="errors.startDate" class="text-xs text-error-600 dark:text-error-500 mt-1">{{ errors.startDate }}</p>
-      </div>
-      <div class="min-w-[140px]">
-        <FormInput label="Hasta" type="date" v-bind="filterBinds.endDate" />
-        <p v-if="errors.endDate" class="text-xs text-error-600 dark:text-error-500 mt-1">{{ errors.endDate }}</p>
-      </div>
-      <div class="min-w-[180px]">
-        <FormSelect
-          label="Agrupación (ventas)"
-          v-bind="filterBinds.granularity"
-          :options="granularityOptions"
-        />
-      </div>
-      <BaseButton type="submit" variant="primary" icon="lucide:check">Aplicar</BaseButton>
-      </div>
-    </form>
+    <!-- Resumen del periodo -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <StatsCard
+        compact
+        title="Ventas cerradas"
+        :value="String(salesQuery.data.value?.closings ?? 0)"
+        :subtitle="label"
+        :loading="salesQuery.isPending.value"
+      >
+        <template #icon><AppIcon icon="lucide:handshake" :size="20" /></template>
+      </StatsCard>
+      <StatsCard compact title="Monto vendido" :value="soldSummary.main" :subtitle="soldSummary.rest || 'precio final'" :loading="salesQuery.isPending.value">
+        <template #icon><AppIcon icon="lucide:banknote" :size="20" /></template>
+      </StatsCard>
+      <StatsCard
+        compact
+        title="Procesos activos"
+        :value="String(conversionQuery.data.value?.active ?? 0)"
+        :subtitle="`${conversionQuery.data.value?.conversionRate ?? 0} % de conversión`"
+        :loading="conversionQuery.isPending.value"
+      >
+        <template #icon><AppIcon icon="lucide:git-branch" :size="20" /></template>
+      </StatsCard>
+      <StatsCard
+        compact
+        title="Comisiones por pagar"
+        :value="pendingCommissions.main"
+        :subtitle="pendingCommissions.rest || 'de las ventas del periodo'"
+        :loading="financialQuery.isPending.value"
+      >
+        <template #icon><AppIcon icon="lucide:hourglass" :size="20" /></template>
+      </StatsCard>
+    </div>
 
     <BaseTabs v-model="activeTab" :tabs="reportTabs" />
 
     <BaseCard class="block">
-      <template v-if="activeTab === 'ventas-periodo'">
-        <div class="space-y-4">
-          <div class="flex flex-wrap gap-2 justify-end">
-            <BaseButton
-              variant="secondary"
-              class="flex items-center gap-2"
-              :loading="isExportingKey(EXPORT_KEYS.sales)"
-              :disabled="salesQuery.isLoading.value"
-              @click="exportSalesExcel"
-            >
-              <ExcelIcon class="w-4 h-4" />
-              Excel
-            </BaseButton>
-          </div>
-          <LoadingState v-if="salesQuery.isLoading.value" class="py-12" />
-          <div
-            v-else-if="salesQuery.isError.value"
-            class="rounded-lg border p-6 text-center space-y-3 border-gray-200 dark:border-gray-800"
-          >
-            <p class="text-sm text-error-500 dark:text-error-400">
-              {{ getApiErrorMessage(salesQuery.error.value) }}
-            </p>
-            <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => salesQuery.refetch()">Reintentar</BaseButton>
-          </div>
-          <DataTable v-else :columns="salesColumns" :data="salesRows" row-key="period" empty-text="Sin cierres en el rango.">
-            <template #row="{ row }">
-              <td class="py-3 px-4 font-medium">{{ (row as VentasSalesByPeriodRow).period }}</td>
-              <td class="py-3 px-4">{{ (row as VentasSalesByPeriodRow).closingsCount }}</td>
-              <td class="py-3 px-4">
-                S/ {{ (row as VentasSalesByPeriodRow).totalAmount.toLocaleString('es-PE') }}
-              </td>
-            </template>
-          </DataTable>
-        </div>
-      </template>
-
-      <template v-else-if="activeTab === 'asesores'">
-        <div class="space-y-4">
-          <div class="flex flex-wrap gap-2 justify-end">
-            <BaseButton
-              variant="secondary"
-              class="flex items-center gap-2"
-              :loading="isExportingKey(EXPORT_KEYS.agents)"
-              :disabled="agentsQuery.isLoading.value"
-              @click="exportAgentsExcel"
-            >
-              <ExcelIcon class="w-4 h-4" />
-              Excel
-            </BaseButton>
-          </div>
-          <LoadingState v-if="agentsQuery.isLoading.value" class="py-12" />
-          <div
-            v-else-if="agentsQuery.isError.value"
-            class="rounded-lg border p-6 text-center space-y-3 border-gray-200 dark:border-gray-800"
-          >
-            <p class="text-sm text-error-500 dark:text-error-400">
-              {{ getApiErrorMessage(agentsQuery.error.value) }}
-            </p>
-            <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => agentsQuery.refetch()">Reintentar</BaseButton>
-          </div>
-          <DataTable v-else :columns="agentColumns" :data="agentRows" row-key="agentId" empty-text="Sin datos de asesores.">
-            <template #row="{ row }">
-              <td class="py-3 px-4">{{ (row as VentasAgentPerformanceRow).agentName }}</td>
-              <td class="py-3 px-4">{{ (row as VentasAgentPerformanceRow).closingsCount }}</td>
-              <td class="py-3 px-4">
-                S/ {{ (row as VentasAgentPerformanceRow).totalSales.toLocaleString('es-PE') }}
-              </td>
-              <td class="py-3 px-4">
-                S/ {{ (row as VentasAgentPerformanceRow).totalCommissionAmount.toLocaleString('es-PE') }}
-              </td>
-            </template>
-          </DataTable>
-        </div>
-      </template>
-
-      <template v-else-if="activeTab === 'conversion'">
-        <div class="space-y-4">
-          <div class="flex flex-wrap gap-2 justify-end">
-            <BaseButton
-              variant="secondary"
-              class="flex items-center gap-2"
-              :loading="isExportingKey(EXPORT_KEYS.conversion)"
-              :disabled="conversionQuery.isLoading.value"
-              @click="exportConversionExcel"
-            >
-              <ExcelIcon class="w-4 h-4" />
-              Excel
-            </BaseButton>
-          </div>
-          <LoadingState v-if="conversionQuery.isLoading.value" class="py-12" />
-          <div
-            v-else-if="conversionQuery.isError.value"
-            class="rounded-lg border p-6 text-center space-y-3 border-gray-200 dark:border-gray-800"
-          >
-            <p class="text-sm text-error-500 dark:text-error-400">
-              {{ getApiErrorMessage(conversionQuery.error.value) }}
-            </p>
-            <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => conversionQuery.refetch()">Reintentar</BaseButton>
-          </div>
-          <template v-else-if="conversion">
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <StatsCard title="Oportunidades creadas" :value="String(conversion.opportunitiesCreated)">
-                <template #icon><AppIcon icon="lucide:sparkles" :size="20" color="var(--color-primary)" /></template>
-              </StatsCard>
-              <StatsCard title="Ganadas" :value="String(conversion.opportunitiesWon)">
-                <template #icon><AppIcon icon="lucide:trophy" :size="20" color="var(--color-primary)" /></template>
-              </StatsCard>
-              <StatsCard title="Tasa conversión" :value="`${conversion.conversionRatePercent} %`">
-                <template #icon><AppIcon icon="lucide:percent" :size="20" color="var(--color-primary)" /></template>
-              </StatsCard>
-              <StatsCard title="Separaciones (periodo)" :value="String(conversion.separationsCreated)">
-                <template #icon><AppIcon icon="lucide:bookmark" :size="20" color="var(--color-primary)" /></template>
-              </StatsCard>
-              <StatsCard title="Cierres (periodo)" :value="String(conversion.closingsCount)">
-                <template #icon><AppIcon icon="lucide:check-circle" :size="20" color="var(--color-primary)" /></template>
-              </StatsCard>
-              <StatsCard title="Perdidas" :value="String(conversion.opportunitiesLost)">
-                <template #icon><AppIcon icon="lucide:x-circle" :size="20" color="var(--color-error)" /></template>
-              </StatsCard>
-            </div>
-            <h3 class="text-sm font-semibold pt-2 text-gray-800 dark:text-white/90">
-              Embudo actual (procesos ACTIVE por etapa)
-            </h3>
-            <DataTable
-              :columns="pipelineColumns"
-              :data="pipelineTableRows"
-              row-key="stage"
-              empty-text="Sin procesos activos."
-            >
-              <template #row="{ row }">
-                <td class="py-3 px-4">{{ (row as { label: string }).label }}</td>
-                <td class="py-3 px-4">{{ (row as { count: number }).count }}</td>
-              </template>
-            </DataTable>
-          </template>
-        </div>
-      </template>
-
-      <template v-else-if="activeTab === 'flujo'">
-        <div class="space-y-4">
-          <div class="flex flex-wrap gap-2 justify-end">
-            <BaseButton
-              variant="secondary"
-              class="flex items-center gap-2"
-              :loading="isExportingKey(EXPORT_KEYS.financial)"
-              :disabled="financialQuery.isLoading.value"
-              @click="exportFinancialExcel"
-            >
-              <ExcelIcon class="w-4 h-4" />
-              Excel
-            </BaseButton>
-          </div>
-          <LoadingState v-if="financialQuery.isLoading.value" class="py-12" />
-          <div
-            v-else-if="financialQuery.isError.value"
-            class="rounded-lg border p-6 text-center space-y-3 border-gray-200 dark:border-gray-800"
-          >
-            <p class="text-sm text-error-500 dark:text-error-400">
-              {{ getApiErrorMessage(financialQuery.error.value) }}
-            </p>
-            <BaseButton variant="secondary" size="sm" icon="lucide:refresh-cw" @click="() => financialQuery.refetch()">Reintentar</BaseButton>
-          </div>
-          <div v-else-if="financial" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <StatsCard
-              title="Cobranza comprador (periodo)"
-              :value="`S/ ${financial.buyerPaymentsCollected.toLocaleString('es-PE')}`"
-            >
-              <template #icon><AppIcon icon="lucide:banknote" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard
-              title="Por cobrar (pendiente)"
-              :value="`S/ ${financial.buyerPaymentsPending.toLocaleString('es-PE')}`"
-            >
-              <template #icon><AppIcon icon="lucide:clock" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard
-              title="Gastos documentación"
-              :value="`S/ ${financial.documentationCostsTotal.toLocaleString('es-PE')}`"
-            >
-              <template #icon><AppIcon icon="lucide:file-text" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard
-              title="Comisiones pagadas"
-              :value="`S/ ${financial.commissionsPaidAmount.toLocaleString('es-PE')}`"
-            >
-              <template #icon><AppIcon icon="lucide:circle-dollar-sign" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard
-              title="Comisiones pendientes"
-              :value="`S/ ${financial.commissionsPendingAmount.toLocaleString('es-PE')}`"
-            >
-              <template #icon><AppIcon icon="lucide:hourglass" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard
-              title="Neto estimado"
-              :value="`S/ ${financial.estimatedNetAfterCosts.toLocaleString('es-PE')}`"
-            >
-              <template #icon><AppIcon icon="lucide:scale" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-          </div>
-        </div>
-      </template>
+      <SalesReportTab v-if="activeTab === 'ventas'" :params="params" :period-label="label" />
+      <AgentsReportTab v-else-if="activeTab === 'asesores'" :params="params" :period-label="label" />
+      <ConversionReportTab v-else-if="activeTab === 'conversion'" :params="params" :period-label="label" />
+      <FinancialReportTab v-else-if="activeTab === 'flujo'" :params="params" :period-label="label" />
+      <IndicatorsReportTab v-else :params="params" :period-label="label" />
     </BaseCard>
   </div>
 </template>
-
-<style scoped>
-@media print {
-  :deep(.no-print) {
-    display: none !important;
-  }
-}
-</style>
-
-<style>
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  #ventas-reportes-print,
-  #ventas-reportes-print * {
-    visibility: visible;
-  }
-  #ventas-reportes-print {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-}
-</style>

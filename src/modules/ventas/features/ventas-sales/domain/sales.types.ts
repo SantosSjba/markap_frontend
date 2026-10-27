@@ -35,6 +35,8 @@ export interface SaleCommissionDeductible {
 export interface SaleProcessCommission {
   id: string
   amount: number
+  /** Moneda de la comisión, sus deducibles y cuotas */
+  currency: string
   grossAmount?: number
   deductiblesTotal?: number
   netPayable?: number
@@ -66,6 +68,8 @@ export interface CreateProcessCommissionInput {
   calculationType: SaleCommissionCalculationType
   percent?: number | null
   fixedAmount?: number | null
+  /** Solo monto fijo; en % se usa la moneda del inmueble */
+  currency?: string | null
   paymentParts?: CreateProcessCommissionPaymentPartInput[]
   deductibles?: CreateProcessCommissionDeductibleInput[]
 }
@@ -109,22 +113,50 @@ export interface SaleProcessListRow {
   agent: { id: string; fullName: string } | null
   financingChannel?: SaleFinancingChannel | null
   commissions?: SaleProcessCommission[]
+  createdAt?: string
+  updatedAt?: string
   /** @deprecated use commissions */
   commission?: SaleProcessCommission | null
 }
+
+export type SaleSeparationStatus = 'ACTIVE' | 'EXPIRED' | 'CLOSED'
 
 export interface SaleSeparationRow {
   id: string
   amount: number
   currency: string
   separationDate: string
+  /** Fecha límite de la reserva (opcional) */
+  expiresAt?: string | null
   status: string
+  notes?: string | null
   receiptFilePath: string | null
   receiptArchivoId?: string | null
   downloadUrl?: string | null
-  buyer: { id: string; fullName: string }
-  property: { id: string; code: string; addressLine: string }
-  saleProcess: { id: string; code: string } | null
+  createdAt?: string
+  buyer: { id: string; fullName: string; documentNumber?: string | null; primaryPhone?: string | null }
+  property: {
+    id: string
+    code: string
+    addressLine: string
+    salePrice?: number | null
+    saleCurrency?: string | null
+    listingStatus?: string | null
+    propertyTypeName?: string | null
+  }
+  saleProcess: { id: string; code: string; pipelineStage?: string; status?: string } | null
+  /** Cierre que consumió la separación */
+  closing?: { id: string; closedAt: string } | null
+}
+
+/** Resumen de separaciones (GET /separations/stats) */
+export interface SaleSeparationStats {
+  active: number
+  expired: number
+  closed: number
+  /** Activas vencidas o que vencen en los próximos 7 días */
+  expiringSoon: number
+  activeAmountByCurrency: { currency: string; amount: number }[]
 }
 
 export interface SaleClosingRow {
@@ -136,7 +168,8 @@ export interface SaleClosingRow {
   contractArchivoId?: string | null
   downloadUrl?: string | null
   buyer: { id: string; fullName: string }
-  property: { id: string; code: string; addressLine: string }
+  /** `saleCurrency`: moneda de la venta (precio final, pagos y costos del cierre) */
+  property: { id: string; code: string; addressLine: string; saleCurrency?: string }
   agent: { id: string; fullName: string } | null
   commission: {
     id: string
@@ -172,6 +205,30 @@ export interface SaleProcessDetail extends SaleProcessListRow {
   notes: SaleProcessNoteRow[]
   activities: SaleProcessActivityRow[]
   reminders: SaleProcessReminderRow[]
+  /** Separaciones registradas sobre este proceso (más recientes primero) */
+  separations?: {
+    id: string
+    buyerClientId: string
+    amount: number
+    currency: string
+    separationDate: string
+    expiresAt: string | null
+    status: string
+    notes: string | null
+    receiptFilePath: string | null
+    receiptArchivoId: string | null
+  }[]
+  /** Cierre de la venta (como máximo uno) */
+  closings?: {
+    id: string
+    finalPrice: number
+    paymentType: string
+    closedAt: string
+    notes: string | null
+    contractFilePath: string | null
+    contractArchivoId: string | null
+    saleSeparationId: string | null
+  }[]
 }
 
 export interface SaleClosingReadiness {
@@ -249,4 +306,16 @@ export interface CompliancePendingItem {
   lastAlertSentAt: string | null
   severity: 'HIGH' | 'MEDIUM' | 'LOW'
   missing: string[]
+}
+
+/** Resumen de procesos (GET /processes/stats) */
+export interface SaleProcessStats {
+  total: number
+  active: number
+  won: number
+  lost: number
+  createdThisMonth: number
+  activeByStage: Record<string, number>
+  /** Precio de lista de los inmuebles en procesos activos, por moneda */
+  activeValueByCurrency: { currency: string; amount: number; count: number }[]
 }

@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import type { RentalsByMonthItem } from '../../domain/reportes.types'
-import MonthlyBarChart from './MonthlyBarChart.vue'
+import MonthlyBarChart from '@shared/presentation/components/reports/MonthlyBarChart.vue'
 /**
  * CommissionsBarChart
  * Ingresos por comisiones cobradas mes a mes.
