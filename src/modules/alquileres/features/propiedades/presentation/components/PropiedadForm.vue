@@ -43,6 +43,8 @@ import PropertyOwnersSection from './PropertyOwnersSection.vue'
  * El código se arma con el tipo, el distrito y el apellido del propietario principal
  * (ver `property-code.ts`; el contrato le antepone «ALQUILER-<año>»);
  * al editar se conserva y solo cambia si el usuario lo regenera.
+ * `variant="modal"`: una sola columna sin resumen ni botones propios; el modal los pone en su
+ * pie fijo y envía el formulario con `form="<formId>"`.
  */
 
 interface Props {
@@ -51,13 +53,20 @@ interface Props {
   submitLabel: string
   submitting?: boolean
   canWrite?: boolean
+  variant?: 'page' | 'modal'
+  /** id del `<form>`, para enviarlo desde un botón externo (pie del modal) */
+  formId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   initial: null,
   submitting: false,
   canWrite: true,
+  variant: 'page',
+  formId: undefined,
 })
+
+const isModal = computed(() => props.variant === 'modal')
 
 const emit = defineEmits<{
   submit: [payload: PropertyFormPayload]
@@ -148,7 +157,7 @@ const schema = yup.object({
   depositMonths: optionalInteger(),
 })
 
-const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm } =
+const { values, handleSubmit, errors, defineComponentBinds, setFieldValue, resetForm, submitCount } =
   useForm<PropertyFormValues>({
     // yup output types (number | null) no coinciden con valores de input en UI (string | number); el esquema sigue validando en runtime
     validationSchema: toTypedSchema(schema) as never,
@@ -212,8 +221,11 @@ const ownerRows = ref<string[]>([''])
 watch(
   () => ownerRows.value[0],
   (id) => {
-    if (!isInitializing.value) setFieldValue('ownerId', id ?? '')
+    // Sin validar hasta el primer intento de guardar: evita errores antes de que el usuario elija
+    if (!isInitializing.value) setFieldValue('ownerId', id ?? '', submitCount.value > 0)
   },
+  // Inmediato: registra `ownerId` sin validar, para que validar otro campo no lo marque en rojo
+  { immediate: true },
 )
 
 const selectedDepartmentId = computed(() => values.departmentId || undefined)
@@ -320,7 +332,7 @@ const autoCode = computed(() =>
 )
 // Alta: el código sigue a los datos. Edición: se conserva hasta pulsar «Regenerar».
 watch(autoCode, (code) => {
-  if (!isEditing.value && !isInitializing.value) setFieldValue('code', code)
+  if (!isEditing.value && !isInitializing.value) setFieldValue('code', code, submitCount.value > 0)
 }, { immediate: true })
 const canRegenerateCode = computed(() => isEditing.value && autoCode.value !== values.code)
 function regenerateCode() {
@@ -420,12 +432,13 @@ const onSubmit = handleSubmit((v: PropertyFormValues) => {
 
   <form
     v-else
-    class="grid grid-cols-1 items-start gap-6 xl:grid-cols-3"
+    :id="formId"
+    :class="isModal ? 'space-y-5' : 'grid grid-cols-1 items-start gap-6 xl:grid-cols-3'"
     novalidate
     @submit.prevent="onSubmit"
   >
     <!-- ── Columna principal ── -->
-    <div class="space-y-6 xl:col-span-2">
+    <div :class="isModal ? 'space-y-5' : 'space-y-6 xl:col-span-2'">
       <FormSectionCard title="Datos generales" subtitle="El código se arma con el tipo, el distrito y el propietario principal">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <FormSelect
@@ -661,8 +674,8 @@ const onSubmit = handleSubmit((v: PropertyFormValues) => {
       <slot name="media" />
     </div>
 
-    <!-- ── Lateral: resumen + acciones (fijo en escritorio) ── -->
-    <aside class="space-y-6 xl:sticky xl:top-24">
+    <!-- ── Lateral: resumen + acciones (fijo en escritorio); en modal van en su pie ── -->
+    <aside v-if="!isModal" class="space-y-6 xl:sticky xl:top-24">
       <FormSectionCard title="Resumen">
         <dl class="space-y-3 text-sm">
           <div>

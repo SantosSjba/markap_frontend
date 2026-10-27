@@ -61,7 +61,8 @@ export const ventasClientsApiRepository: VentasClientsRepository = {
       body.leadOrigin = leadOrigin ?? null
       body.assignedAgentId = assignedAgentId?.trim() || null
     }
-    if (clientType === 'OWNER' && address) {
+    // Propietario: dirección obligatoria; comprador: solo si la registraron
+    if (address) {
       body.address = address
     }
     return apiClient.post<VentasClientDetail>('/clients', body).then((r) => r.data)

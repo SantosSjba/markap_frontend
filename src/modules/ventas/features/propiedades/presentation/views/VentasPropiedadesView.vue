@@ -3,7 +3,6 @@ import { useApplicationAccess } from '@modules/applications/presentation/composa
 const { canWrite, canAdmin, filterActions } = useApplicationAccess('ventas')
 
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
-import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ventasPropertiesRepositoryKey } from '../../application/ports/ventas-properties.port'
 import { useService } from '@shared/presentation/di/services'
 import { toCalendarDateString } from '@shared/utils/formatters'
@@ -16,6 +15,7 @@ import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
+import CollapsibleFilters from '@shared/presentation/components/ui/CollapsibleFilters.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
@@ -24,20 +24,26 @@ import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 import {
   useVentasPropertiesList,
   useVentasPropertyStats,
   useVentasPropertyTypes,
+  useVentasPropertyCurrencies,
   useVentasPropertyDepartments,
   useVentasPropertyProvinces,
   useVentasPropertyDistricts,
   useVentasUpdatePropertyListingStatus,
   useVentasDeleteProperty,
 } from '../composables/useVentasProperties'
-import type {
-  VentasPropertyListItem,
-  VentasListPropertiesParams,
-} from '../../domain/property.types'
+import type { VentasPropertyListItem, VentasListPropertiesParams } from '../../domain/property.types'
+import {
+  VENTAS_LISTING_STATUS_OPTIONS,
+  listingStatusLabel,
+  listingStatusVariant,
+  type VentasListingStatus,
+} from '../../domain/listing-status'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 const ventasPropertiesRepository = useService(ventasPropertiesRepositoryKey)
 
@@ -46,25 +52,25 @@ const ITEMS_PER_PAGE = 10
 
 const tableRowSelection = ref<RowSelectionState>({})
 
-const listParams = ref<VentasListPropertiesParams>({
-  page: 1,
-  limit: ITEMS_PER_PAGE,
-})
+const listParams = ref<VentasListPropertiesParams>({ page: 1, limit: ITEMS_PER_PAGE })
 const searchInput = ref('')
-const filterListingStatus = ref<string>('')
-const filterPropertyTypeId = ref<string>('')
+const debouncedSearch = useDebouncedRef(searchInput)
+const filterListingStatus = ref('')
+const filterPropertyTypeId = ref('')
 const filterDepartmentId = ref('')
 const filterProvinceId = ref('')
 const filterDistrictId = ref('')
-const filterMinPrice = ref<string>('')
-const filterMaxPrice = ref<string>('')
+const filterMinPrice = ref('')
+const filterMaxPrice = ref('')
+const debouncedMinPrice = useDebouncedRef(filterMinPrice)
+const debouncedMaxPrice = useDebouncedRef(filterMaxPrice)
 
 const selectedFilterDepartmentId = computed(() => filterDepartmentId.value || undefined)
 const selectedFilterProvinceId = computed(() => filterProvinceId.value || undefined)
 
 const {
   data: listResult,
-  isLoading: loadingList,
+  isFetching: fetchingList,
   isError: listQueryError,
   error: listFetchError,
   refetch: refetchList,
@@ -82,27 +88,12 @@ const {
   error: propertyTypesFetchError,
   refetch: refetchPropertyTypes,
 } = useVentasPropertyTypes()
-const {
-  data: departments,
-  isLoading: loadingFilterDepartments,
-  isError: departmentsQueryError,
-  error: departmentsFetchError,
-  refetch: refetchDepartments,
-} = useVentasPropertyDepartments()
-const {
-  data: filterProvinces,
-  isLoading: loadingFilterProvinces,
-  isError: provincesQueryError,
-  error: provincesFetchError,
-  refetch: refetchProvinces,
-} = useVentasPropertyProvinces(selectedFilterDepartmentId)
-const {
-  data: filterDistricts,
-  isLoading: loadingFilterDistricts,
-  isError: districtsQueryError,
-  error: districtsFetchError,
-  refetch: refetchDistricts,
-} = useVentasPropertyDistricts(selectedFilterProvinceId)
+const { data: currencies } = useVentasPropertyCurrencies()
+const { data: departments, isLoading: loadingFilterDepartments } = useVentasPropertyDepartments()
+const { data: filterProvinces, isLoading: loadingFilterProvinces } =
+  useVentasPropertyProvinces(selectedFilterDepartmentId)
+const { data: filterDistricts, isLoading: loadingFilterDistricts } =
+  useVentasPropertyDistricts(selectedFilterProvinceId)
 
 const properties = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
@@ -122,29 +113,43 @@ watch(filterProvinceId, () => {
   filterDistrictId.value = ''
 })
 
+/** Filtros del servidor (los mismos para el listado y la exportación) */
+const serverFilters = computed(() => ({
+  search: debouncedSearch.value.trim() || undefined,
+  listingStatus: filterListingStatus.value || undefined,
+  propertyTypeId: filterPropertyTypeId.value || undefined,
+  districtId: filterDistrictId.value || undefined,
+  minSalePrice: parsePriceFilter(debouncedMinPrice.value),
+  maxSalePrice: parsePriceFilter(debouncedMaxPrice.value),
+}))
+
 watch(
-  [
-    searchInput,
-    filterListingStatus,
-    filterPropertyTypeId,
-    filterDistrictId,
-    filterMinPrice,
-    filterMaxPrice,
-  ],
-  () => {
-    listParams.value = {
-      ...listParams.value,
-      page: 1,
-      search: searchInput.value.trim() || undefined,
-      listingStatus: filterListingStatus.value || undefined,
-      propertyTypeId: filterPropertyTypeId.value || undefined,
-      districtId: filterDistrictId.value || undefined,
-      minSalePrice: parsePriceFilter(filterMinPrice.value),
-      maxSalePrice: parsePriceFilter(filterMaxPrice.value),
-    }
+  serverFilters,
+  (filters) => {
+    listParams.value = { ...listParams.value, page: 1, ...filters }
   },
   { immediate: true },
 )
+
+/** Filtros del panel con valor (la ubicación cuenta como uno) */
+const activeFilterCount = computed(
+  () =>
+    [
+      filterListingStatus.value,
+      filterPropertyTypeId.value,
+      filterDepartmentId.value,
+      filterMinPrice.value.trim(),
+      filterMaxPrice.value.trim(),
+    ].filter(Boolean).length,
+)
+
+function clearFilters() {
+  filterListingStatus.value = ''
+  filterPropertyTypeId.value = ''
+  filterDepartmentId.value = ''
+  filterMinPrice.value = ''
+  filterMaxPrice.value = ''
+}
 
 const onPageChange = (page: number) => {
   listParams.value = { ...listParams.value, page }
@@ -180,13 +185,6 @@ const tableColumns = [
     sortAccessor: (r: unknown) => (r as VentasPropertyListItem).ownerFullName,
   },
   {
-    key: 'tipo',
-    label: 'Tipo',
-    align: 'left' as const,
-    sortable: true,
-    sortAccessor: (r: unknown) => (r as VentasPropertyListItem).propertyTypeName,
-  },
-  {
     key: 'estado',
     label: 'Estado',
     align: 'left' as const,
@@ -195,7 +193,7 @@ const tableColumns = [
   },
   {
     key: 'precio',
-    label: 'Precio venta',
+    label: 'Precio de venta',
     align: 'left' as const,
     sortable: true,
     sortType: 'basic' as const,
@@ -205,20 +203,19 @@ const tableColumns = [
 ]
 
 const goToNew = () => router.push('/ventas/propiedades/nueva')
-const goToEdit = (row: VentasPropertyListItem) =>
-  router.push(`/ventas/propiedades/${row.id}/editar`)
+const goToEdit = (row: VentasPropertyListItem) => router.push(`/ventas/propiedades/${row.id}/editar`)
 
 const showStatusModal = ref(false)
 const propertyForStatus = ref<VentasPropertyListItem | null>(null)
-const newListingStatus = ref<'AVAILABLE' | 'RESERVED' | 'SOLD'>('AVAILABLE')
+const newListingStatus = ref<VentasListingStatus>('AVAILABLE')
 const statusModalError = ref('')
 const updateListingStatusMutation = useVentasUpdatePropertyListingStatus()
 
 const openChangeStatusModal = (row: VentasPropertyListItem) => {
   propertyForStatus.value = row
-  const cur = row.listingStatus
-  newListingStatus.value =
-    cur === 'AVAILABLE' || cur === 'RESERVED' || cur === 'SOLD' ? cur : 'AVAILABLE'
+  newListingStatus.value = VENTAS_LISTING_STATUS_OPTIONS.some((o) => o.value === row.listingStatus)
+    ? (row.listingStatus as VentasListingStatus)
+    : 'AVAILABLE'
   statusModalError.value = ''
   showStatusModal.value = true
 }
@@ -228,12 +225,6 @@ const closeStatusModal = () => {
   propertyForStatus.value = null
   statusModalError.value = ''
 }
-
-const listingStatusChangeOptions = [
-  { value: 'AVAILABLE' as const, label: 'Disponible' },
-  { value: 'RESERVED' as const, label: 'Separada' },
-  { value: 'SOLD' as const, label: 'Vendida' },
-]
 
 const saveListingStatus = () => {
   if (!propertyForStatus.value) return
@@ -268,18 +259,11 @@ const executeDeleteProperty = () => {
   deleteProperty(propertyToDelete.value.id, { onSuccess: closeDeleteModal })
 }
 
-const getActions = (row: VentasPropertyListItem) => {
-  const items: { label: string; icon: string; onClick: () => void }[] = [
-    { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(row) },
-    {
-      label: 'Cambiar estado',
-      icon: 'lucide:refresh-cw',
-      onClick: () => openChangeStatusModal(row),
-    },
-    { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteModal(row) },
-  ]
-  return items
-}
+const getActions = (row: VentasPropertyListItem) => [
+  { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(row) },
+  { label: 'Cambiar estado', icon: 'lucide:refresh-cw', onClick: () => openChangeStatusModal(row) },
+  { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteModal(row) },
+]
 
 const paginationProps = computed(() => {
   const page = listParams.value.page ?? 1
@@ -295,18 +279,12 @@ const paginationProps = computed(() => {
   }
 })
 
-const statusOptions = [
-  { value: '', label: 'Todos los estados comerciales' },
-  { value: 'AVAILABLE', label: 'Disponible' },
-  { value: 'RESERVED', label: 'Separada' },
-  { value: 'SOLD', label: 'Vendida' },
-]
+const statusOptions = [{ value: '', label: 'Todos los estados' }, ...VENTAS_LISTING_STATUS_OPTIONS]
 
-const typeOptions = computed(() => {
-  const base = [{ value: '', label: 'Todos los tipos de propiedad' }]
-  const types = propertyTypes.value ?? []
-  return [...base, ...types.map((t) => ({ value: t.id, label: t.name }))]
-})
+const typeOptions = computed(() => [
+  { value: '', label: 'Todos los tipos' },
+  ...(propertyTypes.value ?? []).map((t) => ({ value: t.id, label: t.name })),
+])
 
 const departmentFilterOptions = computed(() =>
   (departments.value ?? []).map((d) => ({ value: d.id, label: d.name })),
@@ -318,86 +296,50 @@ const districtFilterOptions = computed(() =>
   (filterDistricts.value ?? []).map((d) => ({ value: d.id, label: d.name })),
 )
 
-function listingStatusVariant(
-  status: string | null,
-): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
-  if (!status) return 'neutral'
-  switch (status) {
-    case 'AVAILABLE':
-      return 'info'
-    case 'RESERVED':
-      return 'warning'
-    case 'SOLD':
-      return 'success'
-    default:
-      return 'neutral'
-  }
-}
-
-function listingStatusLabel(status: string | null): string {
-  if (!status) return '—'
-  switch (status) {
-    case 'AVAILABLE':
-      return 'Disponible'
-    case 'RESERVED':
-      return 'Separada'
-    case 'SOLD':
-      return 'Vendida'
-    default:
-      return status
-  }
-}
-
-const SALE_CURRENCY_SYMBOL: Record<string, string> = {
-  PEN: 'S/',
-  USD: 'US$',
-  EUR: '€',
+function currencySymbol(code: string | null | undefined): string {
+  return (currencies.value ?? []).find((c) => c.code === code)?.symbol ?? code ?? 'S/'
 }
 
 function formatSalePrice(salePrice: number | null, saleCurrency?: string | null): string {
   if (salePrice == null) return '—'
-  const sym = (saleCurrency && SALE_CURRENCY_SYMBOL[saleCurrency]) || saleCurrency || 'S/'
-  return `${sym} ${Number(salePrice).toLocaleString('es-PE', { maximumFractionDigits: 0 })}`
+  return `${currencySymbol(saleCurrency ?? 'PEN')} ${Number(salePrice).toLocaleString('es-PE', { maximumFractionDigits: 0 })}`
 }
 
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await ventasPropertiesRepository.getList({
-    page: 1,
-    limit: 10000,
-    search: searchInput.value.trim() || undefined,
-    listingStatus: filterListingStatus.value || undefined,
-    propertyTypeId: filterPropertyTypeId.value || undefined,
-    districtId: filterDistrictId.value || undefined,
-    minSalePrice: parsePriceFilter(filterMinPrice.value),
-    maxSalePrice: parsePriceFilter(filterMaxPrice.value),
-  })
-  const now = toCalendarDateString()
+  // Todas las páginas: el backend topa cada página en 50 filas
+  const rows = await fetchAllPages((page, limit) =>
+    ventasPropertiesRepository.getList({ page, limit, ...serverFilters.value }),
+  )
   await exportToExcel({
-    fileName: `propiedades_ventas_${now}`,
+    fileName: `propiedades_ventas_${toCalendarDateString()}`,
     sheetName: 'Propiedades',
     columns: [
-      { header: 'Código', key: 'code', width: 14 },
-      { header: 'Proyecto', key: 'projectName', width: 22 },
-      { header: 'Dirección', key: 'addressLine', width: 32 },
-      { header: 'Distrito', key: 'districtName', width: 18 },
+      { header: 'Código', key: 'code', width: 30 },
       { header: 'Tipo', key: 'propertyTypeName', width: 16 },
+      { header: 'Proyecto', key: 'projectName', width: 24 },
+      { header: 'Dirección', key: 'addressLine', width: 34 },
+      { header: 'Distrito', key: 'districtName', width: 18 },
       { header: 'Área (m²)', key: 'area', width: 12 },
-      { header: 'Propietario', key: 'ownerFullName', width: 26 },
+      { header: 'Propietario', key: 'ownerFullName', width: 28 },
       { header: 'Estado', key: 'listingStatus', width: 14 },
-      { header: 'Precio venta', key: 'salePrice', width: 16 },
+      { header: 'Moneda', key: 'saleCurrency', width: 10 },
+      { header: 'Precio de venta', key: 'salePrice', width: 18 },
+      { header: 'Precio por m²', key: 'pricePerM2', width: 16 },
     ],
-    rows: result.data.map((p: VentasPropertyListItem) => ({
+    rows: rows.map((p: VentasPropertyListItem) => ({
       code: p.code,
+      propertyTypeName: p.propertyTypeName,
       projectName: p.projectName ?? '—',
       addressLine: p.addressLine,
       districtName: p.districtName,
-      propertyTypeName: p.propertyTypeName,
       area: p.area ?? '—',
       ownerFullName: p.ownerFullName,
       listingStatus: listingStatusLabel(p.listingStatus),
+      saleCurrency: p.saleCurrency ?? 'PEN',
       salePrice: p.salePrice ?? '—',
+      pricePerM2: p.salePrice != null && p.area ? Math.round(p.salePrice / p.area) : '—',
     })),
   })
 }
@@ -405,204 +347,150 @@ async function handleExport() {
 
 <template>
   <div class="space-y-6">
-    <PageHeader
-      title="Propiedades en venta"
-      subtitle="Inventario inmobiliario — aplicación Ventas"
-      icon="lucide:building-2"
-      large
-    >
+    <PageHeader title="Propiedades" subtitle="Inventario de inmuebles en venta">
       <template #actions>
-        <BaseButton
-          variant="outline"
-          class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
-          :loading="isExporting"
-          title="Exportar a Excel"
-          @click="handleExport"
-        >
-          <ExcelIcon class="w-5 h-5" />
-          Exportar
-        </BaseButton>
-        <BaseButton v-if="canWrite" variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
-          <AppIcon icon="lucide:plus" :size="18" />
-          Nueva propiedad
-        </BaseButton>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <BaseButton
+            variant="outline"
+            class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
+            :loading="isExporting"
+            title="Exportar a Excel"
+            @click="handleExport"
+          >
+            <ExcelIcon class="w-5 h-5" />
+            Exportar
+          </BaseButton>
+          <BaseButton
+            v-if="canWrite"
+            variant="primary"
+            class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
+            @click="goToNew"
+          >
+            <AppIcon icon="lucide:plus" :size="18" />
+            Nueva Propiedad
+          </BaseButton>
+        </div>
       </template>
     </PageHeader>
 
-    <div v-if="loadingStats" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20" />
+    <!-- Stats -->
     <div
-      v-else-if="statsQueryError"
+      v-if="statsQueryError"
       class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
       <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
-      <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
     </div>
-    <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
+    <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <StatsCard compact title="Total" :value="String(stats?.total ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:building-2" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Disponibles'" :value="String(stats?.available ?? 0)">
+      <StatsCard compact title="Disponibles" :value="String(stats?.available ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:door-open" :size="20" color="#2563eb" /></template>
       </StatsCard>
-      <StatsCard :title="'Separadas'" :value="String(stats?.reserved ?? 0)">
+      <StatsCard compact title="Separadas" :value="String(stats?.reserved ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:bookmark" :size="20" color="#ca8a04" /></template>
       </StatsCard>
-      <StatsCard :title="'Vendidas'" :value="String(stats?.sold ?? 0)">
+      <StatsCard compact title="Vendidas" :value="String(stats?.sold ?? 0)" :loading="loadingStats">
         <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="#16a34a" /></template>
       </StatsCard>
     </div>
 
     <div
-      v-if="
-        propertyTypesQueryError ||
-        departmentsQueryError ||
-        provincesQueryError ||
-        districtsQueryError
-      "
-      class="rounded-xl border px-4 py-3 space-y-2 text-sm border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
+      v-if="propertyTypesQueryError"
+      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
-      <p class="font-medium text-gray-800 dark:text-white/90">Algunos datos de filtros no cargaron</p>
-      <div v-if="propertyTypesQueryError" class="flex flex-wrap items-center gap-2">
-        <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(propertyTypesFetchError) }}</span>
-        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchPropertyTypes()">Tipos</BaseButton>
-      </div>
-      <div v-if="departmentsQueryError" class="flex flex-wrap items-center gap-2">
-        <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(departmentsFetchError) }}</span>
-        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchDepartments()">Departamentos</BaseButton>
-      </div>
-      <div v-if="provincesQueryError" class="flex flex-wrap items-center gap-2">
-        <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(provincesFetchError) }}</span>
-        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchProvinces()">Provincias</BaseButton>
-      </div>
-      <div v-if="districtsQueryError" class="flex flex-wrap items-center gap-2">
-        <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(districtsFetchError) }}</span>
-        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchDistricts()">Distritos</BaseButton>
-      </div>
+      <span class="text-gray-800 dark:text-white/90">No se cargaron los tipos de propiedad para el filtro.</span>
+      <span class="text-xs max-w-md text-error-500 dark:text-error-400">{{ getApiErrorMessage(propertyTypesFetchError) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchPropertyTypes()">Reintentar</BaseButton>
     </div>
 
+    <!-- Table -->
     <BaseCard padding="none" class="block overflow-hidden">
       <div class="overflow-x-auto">
-        <LoadingState v-if="loadingList" class="px-4" />
-        <div
-          v-else-if="listQueryError"
-          class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
-        >
+        <div v-if="listQueryError" class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center">
           <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
-          <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
             v-model:row-selection="tableRowSelection"
             selectable
-            empty-text="No hay propiedades en esta página."
+            empty-text="No hay propiedades con estos filtros."
             :columns="tableColumns"
             :data="properties"
             row-key="id"
+            :loading="fetchingList"
           >
             <template #toolbar>
-              <div class="w-full min-w-0 space-y-5">
-                <div>
-                  <p
-                    class="text-xs font-semibold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400"
-                  >
-                    Búsqueda
-                  </p>
-                  <SearchInput
-                    v-model="searchInput"
-                    placeholder="Código, dirección, proyecto o propietario…"
+              <div class="flex-1 min-w-0">
+                <SearchInput v-model="searchInput" placeholder="Buscar por código, dirección, proyecto o propietario..." />
+              </div>
+              <CollapsibleFilters
+                :active-count="activeFilterCount"
+                storage-key="markap.ventas.propiedades.filtros"
+                @clear="clearFilters"
+              >
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <FormSelect v-model="filterListingStatus" label="Estado comercial" :options="statusOptions" />
+                  <FormSelect v-model="filterPropertyTypeId" label="Tipo de propiedad" :options="typeOptions" />
+                  <FormInput
+                    v-model="filterMinPrice"
+                    type="number"
+                    min="0"
+                    label="Precio mínimo"
+                    placeholder="Sin límite"
+                  />
+                  <FormInput
+                    v-model="filterMaxPrice"
+                    type="number"
+                    min="0"
+                    label="Precio máximo"
+                    placeholder="Sin límite"
+                  />
+                  <FormSelect
+                    v-model="filterDepartmentId"
+                    label="Departamento"
+                    :options="departmentFilterOptions"
+                    placeholder="Todos"
+                    :loading="loadingFilterDepartments"
+                  />
+                  <FormSelect
+                    v-model="filterProvinceId"
+                    label="Provincia"
+                    :options="provinceFilterOptions"
+                    placeholder="Todas"
+                    :loading="loadingFilterProvinces"
+                    :disabled="!filterDepartmentId"
+                  />
+                  <FormSelect
+                    v-model="filterDistrictId"
+                    label="Distrito"
+                    :options="districtFilterOptions"
+                    placeholder="Todos"
+                    :loading="loadingFilterDistricts"
+                    :disabled="!filterProvinceId"
                   />
                 </div>
-
-                <div>
-                  <p
-                    class="text-xs font-semibold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400"
-                  >
-                    Filtros del listado
-                  </p>
-                  <div
-                    class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-3"
-                  >
-                    <FormSelect
-                      v-model="filterListingStatus"
-                      label="Estado comercial"
-                      :options="statusOptions"
-                      placeholder="Seleccionar"
-                    />
-                    <FormSelect
-                      v-model="filterPropertyTypeId"
-                      label="Tipo de propiedad"
-                      :options="typeOptions"
-                      placeholder="Seleccionar"
-                    />
-                    <FormInput
-                      v-model="filterMinPrice"
-                      type="text"
-                      inputmode="numeric"
-                      label="Precio mín. (S/)"
-                      placeholder="Sin límite"
-                    />
-                    <FormInput
-                      v-model="filterMaxPrice"
-                      type="text"
-                      inputmode="numeric"
-                      label="Precio máx. (S/)"
-                      placeholder="Sin límite"
-                    />
-                  </div>
-                </div>
-
-                <div
-                  class="pt-4 border-t border-gray-200 dark:border-gray-800"
-                >
-                  <p
-                    class="text-xs font-semibold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400"
-                  >
-                    Ubicación
-                  </p>
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3">
-                    <FormSelect
-                      v-model="filterDepartmentId"
-                      label="Departamento"
-                      :options="departmentFilterOptions"
-                      placeholder="Seleccionar"
-                      :loading="loadingFilterDepartments"
-                    />
-                    <FormSelect
-                      v-model="filterProvinceId"
-                      label="Provincia"
-                      :options="provinceFilterOptions"
-                      placeholder="Seleccionar"
-                      :loading="loadingFilterProvinces"
-                      :disabled="!filterDepartmentId"
-                    />
-                    <FormSelect
-                      v-model="filterDistrictId"
-                      label="Distrito"
-                      :options="districtFilterOptions"
-                      placeholder="Seleccionar"
-                      :loading="loadingFilterDistricts"
-                      :disabled="!filterProvinceId"
-                    />
-                  </div>
-                </div>
-              </div>
+                <p class="mt-2 text-theme-xs text-gray-400 dark:text-gray-500">
+                  El rango de precio compara el monto de venta tal cual, en la moneda de cada propiedad.
+                </p>
+              </CollapsibleFilters>
             </template>
             <template #row="{ row }">
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
                   <AppIcon icon="lucide:building-2" :size="20" color="var(--color-text-muted)" class="shrink-0" />
                   <div>
-                    <p class="font-medium text-gray-800 dark:text-white/90">
-                      {{ (row as VentasPropertyListItem).code }}
-                    </p>
+                    <p class="font-medium text-gray-800 dark:text-white/90">{{ (row as VentasPropertyListItem).code }}</p>
                     <p class="text-xs text-gray-400 dark:text-gray-500">
                       {{ (row as VentasPropertyListItem).addressLine }}, {{ (row as VentasPropertyListItem).districtName }}
                     </p>
-                    <p
-                      v-if="(row as VentasPropertyListItem).area != null"
-                      class="text-xs mt-0.5 text-gray-500 dark:text-gray-400"
-                    >
-                      {{ (row as VentasPropertyListItem).area }} m²
+                    <p class="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
+                      {{ (row as VentasPropertyListItem).propertyTypeName }}
+                      <template v-if="(row as VentasPropertyListItem).area != null">
+                        · {{ (row as VentasPropertyListItem).area }} m²
+                      </template>
                     </p>
                   </div>
                 </div>
@@ -616,28 +504,20 @@ async function handleExport() {
                   {{ (row as VentasPropertyListItem).ownerFullName }}
                 </span>
               </td>
-              <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
-                {{ (row as VentasPropertyListItem).propertyTypeName }}
-              </td>
               <td class="py-3 px-4">
                 <Badge :variant="listingStatusVariant((row as VentasPropertyListItem).listingStatus)">
                   {{ listingStatusLabel((row as VentasPropertyListItem).listingStatus) }}
                 </Badge>
               </td>
               <td class="py-3 px-4 text-sm font-medium text-gray-800 dark:text-white/90">
-                {{
-                  formatSalePrice(
-                    (row as VentasPropertyListItem).salePrice,
-                    (row as VentasPropertyListItem).saleCurrency,
-                  )
-                }}
+                {{ formatSalePrice((row as VentasPropertyListItem).salePrice, (row as VentasPropertyListItem).saleCurrency) }}
               </td>
               <td class="py-3 px-4 text-right">
                 <ActionsDropdown :items="filterActions(getActions(row as VentasPropertyListItem))" />
               </td>
             </template>
           </DataTable>
-          <div v-if="!loadingList && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
+          <div class="border-t border-gray-200 dark:border-gray-800">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"
@@ -649,7 +529,7 @@ async function handleExport() {
       </div>
     </BaseCard>
 
-    <BaseModal v-model="showStatusModal" title="Estado comercial" size="sm">
+    <BaseModal v-model="showStatusModal" title="Cambiar estado comercial" size="sm">
       <template v-if="propertyForStatus">
         <p class="text-sm mb-4 text-gray-500 dark:text-gray-400">
           {{ propertyForStatus.code }} – {{ propertyForStatus.addressLine }}
@@ -663,14 +543,14 @@ async function handleExport() {
         <FormSelect
           v-model="newListingStatus"
           label="Nuevo estado"
-          :options="listingStatusChangeOptions"
+          :options="VENTAS_LISTING_STATUS_OPTIONS"
           placeholder="Seleccionar"
         />
         <div class="flex justify-end gap-3 mt-6">
-          <BaseButton variant="outline" icon="lucide:x" @click="closeStatusModal">Cancelar</BaseButton>
-          <BaseButton v-if="canWrite"
+          <BaseButton variant="outline" @click="closeStatusModal">Cancelar</BaseButton>
+          <BaseButton
+            v-if="canWrite"
             variant="primary"
-            icon="lucide:save"
             :loading="updateListingStatusMutation.isPending.value"
             @click="saveListingStatus"
           >
@@ -683,9 +563,7 @@ async function handleExport() {
     <BaseModal v-model="showDeleteModal" :closable="true" size="sm" @close="closeDeleteModal">
       <template #title>
         <div class="flex items-center gap-2">
-          <div
-            class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15"
-          >
+          <div class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15">
             <AppIcon class="text-error-500 dark:text-error-400" icon="lucide:trash-2" :size="16" />
           </div>
           <span class="text-base font-semibold text-gray-800 dark:text-white/90">Eliminar propiedad</span>
@@ -693,13 +571,17 @@ async function handleExport() {
       </template>
       <div class="p-4 space-y-3">
         <p class="text-sm text-gray-500 dark:text-gray-400">
-          ¿Eliminar la propiedad
+          ¿Estás seguro de que deseas eliminar la propiedad
           <span class="font-semibold text-gray-800 dark:text-white/90">{{ propertyToDelete?.code }}</span>?
+        </p>
+        <p class="text-xs px-3 py-2 rounded-lg bg-warning-50 dark:bg-warning-500/15 text-warning-600 dark:text-orange-400">
+          Esta acción desactivará la propiedad. Si tiene procesos de venta activos, revísalos primero.
         </p>
       </div>
       <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
-        <BaseButton variant="ghost" icon="lucide:x" @click="closeDeleteModal">Cancelar</BaseButton>
-        <BaseButton v-if="canAdmin" variant="danger" icon="lucide:trash-2" :loading="isDeletingProperty" @click="executeDeleteProperty">
+        <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
+        <BaseButton v-if="canAdmin" variant="danger" :loading="isDeletingProperty" @click="executeDeleteProperty">
+          <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
           Eliminar
         </BaseButton>
       </div>

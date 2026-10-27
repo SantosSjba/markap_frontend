@@ -3,7 +3,7 @@ import { useApplicationAccess } from '@modules/applications/presentation/composa
 const { canWrite, canAdmin, filterActions } = useApplicationAccess('ventas')
 
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
-import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import { ventasAgentsRepositoryKey } from '../../application/ports/ventas-agents.port'
 import { useService } from '@shared/presentation/di/services'
 import { toCalendarDateString } from '@shared/utils/formatters'
@@ -19,17 +19,13 @@ import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
-import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
-import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
-import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
-import {
-  useVentasAgentsList,
-  useVentasUpdateAgent,
-  useVentasDeleteAgent,
-} from '../composables/useAgents'
+import { useVentasAgentsList, useVentasUpdateAgent, useVentasDeleteAgent } from '../composables/useAgents'
 import type { VentasAgentListItem, ListVentasAgentsParams } from '../../domain/agent.types'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 const ventasAgentsRepository = useService(ventasAgentsRepositoryKey)
 
 const router = useRouter()
@@ -42,12 +38,13 @@ const listParams = ref<ListVentasAgentsParams>({
   limit: ITEMS_PER_PAGE,
 })
 const searchInput = ref('')
+const debouncedSearch = useDebouncedRef(searchInput)
 const filterType = ref<'ALL' | 'INTERNAL' | 'EXTERNAL'>('ALL')
 const filterStatus = ref<'ALL' | 'active' | 'inactive'>('ALL')
 
 const {
   data: listResult,
-  isLoading: loadingList,
+  isFetching: fetchingList,
   isError: listQueryError,
   error: listFetchError,
   refetch: refetchList,
@@ -57,12 +54,12 @@ const agents = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
 
 watch(
-  [searchInput, filterType, filterStatus],
+  [debouncedSearch, filterType, filterStatus],
   () => {
     listParams.value = {
       ...listParams.value,
       page: 1,
-      search: searchInput.value.trim() || undefined,
+      search: debouncedSearch.value.trim() || undefined,
       type: filterType.value === 'ALL' ? undefined : filterType.value,
       isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
     }
@@ -80,6 +77,7 @@ const onPageSizeChange = (size: number) => {
 const goToNew = () => router.push('/ventas/agentes/nuevo')
 const goToEdit = (agent: VentasAgentListItem) => router.push(`/ventas/agentes/${agent.id}/editar`)
 
+// ---- Modals confirm ----
 const showConfirmModal = ref(false)
 const confirmModal = ref<{
   type: 'deactivate' | 'activate' | 'delete'
@@ -106,6 +104,7 @@ function closeConfirm() {
 async function executeConfirm() {
   if (!confirmModal.value) return
   const { type, agent } = confirmModal.value
+  closeConfirm()
   try {
     if (type === 'deactivate') {
       await updateMutation.mutateAsync({ id: agent.id, data: { isActive: false } })
@@ -114,7 +113,6 @@ async function executeConfirm() {
     } else {
       await deleteMutation.mutateAsync(agent.id)
     }
-    closeConfirm()
   } catch {
     /* onError en composables; invalidación en onSuccess */
   }
@@ -124,7 +122,13 @@ const getActions = (
   agent: VentasAgentListItem,
 ): { label: string; icon: string; onClick: () => void }[] => {
   const actions: { label: string; icon: string; onClick: () => void }[] = [
-    { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(agent) },
+    {
+      label: 'Editar',
+      icon: 'lucide:pencil',
+      onClick: () => {
+        goToEdit(agent)
+      },
+    },
   ]
   if (agent.isActive) {
     actions.push({
@@ -217,44 +221,39 @@ const tableColumns = [
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  try {
-    const result = await ventasAgentsRepository.list({
-      page: 1,
-      limit: 10000,
+  // Todas las páginas: el backend topa cada página en 50 filas
+  const rows = await fetchAllPages((page, limit) =>
+    ventasAgentsRepository.list({
+      page,
+      limit,
       search: searchInput.value.trim() || undefined,
       type: filterType.value === 'ALL' ? undefined : filterType.value,
       isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
-    })
-    const now = toCalendarDateString()
-    await exportToExcel({
-      fileName: `agentes_ventas_${now}`,
-      sheetName: 'Agentes Ventas',
-      columns: [
-        { header: 'Nombre', key: 'fullName', width: 28 },
-        { header: 'Tipo', key: 'type', width: 12 },
-        { header: 'Tipo doc.', key: 'documentTypeCode', width: 12 },
-        { header: 'N° documento', key: 'documentNumber', width: 16 },
-        { header: 'Email', key: 'email', width: 28 },
-        { header: 'Teléfono', key: 'phone', width: 16 },
-        { header: 'Estado', key: 'isActive', width: 10 },
-      ],
-      rows: result.data.map((a: VentasAgentListItem) => ({
-        fullName: displayName(a),
-        type: a.type === 'INTERNAL' ? 'Interno' : 'Externo',
-        documentTypeCode: a.documentType?.code ?? '—',
-        documentNumber: a.documentNumber ?? '—',
-        email: a.email ?? '—',
-        phone: a.phone ?? '—',
-        isActive: a.isActive ? 'Activo' : 'Inactivo',
-      })),
-    })
-    void markapAlert.toast.success(
-      'Exportación lista',
-      `Se exportaron ${result.data.length} registro(s) a Excel.`,
-    )
-  } catch (err) {
-    void markapAlert.toast.error('No se pudo exportar', getApiErrorMessage(err))
-  }
+    }),
+  )
+  const now = toCalendarDateString()
+  await exportToExcel({
+    fileName: `agentes_ventas_${now}`,
+    sheetName: 'Agentes',
+    columns: [
+      { header: 'Nombre', key: 'fullName', width: 28 },
+      { header: 'Tipo', key: 'type', width: 12 },
+      { header: 'Tipo doc.', key: 'documentTypeCode', width: 12 },
+      { header: 'N° documento', key: 'documentNumber', width: 16 },
+      { header: 'Email', key: 'email', width: 28 },
+      { header: 'Teléfono', key: 'phone', width: 16 },
+      { header: 'Estado', key: 'isActive', width: 10 },
+    ],
+    rows: rows.map((a: VentasAgentListItem) => ({
+      fullName: displayName(a),
+      type: a.type === 'INTERNAL' ? 'Interno' : 'Externo',
+      documentTypeCode: a.documentType?.code ?? '—',
+      documentNumber: a.documentNumber ?? '—',
+      email: a.email ?? '—',
+      phone: a.phone ?? '—',
+      isActive: a.isActive ? 'Activo' : 'Inactivo',
+    })),
+  })
 }
 </script>
 
@@ -262,11 +261,10 @@ async function handleExport() {
   <div class="space-y-6">
     <PageHeader
       title="Agentes"
-      subtitle="Agentes de ventas: internos (usuarios del sistema) y externos (terceros)"
-      icon="lucide:user-check"
-      large
+      subtitle="Agentes internos (usuarios del sistema) y externos (terceros)"
     >
       <template #actions>
+        <div class="flex gap-2 w-full sm:w-auto">
         <BaseButton
           variant="outline"
           class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
@@ -281,18 +279,18 @@ async function handleExport() {
           <AppIcon icon="lucide:plus" :size="18" />
           Nuevo Agente
         </BaseButton>
+      </div>
       </template>
     </PageHeader>
 
     <BaseCard padding="none" class="block overflow-hidden">
       <div class="overflow-x-auto">
-        <LoadingState v-if="loadingList" class="px-4" />
         <div
-          v-else-if="listQueryError"
+          v-if="listQueryError"
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
           <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
-          <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetchList()">Reintentar</BaseButton>
+          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
         </div>
         <template v-else>
           <DataTable
@@ -302,6 +300,7 @@ async function handleExport() {
             :columns="tableColumns"
             :data="agents"
             row-key="id"
+            :loading="fetchingList"
           >
             <template #toolbar>
               <div class="flex-1 min-w-0">
@@ -366,7 +365,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div v-if="!loadingList && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
+          <div v-if="!listQueryError" class="border-t border-gray-200 dark:border-gray-800">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"
@@ -378,6 +377,7 @@ async function handleExport() {
       </div>
     </BaseCard>
 
+    <!-- Modal confirmación -->
     <BaseModal
       v-model="showConfirmModal"
       size="sm"
@@ -462,19 +462,26 @@ async function handleExport() {
 
       <template #footer>
         <div class="flex justify-end gap-3">
-          <BaseButton variant="ghost" icon="lucide:x" @click="closeConfirm">Cancelar</BaseButton>
+          <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
           <BaseButton v-if="canAdmin"
-            :variant="confirmModal?.type === 'delete' ? 'danger' : 'primary'"
-            :icon="
+            :variant="
               confirmModal?.type === 'delete'
-                ? 'lucide:trash-2'
-                : confirmModal?.type === 'activate'
-                  ? 'lucide:user-check'
-                  : 'lucide:user-x'
+                ? 'danger'
+                : 'primary'
             "
             :loading="confirmActionPending"
             @click="executeConfirm"
           >
+            <AppIcon
+              :icon="
+                confirmModal?.type === 'delete'
+                  ? 'lucide:trash-2'
+                  : confirmModal?.type === 'activate'
+                    ? 'lucide:user-check'
+                    : 'lucide:user-x'
+              "
+              :size="16"
+            />
             {{
               confirmModal?.type === 'delete'
                 ? 'Eliminar'

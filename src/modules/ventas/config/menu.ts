@@ -19,25 +19,18 @@ export const VENTAS_MENUS: MenuItem[] = [
     order: 1,
     children: [
       {
-        id: 'ventas-clientes-propietarios',
-        label: 'Propietarios',
-        icon: null,
-        path: '/ventas/clientes/propietarios',
-        order: 0,
-      },
-      {
         id: 'ventas-clientes-listado-de-clientes',
         label: 'Listado de Clientes',
         icon: null,
         path: '/ventas/clientes',
-        order: 1,
+        order: 0,
       },
       {
         id: 'ventas-clientes-nuevo-cliente',
         label: 'Nuevo Cliente',
         icon: null,
         path: '/ventas/clientes/nuevo',
-        order: 2,
+        order: 1,
       },
     ],
   },

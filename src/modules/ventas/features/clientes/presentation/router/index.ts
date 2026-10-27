@@ -6,11 +6,10 @@ export const ventasClientesRoutes: RouteRecordRaw[] = [
     component: () => import('../views/VentasClientesView.vue'),
     meta: { title: 'Listado de Clientes' },
   },
+  // Antigua vista «Propietarios»: ahora es el listado con el filtro de tipo aplicado.
   {
     path: 'propietarios',
-    name: 'ventas-clientes-propietarios',
-    component: () => import('../views/VentasClientesView.vue'),
-    meta: { title: 'Propietarios' },
+    redirect: { name: 'ventas-clientes', query: { tipo: 'OWNER' } },
   },
   {
     path: 'nuevo',

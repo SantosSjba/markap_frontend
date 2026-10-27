@@ -8,6 +8,7 @@ import ClienteFormModal from '../../../clientes/presentation/components/ClienteF
 /**
  * PropertyOwnersSection — propietario principal + copropietarios. «Nuevo» abre el alta
  * de propietario en un modal y lo deja seleccionado en esa fila, sin salir del formulario.
+ * El modal por defecto registra en Alquileres; el slot `new-owner-modal` lo reemplaza.
  */
 export type OwnerOption = { value: string; label: string }
 
@@ -109,6 +110,14 @@ function onOwnerCreated(client: { id: string }) {
       Agregar copropietario
     </BaseButton>
 
-    <ClienteFormModal v-model:open="modalOpen" client-type="OWNER" @created="onOwnerCreated" />
+    <!-- Otra aplicación (ej. Ventas) pone aquí su propio modal de alta de propietario -->
+    <slot
+      name="new-owner-modal"
+      :open="modalOpen"
+      :set-open="(value: boolean) => (modalOpen = value)"
+      :on-created="onOwnerCreated"
+    >
+      <ClienteFormModal v-model:open="modalOpen" client-type="OWNER" @created="onOwnerCreated" />
+    </slot>
   </FormSectionCard>
 </template>

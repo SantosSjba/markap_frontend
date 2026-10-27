@@ -3,7 +3,6 @@ import { useApplicationAccess } from '@modules/applications/presentation/composa
 const { canWrite, canAdmin, filterActions } = useApplicationAccess('ventas')
 
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
-import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import { ventasClientsRepositoryKey } from '../../application/ports/ventas-clients.port'
 import { useService } from '@shared/presentation/di/services'
 import { toCalendarDateString } from '@shared/utils/formatters'
@@ -24,6 +23,8 @@ import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
 import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 import {
   useVentasClientsList,
   useVentasClientStats,
@@ -48,12 +49,13 @@ const listParams = ref<ListVentasClientsParams>({
   limit: ITEMS_PER_PAGE,
 })
 const searchInput = ref('')
+const debouncedSearch = useDebouncedRef(searchInput)
 const filterKind = ref<'ALL' | 'BUYER' | 'OWNER'>('ALL')
 const filterPipeline = ref<'ALL' | 'PROSPECT' | 'INTERESTED' | 'CLIENT'>('ALL')
 
 const {
   data: listResult,
-  isLoading: loadingList,
+  isFetching: fetchingList,
   isError: listQueryError,
   error: listFetchError,
   refetch: refetchList,
@@ -69,25 +71,22 @@ const {
 const clients = computed(() => listResult.value?.data ?? [])
 const totalFromApi = computed(() => listResult.value?.total ?? 0)
 
+// `?tipo=BUYER|OWNER` preselecciona el filtro (ej. redirección desde /clientes/propietarios)
 watch(
-  () => route.name,
-  (name) => {
-    if (name === 'ventas-clientes-propietarios') {
-      filterKind.value = 'OWNER'
-    } else if (name === 'ventas-clientes') {
-      filterKind.value = 'ALL'
-    }
+  () => route.query.tipo,
+  (tipo) => {
+    filterKind.value = tipo === 'OWNER' || tipo === 'BUYER' ? tipo : 'ALL'
   },
   { immediate: true },
 )
 
 watch(
-  [searchInput, filterKind, filterPipeline],
+  [debouncedSearch, filterKind, filterPipeline],
   () => {
     listParams.value = {
       ...listParams.value,
       page: 1,
-      search: searchInput.value.trim() || undefined,
+      search: debouncedSearch.value.trim() || undefined,
       clientType: filterKind.value === 'ALL' ? undefined : filterKind.value,
       salesStatus:
         filterKind.value === 'OWNER'
@@ -186,18 +185,6 @@ const tableColumns = [
   { key: 'actions', label: '', align: 'right' as const },
 ]
 
-const pageTitle = computed(() =>
-  route.name === 'ventas-clientes-propietarios' ? 'Propietarios' : 'Clientes',
-)
-const pageSubtitle = computed(() =>
-  route.name === 'ventas-clientes-propietarios'
-    ? 'Titulares registrados en Ventas (vinculados al inventario)'
-    : 'Compradores / leads y propietarios de inventario (misma idea que en Alquileres)',
-)
-const pageIcon = computed(() =>
-  route.name === 'ventas-clientes-propietarios' ? 'lucide:building-2' : 'lucide:users',
-)
-
 const goToNew = () => router.push('/ventas/clientes/nuevo')
 const goToEdit = (client: VentasClientListItem) =>
   router.push(`/ventas/clientes/${client.id}/editar`)
@@ -256,18 +243,21 @@ const pipelineOptions = [
 const { isExporting, exportToExcel } = useExcelExport()
 
 async function handleExport() {
-  const result = await ventasClientsRepository.getList({
-    page: 1,
-    limit: 10000,
-    search: searchInput.value.trim() || undefined,
-    clientType: filterKind.value === 'ALL' ? undefined : filterKind.value,
-    salesStatus:
-      filterKind.value === 'OWNER'
-        ? undefined
-        : filterPipeline.value === 'ALL'
+  // Todas las páginas: el backend topa cada página en 50 filas
+  const rows = await fetchAllPages((page, limit) =>
+    ventasClientsRepository.getList({
+      page,
+      limit,
+      search: searchInput.value.trim() || undefined,
+      clientType: filterKind.value === 'ALL' ? undefined : filterKind.value,
+      salesStatus:
+        filterKind.value === 'OWNER'
           ? undefined
-          : filterPipeline.value,
-  })
+          : filterPipeline.value === 'ALL'
+            ? undefined
+            : filterPipeline.value,
+    }),
+  )
   const now = toCalendarDateString()
   await exportToExcel({
     fileName: `clientes_ventas_${now}`,
@@ -284,7 +274,7 @@ async function handleExport() {
       { header: 'Origen', key: 'leadOrigin', width: 18 },
       { header: 'Asesor', key: 'assignedAgentName', width: 22 },
     ],
-    rows: result.data.map((c) => ({
+    rows: rows.map((c) => ({
       clientKind: clientKindLabel(c.clientType),
       fullName: c.fullName,
       documentTypeCode: c.documentTypeCode,
@@ -302,12 +292,7 @@ async function handleExport() {
 
 <template>
   <div class="space-y-6">
-    <PageHeader
-      :title="pageTitle"
-      :subtitle="pageSubtitle"
-      :icon="pageIcon"
-      large
-    >
+    <PageHeader title="Clientes" subtitle="Compradores / leads y propietarios">
       <template #actions>
         <BaseButton
           variant="outline"
@@ -330,47 +315,35 @@ async function handleExport() {
       </template>
     </PageHeader>
 
-    <div v-if="loadingStats" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 h-20" />
     <div
-      v-else-if="statsQueryError"
+      v-if="statsQueryError"
       class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
     >
       <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
       <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
     </div>
-    <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
-        <template #icon>
-          <AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" />
-        </template>
+    <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <StatsCard compact title="Total Clientes" :value="String(stats?.total ?? 0)" :loading="loadingStats">
+        <template #icon><AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Propietarios'" :value="String(stats?.owners ?? 0)">
-        <template #icon>
-          <AppIcon icon="lucide:building-2" :size="20" color="#64748b" />
-        </template>
+      <StatsCard compact title="Propietarios" :value="String(stats?.owners ?? 0)" :loading="loadingStats">
+        <template #icon><AppIcon icon="lucide:building-2" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Prospectos'" :value="String(stats?.prospects ?? 0)">
-        <template #icon>
-          <AppIcon icon="lucide:user-plus" :size="20" color="#2563eb" />
-        </template>
+      <StatsCard compact title="Prospectos" :value="String(stats?.prospects ?? 0)" :loading="loadingStats">
+        <template #icon><AppIcon icon="lucide:user-plus" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Interesados'" :value="String(stats?.interested ?? 0)">
-        <template #icon>
-          <AppIcon icon="lucide:heart" :size="20" color="#d97706" />
-        </template>
+      <StatsCard compact title="Interesados" :value="String(stats?.interested ?? 0)" :loading="loadingStats">
+        <template #icon><AppIcon icon="lucide:heart" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Clientes'" :value="String(stats?.salesClients ?? 0)">
-        <template #icon>
-          <AppIcon icon="lucide:badge-check" :size="20" color="#16a34a" />
-        </template>
+      <StatsCard compact title="Clientes" :value="String(stats?.salesClients ?? 0)" subtitle="compraron" :loading="loadingStats">
+        <template #icon><AppIcon icon="lucide:badge-check" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
     </div>
 
     <BaseCard padding="none" class="block overflow-hidden">
       <div class="overflow-x-auto">
-        <LoadingState v-if="loadingList" class="px-4" />
         <div
-          v-else-if="listQueryError"
+          v-if="listQueryError"
           class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
         >
           <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
@@ -384,6 +357,7 @@ async function handleExport() {
             :columns="tableColumns"
             :data="clients"
             row-key="id"
+            :loading="fetchingList"
           >
             <template #toolbar>
               <div class="flex-1 min-w-0">
@@ -398,7 +372,6 @@ async function handleExport() {
                     v-model="filterKind"
                     :options="kindFilterOptions"
                     placeholder="Tipo de cliente"
-                    :disabled="route.name === 'ventas-clientes-propietarios'"
                   />
                 </div>
                 <div class="w-full sm:w-[220px] min-w-0">
@@ -478,7 +451,7 @@ async function handleExport() {
               </td>
             </template>
           </DataTable>
-          <div v-if="!loadingList && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
+          <div v-if="!listQueryError" class="border-t border-gray-200 dark:border-gray-800">
             <BasePagination
               v-bind="paginationProps"
               :show-page-size="true"

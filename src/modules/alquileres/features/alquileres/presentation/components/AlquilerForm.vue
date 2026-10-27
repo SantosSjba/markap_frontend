@@ -10,6 +10,7 @@ import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
 import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
 import OptionCardGroup from '@shared/presentation/components/forms/OptionCardGroup.vue'
 import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
+import { fieldLabelClass } from '@shared/presentation/components/forms/field-classes'
 import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
 import { usePropertiesList } from '../../../propiedades/presentation/composables/useProperties'
 import { useClientsList } from '../../../clientes/presentation/composables/useClients'
@@ -19,9 +20,11 @@ import type { ClientListItem } from '../../../clientes/domain/client.types'
 import type { RentalDetail, RentalFormPayload } from '../../domain/rental.types'
 import RentalContractAlertSettings from './RentalContractAlertSettings.vue'
 import RentalTenantsSection from './RentalTenantsSection.vue'
+import PropiedadFormModal from '../../../propiedades/presentation/components/PropiedadFormModal.vue'
 /**
  * AlquilerForm — formulario único de alta/edición de contratos de alquiler.
- * Alta: se elige una propiedad disponible y hereda su monto y moneda.
+ * Alta: se elige una propiedad disponible y hereda su monto y moneda; «Nueva» la registra en un
+ * modal y la deja seleccionada, sin salir del formulario.
  * Edición: la propiedad no cambia y se puede actualizar el estado.
  * Los adjuntos difieren entre alta y edición: cada vista los aporta en el slot `attachments`.
  */
@@ -160,6 +163,11 @@ const commissionStatusOptions = [
     icon: 'lucide:circle-check',
   },
 ]
+
+const propertyModalOpen = ref(false)
+function onPropertyCreated(property: { id: string }) {
+  setFieldValue('propertyId', property.id)
+}
 
 const tenantIds = ref<string[]>([''])
 const tenantIdsError = ref<string | undefined>()
@@ -354,15 +362,34 @@ const onSubmit = handleSubmit(
         title="Propiedad"
         :subtitle="isEditing ? 'Inmueble del contrato (no se puede cambiar)' : 'Solo se listan propiedades disponibles'"
       >
-        <FormSelect
-          v-if="!isEditing"
-          v-bind="propertyIdBinds"
-          label="Propiedad"
-          placeholder="Seleccionar propiedad"
-          :options="propertyOptions"
-          :error="errors.propertyId"
-          required
-        />
+        <template v-if="!isEditing">
+          <label :class="fieldLabelClass">
+            Propiedad <span class="text-error-500">*</span>
+          </label>
+          <!-- items-start: el botón queda a la altura del select aunque aparezca el error debajo -->
+          <div class="mt-2 flex items-start gap-2">
+            <FormSelect
+              v-bind="propertyIdBinds"
+              class="min-w-0 flex-1"
+              placeholder="Seleccionar propiedad"
+              :options="propertyOptions"
+              :error="errors.propertyId"
+              aria-label="Propiedad"
+            />
+            <BaseButton
+              v-if="canWrite"
+              type="button"
+              variant="outline"
+              size="lg"
+              icon="lucide:house-plus"
+              class="shrink-0"
+              @click="propertyModalOpen = true"
+            >
+              Nueva
+            </BaseButton>
+          </div>
+          <PropiedadFormModal v-model:open="propertyModalOpen" @created="onPropertyCreated" />
+        </template>
         <div
           v-else
           class="rounded-[10px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900"
@@ -373,7 +400,7 @@ const onSubmit = handleSubmit(
           </p>
         </div>
         <p v-if="!isEditing && propertyOptions.length === 0" class="mt-2 text-theme-xs text-gray-500 dark:text-gray-400">
-          No hay propiedades disponibles: todas tienen un contrato vigente.
+          No hay propiedades disponibles: todas tienen un contrato vigente. Registre una con «Nueva».
         </p>
       </FormSectionCard>
 

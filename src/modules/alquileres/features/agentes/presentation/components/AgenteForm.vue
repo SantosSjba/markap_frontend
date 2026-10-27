@@ -16,7 +16,7 @@ import { useUsers } from '@modules/settings/presentation/composables/useUsers'
 import { useDocumentTypes } from '../../../clientes/presentation/composables/useClients'
 import type { AgentFormPayload, AgentListItem, AgentType } from '../../domain/agent.types'
 /**
- * AgenteForm — formulario único de alta/edición de agentes de alquileres.
+ * AgenteForm — formulario único de alta/edición de agentes (lo usan Alquileres y Ventas).
  * Interno: puede vincularse a un usuario del sistema (solo admins pueden listar usuarios).
  * Externo: tercero o inmobiliaria. Slot `extra`: secciones propias de la vista (ej. estado en edición).
  * `variant="modal"`: una columna sin botones propios; el modal los pone en su pie fijo
