@@ -18,7 +18,7 @@ import {
   useUpsertRentalFinancialConfig,
 } from '../composables/useRentals'
 import { useAgentsList } from '../../../agentes/presentation/composables/useAgents'
-import { useCurrencyCatalog } from '../../../../presentation/composables/useCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import type { FinancialValueType, RentalFinancialConfig } from '../../domain/rental.types'
 import FinancialAmountFields from '../components/FinancialAmountFields.vue'
@@ -188,6 +188,12 @@ const goToEdit = () => router.push(`/alquileres/contratos/${id.value}/editar`)
   <div>
     <PageHeader
       title="Distribución financiera"
+      :help-items="[
+        { icon: 'lucide:banknote', term: '1. Ingreso', text: 'Monto que recibe la empresa por el contrato, en su moneda. Es la base de todo el cálculo.' },
+        { icon: 'lucide:minus', term: '2. Gastos e impuestos', text: 'Se restan del ingreso.' },
+        { icon: 'lucide:percent', term: '3. Comisiones de agentes', text: 'Porcentaje sobre el ingreso menos gastos e impuestos.' },
+        { icon: 'lucide:equal', term: '4. Desglose', text: 'Lo que queda para la empresa, según la última configuración guardada.' },
+      ]"
       :subtitle="rental ? `${rental.code} · ${rental.property?.addressLine ?? ''}` : 'Cargando...'"
       back
       @back="goBack"

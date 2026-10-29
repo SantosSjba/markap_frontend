@@ -9,6 +9,9 @@ export interface InteriorDocumentRow {
   title: string
   fileUrl: string | null
   archivoId: string | null
+  fileName: string | null
+  mimeType: string | null
+  sizeBytes: number | null
   downloadUrl?: string | null
   createdAt: string
 }
@@ -16,7 +19,8 @@ export interface InteriorDocumentRow {
 export interface ListInteriorDocumentsParams {
   page: number
   limit: number
-  docType: InteriorDocumentType
+  /** Sin tipo = todos */
+  docType?: InteriorDocumentType
   search?: string
   projectId?: string
 }
@@ -46,4 +50,9 @@ export interface UpdateInteriorDocumentPayload {
   title?: string
   fileUrl?: string | null
   docType?: InteriorDocumentType
+}
+
+export interface InteriorDocumentStats {
+  total: number
+  byType: Record<InteriorDocumentType, number>
 }

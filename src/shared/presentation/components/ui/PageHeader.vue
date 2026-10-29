@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import IconButton from './IconButton.vue'
+import HelpTooltip, { type HelpTooltipItem } from './HelpTooltip.vue'
 /**
  * PageHeader — encabezado de página de TailAdmin (`PageBreadcrumb`):
  * título a la izquierda y acciones a la derecha.
@@ -8,6 +9,7 @@ import IconButton from './IconButton.vue'
  * - `eyebrow`: texto pequeño sobre el título.
  * - Slots: `#badges` (junto al título), `#subtitle` (subtítulo enriquecido), `#actions`.
  * `icon`/`iconColor`/`large` se mantienen por compatibilidad; la plantilla no muestra icono.
+ * `help` / `helpItems`: «?» junto al título que explica la pantalla (HelpTooltip).
  */
 withDefaults(
   defineProps<{
@@ -20,6 +22,9 @@ withDefaults(
     iconColor?: string
     /** Sin efecto en TailAdmin; se conserva por compatibilidad. */
     large?: boolean
+    /** Ayuda «?» junto al título: texto corto o lista de términos (HelpTooltip) */
+    help?: string
+    helpItems?: HelpTooltipItem[]
   }>(),
   {
     subtitle: undefined,
@@ -28,6 +33,8 @@ withDefaults(
     icon: undefined,
     iconColor: undefined,
     large: false,
+    help: undefined,
+    helpItems: () => [],
   },
 )
 
@@ -53,6 +60,15 @@ const emit = defineEmits<{ back: [] }>()
           <h2 class="text-xl font-semibold text-gray-800 dark:text-white/90">
             {{ title }}
           </h2>
+          <HelpTooltip
+            v-if="help || helpItems.length"
+            :title="`¿Qué es «${title}»?`"
+            :text="help"
+            :items="helpItems"
+            :size="16"
+            width="w-96"
+            align="start"
+          />
           <slot name="badges" />
         </div>
         <p

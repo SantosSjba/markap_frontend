@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useVentasCurrencyCatalog } from '../../../../presentation/composables/useVentasCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 import { computed, ref, watch } from 'vue'
 import * as yup from 'yup'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
@@ -29,8 +29,8 @@ import {
   buildPropertyUbigeoPayload,
   parseLocationFromDescription,
   stripLocationFromDescription,
-} from '@modules/alquileres/features/clientes/constants/ubigeo-other'
-import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
+} from '@shared/domain/ubigeo-other'
+import { useClientAddressUbigeo } from '@shared/presentation/composables/useClientAddressUbigeo'
 import { buildPropertyCode, suggestOwnerSurname } from '@modules/alquileres/features/propiedades/domain/property-code'
 import PropertyOwnersSection from '@modules/alquileres/features/propiedades/presentation/components/PropertyOwnersSection.vue'
 import VentasClienteFormModal from '../../../clientes/presentation/components/VentasClienteFormModal.vue'
@@ -240,7 +240,7 @@ const selectedDepartmentId = computed(() => values.departmentId || undefined)
 const selectedProvinceId = computed(() => values.provinceId || undefined)
 
 const { data: propertyTypes, isLoading: loadingTypes } = useVentasPropertyTypes()
-const { currencies, options: currencyOptions, isLoading: loadingCurrencies } = useVentasCurrencyCatalog()
+const { currencies, options: currencyOptions, isLoading: loadingCurrencies } = useCurrencyCatalog()
 const { data: departments, isLoading: loadingDepartments } = useVentasPropertyDepartments()
 const { data: provinces, isLoading: loadingProvinces } = useVentasPropertyProvinces(selectedDepartmentId)
 const { data: districts, isLoading: loadingDistricts } = useVentasPropertyDistricts(selectedProvinceId)

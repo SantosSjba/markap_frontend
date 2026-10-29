@@ -2,15 +2,10 @@
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
 const { canWrite, canAdmin, filterActions } = useApplicationAccess('interiorismo')
 
+import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
-import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
-import { interiorClientsRepositoryKey } from '../../application/ports/clients.port'
-import { useService } from '@shared/presentation/di/services'
-import { toCalendarDateString } from '@shared/utils/formatters'
-import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import type { RowSelectionState } from '@tanstack/vue-table'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
@@ -18,173 +13,63 @@ import Badge from '@shared/presentation/components/ui/Badge.vue'
 import Avatar from '@shared/presentation/components/ui/Avatar.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
 import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
-import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
-import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
 import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
-import {
-  useInteriorClientsList,
-  useInteriorClientStats,
-  useDeleteInteriorClient,
-} from '../composables/useClients'
-import type { ClientListItem, ListClientsParams } from '../../domain/client.types'
-import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { useService } from '@shared/presentation/di/services'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { toCalendarDateString } from '@shared/utils/formatters'
 import { INTERIORISMO_APP_SLUG } from '../../../../config/app.constants'
 import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
-import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
-const interiorClientsRepository = useService(interiorClientsRepositoryKey)
+import { interiorClientsRepositoryKey } from '../../application/ports/clients.port'
+import { useInteriorClientsProjectsSummary } from '../../../proyectos/presentation/composables/useInteriorProjects'
+import { useDeleteInteriorClient, useInteriorClientStats, useInteriorClientsList } from '../composables/useClients'
+import type { ClientListItem, InteriorClientType, ListClientsParams } from '../../domain/client.types'
+/**
+ * Clientes de Interiorismo (patrón de Alquileres): indicadores compactos y una fila por cliente
+ * con documento, contacto, tipo y cuántos proyectos tiene (activos).
+ */
 
 const router = useRouter()
-const ITEMS_PER_PAGE = 10
+const clientsRepository = useService(interiorClientsRepositoryKey)
+const PAGE_SIZE = 10
 
-const tableRowSelection = ref<RowSelectionState>({})
-
-const listParams = ref<ListClientsParams>({
-  applicationSlug: INTERIORISMO_APP_SLUG,
-  page: 1,
-  limit: ITEMS_PER_PAGE,
-})
+// ── Filtros ──
 const searchInput = ref('')
-const filterType = ref<'ALL' | 'RESIDENTIAL' | 'CORPORATE'>('ALL')
+const debouncedSearch = useDebouncedRef(searchInput)
+const filterType = ref<'ALL' | InteriorClientType>('ALL')
 const filterStatus = ref<'ALL' | 'active' | 'inactive'>('ALL')
+const page = ref(1)
+const pageSize = ref(PAGE_SIZE)
+watch([debouncedSearch, filterType, filterStatus], () => (page.value = 1))
 
-const {
-  data: listResult,
-  isLoading: loadingList,
-  isError: listQueryError,
-  error: listFetchError,
-  refetch: refetchList,
-} = useInteriorClientsList(listParams)
-const {
-  data: stats,
-  isLoading: loadingStats,
-  isError: statsQueryError,
-  error: statsFetchError,
-  refetch: refetchStats,
-} = useInteriorClientStats(INTERIORISMO_APP_SLUG)
+const filters = computed(() => ({
+  search: debouncedSearch.value.trim() || undefined,
+  clientType: filterType.value === 'ALL' ? undefined : filterType.value,
+  isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
+}))
+const listParams = computed<ListClientsParams>(() => ({
+  applicationSlug: INTERIORISMO_APP_SLUG,
+  page: page.value,
+  limit: pageSize.value,
+  ...filters.value,
+}))
 
+const { data: listResult, isLoading, isFetching, isError, error, refetch } = useInteriorClientsList(listParams)
 const clients = computed(() => listResult.value?.data ?? [])
-const totalFromApi = computed(() => listResult.value?.total ?? 0)
+const total = computed(() => listResult.value?.total ?? 0)
 
-watch(
-  [searchInput, filterType, filterStatus],
-  () => {
-    listParams.value = {
-      ...listParams.value,
-      page: 1,
-      search: searchInput.value.trim() || undefined,
-      clientType: filterType.value === 'ALL' ? undefined : filterType.value,
-      isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
-    }
-  },
-  { immediate: true },
-)
+const statsQuery = useInteriorClientStats(INTERIORISMO_APP_SLUG)
+const stats = computed(() => statsQuery.data.value)
 
-const onPageChange = (page: number) => {
-  listParams.value = { ...listParams.value, page }
-}
-
-const onPageSizeChange = (size: number) => {
-  listParams.value = { ...listParams.value, limit: size, page: 1 }
-}
-
-const tableColumns = [
-  {
-    key: 'cliente',
-    label: 'Cliente',
-    align: 'left' as const,
-    sortable: true,
-    sortAccessor: (r: unknown) => (r as ClientListItem).fullName,
-  },
-  {
-    key: 'contacto',
-    label: 'Contacto',
-    align: 'left' as const,
-    sortable: true,
-    sortAccessor: (r: unknown) => {
-      const c = r as ClientListItem
-      return `${c.primaryPhone} ${c.primaryEmail}`
-    },
-  },
-  {
-    key: 'tipo',
-    label: 'Tipo',
-    align: 'left' as const,
-    sortable: true,
-    sortAccessor: (r: unknown) => (r as ClientListItem).clientType,
-  },
-  {
-    key: 'proyectos',
-    label: 'Proyectos',
-    align: 'left' as const,
-    sortable: false,
-  },
-  {
-    key: 'presupuestos',
-    label: 'Presupuestos',
-    align: 'left' as const,
-    sortable: false,
-  },
-  {
-    key: 'estado',
-    label: 'Estado',
-    align: 'left' as const,
-    sortable: true,
-    sortAccessor: (r: unknown) => ((r as ClientListItem).isActive ? 1 : 0),
-  },
-  { key: 'actions', label: '', align: 'right' as const },
-]
-
-const goToNew = () => router.push(`${INTERIORISMO_BASE_PATH}/clientes/nuevo`)
-const goToDetail = (client: ClientListItem) =>
-  router.push(`${INTERIORISMO_BASE_PATH}/clientes/${client.id}`)
-const goToEdit = (client: ClientListItem) =>
-  router.push(`${INTERIORISMO_BASE_PATH}/clientes/${client.id}/editar`)
-
-const showConfirmModal = ref(false)
-const confirmClient = ref<ClientListItem | null>(null)
-const { mutate: deleteClient, isPending: isDeletingClient } = useDeleteInteriorClient()
-
-const openDeleteConfirm = (client: ClientListItem) => {
-  confirmClient.value = client
-  showConfirmModal.value = true
-}
-
-const closeConfirm = () => {
-  showConfirmModal.value = false
-  confirmClient.value = null
-}
-
-const executeDelete = () => {
-  if (!confirmClient.value) return
-  deleteClient(confirmClient.value.id, { onSuccess: closeConfirm })
-}
-
-const typeLabel = (t: ClientListItem['clientType']) =>
-  t === 'RESIDENTIAL' ? 'Residencial' : 'Corporativo'
-
-const getActions = (
-  client: ClientListItem,
-): { label: string; icon: string; onClick: () => void }[] => [
-  { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goToDetail(client) },
-  { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(client) },
-  { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteConfirm(client) },
-]
-
-const paginationProps = computed(() => {
-  const page = listParams.value.page ?? 1
-  const limit = listParams.value.limit ?? ITEMS_PER_PAGE
-  const totalPages = Math.max(1, Math.ceil(totalFromApi.value / limit))
-  return {
-    currentPage: page,
-    totalPages,
-    totalItems: totalFromApi.value,
-    pageSize: limit,
-    hasPrevPage: page > 1,
-    hasNextPage: page < totalPages,
-  }
-})
+// ── Proyectos por cliente (solo los de la página) ──
+const pageIds = computed(() => clients.value.map((c) => c.id))
+const { data: summary } = useInteriorClientsProjectsSummary(pageIds)
+const projectsOf = (id: string) => summary.value?.find((s) => s.clientId === id)
 
 const typeOptions = [
   { value: 'ALL', label: 'Todos los tipos' },
@@ -193,42 +78,82 @@ const typeOptions = [
 ]
 const statusOptions = [
   { value: 'ALL', label: 'Todos los estados' },
-  { value: 'active', label: 'Activo' },
-  { value: 'inactive', label: 'Inactivo' },
+  { value: 'active', label: 'Activos' },
+  { value: 'inactive', label: 'Inactivos' },
 ]
+const typeLabel = (t: InteriorClientType) => (t === 'CORPORATE' ? 'Corporativo' : 'Residencial')
 
-const { isExporting, exportToExcel } = useExcelExport()
+const columns = [
+  { key: 'client', label: 'Cliente', align: 'left' as const },
+  { key: 'contact', label: 'Contacto', align: 'left' as const },
+  { key: 'type', label: 'Tipo', align: 'left' as const },
+  { key: 'projects', label: 'Proyectos', align: 'left' as const },
+  { key: 'status', label: 'Estado', align: 'left' as const },
+  { key: 'actions', label: '', align: 'right' as const },
+]
+const asClient = (r: unknown) => r as ClientListItem
 
-async function handleExport() {
-  const result = await interiorClientsRepository.getList({
-    applicationSlug: INTERIORISMO_APP_SLUG,
-    page: 1,
-    limit: 10000,
-    search: searchInput.value.trim() || undefined,
-    clientType: filterType.value === 'ALL' ? undefined : filterType.value,
-    isActive: filterStatus.value === 'ALL' ? undefined : filterStatus.value === 'active',
+const paginationProps = computed(() => {
+  const totalPages = Math.max(1, Math.ceil(total.value / pageSize.value))
+  return {
+    currentPage: page.value,
+    totalPages,
+    totalItems: total.value,
+    pageSize: pageSize.value,
+    hasPrevPage: page.value > 1,
+    hasNextPage: page.value < totalPages,
+  }
+})
+
+// ── Acciones ──
+const goToNew = () => router.push(`${INTERIORISMO_BASE_PATH}/clientes/nuevo`)
+const goToDetail = (c: ClientListItem) => router.push(`${INTERIORISMO_BASE_PATH}/clientes/${c.id}`)
+const goToEdit = (c: ClientListItem) => router.push(`${INTERIORISMO_BASE_PATH}/clientes/${c.id}/editar`)
+const goToNewProject = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos/nuevo`)
+
+const { mutateAsync: deleteClient } = useDeleteInteriorClient()
+async function confirmDelete(c: ClientListItem) {
+  const ok = await markapAlert.confirmDanger({
+    title: 'Desactivar cliente',
+    text: `«${c.fullName}» quedará inactivo en Interiorismo.`,
+    confirmText: 'Desactivar',
   })
-  const now = toCalendarDateString()
+  if (ok) await deleteClient(c.id).catch(() => undefined)
+}
+const getActions = (c: ClientListItem) => {
+  const items: { label: string; icon: string; onClick: () => void }[] = [
+    { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goToDetail(c) },
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => goToEdit(c) },
+    { label: 'Nuevo proyecto', icon: 'lucide:folder-plus', onClick: goToNewProject },
+  ]
+  if (canAdmin.value) items.push({ label: 'Desactivar', icon: 'lucide:user-x', onClick: () => void confirmDelete(c) })
+  return items
+}
+
+// ── Exportar ──
+const { isExporting, exportToExcel } = useExcelExport()
+async function handleExport() {
+  const result = await clientsRepository.getList({ applicationSlug: INTERIORISMO_APP_SLUG, page: 1, limit: 10000, ...filters.value })
   await exportToExcel({
-    fileName: `clientes_interiorismo_${now}`,
+    fileName: `clientes_interiorismo_${toCalendarDateString()}`,
     sheetName: 'Clientes',
     columns: [
-      { header: 'Nombre completo', key: 'fullName', width: 28 },
-      { header: 'Tipo doc.', key: 'documentTypeCode', width: 12 },
+      { header: 'Nombre / razón social', key: 'fullName', width: 32 },
+      { header: 'Tipo doc.', key: 'documentTypeCode', width: 10 },
       { header: 'N° documento', key: 'documentNumber', width: 16 },
-      { header: 'Tipo cliente', key: 'clientTypeLabel', width: 14 },
+      { header: 'Tipo', key: 'type', width: 14 },
       { header: 'Teléfono', key: 'primaryPhone', width: 16 },
       { header: 'Email', key: 'primaryEmail', width: 28 },
-      { header: 'Estado', key: 'isActive', width: 10 },
+      { header: 'Estado', key: 'status', width: 10 },
     ],
-    rows: result.data.map((c: ClientListItem) => ({
+    rows: result.data.map((c) => ({
       fullName: c.fullName,
       documentTypeCode: c.documentTypeCode,
       documentNumber: c.documentNumber,
-      clientTypeLabel: typeLabel(c.clientType),
+      type: typeLabel(c.clientType),
       primaryPhone: c.primaryPhone,
       primaryEmail: c.primaryEmail,
-      isActive: c.isActive ? 'Activo' : 'Inactivo',
+      status: c.isActive ? 'Activo' : 'Inactivo',
     })),
   })
 }
@@ -236,181 +161,96 @@ async function handleExport() {
 
 <template>
   <div class="space-y-6">
-    <PageHeader
-      title="Clientes"
-      subtitle="Clientes residenciales y corporativos del estudio (DNI / RUC y contacto)"
-    >
+    <PageHeader title="Clientes" subtitle="Personas y empresas con proyectos de interiorismo">
       <template #actions>
-        <div class="flex gap-2 w-full sm:w-auto">
-        <BaseButton
-          variant="outline"
-          class="flex items-center gap-2 flex-1 sm:flex-none justify-center"
-          :loading="isExporting"
-          title="Exportar a Excel"
-          @click="handleExport"
-        >
-          <ExcelIcon class="w-5 h-5" />
-          Exportar
-        </BaseButton>
-        <BaseButton v-if="canWrite" variant="primary" class="flex items-center gap-2 flex-1 sm:flex-none justify-center" @click="goToNew">
-          <AppIcon icon="lucide:plus" :size="18" />
-          Nuevo cliente
-        </BaseButton>
-      </div>
+        <div class="flex w-full gap-2 sm:w-auto">
+          <BaseButton variant="outline" class="flex-1 justify-center sm:flex-none" :loading="isExporting" @click="handleExport">
+            <ExcelIcon class="size-5" /> Exportar
+          </BaseButton>
+          <BaseButton v-if="canWrite" variant="primary" icon="lucide:plus" class="flex-1 justify-center sm:flex-none" @click="goToNew">
+            Nuevo cliente
+          </BaseButton>
+        </div>
       </template>
     </PageHeader>
 
-    <div v-if="loadingStats" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 h-20" />
     <div
-      v-else-if="statsQueryError"
-      class="rounded-xl border px-4 py-3 text-sm flex flex-wrap items-center gap-3 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
+      v-if="statsQuery.isError.value"
+      class="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-warning-50 px-4 py-3 text-sm dark:border-gray-800 dark:bg-warning-500/15"
     >
-      <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsFetchError) }}</span>
-      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => refetchStats()">Reintentar</BaseButton>
+      <span class="max-w-xl text-error-500 dark:text-error-400">{{ getApiErrorMessage(statsQuery.error.value) }}</span>
+      <BaseButton variant="outline" size="sm" class="ml-auto shrink-0" @click="() => statsQuery.refetch()">Reintentar</BaseButton>
     </div>
-    <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <StatsCard :title="'Total'" :value="String(stats?.total ?? 0)">
+    <div v-else class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatsCard compact title="Clientes" :value="String(stats?.total ?? 0)" :subtitle="`${stats?.active ?? 0} activos`" :loading="statsQuery.isPending.value">
         <template #icon><AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" /></template>
       </StatsCard>
-      <StatsCard :title="'Residencial'" :value="String(stats?.residential ?? 0)">
+      <StatsCard compact title="Residenciales" :value="String(stats?.residential ?? 0)" subtitle="personas" :loading="statsQuery.isPending.value">
         <template #icon><AppIcon icon="lucide:home" :size="20" color="#2563eb" /></template>
       </StatsCard>
-      <StatsCard :title="'Corporativo'" :value="String(stats?.corporate ?? 0)">
+      <StatsCard compact title="Corporativos" :value="String(stats?.corporate ?? 0)" subtitle="empresas" :loading="statsQuery.isPending.value">
         <template #icon><AppIcon icon="lucide:building-2" :size="20" color="#16a34a" /></template>
       </StatsCard>
-      <StatsCard :title="'Activos'" :value="String(stats?.active ?? 0)">
-        <template #icon><AppIcon icon="lucide:trending-up" :size="20" color="#d97706" /></template>
+      <StatsCard compact title="Inactivos" :value="String((stats?.total ?? 0) - (stats?.active ?? 0))" subtitle="sin seguimiento" :loading="statsQuery.isPending.value">
+        <template #icon><AppIcon icon="lucide:user-x" :size="20" color="#d97706" /></template>
       </StatsCard>
     </div>
 
     <BaseCard padding="none" class="block overflow-hidden">
-      <div class="overflow-x-auto">
-        <LoadingState v-if="loadingList" class="px-4" />
-        <div
-          v-else-if="listQueryError"
-          class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
-        >
-          <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
-          <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
-        </div>
-        <template v-else>
-          <DataTable
-            v-model:row-selection="tableRowSelection"
-            selectable
-            empty-text="No hay clientes en esta página."
-            :columns="tableColumns"
-            :data="clients"
-            row-key="id"
-          >
-            <template #toolbar>
-              <div class="flex-1 min-w-0">
-                <SearchInput v-model="searchInput" placeholder="Buscar por nombre, documento o email..." />
-              </div>
-              <div class="flex flex-wrap gap-3 shrink-0 sm:flex-nowrap">
-                <div class="w-full sm:w-[175px] min-w-0">
-                  <FormSelect v-model="filterType" :options="typeOptions" placeholder="Todos los tipos" />
-                </div>
-                <div class="w-full sm:w-[175px] min-w-0">
-                  <FormSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
-                </div>
-              </div>
-            </template>
-            <template #row="{ row }">
-              <td class="py-3 px-4">
-                <button
-                  type="button"
-                  class="text-left w-full"
-                  @click="goToDetail(row as ClientListItem)"
-                >
-                  <div class="flex items-center gap-3">
-                    <Avatar :name="(row as ClientListItem).fullName" size="md" />
-                    <div>
-                      <p class="font-medium text-gray-800 dark:text-white/90">
-                        {{ (row as ClientListItem).fullName }}
-                      </p>
-                      <p class="text-xs text-gray-400 dark:text-gray-500">
-                        {{ (row as ClientListItem).documentTypeCode }}: {{ (row as ClientListItem).documentNumber }}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              </td>
-              <td class="py-3 px-4">
-                <div class="flex flex-col gap-0.5 text-sm">
-                  <span class="flex items-center gap-1.5 text-gray-800 dark:text-white/90">
-                    <AppIcon icon="lucide:phone" :size="16" color="var(--color-text-muted)" />
-                    {{ (row as ClientListItem).primaryPhone }}
-                  </span>
-                  <span class="flex items-center gap-1.5 text-gray-800 dark:text-white/90">
-                    <AppIcon icon="lucide:mail" :size="16" color="var(--color-text-muted)" />
-                    {{ (row as ClientListItem).primaryEmail }}
-                  </span>
-                </div>
-              </td>
-              <td class="py-3 px-4">
-                <Badge :variant="(row as ClientListItem).clientType === 'RESIDENTIAL' ? 'info' : 'success'">
-                  {{ typeLabel((row as ClientListItem).clientType) }}
-                </Badge>
-              </td>
-              <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
-                <span class="inline-flex items-center gap-1">
-                  <AppIcon icon="lucide:folder-kanban" :size="16" />
-                  —
-                </span>
-              </td>
-              <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
-                <span class="inline-flex items-center gap-1">
-                  <AppIcon icon="lucide:file-text" :size="16" />
-                  —
-                </span>
-              </td>
-              <td class="py-3 px-4">
-                <Badge :variant="(row as ClientListItem).isActive ? 'success' : 'error'">
-                  {{ (row as ClientListItem).isActive ? 'Activo' : 'Inactivo' }}
-                </Badge>
-              </td>
-              <td class="py-3 px-4 text-right">
-                <ActionsDropdown :items="filterActions(getActions(row as ClientListItem))" />
-              </td>
-            </template>
-          </DataTable>
-          <div v-if="!loadingList && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
-            <BasePagination
-              v-bind="paginationProps"
-              :show-page-size="true"
-              @update:current-page="onPageChange"
-              @update:page-size="onPageSizeChange"
-            />
-          </div>
-        </template>
+      <div v-if="isError" class="flex flex-col items-center justify-center gap-3 px-4 py-16 text-center">
+        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(error) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetch()">Reintentar</BaseButton>
       </div>
+      <template v-else>
+        <DataTable :columns="columns" :data="clients" row-key="id" :loading="isLoading || isFetching" empty-text="No hay clientes con estos filtros.">
+          <template #toolbar>
+            <div class="min-w-0 flex-1"><SearchInput v-model="searchInput" placeholder="Buscar por nombre, documento o email..." /></div>
+            <div class="flex shrink-0 flex-wrap gap-3 sm:flex-nowrap">
+              <div class="w-full min-w-0 sm:w-[170px]"><FormSelect v-model="filterType" :options="typeOptions" /></div>
+              <div class="w-full min-w-0 sm:w-[170px]"><FormSelect v-model="filterStatus" :options="statusOptions" /></div>
+            </div>
+          </template>
+          <template #row="{ row }">
+            <td class="px-4 py-3">
+              <button type="button" class="flex items-center gap-3 text-left" @click="goToDetail(asClient(row))">
+                <Avatar :name="asClient(row).fullName" size="md" />
+                <span class="min-w-0">
+                  <span class="block font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400">{{ asClient(row).fullName }}</span>
+                  <span class="block text-xs text-gray-400 dark:text-gray-500">{{ asClient(row).documentTypeCode }} {{ asClient(row).documentNumber }}</span>
+                </span>
+              </button>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex flex-col gap-0.5 text-sm text-gray-800 dark:text-white/90">
+                <span class="flex items-center gap-1.5"><AppIcon icon="lucide:phone" :size="14" color="var(--color-text-muted)" />{{ asClient(row).primaryPhone || '—' }}</span>
+                <span v-if="asClient(row).primaryEmail" class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400"><AppIcon icon="lucide:mail" :size="14" color="var(--color-text-muted)" />{{ asClient(row).primaryEmail }}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <Badge :variant="asClient(row).clientType === 'CORPORATE' ? 'success' : 'info'">{{ typeLabel(asClient(row).clientType) }}</Badge>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <template v-if="projectsOf(asClient(row).id)?.total">
+                <span class="font-medium text-gray-800 dark:text-white/90">{{ projectsOf(asClient(row).id)?.total }}</span>
+                <span class="text-gray-500 dark:text-gray-400"> · {{ projectsOf(asClient(row).id)?.active }} activos</span>
+              </template>
+              <span v-else class="text-gray-400">Sin proyectos</span>
+            </td>
+            <td class="px-4 py-3">
+              <Badge :variant="asClient(row).isActive ? 'success' : 'neutral'">{{ asClient(row).isActive ? 'Activo' : 'Inactivo' }}</Badge>
+            </td>
+            <td class="px-4 py-3 text-right"><ActionsDropdown :items="filterActions(getActions(asClient(row)))" /></td>
+          </template>
+        </DataTable>
+        <div class="border-t border-gray-200 dark:border-gray-800">
+          <BasePagination
+            v-bind="paginationProps"
+            :show-page-size="true"
+            @update:current-page="(p: number) => (page = p)"
+            @update:page-size="(s: number) => { pageSize = s; page = 1 }"
+          />
+        </div>
+      </template>
     </BaseCard>
   </div>
-
-  <BaseModal v-model="showConfirmModal" :closable="true" size="sm" @close="closeConfirm">
-    <template #title>
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15">
-          <AppIcon class="text-error-500 dark:text-error-400" icon="lucide:trash-2" :size="16" />
-        </div>
-        <span class="text-base font-semibold text-gray-800 dark:text-white/90">Eliminar cliente</span>
-      </div>
-    </template>
-    <div class="p-4 space-y-3">
-      <p class="text-sm text-gray-500 dark:text-gray-400">
-        ¿Eliminar al cliente
-        <span class="font-semibold text-gray-800 dark:text-white/90">{{ confirmClient?.fullName }}</span>?
-      </p>
-      <p class="text-xs px-3 py-2 rounded-lg bg-warning-50 dark:bg-warning-500/15 text-warning-600 dark:text-orange-400">
-        Se desactivará el cliente en esta aplicación.
-      </p>
-    </div>
-    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
-      <BaseButton variant="ghost" @click="closeConfirm">Cancelar</BaseButton>
-      <BaseButton v-if="canAdmin" variant="danger" :loading="isDeletingClient" @click="executeDelete">
-        <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
-        Eliminar
-      </BaseButton>
-    </div>
-  </BaseModal>
 </template>

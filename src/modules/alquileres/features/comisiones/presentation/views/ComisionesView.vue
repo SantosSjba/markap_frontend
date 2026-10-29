@@ -26,7 +26,7 @@ import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { formatShortDate, parseCalendarDate, toCalendarDateString } from '@shared/utils/formatters'
-import { useCurrencyCatalog } from '../../../../presentation/composables/useCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 import { useCommissions, useUpdateCommission } from '../composables/useCommissions'
 import type {
   CommissionStatus,
@@ -282,6 +282,12 @@ async function handleExport() {
     <PageHeader
       title="Comisiones"
       subtitle="Seguimiento del cobro de la comisión (ingreso) de cada alquiler hasta que se pague"
+      :help-items="[
+        { icon: 'lucide:building-2', term: 'Qué es', text: 'Lo que cobra la empresa por intermediar el alquiler; se registra una sola vez por contrato.' },
+        { icon: 'lucide:clock', term: 'Pendiente', text: 'Aún no se cobra; la fecha estimada sirve para el seguimiento.' },
+        { icon: 'lucide:check', term: 'Cobrada', text: 'Su fecha de cobro define el mes en que aparece en Reportes.' },
+        { icon: 'lucide:scale', term: 'Distribución', text: 'Gastos, impuestos y comisiones de agentes sobre ese ingreso se ven en la Distribución financiera del contrato.' },
+      ]"
     >
       <template #actions>
         <BaseButton

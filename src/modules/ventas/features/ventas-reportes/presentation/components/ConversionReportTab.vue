@@ -98,6 +98,7 @@ async function exportExcel() {
     <ReportSectionHeader
       title="Conversión"
       :subtitle="`De proceso a venta · ${periodLabel}`"
+      help="Conversión = procesos ganados ÷ procesos creados en el periodo. Un proceso se gana al cerrar la venta y se pierde al marcarlo como «Venta caída»; los demás siguen activos."
       icon="lucide:git-branch"
       :exporting="isExporting"
       @export="exportExcel"

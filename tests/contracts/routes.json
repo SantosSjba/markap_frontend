@@ -1472,14 +1472,14 @@
   {
     "path": "/interiorismo/documentos",
     "name": "",
-    "meta": {},
-    "redirect": {
-      "name": "interiorismo-documentos-contratos"
-    }
+    "meta": {
+      "title": "Documentos"
+    },
+    "redirect": null
   },
   {
     "path": "/interiorismo/documentos",
-    "name": "",
+    "name": "interiorismo-documentos",
     "meta": {
       "title": "Documentos"
     },
@@ -1488,78 +1488,115 @@
   {
     "path": "/interiorismo/documentos/actas",
     "name": "interiorismo-documentos-actas",
-    "meta": {
-      "title": "Actas",
-      "docType": "ACTA"
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "name": "interiorismo-documentos",
+      "query": {
+        "type": "ACTA"
+      }
+    }
   },
   {
     "path": "/interiorismo/documentos/contratos",
     "name": "interiorismo-documentos-contratos",
-    "meta": {
-      "title": "Contratos",
-      "docType": "CONTRATO"
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "name": "interiorismo-documentos",
+      "query": {
+        "type": "CONTRATO"
+      }
+    }
   },
   {
     "path": "/interiorismo/documentos/facturas",
     "name": "interiorismo-documentos-facturas",
-    "meta": {
-      "title": "Facturas",
-      "docType": "FACTURA"
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "name": "interiorismo-documentos",
+      "query": {
+        "type": "FACTURA"
+      }
+    }
   },
   {
     "path": "/interiorismo/documentos/pdfs",
     "name": "interiorismo-documentos-pdfs",
-    "meta": {
-      "title": "PDFs",
-      "docType": "PDF"
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "name": "interiorismo-documentos",
+      "query": {
+        "type": "PDF"
+      }
+    }
   },
   {
     "path": "/interiorismo/documentos/planos",
     "name": "interiorismo-documentos-planos",
-    "meta": {
-      "title": "Planos",
-      "docType": "PLANO"
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "name": "interiorismo-documentos",
+      "query": {
+        "type": "PLANO"
+      }
+    }
   },
   {
     "path": "/interiorismo/documentos/renderizados",
     "name": "interiorismo-documentos-renderizados",
-    "meta": {
-      "title": "Renderizados",
-      "docType": "RENDERIZADO"
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "name": "interiorismo-documentos",
+      "query": {
+        "type": "RENDERIZADO"
+      }
+    }
   },
   {
     "path": "/interiorismo/ejecucion",
     "name": "",
-    "meta": {
-      "title": "Ejecución"
-    },
-    "redirect": null
-  },
-  {
-    "path": "/interiorismo/ejecucion",
-    "name": "interiorismo-ejecucion",
-    "meta": {
-      "title": "Ejecución de obra"
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "path": "/interiorismo/proyectos",
+      "query": {
+        "status": "IN_PROGRESS"
+      }
+    }
   },
   {
     "path": "/interiorismo/ejecucion/:projectId",
-    "name": "interiorismo-ejecucion-tablero",
+    "name": "",
+    "meta": {},
+    "redirect": "(to) => ({\n          path: `${__vite_ssr_import_2__.INTERIORISMO_BASE_PATH}/proyectos/${String(to.params.projectId)}`,\n          query: { tab: \"ejecucion\" }\n        })"
+  },
+  {
+    "path": "/interiorismo/equipo",
+    "name": "",
     "meta": {
-      "title": "Tablero de ejecución"
+      "title": "Equipo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/equipo",
+    "name": "interiorismo-equipo",
+    "meta": {
+      "title": "Equipo"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/equipo/:id/editar",
+    "name": "interiorismo-equipo-editar",
+    "meta": {
+      "title": "Editar integrante"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/equipo/nuevo",
+    "name": "interiorismo-equipo-nuevo",
+    "meta": {
+      "title": "Nuevo integrante"
     },
     "redirect": null
   },
@@ -1616,6 +1653,14 @@
     "redirect": null
   },
   {
+    "path": "/interiorismo/materiales/catalogo/:id/editar",
+    "name": "interiorismo-materiales-catalogo-editar",
+    "meta": {
+      "title": "Editar material"
+    },
+    "redirect": null
+  },
+  {
     "path": "/interiorismo/materiales/catalogo/nuevo",
     "name": "interiorismo-materiales-catalogo-nuevo",
     "meta": {
@@ -1644,6 +1689,14 @@
     "name": "interiorismo-materiales-proveedores-detalle",
     "meta": {
       "title": "Proveedor"
+    },
+    "redirect": null
+  },
+  {
+    "path": "/interiorismo/materiales/proveedores/:id/editar",
+    "name": "interiorismo-materiales-proveedores-editar",
+    "meta": {
+      "title": "Editar proveedor"
     },
     "redirect": null
   },
@@ -1687,8 +1740,7 @@
     "path": "/interiorismo/proyectos",
     "name": "interiorismo-proyectos",
     "meta": {
-      "title": "Listado de proyectos",
-      "inProgressOnly": false
+      "title": "Listado de proyectos"
     },
     "redirect": null
   },
@@ -1711,11 +1763,13 @@
   {
     "path": "/interiorismo/proyectos/en-progreso",
     "name": "interiorismo-proyectos-en-progreso",
-    "meta": {
-      "title": "En progreso",
-      "inProgressOnly": true
-    },
-    "redirect": null
+    "meta": {},
+    "redirect": {
+      "name": "interiorismo-proyectos",
+      "query": {
+        "status": "IN_PROGRESS"
+      }
+    }
   },
   {
     "path": "/interiorismo/proyectos/nuevo",

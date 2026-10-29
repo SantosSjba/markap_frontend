@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import FormInput from '@shared/presentation/components/forms/FormInput.vue'
 import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
-import { useCurrencyCatalog } from '../../../../presentation/composables/useCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 import type { FinancialValueType } from '../../domain/rental.types'
 /**
  * FinancialAmountFields — tipo (fijo / %), moneda y valor de un concepto de la distribución.

@@ -1,473 +1,115 @@
 <script setup lang="ts">
-import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
-import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
-import { ref, computed } from 'vue'
-import * as yup from 'yup'
-import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
-import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
-import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
-import DataTable from '@shared/presentation/components/ui/DataTable.vue'
-import FormInput from '@shared/presentation/components/forms/FormInput.vue'
-import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
-import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
-import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import ReportPeriodPicker from '@shared/presentation/components/reports/ReportPeriodPicker.vue'
+import { useReportPeriod } from '@shared/presentation/components/reports/report-period'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
-import { toCalendarDateString } from '@shared/utils/formatters'
+import { splitCurrencyTotals } from '@shared/utils/money'
 import { useInteriorReportsDashboard } from '../composables/useInteriorReportes'
-import { projectStatusLabel } from '../../../proyectos/presentation/labels'
-import { useInteriorProjectStageOptions } from '../../../proyectos/presentation/composables/useInteriorProjectStageOptions'
-const { stageLabelMap } = useInteriorProjectStageOptions()
+import ProjectsReportTab from '../components/ProjectsReportTab.vue'
+import ProfitabilityReportTab from '../components/ProfitabilityReportTab.vue'
+import CollectionsReportTab from '../components/CollectionsReportTab.vue'
+import SuppliersReportTab from '../components/SuppliersReportTab.vue'
+import IndicatorsReportTab from '../components/IndicatorsReportTab.vue'
+/**
+ * Reportes de Interiorismo (como en Ventas y Alquileres): un periodo común (año, mes, rango o
+ * todo), un resumen arriba y una pestaña por reporte. Cada monto se muestra en su moneda.
+ */
 
-const COST_CAT_LABEL: Record<string, string> = {
-  LABOR: 'Mano de obra',
-  MATERIAL: 'Material',
-  EXPENSE: 'Gastos',
-  TRANSPORT: 'Transporte',
-}
-
-function defaultRange() {
-  const end = new Date()
-  const start = new Date()
-  start.setDate(start.getDate() - 89)
-  return {
-    startDate: toCalendarDateString(start),
-    endDate: toCalendarDateString(end),
-  }
-}
-
-const filterSchema = toTypedSchema(
-  yup.object({
-    startDate: yup.string().required('Desde es requerido'),
-    endDate: yup.string().required('Hasta es requerido'),
-  }),
-)
-
-const { handleSubmit, errors, defineComponentBinds } = useForm({
-  validationSchema: filterSchema,
-  initialValues: { ...defaultRange() },
-})
-
-const filterBinds = {
-  startDate: defineComponentBinds('startDate'),
-  endDate: defineComponentBinds('endDate'),
-}
-
-const applied = ref({ ...defaultRange() })
-
-const rangeParams = computed(() => ({
-  startDate: applied.value.startDate,
-  endDate: applied.value.endDate,
-}))
-
-const applyFilters = handleSubmit((v) => {
-  applied.value = { startDate: v.startDate, endDate: v.endDate }
-})
-
-const dashboardQuery = useInteriorReportsDashboard(rangeParams, { toastOnLoadError: false })
-const d = computed(() => dashboardQuery.data.value)
-
-const activeTab = ref('ventas')
+const route = useRoute()
+const router = useRouter()
 
 const reportTabs = [
-  { id: 'ventas', label: 'Ventas', icon: 'lucide:banknote' },
-  { id: 'conversion', label: 'Conversión', icon: 'lucide:git-branch' },
-  { id: 'rentabilidad', label: 'Rentabilidad', icon: 'lucide:percent' },
-  { id: 'productividad', label: 'Productividad', icon: 'lucide:clipboard-check' },
-  { id: 'costos', label: 'Costos', icon: 'lucide:wallet-cards' },
-  { id: 'kpis', label: 'KPIs', icon: 'lucide:gauge' },
-]
+  { id: 'proyectos', label: 'Proyectos', icon: 'lucide:folder-kanban' },
+  { id: 'rentabilidad', label: 'Rentabilidad', icon: 'lucide:trending-up' },
+  { id: 'cobranzas', label: 'Cobranzas', icon: 'lucide:wallet' },
+  { id: 'proveedores', label: 'Compras y proveedores', icon: 'lucide:truck' },
+  { id: 'indicadores', label: 'Indicadores', icon: 'lucide:gauge' },
+] as const
+type ReportTab = (typeof reportTabs)[number]['id']
 
-function formatPen(value: number) {
-  return new Intl.NumberFormat('es-PE', {
-    style: 'currency',
-    currency: 'PEN',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
-const estadoRows = computed(() => {
-  const rows = d.value?.conversion.proyectosPorEstado ?? []
-  return [...rows].sort((a, b) => b.count - a.count)
+const activeTab = computed<ReportTab>({
+  get() {
+    const tab = route.query.tab
+    return reportTabs.some((t) => t.id === tab) ? (tab as ReportTab) : 'proyectos'
+  },
+  set(tab) {
+    void router.replace({ query: { ...route.query, tab } })
+  },
 })
 
-const estadoColumns = [
-  {
-    key: 's',
-    label: 'Estado',
-    sortAccessor: (r: unknown) =>
-      projectStatusLabel((r as { status: string }).status, stageLabelMap.value),
-  },
-  { key: 'c', label: 'Proyectos', sortAccessor: (r: unknown) => (r as { count: number }).count },
-]
+const { mode, year, month, startDate, endDate, yearOptions, monthOptions, params, label } = useReportPeriod()
+const range = computed(() => ({ startDate: params.value.startDate, endDate: params.value.endDate }))
+const query = useInteriorReportsDashboard(range, { toastOnLoadError: false })
+const d = computed(() => query.data.value)
 
-const costoCatColumns = [
-  {
-    key: 'cat',
-    label: 'Categoría',
-    sortAccessor: (r: unknown) => COST_CAT_LABEL[(r as { category: string }).category] ?? '',
-  },
-  { key: 'tot', label: 'Monto', sortAccessor: (r: unknown) => (r as { total: number }).total },
-]
-
-const costoCatRows = computed(() => d.value?.costos.ejecucionPorCategoria ?? [])
-
-const { isExporting, exportToExcel } = useExcelExport()
-
-const rangeLabel = computed(() => `${applied.value.startDate}_${applied.value.endDate}`)
-
-async function exportDashboardExcel() {
-  const row = d.value
-  if (!row) {
-    void markapAlert.toast.warning('No hay datos para exportar')
-    return
-  }
-  await exportToExcel({
-    fileName: `interiorismo_reportes_${rangeLabel.value}.xlsx`,
-    sheetName: 'Resumen',
-    columns: [
-      { header: 'Sección', key: 'seccion' },
-      { header: 'Indicador', key: 'indicador' },
-      { header: 'Valor', key: 'valor' },
-    ],
-    rows: [
-      { seccion: 'Ventas', indicador: 'Cobranzas período', valor: row.ventas.cobranzasPeriodo },
-      {
-        seccion: 'Ventas',
-        indicador: 'Pagos registrados',
-        valor: row.ventas.pagosRegistradosPeriodo,
-      },
-      {
-        seccion: 'Ventas',
-        indicador: 'Proyectos con cobro en período',
-        valor: row.ventas.proyectosConCobroEnPeriodo,
-      },
-      {
-        seccion: 'Ventas',
-        indicador: 'Cartera pendiente (cuotas)',
-        valor: row.ventas.carteraPendienteCuotas,
-      },
-      {
-        seccion: 'Conversión',
-        indicador: 'Proyectos nuevos',
-        valor: row.conversion.proyectosNuevosPeriodo,
-      },
-      {
-        seccion: 'Conversión',
-        indicador: 'Proyectos finalizados',
-        valor: row.conversion.proyectosFinalizadosPeriodo,
-      },
-      {
-        seccion: 'Conversión',
-        indicador: 'Presup. aprobados período',
-        valor: row.conversion.presupuestosAprobadosPeriodo,
-      },
-      {
-        seccion: 'Conversión',
-        indicador: 'Presup. rechazados período',
-        valor: row.conversion.presupuestosRechazadosPeriodo,
-      },
-      {
-        seccion: 'Conversión',
-        indicador: 'Tasa cierre presupuesto %',
-        valor: row.conversion.tasaCierrePresupuestoPct ?? '',
-      },
-      {
-        seccion: 'Rentabilidad',
-        indicador: 'Volumen aprobado período',
-        valor: row.rentabilidad.volumenPresupuestosAprobadosPeriodo,
-      },
-      {
-        seccion: 'Rentabilidad',
-        indicador: 'Costos ejecución período',
-        valor: row.rentabilidad.costosEjecucionPeriodo,
-      },
-      {
-        seccion: 'Rentabilidad',
-        indicador: 'Compras materiales período',
-        valor: row.rentabilidad.comprasMaterialesPeriodo,
-      },
-      {
-        seccion: 'Rentabilidad',
-        indicador: 'Margen bruto estimado',
-        valor: row.rentabilidad.margenBrutoEstimado,
-      },
-      {
-        seccion: 'Rentabilidad',
-        indicador: 'Margen bruto %',
-        valor: row.rentabilidad.margenBrutoPct ?? '',
-      },
-      {
-        seccion: 'Productividad',
-        indicador: 'Tareas totales',
-        valor: row.productividad.tareasTotales,
-      },
-      {
-        seccion: 'Productividad',
-        indicador: 'Tareas completadas',
-        valor: row.productividad.tareasCompletadasSnapshot,
-      },
-      {
-        seccion: 'Productividad',
-        indicador: 'Tareas hechas en período',
-        valor: row.productividad.tareasCompletadasPeriodo,
-      },
-      {
-        seccion: 'Productividad',
-        indicador: 'Evidencias en período',
-        valor: row.productividad.evidenciasPeriodo,
-      },
-      {
-        seccion: 'Productividad',
-        indicador: 'Incidencias abiertas',
-        valor: row.productividad.incidenciasAbiertas,
-      },
-      { seccion: 'Costos', indicador: 'Total período', valor: row.costos.totalCostosPeriodo },
-      { seccion: 'KPIs', indicador: 'Proyectos activos', valor: row.kpis.proyectosActivos },
-      { seccion: 'KPIs', indicador: 'En ejecución', valor: row.kpis.proyectosEnEjecucion },
-      { seccion: 'KPIs', indicador: 'Clientes', valor: row.kpis.clientesTotales },
-      { seccion: 'KPIs', indicador: 'Presupuestos borrador', valor: row.kpis.presupuestosBorrador },
-    ] as Record<string, string | number>[],
-    additionalSheets: [
-      {
-        sheetName: 'Estado proyectos',
-        columns: [
-          { header: 'Estado', key: 'estado' },
-          { header: 'Cantidad', key: 'cantidad' },
-        ],
-        rows: estadoRows.value.map((x) => ({
-          estado: projectStatusLabel(x.status, stageLabelMap.value),
-          cantidad: x.count,
-        })) as Record<string, string | number>[],
-      },
-      {
-        sheetName: 'Costos ejecución',
-        columns: [
-          { header: 'Categoría', key: 'categoria' },
-          { header: 'Total', key: 'total' },
-        ],
-        rows: costoCatRows.value.map((x) => ({
-          categoria: COST_CAT_LABEL[x.category] ?? x.category,
-          total: x.total,
-        })) as Record<string, string | number>[],
-      },
-    ],
-  })
-  void markapAlert.toast.success('Excel generado')
-}
+const collected = computed(() => splitCurrencyTotals(d.value?.totals.collected.filter((t) => t.amount > 0) ?? [], true))
+const pending = computed(() => splitCurrencyTotals(d.value?.totals.pending.filter((t) => t.amount > 0) ?? [], true))
+const supplierBalance = computed(() =>
+  splitCurrencyTotals(d.value?.totals.supplierBalance.filter((t) => t.amount > 0) ?? [], true),
+)
 </script>
 
 <template>
   <div class="space-y-6">
-    <PageHeader
-      title="Reportes"
-      subtitle="Vista consolidada de proyectos, presupuestos, cobranzas, ejecución y compras. Los datos dependen de los demás módulos."
-    >
+    <PageHeader title="Reportes" subtitle="Proyectos, rentabilidad, cobranzas y proveedores en cada moneda" icon="lucide:bar-chart-3">
       <template #actions>
-        <BaseButton
-        variant="secondary"
-        class="flex items-center gap-2 shrink-0"
-        :loading="isExporting"
-        :disabled="!d || dashboardQuery.isLoading.value"
-        @click="exportDashboardExcel"
-      >
-        <ExcelIcon class="w-4 h-4" />
-        Exportar Excel
-      </BaseButton>
+        <ReportPeriodPicker
+          v-model:mode="mode"
+          v-model:year="year"
+          v-model:month="month"
+          v-model:start-date="startDate"
+          v-model:end-date="endDate"
+          :year-options="yearOptions"
+          :month-options="monthOptions"
+        />
       </template>
     </PageHeader>
 
-    <form
-      class="rounded-2xl border p-4 flex flex-wrap gap-4 items-end bg-white dark:bg-gray-dark border-gray-200 dark:border-gray-800"
-      @submit.prevent="applyFilters"
-    >
-      <div class="min-w-[140px]">
-        <FormInput label="Desde" type="date" v-bind="filterBinds.startDate" />
-        <p v-if="errors.startDate" class="text-xs text-error-600 dark:text-error-500 mt-1">{{ errors.startDate }}</p>
-      </div>
-      <div class="min-w-[140px]">
-        <FormInput label="Hasta" type="date" v-bind="filterBinds.endDate" />
-        <p v-if="errors.endDate" class="text-xs text-error-600 dark:text-error-500 mt-1">{{ errors.endDate }}</p>
-      </div>
-      <BaseButton type="submit" variant="primary">Aplicar</BaseButton>
-      <p v-if="d" class="text-xs w-full sm:w-auto sm:ml-auto text-gray-400 dark:text-gray-500">
-        Rango aplicado: {{ d.range.startDate }} — {{ d.range.endDate }}
-      </p>
-    </form>
+    <!-- Resumen -->
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatsCard compact title="Proyectos nuevos" :value="String(d?.kpis.newProjects ?? 0)" :subtitle="label" :loading="query.isPending.value">
+        <template #icon><AppIcon icon="lucide:folder-plus" :size="20" /></template>
+      </StatsCard>
+      <StatsCard compact title="Cobrado" :value="collected.main" :subtitle="collected.rest || label" :loading="query.isPending.value">
+        <template #icon><AppIcon icon="lucide:banknote" :size="20" /></template>
+      </StatsCard>
+      <StatsCard compact title="Por cobrar hoy" :value="pending.main" :subtitle="pending.rest || 'saldo de clientes'" :loading="query.isPending.value">
+        <template #icon><AppIcon icon="lucide:hourglass" :size="20" /></template>
+      </StatsCard>
+      <StatsCard
+        compact
+        title="Saldo con proveedores"
+        :value="supplierBalance.main"
+        :subtitle="supplierBalance.rest || 'por pagar hoy'"
+        :loading="query.isPending.value"
+      >
+        <template #icon><AppIcon icon="lucide:truck" :size="20" /></template>
+      </StatsCard>
+    </div>
 
-    <LoadingState v-if="dashboardQuery.isLoading.value" />
+    <BaseTabs v-model="activeTab" :tabs="reportTabs" />
 
-    <BaseCard v-else-if="dashboardQuery.isError.value" padding="lg" class="block text-center space-y-4">
-      <p class="text-sm text-error-500 dark:text-error-400">
-        {{ getApiErrorMessage(dashboardQuery.error.value) }}
-      </p>
-      <BaseButton variant="secondary" @click="() => dashboardQuery.refetch()">Reintentar</BaseButton>
+    <BaseCard class="block">
+      <LoadingState v-if="query.isPending.value" class="py-16" />
+      <div v-else-if="query.isError.value || !d" class="space-y-3 py-12 text-center text-sm">
+        <p class="text-error-500">{{ getApiErrorMessage(query.error.value) }}</p>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => query.refetch()">Reintentar</BaseButton>
+      </div>
+      <template v-else>
+        <ProjectsReportTab v-if="activeTab === 'proyectos'" :data="d" :params="params" :period-label="label" />
+        <ProfitabilityReportTab v-else-if="activeTab === 'rentabilidad'" :data="d" />
+        <CollectionsReportTab v-else-if="activeTab === 'cobranzas'" :data="d" :params="params" :period-label="label" />
+        <SuppliersReportTab v-else-if="activeTab === 'proveedores'" :data="d" :period-label="label" />
+        <IndicatorsReportTab v-else :data="d" :params="params" :period-label="label" />
+      </template>
     </BaseCard>
-
-    <template v-else-if="d">
-      <BaseTabs v-model="activeTab" :tabs="reportTabs" />
-
-      <BaseCard class="block">
-        <template v-if="activeTab === 'ventas'">
-          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard title="Cobranzas (período)" :value="formatPen(d.ventas.cobranzasPeriodo)">
-              <template #icon><AppIcon icon="lucide:banknote" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Pagos registrados" :value="String(d.ventas.pagosRegistradosPeriodo)">
-              <template #icon><AppIcon icon="lucide:list-checks" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Proyectos con cobro" :value="String(d.ventas.proyectosConCobroEnPeriodo)">
-              <template #icon><AppIcon icon="lucide:folder-check" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Cartera pendiente (cuotas)" :value="formatPen(d.ventas.carteraPendienteCuotas)">
-              <template #icon><AppIcon icon="lucide:clock" :size="20" color="var(--color-warning)" /></template>
-            </StatsCard>
-          </div>
-          <p class="text-xs mt-4 text-gray-400 dark:text-gray-500">
-            Cobranzas: pagos del cliente marcados como pagados en el rango. Pendiente: cuotas programadas aún no saldadas (PENDING / PARTIAL).
-          </p>
-        </template>
-
-        <template v-else-if="activeTab === 'conversion'">
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <StatsCard title="Proyectos nuevos" :value="String(d.conversion.proyectosNuevosPeriodo)">
-              <template #icon><AppIcon icon="lucide:folder-plus" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Finalizados (período)" :value="String(d.conversion.proyectosFinalizadosPeriodo)">
-              <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard
-              title="Tasa cierre presupuesto"
-              :value="d.conversion.tasaCierrePresupuestoPct != null ? `${d.conversion.tasaCierrePresupuestoPct} %` : '—'"
-            >
-              <template #icon><AppIcon icon="lucide:percent" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Proyectos aprobados" :value="String(d.conversion.presupuestosAprobadosPeriodo)">
-              <template #icon><AppIcon icon="lucide:check" :size="20" color="var(--color-success)" /></template>
-            </StatsCard>
-            <StatsCard title="Proyectos cancelados" :value="String(d.conversion.presupuestosRechazadosPeriodo)">
-              <template #icon><AppIcon icon="lucide:x-circle" :size="20" color="var(--color-error)" /></template>
-            </StatsCard>
-            <StatsCard title="En cotización" :value="String(d.conversion.presupuestosEnviadosSnapshot)">
-              <template #icon><AppIcon icon="lucide:send" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-          </div>
-          <h3 class="text-sm font-semibold mb-2 text-gray-800 dark:text-white/90">
-            Proyectos por estado (cartera actual)
-          </h3>
-          <DataTable :columns="estadoColumns" :data="estadoRows" row-key="status" empty-text="Sin proyectos.">
-            <template #row="{ row }">
-              <td class="py-3 px-4 font-medium">
-                {{ projectStatusLabel((row as { status: string }).status, stageLabelMap) }}
-              </td>
-              <td class="py-3 px-4">{{ (row as { count: number }).count }}</td>
-            </template>
-          </DataTable>
-        </template>
-
-        <template v-else-if="activeTab === 'rentabilidad'">
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <StatsCard title="Volumen aprobado (período)" :value="formatPen(d.rentabilidad.volumenPresupuestosAprobadosPeriodo)">
-              <template #icon><AppIcon icon="lucide:file-check" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Costos ejecución" :value="formatPen(d.rentabilidad.costosEjecucionPeriodo)">
-              <template #icon><AppIcon icon="lucide:hammer" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Compras materiales" :value="formatPen(d.rentabilidad.comprasMaterialesPeriodo)">
-              <template #icon><AppIcon icon="lucide:package" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Margen bruto estimado" :value="formatPen(d.rentabilidad.margenBrutoEstimado)">
-              <template #icon><AppIcon icon="lucide:trending-up" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard
-              title="Margen % sobre volumen"
-              :value="d.rentabilidad.margenBrutoPct != null ? `${d.rentabilidad.margenBrutoPct} %` : '—'"
-            >
-              <template #icon><AppIcon icon="lucide:chart-no-axes-combined" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-          </div>
-          <p class="text-xs mt-4 text-gray-400 dark:text-gray-500">
-            Estimación simple: total presupuestos aprobados en el período menos costos de obra registrados y compras a proveedores en el mismo rango.
-          </p>
-        </template>
-
-        <template v-else-if="activeTab === 'productividad'">
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <StatsCard title="Tareas totales" :value="String(d.productividad.tareasTotales)">
-              <template #icon><AppIcon icon="lucide:list-todo" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Completadas (snapshot)" :value="String(d.productividad.tareasCompletadasSnapshot)">
-              <template #icon><AppIcon icon="lucide:circle-check" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Hechas en período" :value="String(d.productividad.tareasCompletadasPeriodo)">
-              <template #icon><AppIcon icon="lucide:calendar-check" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard
-              title="% avance tareas"
-              :value="d.productividad.pctAvanceTareas != null ? `${d.productividad.pctAvanceTareas} %` : '—'"
-            >
-              <template #icon><AppIcon icon="lucide:activity" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Evidencias (período)" :value="String(d.productividad.evidenciasPeriodo)">
-              <template #icon><AppIcon icon="lucide:camera" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Incidencias abiertas" :value="String(d.productividad.incidenciasAbiertas)">
-              <template #icon><AppIcon icon="lucide:triangle-alert" :size="20" color="var(--color-warning)" /></template>
-            </StatsCard>
-            <StatsCard
-              title="Progreso medio proyectos"
-              :value="d.productividad.progresoPromedioProyectosPct != null ? `${d.productividad.progresoPromedioProyectosPct} %` : '—'"
-            >
-              <template #icon><AppIcon icon="lucide:layout-dashboard" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-          </div>
-        </template>
-
-        <template v-else-if="activeTab === 'costos'">
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <StatsCard title="Total costos período" :value="formatPen(d.costos.totalCostosPeriodo)">
-              <template #icon><AppIcon icon="lucide:calculator" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Compras proveedores" :value="formatPen(d.costos.comprasProveedoresPeriodo)">
-              <template #icon><AppIcon icon="lucide:truck" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-          </div>
-          <h3 class="text-sm font-semibold mb-2 text-gray-800 dark:text-white/90">
-            Ejecución por categoría (período)
-          </h3>
-          <DataTable :columns="costoCatColumns" :data="costoCatRows" row-key="category" empty-text="Sin costos registrados en el rango.">
-            <template #row="{ row }">
-              <td class="py-3 px-4">
-                {{ COST_CAT_LABEL[(row as { category: string }).category] ?? (row as { category: string }).category }}
-              </td>
-              <td class="py-3 px-4 font-medium">{{ formatPen((row as { total: number }).total) }}</td>
-            </template>
-          </DataTable>
-        </template>
-
-        <template v-else-if="activeTab === 'kpis'">
-          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard title="Proyectos activos" :value="String(d.kpis.proyectosActivos)">
-              <template #icon><AppIcon icon="lucide:folder-open" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="En ejecución" :value="String(d.kpis.proyectosEnEjecucion)">
-              <template #icon><AppIcon icon="lucide:flame" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Clientes" :value="String(d.kpis.clientesTotales)">
-              <template #icon><AppIcon icon="lucide:users" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-            <StatsCard title="Proyectos en cotización" :value="String(d.kpis.presupuestosBorrador)">
-              <template #icon><AppIcon icon="lucide:file-pen" :size="20" color="var(--color-primary)" /></template>
-            </StatsCard>
-          </div>
-          <p class="text-xs mt-4 text-gray-400 dark:text-gray-500">
-            Activos: proyectos que no están cancelados ni finalizados. Use las demás pestañas para el detalle por período.
-          </p>
-        </template>
-      </BaseCard>
-    </template>
   </div>
 </template>

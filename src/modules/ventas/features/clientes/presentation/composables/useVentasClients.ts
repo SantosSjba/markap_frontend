@@ -14,7 +14,7 @@ import type {
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
   UBIGEO_OTHER_PROVINCE_ID,
-} from '@modules/alquileres/features/clientes/constants/ubigeo-other'
+} from '@shared/domain/ubigeo-other'
 /** Caché e invalidación CRM clientes Ventas (sin prefijo compartido con Alquileres). */
 export const ventasClientKeys = {
   root: ['ventas-clients'] as const,

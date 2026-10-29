@@ -307,6 +307,12 @@ async function handleExport() {
     <PageHeader
       title="Cobranzas"
       subtitle="Seguimiento de pagos de alquiler"
+      :help-items="[
+        { icon: 'lucide:clock', term: 'Pendiente', text: 'Cuota del alquiler que aún no vence o vence hoy.' },
+        { icon: 'lucide:alarm-clock', term: 'Atrasado', text: 'La cuota pasó su fecha de vencimiento sin pagarse.' },
+        { icon: 'lucide:split', term: 'Parcial', text: 'Se pagó una parte; el saldo sigue pendiente en la misma cuota.' },
+        { icon: 'lucide:banknote', term: 'Registrar pago', text: 'Al registrarlo la cuota se actualiza y queda en el Historial de pagos.' },
+      ]"
     >
       <template #actions>
         <div class="flex items-center gap-2">

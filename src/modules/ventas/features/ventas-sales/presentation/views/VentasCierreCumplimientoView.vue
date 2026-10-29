@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { COMPLIANCE_DOCUMENT_OPTIONS, complianceDocumentLabel } from '../../domain/pipeline.constants'
 import { financingChannelCodeOptions } from '../../domain/financing-channels'
-import { useVentasCurrencyCatalog } from '../../../../presentation/composables/useVentasCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
 const { canWrite } = useApplicationAccess('ventas')
 
@@ -115,7 +115,7 @@ const complianceForm = ref({
 })
 
 // Catálogos: monedas y bancos / medios de pago
-const { options: currencyOptions } = useVentasCurrencyCatalog()
+const { options: currencyOptions } = useCurrencyCatalog()
 const { data: financingChannels, isLoading: loadingChannels } = useVentasFinancingChannels()
 const paymentMethodOptions = computed(() =>
   financingChannelCodeOptions(
@@ -394,7 +394,18 @@ const hasPaymentEvidence = computed(
       </BaseCard>
 
       <template v-else>
-        <FormSectionCard title="Checklist legal" icon="lucide:list-checks" dense>
+        <FormSectionCard
+          title="Checklist legal"
+          icon="lucide:list-checks"
+          dense
+          :help-items="[
+            { term: 'Estudio de títulos y CRI', text: 'Se verificó que el vendedor es el propietario inscrito (Certificado Registral Inmobiliario).' },
+            { term: 'Sin cargas', text: 'El inmueble no tiene hipotecas, embargos ni otros gravámenes.' },
+            { term: 'Constancia municipal', text: 'No hay deudas de impuesto predial ni arbitrios.' },
+            { term: 'Minuta y escritura', text: 'Contrato privado y su elevación a escritura pública ante notario.' },
+            { term: 'Bancarización y fondos', text: 'El pago se hizo por medios bancarios y se declaró el origen de los fondos y el beneficiario final.' },
+          ]"
+        >
           <div class="grid sm:grid-cols-2 gap-2">
             <FormCheckbox v-model="complianceForm.titleStudyChecked" label="Estudio de títulos" />
             <FormCheckbox v-model="complianceForm.criChecked" label="CRI verificado" />
@@ -409,7 +420,12 @@ const hasPaymentEvidence = computed(
           </div>
         </FormSectionCard>
 
-        <FormSectionCard title="SUNARP" icon="lucide:landmark" dense>
+        <FormSectionCard
+          title="SUNARP"
+          icon="lucide:landmark"
+          dense
+          help="Registro de la transferencia: el notario presenta el parte notarial y SUNARP lo inscribe a nombre del comprador. Si hay una observación, se anota aquí hasta subsanarla."
+        >
           <div class="grid sm:grid-cols-3 gap-3">
             <FormSelect
               v-model="complianceForm.sunarpStatus"
@@ -430,6 +446,11 @@ const hasPaymentEvidence = computed(
         <FormSectionCard
           title="Tributos"
           subtitle="Alcabala (municipal) y renta de 2da categoría; se liquidan en soles"
+          :help-items="[
+            { term: 'Alcabala', text: 'Impuesto municipal que paga el comprador sobre el valor de la transferencia (con un tramo inafecto en UIT).' },
+            { term: 'Renta de 2da', text: 'Impuesto del vendedor persona natural sobre la ganancia: precio de venta − costo de adquisición.' },
+            { term: 'Tipo de cambio', text: 'Si la venta no es en soles, se usa para estimar ambos tributos, que se calculan en soles.' },
+          ]"
           icon="lucide:receipt"
           dense
         >
@@ -487,7 +508,12 @@ const hasPaymentEvidence = computed(
           </div>
         </FormSectionCard>
 
-        <FormSectionCard title="Pago y KYC" icon="lucide:shield-check" dense>
+        <FormSectionCard
+          title="Pago y KYC"
+          icon="lucide:shield-check"
+          dense
+          help="KYC («conoce a tu cliente»): cómo se pagó (banco y medio) y la verificación de identidad y origen de fondos del comprador, por prevención de lavado de activos."
+        >
           <div class="grid sm:grid-cols-2 gap-3">
             <FormSelect
               v-model="complianceForm.paymentMethod"

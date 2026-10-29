@@ -28,8 +28,8 @@ import {
   buildPropertyUbigeoPayload,
   parseLocationFromDescription,
   stripLocationFromDescription,
-} from '../../../clientes/constants/ubigeo-other'
-import { useClientAddressUbigeo } from '../../../clientes/composables/useClientAddressUbigeo'
+} from '@shared/domain/ubigeo-other'
+import { useClientAddressUbigeo } from '@shared/presentation/composables/useClientAddressUbigeo'
 import type { PropertyDetail, PropertyFormPayload } from '../../domain/property.types'
 import {
   buildPropertyCode,
@@ -439,7 +439,11 @@ const onSubmit = handleSubmit((v: PropertyFormValues) => {
   >
     <!-- ── Columna principal ── -->
     <div :class="isModal ? 'space-y-5' : 'space-y-6 xl:col-span-2'">
-      <FormSectionCard title="Datos generales" subtitle="El código se arma con el tipo, el distrito y el propietario principal">
+      <FormSectionCard
+        title="Datos generales"
+        subtitle="El código se arma con el tipo, el distrito y el propietario principal"
+        :help="`El código se completa al elegir tipo, propietario y distrito. Los contratos le agregan la operación y el año (ALQUILER-${new Date().getFullYear()}-…).`"
+      >
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <FormSelect
             v-bind="propertyTypeIdBinds"
@@ -472,9 +476,6 @@ const onSubmit = handleSubmit((v: PropertyFormValues) => {
             <p v-if="errors.code" role="alert" class="mt-1.5 text-theme-xs text-error-500">{{ errors.code }}</p>
             <p v-else-if="canRegenerateCode" class="mt-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
               Con los datos actuales sería <strong>{{ autoCode }}</strong>
-            </p>
-            <p v-else-if="!isEditing" class="mt-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
-              Se completa al elegir tipo, propietario y distrito. Los contratos le agregan la operación y el año (ALQUILER-{{ new Date().getFullYear() }}-…).
             </p>
           </div>
 
@@ -625,7 +626,15 @@ const onSubmit = handleSubmit((v: PropertyFormValues) => {
         </div>
       </FormSectionCard>
 
-      <FormSectionCard title="Condiciones de alquiler" subtitle="Moneda, montos de referencia y garantía">
+      <FormSectionCard
+        title="Condiciones de alquiler"
+        subtitle="Moneda, montos de referencia y garantía"
+        :help-items="[
+          { term: 'Montos de referencia', text: 'Alquiler y mantenimiento sugeridos; cada contrato define el monto final.' },
+          { term: 'Moneda', text: 'Los contratos de esta propiedad deben usar la misma moneda.' },
+          { term: 'Garantía (meses)', text: 'Cuántos meses de alquiler se piden como depósito de garantía.' },
+        ]"
+      >
         <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
           <FormSelect
             v-bind="rentCurrencyBinds"

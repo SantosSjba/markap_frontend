@@ -224,7 +224,16 @@ async function handleExport() {
 
 <template>
   <div class="space-y-6">
-    <PageHeader title="Comisiones" subtitle="Comisiones de asesores por proceso de venta, cada una en su moneda">
+    <PageHeader
+      title="Comisiones"
+      subtitle="Comisiones de asesores por proceso de venta, cada una en su moneda"
+      :help-items="[
+        { icon: 'lucide:percent', term: 'Origen', text: 'Se definen en cada proceso de venta: % del precio o monto fijo por asesor.' },
+        { icon: 'lucide:hourglass', term: 'Pendiente', text: 'Aún no se paga al asesor; si la venta se cae, se anula.' },
+        { icon: 'lucide:check', term: 'Pagada', text: 'Marcada como pagada con su fecha; cuenta en reportes en ese mes.' },
+        { icon: 'lucide:coins', term: 'Monedas', text: 'Soles y dólares nunca se suman: cada total va en su moneda.' },
+      ]"
+    >
       <template #actions>
         <BaseButton
           variant="outline"

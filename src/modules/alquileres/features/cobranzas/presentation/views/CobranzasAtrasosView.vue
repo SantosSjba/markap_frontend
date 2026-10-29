@@ -373,6 +373,11 @@ async function handleExport() {
     <PageHeader
       title="Clientes con Atraso"
       subtitle="Seguimiento de pagos pendientes"
+      :help-items="[
+        { icon: 'lucide:calendar-x', term: 'Días de atraso', text: 'Se cuentan desde la fecha de vencimiento de la cuota más antigua sin pagar.' },
+        { icon: 'lucide:siren', term: 'Gravedad', text: 'Moderado hasta 14 días, alto de 15 a 30 y crítico con más de 30 días de atraso.' },
+        { icon: 'lucide:list-checks', term: 'Período a regularizar', text: 'Cuotas vencidas del cliente que debe ponerse al día.' },
+      ]"
       back
       @back="router.push({ name: 'alquileres-cobranzas' })"
     >

@@ -418,7 +418,13 @@ const goList = () => router.push({ name: 'ventas-procesos' })
             <SaleParticipantList :people="buyersList" empty-text="Sin compradores registrados." />
           </FormSectionCard>
 
-          <FormSectionCard title="Separación" subtitle="Reserva con dinero: el inmueble queda «Separado»" icon="lucide:bookmark" show-icon>
+          <FormSectionCard
+            title="Separación"
+            subtitle="Reserva con dinero: el inmueble queda «Separado»"
+            icon="lucide:bookmark"
+            show-icon
+            help="Monto que entrega el comprador para reservar el inmueble: este pasa a «Separado» y deja de ofrecerse como disponible. Si la venta se cae, la separación vence y el inmueble vuelve a estar disponible."
+          >
             <template v-if="canRegisterSeparation" #actions>
               <BaseButton variant="outline" size="sm" icon="lucide:plus" @click="separationModalOpen = true">
                 Registrar separación
@@ -480,7 +486,17 @@ const goList = () => router.push({ name: 'ventas-procesos' })
             </p>
           </FormSectionCard>
 
-          <FormSectionCard title="Comisiones de asesores" subtitle="Cada comisión en su moneda" icon="lucide:percent" show-icon>
+          <FormSectionCard
+            title="Comisiones de asesores"
+            subtitle="Cada comisión en su moneda"
+            icon="lucide:percent"
+            show-icon
+            :help-items="[
+              { term: 'Cálculo', text: 'Un % sobre el precio del inmueble o un monto fijo; se guarda en su propia moneda.' },
+              { term: 'Neto', text: 'Comisión menos sus descuentos (deducibles): es lo que se le paga al asesor.' },
+              { term: 'Pago', text: 'Se marcan como pagadas en Ventas › Comisiones; si la venta se cae, las pendientes se anulan.' },
+            ]"
+          >
             <template #actions>
               <BaseButton variant="ghost" size="sm" icon="lucide:external-link" @click="router.push({ name: 'ventas-comisiones', query: { q: detail.code } })">
                 Ver comisiones
@@ -569,7 +585,13 @@ const goList = () => router.push({ name: 'ventas-procesos' })
             <p v-else class="text-sm text-gray-400 dark:text-gray-500">Sin comisiones registradas para este proceso.</p>
           </FormSectionCard>
 
-          <FormSectionCard title="Cierre de la venta" subtitle="Checklist legal, contrato y precio final" icon="lucide:circle-check" show-icon>
+          <FormSectionCard
+            title="Cierre de la venta"
+            subtitle="Checklist legal, contrato y precio final"
+            icon="lucide:circle-check"
+            show-icon
+            help="El cierre registra el precio final y el contrato. Se habilita cuando el checklist legal de Cumplimiento está completo; desde ahí se lleva la cobranza al comprador y los gastos."
+          >
             <!-- Venta cerrada -->
             <template v-if="closing">
               <dl class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
@@ -655,6 +677,11 @@ const goList = () => router.push({ name: 'ventas-procesos' })
             v-if="closing"
             title="Cobranza y gastos"
             subtitle="Pagos del comprador, gastos de documentación y rentabilidad de la venta"
+            :help-items="[
+              { term: 'Cobranza', text: 'Pagos que hace el comprador hasta completar el precio final.' },
+              { term: 'Gastos', text: 'Notaría, registros y otros gastos de documentación, en la moneda en que se pagaron.' },
+              { term: 'Rentabilidad', text: 'Precio final − comisiones − gastos en la misma moneda; los de otra moneda se muestran aparte.' },
+            ]"
             icon="lucide:wallet"
             show-icon
           >

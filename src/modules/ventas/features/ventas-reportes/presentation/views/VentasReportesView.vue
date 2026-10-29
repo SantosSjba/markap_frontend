@@ -4,13 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
-import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
-import FormInput from '@shared/presentation/components/forms/FormInput.vue'
+import ReportPeriodPicker from '@shared/presentation/components/reports/ReportPeriodPicker.vue'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import { formatCurrencyRounded } from '@shared/utils/formatters'
 import { useVentasReportSummary } from '../composables/useVentasReportes'
-import { PERIOD_MODE_OPTIONS, useReportPeriod } from '../utils/report-period'
+import { useReportPeriod } from '../utils/report-period'
 import SalesReportTab from '../components/SalesReportTab.vue'
 import AgentsReportTab from '../components/AgentsReportTab.vue'
 import ConversionReportTab from '../components/ConversionReportTab.vue'
@@ -74,15 +73,15 @@ const pendingCommissions = computed(() =>
   <div class="space-y-6">
     <PageHeader title="Reportes" subtitle="Ventas, asesores, conversión y flujo financiero en cada moneda" icon="lucide:bar-chart-3">
       <template #actions>
-        <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-end">
-          <FormSelect v-model="mode" :options="PERIOD_MODE_OPTIONS" class="sm:w-40" />
-          <FormSelect v-if="mode === 'year' || mode === 'month'" v-model="year" :options="yearOptions" class="sm:w-28" />
-          <FormSelect v-if="mode === 'month'" v-model="month" :options="monthOptions" class="col-span-2 sm:col-span-1 sm:w-36" />
-          <template v-if="mode === 'range'">
-            <FormInput v-model="startDate" type="date" class="sm:w-40" />
-            <FormInput v-model="endDate" type="date" class="sm:w-40" />
-          </template>
-        </div>
+        <ReportPeriodPicker
+          v-model:mode="mode"
+          v-model:year="year"
+          v-model:month="month"
+          v-model:start-date="startDate"
+          v-model:end-date="endDate"
+          :year-options="yearOptions"
+          :month-options="monthOptions"
+        />
       </template>
     </PageHeader>
 

@@ -14,7 +14,7 @@ import { fieldLabelClass } from '@shared/presentation/components/forms/field-cla
 import { formatShortDate, toCalendarDateString } from '@shared/utils/formatters'
 import { usePropertiesList } from '../../../propiedades/presentation/composables/useProperties'
 import { useClientsList } from '../../../clientes/presentation/composables/useClients'
-import { useCurrencyCatalog } from '../../../../presentation/composables/useCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 import type { PropertyListItem } from '../../../propiedades/domain/property.types'
 import type { ClientListItem } from '../../../clientes/domain/client.types'
 import type { RentalDetail, RentalFormPayload } from '../../domain/rental.types'
@@ -406,7 +406,11 @@ const onSubmit = handleSubmit(
 
       <RentalTenantsSection v-model:tenant-ids="tenantIds" :tenant-options="tenantOptions" :error="tenantIdsError" />
 
-      <FormSectionCard title="Vigencia y pago" subtitle="Fechas del contrato y día de vencimiento de cada cuota">
+      <FormSectionCard
+        title="Vigencia y pago"
+        subtitle="Fechas del contrato y día de vencimiento de cada cuota"
+        help="Con el inicio, el fin y el día de vencimiento se generan las cuotas mensuales en Cobranzas. Una cuota pasa a «Atrasado» si se vence sin pagarse."
+      >
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <FormInput v-bind="startDateBinds" type="date" label="Fecha de inicio" :error="errors.startDate" required />
           <FormInput
@@ -435,7 +439,15 @@ const onSubmit = handleSubmit(
         </div>
       </FormSectionCard>
 
-      <FormSectionCard title="Montos" subtitle="Moneda, alquiler mensual y garantía">
+      <FormSectionCard
+        title="Montos"
+        subtitle="Moneda, alquiler mensual y garantía"
+        :help-items="[
+          { term: 'Moneda', text: 'Debe ser la misma del alquiler de la propiedad.' },
+          { term: 'Monto mensual', text: 'Cuota que paga el inquilino cada mes; con ella se generan las cobranzas.' },
+          { term: 'Garantía', text: 'Depósito que entrega el inquilino y se devuelve al terminar el contrato si no hay deudas ni daños.' },
+        ]"
+      >
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <FormSelect
             v-bind="currencyBinds"
@@ -476,6 +488,7 @@ const onSubmit = handleSubmit(
       <FormSectionCard
         title="Comisión (ingreso)"
         subtitle="Cobro del ingreso de la distribución financiera; se registra una sola vez"
+        help="Lo que cobra la empresa por intermediar este alquiler. Si aún no se cobró, déjela pendiente con una fecha estimada; al marcarla cobrada, su fecha define el mes del ingreso en Reportes. Se sigue en el menú Comisiones."
       >
         <OptionCardGroup
           :model-value="values.commissionStatus"

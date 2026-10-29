@@ -144,3 +144,14 @@ export interface CreateExecutionActualCostPayload {
   occurredAt: string
   catalogMaterialId?: string | null
 }
+
+export interface CreateExecutionMilestonePayload {
+  title: string
+  plannedDate: string
+}
+
+export interface UpdateExecutionMilestonePayload {
+  title?: string
+  plannedDate?: string
+  completed?: boolean
+}

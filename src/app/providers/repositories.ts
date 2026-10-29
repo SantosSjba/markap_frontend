@@ -90,6 +90,8 @@ import { interiorClientsRepositoryKey as interiorismoClientesKey } from '@module
 import { interiorClientsApiRepository as interiorismoClientesAdapter } from '@modules/interiorismo/features/clientes/infrastructure/repositories/clients.api.repository'
 import { interiorismoConfigRepositoryKey as interiorismoConfiguracionKey } from '@modules/interiorismo/features/configuracion/application/ports/interiorismo-config.port'
 import { interiorismoConfigApiRepository as interiorismoConfiguracionAdapter } from '@modules/interiorismo/features/configuracion/infrastructure/repositories/interiorismo-config.api.repository'
+import { interiorTeamRepositoryKey as interiorismoEquipoKey } from '@modules/interiorismo/features/equipo/application/ports/team.port'
+import { interiorTeamApiRepository as interiorismoEquipoAdapter } from '@modules/interiorismo/features/equipo/infrastructure/repositories/team.api.repository'
 import { interiorDocumentsRepositoryKey as interiorismoDocumentosKey } from '@modules/interiorismo/features/documentos/application/ports/documents.port'
 import { interiorDocumentsApiRepository as interiorismoDocumentosAdapter } from '@modules/interiorismo/features/documentos/infrastructure/documents.api.repository'
 import { interiorExecutionRepositoryKey as interiorismoEjecucionKey } from '@modules/interiorismo/features/ejecucion/application/ports/execution.port'
@@ -204,6 +206,7 @@ export function installRepositories(app: App): void {
   provideService(app, interiorismoClientesKey, interiorismoClientesAdapter)
   provideService(app, interiorismoConfiguracionKey, interiorismoConfiguracionAdapter)
   provideService(app, interiorismoDocumentosKey, interiorismoDocumentosAdapter)
+  provideService(app, interiorismoEquipoKey, interiorismoEquipoAdapter)
   provideService(app, interiorismoEjecucionKey, interiorismoEjecucionAdapter)
   provideService(app, interiorismoFinanzasKey, interiorismoFinanzasAdapter)
   provideService(app, interiorismoMaterialesKey, interiorismoMaterialesAdapter)

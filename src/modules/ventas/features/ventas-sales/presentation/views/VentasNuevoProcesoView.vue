@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useVentasCurrencyCatalog } from '../../../../presentation/composables/useVentasCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
 const { canWrite } = useApplicationAccess('ventas')
 
@@ -66,7 +66,7 @@ const propertiesQuery = useQuery({
     ),
 })
 const { data: agentsRes, isLoading: loadingAgents } = useVentasAgentsList(ref({ page: 1, limit: 50, isActive: true }))
-const { options: currencyOptions } = useVentasCurrencyCatalog()
+const { options: currencyOptions } = useCurrencyCatalog()
 const { data: financingChannels, isLoading: loadingFinancing } = useVentasFinancingChannels()
 const { stageOptions, labelFor: stageLabel } = useVentasPipelineStages()
 
@@ -290,6 +290,7 @@ function submit() {
         <FormSectionCard
           title="Comisiones de asesores"
           :subtitle="`En % sobre el precio (${propertyCurrency}) o monto fijo en cualquier moneda`"
+          help="Cada asesor que participa recibe su comisión: un porcentaje del precio del inmueble o un monto fijo. Se pueden ajustar después en el proceso; se pagan desde Ventas › Comisiones."
         >
           <ProcessCommissionsEditor
             v-model="commissionRows"

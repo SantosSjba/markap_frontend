@@ -30,11 +30,4 @@ export const interiorismoConfigApiRepository: InteriorismoConfigRepository = {
         },
       )
       .then((r) => r.data),
-
-  patchInteriorProjectNumbering: (body: { prefix?: string; lastNumber?: number }) =>
-    apiClient
-      .patch<
-        InteriorismoConfigBootstrap['numbering']
-      >(`/interiorismo-config/numbering/interior-project?${qs({ ...scope })}`, body)
-      .then((r) => r.data),
 }

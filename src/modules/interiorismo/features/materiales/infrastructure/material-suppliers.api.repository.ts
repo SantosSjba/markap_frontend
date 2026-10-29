@@ -2,6 +2,7 @@ import { apiClient } from '@shared/infrastructure/http/api-client'
 import { INTERIORISMO_APP_SLUG } from '../../../config/app.constants'
 import type { InteriorMaterialSuppliersRepository } from '../domain/repositories/materialSuppliers.repository'
 import type {
+  InteriorSupplierStats,
   CreateInteriorMaterialSupplierPayload,
   InteriorSupplierDetail,
   LinkSupplierCatalogPayload,
@@ -71,5 +72,10 @@ export const interiorMaterialSuppliersApiRepository: InteriorMaterialSuppliersRe
       .post<InteriorSupplierDetail>(`${BASE}/${supplierId}/purchases`, payload, {
         params: { applicationSlug: INTERIORISMO_APP_SLUG },
       })
+      .then((r) => r.data),
+
+  getStats: () =>
+    apiClient
+      .get<InteriorSupplierStats>(`${BASE}/stats`, { params: { applicationSlug: INTERIORISMO_APP_SLUG } })
       .then((r) => r.data),
 }

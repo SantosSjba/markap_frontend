@@ -7,11 +7,12 @@ import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { invalidateModuleQueries } from '@shared/utils/invalidateModuleQueries'
 import { INTERIORISMO_APP_SLUG } from '../../../../config/app.constants'
 import type {
-  CreateExecutionActualCostPayload,
   CreateExecutionEvidencePayload,
   CreateExecutionIncidentPayload,
+  CreateExecutionMilestonePayload,
   CreateExecutionTaskPayload,
   UpdateExecutionIncidentPayload,
+  UpdateExecutionMilestonePayload,
   UpdateExecutionTaskPayload,
   UploadExecutionEvidencePayload,
 } from '../../domain/execution.types'
@@ -187,20 +188,6 @@ export function useUpdateExecutionIncident(projectId: Ref<string> | string) {
   })
 }
 
-export function useCreateExecutionActualCost(projectId: Ref<string> | string) {
-  const repo = useService(repoKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: CreateExecutionActualCostPayload) =>
-      repo.createActualCost(unref(projectId), payload),
-    onSuccess: async () => {
-      await invalidateModuleQueries(qc, 'interiorismo')
-      void markapAlert.toast.success('Costo registrado')
-    },
-    onError: (err) =>
-      void markapAlert.toast.error('No se pudo registrar el costo', getApiErrorMessage(err)),
-  })
-}
 
 export function useDeleteExecutionActualCost(projectId: Ref<string> | string) {
   const repo = useService(repoKey)
@@ -210,6 +197,53 @@ export function useDeleteExecutionActualCost(projectId: Ref<string> | string) {
     onSuccess: async () => {
       await invalidateModuleQueries(qc, 'interiorismo')
       void markapAlert.toast.success('Costo eliminado')
+    },
+    onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),
+  })
+}
+
+export function useCreateExecutionMilestone(projectId: Ref<string> | string) {
+  const repo = useService(repoKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateExecutionMilestonePayload) =>
+      repo.createMilestone(unref(projectId), payload),
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
+      void markapAlert.toast.success('Hito creado')
+    },
+    onError: (err) => void markapAlert.toast.error('No se pudo crear el hito', getApiErrorMessage(err)),
+  })
+}
+
+export function useUpdateExecutionMilestone(projectId: Ref<string> | string) {
+  const repo = useService(repoKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      milestoneId,
+      payload,
+    }: {
+      milestoneId: string
+      payload: UpdateExecutionMilestonePayload
+    }) => repo.updateMilestone(unref(projectId), milestoneId, payload),
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
+      void markapAlert.toast.success('Hito actualizado')
+    },
+    onError: (err) =>
+      void markapAlert.toast.error('No se pudo actualizar el hito', getApiErrorMessage(err)),
+  })
+}
+
+export function useDeleteExecutionMilestone(projectId: Ref<string> | string) {
+  const repo = useService(repoKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (milestoneId: string) => repo.deleteMilestone(unref(projectId), milestoneId),
+    onSuccess: async () => {
+      await invalidateModuleQueries(qc, 'interiorismo')
+      void markapAlert.toast.success('Hito eliminado')
     },
     onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),
   })

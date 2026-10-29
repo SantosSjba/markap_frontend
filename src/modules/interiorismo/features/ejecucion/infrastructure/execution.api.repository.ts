@@ -5,12 +5,15 @@ import type {
   CreateExecutionActualCostPayload,
   CreateExecutionEvidencePayload,
   CreateExecutionIncidentPayload,
+  CreateExecutionMilestonePayload,
   CreateExecutionTaskPayload,
   InteriorExecutionEvidenceDto,
   InteriorExecutionIncidentDto,
+  InteriorExecutionMilestoneDto,
   InteriorExecutionOverviewDto,
   InteriorExecutionTaskDto,
   UpdateExecutionIncidentPayload,
+  UpdateExecutionMilestonePayload,
   UpdateExecutionTaskPayload,
   UploadExecutionEvidencePayload,
 } from '../domain/execution.types'
@@ -95,6 +98,29 @@ export const interiorExecutionApiRepository: InteriorExecutionRepository = {
   deleteActualCost: (projectId: string, costId: string) =>
     apiClient
       .delete(`${BASE}/projects/${projectId}/actual-costs/${costId}`, q())
+      .then(() => undefined),
+
+  createMilestone: (projectId: string, payload: CreateExecutionMilestonePayload) =>
+    apiClient
+      .post<InteriorExecutionMilestoneDto>(`${BASE}/projects/${projectId}/milestones`, payload, q())
+      .then((r) => r.data),
+
+  updateMilestone: (
+    projectId: string,
+    milestoneId: string,
+    payload: UpdateExecutionMilestonePayload,
+  ) =>
+    apiClient
+      .patch<InteriorExecutionMilestoneDto>(
+        `${BASE}/projects/${projectId}/milestones/${milestoneId}`,
+        payload,
+        q(),
+      )
+      .then((r) => r.data),
+
+  deleteMilestone: (projectId: string, milestoneId: string) =>
+    apiClient
+      .delete(`${BASE}/projects/${projectId}/milestones/${milestoneId}`, q())
       .then(() => undefined),
 
   getDownloadUrl: (archivoId: string) =>

@@ -1,574 +1,203 @@
 <script setup lang="ts">
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
-const { canWrite, filterActions } = useApplicationAccess('interiorismo')
+const { canWrite } = useApplicationAccess('interiorismo')
 
-import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
-import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
-import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
-import FormCheckbox from '@shared/presentation/components/forms/FormCheckbox.vue'
-import { useService } from '@shared/presentation/di/services'
-import { DIRECTORY } from '@shared/application/ports/directory.port'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useQuery } from '@tanstack/vue-query'
-import * as yup from 'yup'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
-import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
-import DataTable from '@shared/presentation/components/ui/DataTable.vue'
-import FormInput from '@shared/presentation/components/forms/FormInput.vue'
-import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
-import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
-import Badge from '@shared/presentation/components/ui/Badge.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
-import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
-import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
-import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import HelpTooltip, { type HelpTooltipItem } from '@shared/presentation/components/ui/HelpTooltip.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
+import FormCombobox from '@shared/presentation/components/forms/FormCombobox.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import CalendarToolbar from '@shared/presentation/components/calendar/CalendarToolbar.vue'
+import CalendarMonthView from '@shared/presentation/components/calendar/CalendarMonthView.vue'
+import CalendarAgendaList from '@shared/presentation/components/calendar/CalendarAgendaList.vue'
+import { CALENDAR_TONE_CLASSES } from '@shared/presentation/components/calendar/calendar-tones'
+import type { CalendarEntry } from '@shared/presentation/components/calendar/calendar.types'
+import { shiftAnchor, viewRange, weekDays, type CalendarViewMode } from '@shared/domain/calendar-grid'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
-import {
-  formatDate,
-  formatDateTime,
-  formatShortDate,
-  toCalendarDateString,
-} from '@shared/utils/formatters'
-import { INTERIORISMO_APP_SLUG } from '../../../../config/app.constants'
-import { useInteriorProjectsList } from '../../../proyectos/presentation/composables/useInteriorProjects'
-import type { ListInteriorProjectsParams } from '../../../proyectos/domain/project.types'
+import { formatDate, toCalendarDateString } from '@shared/utils/formatters'
+import { useInteriorProjectOptions } from '../../../proyectos/presentation/composables/useInteriorProjects'
+import { useInteriorActiveTeam } from '../../../equipo/presentation/composables/useTeam'
 import type { CalendarFeedItemDto } from '../../domain/calendar.types'
-import {
-  useInteriorCalendarFeed,
-  useCreateCalendarEvent,
-  useUpdateCalendarEvent,
-  useDeleteCalendarEvent,
-} from '../composables/useInteriorCalendar'
-import { CAL_EVENT_TYPE_LABELS, CAL_SOURCE_LABELS } from '../labels'
-const directory = useService(DIRECTORY)
+import { useInteriorCalendarFeed } from '../composables/useInteriorCalendar'
+import { CALENDAR_ORIGINS, originOf, toCalendarEntry, type CalendarOrigin } from '../calendar-entries'
+import CalendarEventFormModal from '../components/CalendarEventFormModal.vue'
+import CalendarEventDetailModal from '../components/CalendarEventDetailModal.vue'
+/**
+ * Calendario de Interiorismo: agenda manual + hitos, tareas de obra y cobros programados.
+ * Vistas mes / semana / lista; estado en la URL (`?view=&date=&projectId=`).
+ */
 
 const route = useRoute()
 const router = useRouter()
+const today = toCalendarDateString()
 
-function monthBounds(y: number, m: number): { from: string; to: string } {
-  const from = new Date(y, m - 1, 1)
-  const to = new Date(y, m, 0)
-  return {
-    from: toCalendarDateString(from),
-    to: toCalendarDateString(to),
-  }
-}
-
-const now = new Date()
-const rangeMonth = ref(now.getMonth() + 1)
-const rangeYear = ref(now.getFullYear())
-
-const range = computed(() => monthBounds(rangeYear.value, rangeMonth.value))
-
-const projectFilter = ref('')
+// ── Estado sincronizado con la URL ──
+const qs = (k: string) => (typeof route.query[k] === 'string' ? (route.query[k] as string) : '')
+const VIEWS: CalendarViewMode[] = ['month', 'week', 'list']
+const view = ref<CalendarViewMode>(VIEWS.includes(qs('view') as CalendarViewMode) ? (qs('view') as CalendarViewMode) : 'month')
+const anchor = ref(/^\d{4}-\d{2}-\d{2}$/.test(qs('date')) ? qs('date') : today)
+const projectFilter = ref(qs('projectId'))
 const agentFilter = ref('')
-const lens = ref('all')
+const hiddenOrigins = ref<CalendarOrigin[]>([])
 
-const lensTabs = [
-  { id: 'all', label: 'Todo', icon: 'lucide:calendar-days' },
-  { id: 'meetings', label: 'Reuniones', icon: 'lucide:users' },
-  { id: 'visits', label: 'Visitas', icon: 'lucide:map-pin' },
-  { id: 'installations', label: 'Instalaciones', icon: 'lucide:hammer' },
-  { id: 'deadlines', label: 'Fechas límite', icon: 'lucide:alarm-clock' },
-  { id: 'team', label: 'Agenda equipo', icon: 'lucide:briefcase' },
-]
+watch([view, anchor, projectFilter], () => {
+  void router.replace({
+    query: {
+      ...route.query,
+      view: view.value === 'month' ? undefined : view.value,
+      date: anchor.value === today ? undefined : anchor.value,
+      projectId: projectFilter.value || undefined,
+    },
+  })
+})
 
+const range = computed(() => viewRange(view.value, anchor.value))
 const feedParams = computed(() => ({
-  from: range.value.from,
-  to: range.value.to,
-  ...(projectFilter.value.trim() ? { projectId: projectFilter.value.trim() } : {}),
-  ...(agentFilter.value.trim() ? { agentId: agentFilter.value.trim() } : {}),
+  ...range.value,
+  ...(projectFilter.value ? { projectId: projectFilter.value } : {}),
+  ...(agentFilter.value ? { agentId: agentFilter.value } : {}),
 }))
+const { data: feed, isLoading, isError, error, refetch } = useInteriorCalendarFeed(feedParams)
 
-const {
-  data: feed,
-  isLoading,
-  isError,
-  error: feedError,
-  refetch: refetchFeed,
-} = useInteriorCalendarFeed(feedParams)
-const createEv = useCreateCalendarEvent()
-const updateEv = useUpdateCalendarEvent()
-const deleteEv = useDeleteCalendarEvent()
-
-const listParams = ref<ListInteriorProjectsParams>({ page: 1, limit: 400 })
-const {
-  data: projectsRes,
-  isError: projectsQueryError,
-  error: projectsListError,
-  refetch: refetchProjects,
-} = useInteriorProjectsList(listParams)
-
-const projectOptions = computed(() => [
-  { value: '', label: 'Todos los proyectos' },
-  ...(projectsRes.value?.data ?? []).map((p) => ({
-    value: p.id,
-    label: `${p.code} · ${p.name}`,
-  })),
-])
-
-const {
-  data: agentsRes,
-  isError: agentsQueryError,
-  error: agentsListError,
-  refetch: refetchAgents,
-} = useQuery({
-  queryKey: ['agents', INTERIORISMO_APP_SLUG, 'calendar'],
-  queryFn: async () => {
-    const data = await directory.listAgents({
-      applicationSlug: INTERIORISMO_APP_SLUG,
-      limit: 500,
-      page: 1,
-    })
-    return data
-  },
-})
-
-const agentOptions = computed(() => [
-  { value: '', label: 'Todo el equipo' },
-  ...(agentsRes.value?.data ?? []).map((a) => ({
-    value: a.id,
-    label: a.fullName,
-  })),
-])
-
-function matchesLens(item: CalendarFeedItemDto, L: string): boolean {
-  switch (L) {
-    case 'all':
-      return true
-    case 'meetings':
-      return item.eventType === 'MEETING'
-    case 'visits':
-      return item.eventType === 'VISIT'
-    case 'installations':
-      return item.eventType === 'INSTALLATION' || item.eventType === 'TASK_INSTALLATION'
-    case 'deadlines':
-      return ['DEADLINE', 'MILESTONE', 'FINANCE_DUE'].includes(item.eventType)
-    case 'team':
-      return item.eventType === 'TEAM_BLOCK' || !!item.assignedAgentId
-    default:
-      return true
-  }
-}
-
-const filteredFeed = computed(() => {
-  const rows = feed.value ?? []
-  let list = rows.filter((r) => matchesLens(r, lens.value))
-  if (agentFilter.value.trim()) {
-    list = list.filter((r) => r.assignedAgentId === agentFilter.value.trim())
-  }
-  return [...list].sort((a, b) => a.startsAt.localeCompare(b.startsAt))
-})
-
-/** Mini heatmap: cuántos eventos por día (filtrados) */
-const countsByDay = computed(() => {
-  const m: Record<string, number> = {}
-  for (const r of filteredFeed.value) {
-    const d = toCalendarDateString(r.startsAt)
-    m[d] = (m[d] ?? 0) + 1
-  }
-  return m
-})
-
-const monthDays = computed(() => {
-  const y = rangeYear.value
-  const m = rangeMonth.value
-  const first = new Date(Date.UTC(y, m - 1, 1))
-  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate()
-  const pad = (first.getUTCDay() + 6) % 7
-  const cells: { key: string; label: string | null; iso: string | null }[] = []
-  for (let i = 0; i < pad; i++) cells.push({ key: `p-${i}`, label: null, iso: null })
-  for (let d = 1; d <= lastDay; d++) {
-    const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-    cells.push({ key: iso, label: String(d), iso })
-  }
-  return cells
-})
-
-onMounted(() => {
-  const q = route.query.projectId
-  if (typeof q === 'string' && q.trim()) projectFilter.value = q.trim()
-})
-
-watch(projectFilter, (v) => {
-  const cur = typeof route.query.projectId === 'string' ? route.query.projectId : ''
-  const next = v.trim()
-  if (cur === next) return
-  router.replace({ path: route.path, query: { ...route.query, projectId: next || undefined } })
-})
-
-/** Id del formulario del modal de evento (botones en `#footer` usan `form` para submit nativo). */
-const CAL_EVENT_FORM_ID = 'interior-cal-event-form'
-
-const cols = [
-  { key: 'when', label: 'Cuándo', align: 'left' as const },
-  { key: 'kind', label: 'Tipo', align: 'left' as const },
-  { key: 'title', label: 'Título', align: 'left' as const },
-  { key: 'project', label: 'Proyecto', align: 'left' as const },
-  { key: 'assignee', label: 'Responsable', align: 'left' as const },
-  { key: 'source', label: 'Origen', align: 'left' as const },
-  { key: '_a', label: '', align: 'right' as const },
-]
-
-const modalOpen = ref(false)
-const editId = ref<string | null>(null)
-
-const MANUAL_TYPES = ['MEETING', 'VISIT', 'INSTALLATION', 'DEADLINE', 'TEAM_BLOCK'] as const
-
-const eventSchema = yup.object({
-  eventType: yup.string().required('Seleccione el tipo'),
-  title: yup.string().required('El título es obligatorio').trim(),
-  description: yup.string().trim(),
-  location: yup.string().trim(),
-  startsAt: yup.string().required('Indique inicio'),
-  endsAt: yup.string().trim(),
-  allDay: yup.boolean(),
-  projectId: yup.string().trim(),
-  assignedAgentId: yup.string().trim(),
-})
-
-const evForm = useForm({
-  validationSchema: toTypedSchema(eventSchema),
-  initialValues: {
-    eventType: 'MEETING',
-    title: '',
-    description: '',
-    location: '',
-    startsAt: '',
-    endsAt: '',
-    allDay: false,
-    projectId: '',
-    assignedAgentId: '',
-  },
-})
-
-const { values: evValues, setFieldValue } = evForm
-
-const evBinds = {
-  eventType: evForm.defineComponentBinds('eventType'),
-  title: evForm.defineComponentBinds('title'),
-  description: evForm.defineComponentBinds('description'),
-  location: evForm.defineComponentBinds('location'),
-  startsAt: evForm.defineComponentBinds('startsAt'),
-  endsAt: evForm.defineComponentBinds('endsAt'),
-  allDay: evForm.defineComponentBinds('allDay'),
-  projectId: evForm.defineComponentBinds('projectId'),
-  assignedAgentId: evForm.defineComponentBinds('assignedAgentId'),
-}
-
-const typeOptions = MANUAL_TYPES.map((v) => ({
-  value: v,
-  label: CAL_EVENT_TYPE_LABELS[v] ?? v,
-}))
-
-function openCreate() {
-  editId.value = null
-  const d = new Date()
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-  evForm.resetForm({
-    values: {
-      eventType: 'MEETING',
-      title: '',
-      description: '',
-      location: '',
-      startsAt: local,
-      endsAt: '',
-      allDay: false,
-      projectId: projectFilter.value.trim(),
-      assignedAgentId: '',
-    },
-  })
-  modalOpen.value = true
-}
-
-function openEdit(row: CalendarFeedItemDto) {
-  if (row.readOnly) return
-  editId.value = row.id
-  let startsLocal: string
-  let endsLocal = ''
-  if (row.allDay) {
-    startsLocal = toCalendarDateString(row.startsAt)
-    endsLocal = row.endsAt ? toCalendarDateString(row.endsAt) : ''
-  } else {
-    const sd = new Date(row.startsAt)
-    startsLocal = new Date(sd.getTime() - sd.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-    if (row.endsAt) {
-      const ed = new Date(row.endsAt)
-      endsLocal = new Date(ed.getTime() - ed.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-    }
-  }
-  evForm.resetForm({
-    values: {
-      eventType: row.eventType,
-      title: row.title,
-      description: row.description ?? '',
-      location: row.location ?? '',
-      startsAt: startsLocal,
-      endsAt: endsLocal,
-      allDay: row.allDay,
-      projectId: row.projectId ?? '',
-      assignedAgentId: row.assignedAgentId ?? '',
-    },
-  })
-  modalOpen.value = true
-}
-
-const onSubmitEvent = evForm.handleSubmit(async (values) => {
-  const pid = values.projectId?.trim() ? values.projectId.trim() : null
-  const aid = values.assignedAgentId?.trim() ? values.assignedAgentId.trim() : null
-  let startsIso: string
-  let endsIso: string | null = null
-  if (values.allDay) {
-    const d = toCalendarDateString(values.startsAt.trim())
-    // Noon UTC: date-only transport convention (matches backend parseDateOnly)
-    startsIso = `${d}T12:00:00.000Z`
-    const er = values.endsAt?.trim()
-    endsIso = er ? `${toCalendarDateString(er)}T12:00:00.000Z` : null
-  } else {
-    startsIso = new Date(values.startsAt).toISOString()
-    const endsRaw = values.endsAt?.trim()
-    endsIso = endsRaw ? new Date(endsRaw).toISOString() : null
-  }
-
-  if (editId.value) {
-    await updateEv.mutateAsync({
-      eventId: editId.value,
-      payload: {
-        eventType: values.eventType,
-        title: values.title,
-        description: values.description || null,
-        location: values.location || null,
-        startsAt: startsIso,
-        endsAt: endsIso,
-        allDay: values.allDay,
-        projectId: pid,
-        assignedAgentId: aid,
-      },
-    })
-  } else {
-    await createEv.mutateAsync({
-      eventType: values.eventType,
-      title: values.title,
-      description: values.description || null,
-      location: values.location || null,
-      startsAt: startsIso,
-      endsAt: endsIso,
-      allDay: values.allDay,
-      projectId: pid,
-      assignedAgentId: aid,
-    })
-  }
-  modalOpen.value = false
-})
-
-async function removeEvent(row: CalendarFeedItemDto) {
-  if (row.readOnly) return
-  const ok = await markapAlert.confirmDanger({
-    title: '¿Eliminar evento?',
-    confirmText: 'Eliminar',
-  })
-  if (!ok) return
-  await deleteEv.mutateAsync(row.id)
-}
-
-function getEventActions(
-  row: CalendarFeedItemDto,
-): { label: string; icon: string; onClick: () => void }[] {
-  if (row.readOnly) return []
-  return [
-    { label: 'Editar', icon: 'lucide:pencil', onClick: () => openEdit(row) },
-    { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => void removeEvent(row) },
-  ]
-}
-
-function fmtWhen(row: CalendarFeedItemDto): string {
-  if (row.allDay) return formatShortDate(row.startsAt)
-  const s = formatDateTime(row.startsAt)
-  if (!row.endsAt) return s
-  return `${s} → ${formatDateTime(row.endsAt)}`
-}
-
-function prevMonth() {
-  if (rangeMonth.value <= 1) {
-    rangeMonth.value = 12
-    rangeYear.value -= 1
-  } else {
-    rangeMonth.value -= 1
-  }
-}
-
-function nextMonth() {
-  if (rangeMonth.value >= 12) {
-    rangeMonth.value = 1
-    rangeYear.value += 1
-  } else {
-    rangeMonth.value += 1
-  }
-}
-
-const monthTitle = computed(() =>
-  formatDate(new Date(rangeYear.value, rangeMonth.value - 1, 1), {
-    month: 'long',
-    year: 'numeric',
-  }),
+const visibleFeed = computed(() => (feed.value ?? []).filter((i) => !hiddenOrigins.value.includes(originOf(i))))
+const entryIndex = computed(() => new Map(visibleFeed.value.map((i) => [`${i.source}:${i.id}`, i])))
+const entries = computed(() =>
+  visibleFeed.value.map(toCalendarEntry).sort((a, b) => a.start.localeCompare(b.start) || (a.time ?? '').localeCompare(b.time ?? '')),
 )
+
+const countByOrigin = computed(() => {
+  const counts: Record<CalendarOrigin, number> = { MANUAL: 0, MILESTONE: 0, TASK: 0, FINANCE: 0 }
+  for (const i of feed.value ?? []) counts[originOf(i)]++
+  return counts
+})
+function toggleOrigin(o: CalendarOrigin) {
+  hiddenOrigins.value = hiddenOrigins.value.includes(o) ? hiddenOrigins.value.filter((x) => x !== o) : [...hiddenOrigins.value, o]
+}
+
+const periodTitle = computed(() => {
+  if (view.value === 'week') {
+    const { from: first, to: last } = range.value
+    return `${formatDate(first, { day: 'numeric', month: 'short', year: undefined })} – ${formatDate(last, { day: 'numeric', month: 'short' })}`
+  }
+  return formatDate(anchor.value, { month: 'long', year: 'numeric', day: undefined })
+})
+
+// ── Filtros: proyectos y equipo ──
+const { options: projectItems } = useInteriorProjectOptions()
+const projectFilterOptions = computed(() => [{ value: '', label: 'Todos los proyectos' }, ...projectItems.value])
+const projectFormOptions = computed(() => [{ value: '', label: 'Sin proyecto' }, ...projectItems.value])
+
+const { data: team } = useInteriorActiveTeam()
+const agentItems = computed(() => (team.value ?? []).map((a) => ({ value: a.id, label: a.fullName })))
+
+// ── Ayuda ──
+const HELP: HelpTooltipItem[] = [
+  { icon: 'lucide:calendar-plus', term: 'Agenda', text: 'Reuniones, visitas, instalaciones y fechas límite que se crean aquí con «Nuevo evento».' },
+  { icon: 'lucide:flag', term: 'Hitos y fechas', text: 'Hitos del cronograma (Ejecución) y el inicio y la entrega estimada de cada proyecto. Los hitos cumplidos se ven en gris.' },
+  { icon: 'lucide:list-checks', term: 'Tareas de obra', text: 'Tareas de Ejecución con fechas planificadas, de su inicio a su fin.' },
+  { icon: 'lucide:wallet', term: 'Cobros', text: 'Cobros «Programado» registrados en Liquidación, en su fecha.' },
+  { icon: 'lucide:users', term: 'Filtro por persona', text: 'Muestra sus eventos asignados y lo de los proyectos donde integra el equipo.' },
+  { icon: 'lucide:info', term: 'Proyectos cancelados', text: 'No aparecen sus hitos, tareas ni cobros.' },
+]
+const agentFilterOptions = computed(() => [{ value: '', label: 'Todo el equipo' }, ...agentItems.value])
+const agentFormOptions = computed(() => [{ value: '', label: 'Sin responsable' }, ...agentItems.value])
+
+// ── Modales ──
+const formOpen = ref(false)
+const formEvent = ref<CalendarFeedItemDto | null>(null)
+const formDate = ref<string>()
+const detailOpen = ref(false)
+const detailEvent = ref<CalendarFeedItemDto | null>(null)
+
+function openCreate(date?: string) {
+  formEvent.value = null
+  formDate.value = date ?? (anchor.value === today || view.value === 'week' ? today : anchor.value)
+  formOpen.value = true
+}
+function openEntry(entry: CalendarEntry) {
+  detailEvent.value = entryIndex.value.get(entry.id) ?? null
+  detailOpen.value = !!detailEvent.value
+}
+function onEdit(event: CalendarFeedItemDto) {
+  detailOpen.value = false
+  formEvent.value = event
+  formOpen.value = true
+}
+/** Clic en un día: en la vista mensual pasa a la semana de ese día; con permiso abre el alta. */
+function onSelectDay(date: string) {
+  if (view.value === 'month') {
+    anchor.value = date
+    view.value = 'week'
+  } else if (canWrite.value) {
+    openCreate(date)
+  }
+}
 </script>
 
 <template>
   <div class="space-y-6">
-    <PageHeader
-      title="Calendario"
-    >
+    <PageHeader title="Calendario" subtitle="Agenda del equipo, hitos, fechas de proyecto, tareas de obra y cobros programados">
       <template #actions>
-        <p class="text-sm mt-1 text-gray-500 dark:text-gray-400">
-        Reuniones, visitas, instalaciones, fechas límite y agenda del equipo; integrado con hitos, tareas de ejecución y cobros programados.
-      </p>
+        <BaseButton v-if="canWrite" variant="primary" icon="lucide:plus" @click="openCreate()">Nuevo evento</BaseButton>
       </template>
     </PageHeader>
 
-    <BaseCard padding="sm" class="block overflow-hidden space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
-          <BaseButton variant="outline" size="sm" type="button" @click="prevMonth">
-            <AppIcon icon="lucide:chevron-left" :size="18" />
-          </BaseButton>
-          <span class="text-sm font-semibold capitalize min-w-[160px] text-center text-gray-800 dark:text-white/90">
-            {{ monthTitle }}
-          </span>
-          <BaseButton variant="outline" size="sm" type="button" @click="nextMonth">
-            <AppIcon icon="lucide:chevron-right" :size="18" />
-          </BaseButton>
-        </div>
-        <BaseButton v-if="canWrite" variant="primary" size="sm" type="button" @click="openCreate">
-          <AppIcon icon="lucide:plus" :size="18" class="mr-1" />
-          Nuevo evento
-        </BaseButton>
-      </div>
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatsCard v-for="o in CALENDAR_ORIGINS" :key="o.id" compact :title="o.label" :value="String(countByOrigin[o.id])" :subtitle="view === 'week' ? 'esta semana' : 'en el período'" :loading="isLoading">
+        <template #icon><span class="size-2.5 rounded-full" :class="CALENDAR_TONE_CLASSES[o.tone].dot" /></template>
+      </StatsCard>
+    </div>
 
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <FormSelect v-model="projectFilter" label="Proyecto" :options="projectOptions" />
-        <FormSelect v-model="agentFilter" label="Responsable (filtro)" :options="agentOptions" />
-      </div>
+    <div class="space-y-4">
+      <CalendarToolbar v-model:view="view" :title="periodTitle" @prev="anchor = shiftAnchor(view, anchor, -1)" @next="anchor = shiftAnchor(view, anchor, 1)" @today="anchor = today" />
 
-      <div
-        v-if="projectsQueryError || agentsQueryError"
-        class="rounded-lg border px-3 py-2 text-sm space-y-2 border-gray-200 dark:border-gray-800 bg-warning-50 dark:bg-warning-500/15"
-      >
-        <p v-if="projectsQueryError" class="flex flex-wrap items-center gap-2 text-gray-800 dark:text-white/90">
-          <span class="text-xs font-medium text-error-600 dark:text-error-500">Proyectos</span>
-          <span class="text-xs">{{ getApiErrorMessage(projectsListError) }}</span>
-          <BaseButton variant="outline" size="sm" class="ml-auto" @click="() => refetchProjects()">Reintentar</BaseButton>
-        </p>
-        <p v-if="agentsQueryError" class="flex flex-wrap items-center gap-2 text-gray-800 dark:text-white/90">
-          <span class="text-xs font-medium text-error-600 dark:text-error-500">Agentes</span>
-          <span class="text-xs">{{ getApiErrorMessage(agentsListError) }}</span>
-          <BaseButton variant="outline" size="sm" class="ml-auto" @click="() => refetchAgents()">Reintentar</BaseButton>
-        </p>
-      </div>
-
-      <BaseTabs v-model="lens" :tabs="lensTabs" />
-
-      <div
-        class="rounded-lg border p-3 overflow-x-auto border-gray-200 dark:border-gray-800"
-      >
-        <p class="text-xs mb-2 text-gray-400 dark:text-gray-500">
-          Vista rápida del mes · número = cantidad de ítems en esta vista
-        </p>
-        <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium mb-1 text-gray-500 dark:text-gray-400">
-          <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
-        </div>
-        <div class="grid grid-cols-7 gap-1">
-          <div :class="[(c.iso && countsByDay[c.iso] ? 'bg-brand-50 dark:bg-brand-500/12' : 'bg-transparent')]"
-            v-for="c in monthDays"
-            :key="c.key"
-            class="aspect-square rounded-md flex flex-col items-center justify-center text-xs border border-transparent text-gray-800 dark:text-white/90" :style="{ opacity: c.label ? 1 : 0 }"
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div class="w-full min-w-0 lg:w-[280px]"><FormCombobox v-model="projectFilter" :options="projectFilterOptions" placeholder="Todos los proyectos" /></div>
+        <div class="w-full min-w-0 lg:w-[220px]"><FormSelect v-model="agentFilter" :options="agentFilterOptions" /></div>
+        <div class="flex flex-wrap items-center gap-1.5 lg:ml-auto">
+          <HelpTooltip title="¿Qué muestra el calendario?" :items="HELP" width="w-96" align="end" class="me-1" />
+          <button
+            v-for="o in CALENDAR_ORIGINS"
+            :key="o.id"
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-theme-xs font-medium transition-colors"
+            :class="hiddenOrigins.includes(o.id) ? 'border-gray-200 text-gray-400 line-through dark:border-gray-800 dark:text-gray-600' : 'border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-300'"
+            :aria-pressed="!hiddenOrigins.includes(o.id)"
+            @click="toggleOrigin(o.id)"
           >
-            <template v-if="c.label">
-              <span>{{ c.label }}</span>
-              <span v-if="countsByDay[c.iso!]" class="font-semibold text-[10px] text-brand-500 dark:text-brand-400">
-                {{ countsByDay[c.iso!] }}
-              </span>
-            </template>
-          </div>
+            <span class="size-2 rounded-full" :class="hiddenOrigins.includes(o.id) ? 'bg-gray-300 dark:bg-gray-700' : CALENDAR_TONE_CLASSES[o.tone].dot" />{{ o.label }}
+          </button>
         </div>
       </div>
 
-      <LoadingState v-if="isLoading" />
-      <div v-else-if="isError" class="text-center py-12 space-y-3 text-sm text-gray-500 dark:text-gray-400">
-        <p class="text-error-500 dark:text-error-400">{{ getApiErrorMessage(feedError) }}</p>
-        <BaseButton variant="outline" size="sm" @click="() => refetchFeed()">Reintentar</BaseButton>
+      <LoadingState v-if="isLoading" class="py-16" />
+      <div v-else-if="isError" class="space-y-3 py-12 text-center text-sm">
+        <p class="text-error-500">{{ getApiErrorMessage(error) }}</p>
+        <BaseButton variant="outline" size="sm" icon="lucide:refresh-cw" @click="() => refetch()">Reintentar</BaseButton>
       </div>
-      <DataTable
+      <CalendarMonthView v-else-if="view === 'month'" :anchor="anchor" :today="today" :entries="entries" @select-entry="openEntry" @select-day="onSelectDay" />
+      <CalendarAgendaList
         v-else
-        empty-text="Sin eventos en el período."
-        :columns="cols"
-        :data="
-          filteredFeed.map((r) => ({
-            ...r,
-            when: fmtWhen(r),
-            kind: CAL_EVENT_TYPE_LABELS[r.eventType] ?? r.eventType,
-            project: r.projectCode ? `${r.projectCode}` : '—',
-            assignee: r.assignedAgentName ?? '—',
-            source: CAL_SOURCE_LABELS[r.source] ?? r.source,
-            _a: '',
-          }))
-        "
-        row-key="id"
-      >
-        <template #row="{ row }">
-          <td class="py-2 px-3 text-sm whitespace-nowrap">{{ (row as any).when }}</td>
-          <td class="py-2 px-3 text-sm">{{ (row as any).kind }}</td>
-          <td class="py-2 px-3 text-sm max-w-[240px]">
-            <span class="line-clamp-2">{{ (row as any).title }}</span>
-            <span v-if="(row as CalendarFeedItemDto).location" class="block text-xs text-muted truncate">{{
-              (row as CalendarFeedItemDto).location
-            }}</span>
-          </td>
-          <td class="py-2 px-3 text-sm">{{ (row as any).project }}</td>
-          <td class="py-2 px-3 text-sm">{{ (row as any).assignee }}</td>
-          <td class="py-2 px-3">
-            <Badge variant="neutral">{{ (row as any).source }}</Badge>
-          </td>
-          <td class="py-2 px-3 text-right whitespace-nowrap">
-            <ActionsDropdown
-              v-if="!(row as CalendarFeedItemDto).readOnly"
-              :items="filterActions(getEventActions(row as CalendarFeedItemDto))"
-            />
-            <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
-          </td>
-        </template>
-      </DataTable>
-    </BaseCard>
+        :entries="entries"
+        :range="range"
+        :today="today"
+        :days="view === 'week' ? weekDays(anchor) : undefined"
+        empty-text="Sin eventos este mes."
+        @select-entry="openEntry"
+        @select-day="onSelectDay"
+      />
+      <p v-if="view !== 'list' && !isLoading" class="flex items-center gap-1.5 text-theme-xs text-gray-400 dark:text-gray-500">
+        <AppIcon icon="lucide:info" :size="14" />
+        {{ view === 'month' ? 'Toca un día para ver su semana.' : canWrite ? 'Toca un día para agendar un evento.' : 'Toca un evento para ver su detalle.' }}
+      </p>
+    </div>
 
-    <BaseModal v-model="modalOpen" :title="editId ? 'Editar evento' : 'Nuevo evento'" size="lg">
-      <form :id="CAL_EVENT_FORM_ID" class="space-y-3" @submit.prevent="onSubmitEvent">
-        <FormSelect v-bind="evBinds.eventType" label="Tipo" :options="typeOptions" />
-        <FormInput v-bind="evBinds.title" label="Título" />
-        <FormTextarea v-bind="evBinds.description" label="Detalle" :rows="2" />
-        <FormInput v-bind="evBinds.location" label="Ubicación (visitas / obra)" />
-        <div class="flex flex-wrap gap-4 items-center">
-          <FormCheckbox :model-value="!!evValues.allDay" label="Todo el día" @update:model-value="setFieldValue('allDay', $event)" />
-        </div>
-        <FormInput v-bind="evBinds.startsAt" :type="evValues.allDay ? 'date' : 'datetime-local'" label="Inicio" />
-        <FormInput v-bind="evBinds.endsAt" :type="evValues.allDay ? 'date' : 'datetime-local'" label="Fin (opcional)" />
-        <FormSelect v-bind="evBinds.projectId" label="Proyecto (opcional)" :options="projectOptions" />
-        <FormSelect v-bind="evBinds.assignedAgentId" label="Responsable (opcional)" :options="agentOptions" />
-      </form>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <BaseButton variant="outline" type="button" @click="modalOpen = false">Cancelar</BaseButton>
-          <BaseButton v-if="canWrite"
-            variant="primary"
-            type="submit"
-            :form="CAL_EVENT_FORM_ID"
-            :loading="createEv.isPending.value || updateEv.isPending.value"
-          >
-            Guardar
-          </BaseButton>
-        </div>
-      </template>
-    </BaseModal>
+    <CalendarEventFormModal v-model:open="formOpen" :event="formEvent" :default-date="formDate" :default-project-id="projectFilter" :project-options="projectFormOptions" :agent-options="agentFormOptions" />
+    <CalendarEventDetailModal v-model:open="detailOpen" :event="detailEvent" @edit="onEdit" />
   </div>
 </template>

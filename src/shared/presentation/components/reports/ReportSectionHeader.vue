@@ -2,6 +2,7 @@
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import ExcelIcon from '@shared/presentation/components/ui/ExcelIcon.vue'
+import HelpTooltip from '@shared/presentation/components/ui/HelpTooltip.vue'
 /**
  * Encabezado de una pestaña de Reportes: título, descripción, controles propios
  * (slot `actions`, p. ej. el período) y exportación a Excel.
@@ -11,6 +12,8 @@ defineProps<{
   subtitle: string
   icon: string
   exporting?: boolean
+  /** Cómo se calcula o qué incluye el reporte («?» junto al título) */
+  help?: string
 }>()
 const emit = defineEmits<{ export: [] }>()
 </script>
@@ -22,7 +25,10 @@ const emit = defineEmits<{ export: [] }>()
         <AppIcon :icon="icon" :size="18" color="var(--color-primary)" />
       </div>
       <div class="min-w-0">
-        <h2 class="text-base font-semibold text-gray-800 dark:text-white/90">{{ title }}</h2>
+        <h2 class="flex items-center gap-1.5 text-base font-semibold text-gray-800 dark:text-white/90">
+          {{ title }}
+          <HelpTooltip v-if="help" :title="title" :text="help" width="w-80" align="start" />
+        </h2>
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ subtitle }}</p>
       </div>
     </div>

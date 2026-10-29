@@ -18,7 +18,8 @@ import { useVentasPropertyStats } from '../../features/propiedades/presentation/
 import { useVentasClientStats } from '../../features/clientes/presentation/composables/useVentasClients'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { formatCurrency, formatDate, toCalendarDateString } from '@shared/utils/formatters'
-import DashboardAccionesRapidas from '../components/DashboardAccionesRapidas.vue'
+import QuickActionsBar from '@shared/presentation/components/dashboard/QuickActionsBar.vue'
+import type { QuickAction } from '@shared/presentation/components/dashboard/quick-actions.types'
 import DashboardProcesosList from '../components/DashboardProcesosList.vue'
 import DashboardBarChart from '../components/DashboardBarChart.vue'
 import DashboardEmbudo from '../components/DashboardEmbudo.vue'
@@ -81,6 +82,16 @@ const chartTabs: { id: ChartMode; label: string }[] = [
   { id: 'closingsCount', label: 'Cierres' },
   { id: 'totalAmount', label: 'Volumen' },
 ]
+
+const quickActions: QuickAction[] = [
+  { id: 'nuevo-proceso', label: 'Nuevo Proceso', route: { name: 'ventas-procesos-nuevo' }, icon: 'lucide:plus', primary: true },
+  { id: 'pipeline', label: 'Pipeline', route: { name: 'ventas-procesos-pipeline' }, icon: 'lucide:columns-3' },
+  { id: 'procesos', label: 'Procesos', route: { name: 'ventas-procesos' }, icon: 'lucide:handshake' },
+  { id: 'clientes', label: 'Clientes', route: { name: 'ventas-clientes' }, icon: 'lucide:users' },
+  { id: 'propiedades', label: 'Propiedades', route: { name: 'ventas-propiedades' }, icon: 'lucide:building-2' },
+  { id: 'comisiones', label: 'Comisiones', route: { name: 'ventas-comisiones' }, icon: 'lucide:wallet' },
+  { id: 'reportes', label: 'Reportes', route: { name: 'ventas-reportes' }, icon: 'lucide:bar-chart-3' },
+]
 </script>
 
 <template>
@@ -96,7 +107,7 @@ const chartTabs: { id: ChartMode; label: string }[] = [
     </PageHeader>
 
     <!-- ── Acciones rápidas ── -->
-    <DashboardAccionesRapidas />
+    <QuickActionsBar :actions="quickActions" />
 
     <!-- ── KPIs (compactos) ── -->
     <BaseCard v-if="conversionQuery.isError.value" class="block text-center space-y-3">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useVentasCurrencyCatalog } from '../../../../presentation/composables/useVentasCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 import { computed, ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
@@ -68,7 +68,7 @@ const buyersQuery = useQuery({
   queryFn: () => fetchAllPages((page, limit) => clientsRepository.getList({ clientType: 'BUYER', page, limit })),
   enabled: open,
 })
-const { options: currencyOptions } = useVentasCurrencyCatalog()
+const { options: currencyOptions } = useCurrencyCatalog()
 
 // ── Formulario ──
 type Mode = 'process' | 'manual'

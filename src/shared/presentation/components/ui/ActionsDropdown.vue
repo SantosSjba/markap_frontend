@@ -6,6 +6,8 @@ export interface ActionItem {
   icon?: string
   /** Variante de color para acciones destructivas */
   danger?: boolean
+  /** Línea divisoria antes del ítem (para separar bloques de acciones) */
+  separator?: boolean
 }
 </script>
 
@@ -15,6 +17,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu'
 import { HorizontalDotsIcon } from '../../icons/layout'
@@ -47,15 +50,13 @@ defineProps<Props>()
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" class="min-w-44 p-2">
-      <DropdownMenuItem
-        v-for="(item, idx) in items"
-        :key="idx"
-        :variant="item.danger ? 'destructive' : 'default'"
-        @select="item.onClick()"
-      >
-        <AppIcon v-if="item.icon" :icon="item.icon" class="size-4!" />
-        <span>{{ item.label }}</span>
-      </DropdownMenuItem>
+      <template v-for="(item, idx) in items" :key="idx">
+        <DropdownMenuSeparator v-if="item.separator && idx > 0" />
+        <DropdownMenuItem :variant="item.danger ? 'destructive' : 'default'" @select="item.onClick()">
+          <AppIcon v-if="item.icon" :icon="item.icon" class="size-4!" />
+          <span>{{ item.label }}</span>
+        </DropdownMenuItem>
+      </template>
     </DropdownMenuContent>
   </DropdownMenu>
 </template>

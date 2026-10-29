@@ -1,4 +1,5 @@
 import type {
+  InteriorDocumentStats,
   CreateInteriorDocumentPayload,
   InteriorDocumentRow,
   ListInteriorDocumentsParams,
@@ -13,4 +14,5 @@ export interface InteriorDocumentsRepository {
   update(id: string, payload: UpdateInteriorDocumentPayload): Promise<InteriorDocumentRow>
   delete(id: string): Promise<void>
   getDownloadUrl(archivoId: string): Promise<string>
+  stats(projectId?: string): Promise<InteriorDocumentStats>
 }

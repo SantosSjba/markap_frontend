@@ -6,6 +6,8 @@ export interface InteriorSupplierListItem {
   phone: string | null
   email: string | null
   linkedMaterialsCount: number
+  projectItemsCount: number
+  lastPurchaseAt: string | null
   updatedAt: string
 }
 
@@ -28,8 +30,28 @@ export interface InteriorMaterialPurchaseDto {
   quantity: number
   unitPrice: number
   totalAmount: number
+  currency: string
   invoiceRef: string | null
   notes: string | null
+}
+
+/** Partida de un presupuesto de proyecto comprada a este proveedor */
+export interface InteriorSupplierProjectItemDto {
+  rowId: string
+  description: string
+  status: string
+  cost: number | null
+  actualCost: number | null
+  paid: number
+  currency: string
+  project: { id: string; code: string; name: string }
+}
+
+export interface InteriorSupplierStats {
+  total: number
+  withMaterials: number
+  withProjects: number
+  purchasedThisMonth: { currency: string; amount: number }[]
 }
 
 export interface InteriorSupplierDetail {
@@ -41,6 +63,7 @@ export interface InteriorSupplierDetail {
   email: string | null
   catalogLinks: InteriorSupplierCatalogLinkDto[]
   purchases: InteriorMaterialPurchaseDto[]
+  projectItems: InteriorSupplierProjectItemDto[]
   updatedAt: string
 }
 
@@ -71,6 +94,7 @@ export interface RecordInteriorMaterialPurchasePayload {
   purchasedAt: string
   quantity: number
   unitPrice: number
+  currency?: string
   invoiceRef?: string | null
   notes?: string | null
 }

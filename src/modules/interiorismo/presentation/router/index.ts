@@ -3,12 +3,12 @@ import InteriorismoLayout from '../views/InteriorismoLayout.vue'
 import SectionLayout from '@app/layouts/SectionLayout.vue'
 import { INTERIORISMO_BASE_PATH } from '../../config/routes.constants'
 import { interiorismoClientesRoutes } from '../../features/clientes/presentation/router/index'
+import { interiorismoEquipoRoutes } from '../../features/equipo/presentation/router/index'
 import { interiorismoProyectosRoutes } from '../../features/proyectos/presentation/router/index'
 import {
   interiorismoMaterialesCatalogoRoutes,
   interiorismoMaterialesProveedoresRoutes,
 } from '../../features/materiales/presentation/router/index'
-import { interiorismoEjecucionRoutes } from '../../features/ejecucion/presentation/router/index'
 import { interiorismoDocumentosRoutes } from '../../features/documentos/presentation/router/index'
 import { interiorismoReportesRoutes } from '../../features/reportes/presentation/router/index'
 import { interiorismoConfiguracionRoutes } from '../../features/configuracion/presentation/router/index'
@@ -43,6 +43,12 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
         children: interiorismoClientesRoutes,
       },
       {
+        path: 'equipo',
+        component: SectionLayout,
+        meta: { title: 'Equipo' },
+        children: interiorismoEquipoRoutes,
+      },
+      {
         path: 'presupuestos',
         redirect: `${INTERIORISMO_BASE_PATH}/proyectos`,
       },
@@ -75,9 +81,14 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'ejecucion',
-        component: SectionLayout,
-        meta: { title: 'Ejecución' },
-        children: interiorismoEjecucionRoutes,
+        redirect: { path: `${INTERIORISMO_BASE_PATH}/proyectos`, query: { status: 'IN_PROGRESS' } },
+      },
+      {
+        path: 'ejecucion/:projectId',
+        redirect: (to) => ({
+          path: `${INTERIORISMO_BASE_PATH}/proyectos/${String(to.params.projectId)}`,
+          query: { tab: 'ejecucion' },
+        }),
       },
       {
         path: 'finanzas',
@@ -107,13 +118,7 @@ export const interiorismoRoutes: RouteRecordRaw[] = [
         path: 'documentos',
         component: SectionLayout,
         meta: { title: 'Documentos' },
-        children: [
-          {
-            path: '',
-            redirect: { name: 'interiorismo-documentos-contratos' },
-          },
-          ...interiorismoDocumentosRoutes,
-        ],
+        children: interiorismoDocumentosRoutes,
       },
       {
         path: 'configuracion',

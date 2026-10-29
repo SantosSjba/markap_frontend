@@ -11,6 +11,8 @@ export const CAL_EVENT_TYPE_LABELS: Record<string, string> = {
   TASK_INSTALLATION: 'Tarea · Instalación',
   TASK_OTHER: 'Tarea',
   FINANCE_DUE: 'Cobro programado',
+  PROJECT_START: 'Inicio de proyecto',
+  PROJECT_END: 'Entrega estimada',
 }
 
 export const CAL_SOURCE_LABELS: Record<string, string> = {
@@ -18,4 +20,5 @@ export const CAL_SOURCE_LABELS: Record<string, string> = {
   MILESTONE: 'Proyecto',
   EXECUTION_TASK: 'Ejecución',
   FINANCE_SCHEDULE: 'Finanzas',
+  PROJECT: 'Proyecto',
 }

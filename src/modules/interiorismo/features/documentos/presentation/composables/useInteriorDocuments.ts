@@ -15,6 +15,7 @@ import type {
 export const interiorDocumentKeys = {
   all: ['interiorismo-documents', INTERIORISMO_APP_SLUG] as const,
   list: (p: ListInteriorDocumentsParams) => [...interiorDocumentKeys.all, 'list', p] as const,
+  stats: (projectId?: string) => [...interiorDocumentKeys.all, 'stats', projectId ?? 'all'] as const,
 }
 
 export function useInteriorDocumentsList(params: Ref<ListInteriorDocumentsParams>) {
@@ -22,6 +23,15 @@ export function useInteriorDocumentsList(params: Ref<ListInteriorDocumentsParams
   return useQuery({
     queryKey: computed(() => interiorDocumentKeys.list(params.value)),
     queryFn: () => repo.list(params.value),
+  })
+}
+
+/** Cantidad por tipo (pestañas), de todo el módulo o de un proyecto */
+export function useInteriorDocumentStats(projectId: Ref<string | undefined>) {
+  const repo = useService(repoKey)
+  return useQuery({
+    queryKey: computed(() => interiorDocumentKeys.stats(projectId.value)),
+    queryFn: () => repo.stats(projectId.value),
   })
 }
 

@@ -4,8 +4,4 @@ export interface InteriorismoConfigRepository {
   replaceProjectStages: (
     stages: InteriorismoProjectStageDTO[],
   ) => Promise<InteriorismoProjectStageDTO[]>
-  patchInteriorProjectNumbering: (body: {
-    prefix?: string
-    lastNumber?: number
-  }) => Promise<InteriorismoConfigBootstrap['numbering']>
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useCurrencyCatalog } from '../../../../presentation/composables/useCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 import { RENTAL_UTILITY_NET_LABEL } from '../../domain/rental-financial.labels'
 import type { RentalFinancialBreakdown } from '../../domain/rental.types'
 /**

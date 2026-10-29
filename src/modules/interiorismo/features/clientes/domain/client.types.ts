@@ -1,3 +1,5 @@
+import type { LocationCustom } from '@shared/domain/ubigeo-other'
+
 export type InteriorClientType = 'RESIDENTIAL' | 'CORPORATE'
 
 export interface DocumentType {
@@ -42,15 +44,20 @@ export interface CreateInteriorClientPayload {
   legalRepresentativePosition?: string | null
   primaryPhone: string
   secondaryPhone?: string | null
-  primaryEmail: string
+  primaryEmail?: string | null
   secondaryEmail?: string | null
   notes?: string | null
   address?: {
     addressLine: string
     districtId: string
     reference?: string | null
+    /** Ubicación fuera del Perú (distrito «Otros») */
+    locationCustom?: LocationCustom | null
   }
 }
+
+/** Lo que emite el formulario de cliente (alta y edición) */
+export type InteriorClientFormPayload = Omit<CreateInteriorClientPayload, 'applicationSlug'>
 
 export interface ClientDetail {
   id: string
@@ -63,7 +70,7 @@ export interface ClientDetail {
   legalRepresentativePosition: string | null
   primaryPhone: string
   secondaryPhone: string | null
-  primaryEmail: string
+  primaryEmail: string | null
   secondaryEmail: string | null
   notes: string | null
   isActive: boolean
@@ -73,6 +80,7 @@ export interface ClientDetail {
     addressLine: string
     reference: string | null
     districtId: string
+    locationCustom: LocationCustom | null
     district: District
   } | null
 }
@@ -86,13 +94,14 @@ export interface UpdateInteriorClientPayload {
   legalRepresentativePosition?: string | null
   primaryPhone?: string
   secondaryPhone?: string | null
-  primaryEmail?: string
+  primaryEmail?: string | null
   secondaryEmail?: string | null
   notes?: string | null
   address?: {
     addressLine?: string
     districtId?: string
     reference?: string | null
+    locationCustom?: LocationCustom | null
   }
 }
 

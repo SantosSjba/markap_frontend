@@ -84,6 +84,7 @@ async function exportExcel() {
     <ReportSectionHeader
       title="Flujo financiero"
       :subtitle="`Montos de cada moneda por separado · ${periodLabel}`"
+      help="Entradas: ventas cerradas y separaciones recibidas. Salidas: comisiones pagadas a asesores y costos de documentación (notaría, registros). Cada moneda se muestra por separado; nunca se suman soles y dólares."
       icon="lucide:wallet"
       :exporting="isExporting"
       @export="exportExcel"

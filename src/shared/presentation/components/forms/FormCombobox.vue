@@ -95,8 +95,10 @@ function onSelect(value: AcceptableValue) {
           disabled || loading ? 'cursor-not-allowed bg-gray-100/50 dark:bg-gray-800/50' : '',
         ]"
       >
+        <!-- `key`: si las opciones llegan después del valor, se vuelve a pintar la etiqueta elegida -->
         <ComboboxInput
           :id="inputId"
+          :key="labelFor(modelValue ?? '') ? 'resolved' : 'pending'"
           v-model="search"
           :display-value="labelFor"
           :placeholder="loading ? 'Cargando...' : placeholder"

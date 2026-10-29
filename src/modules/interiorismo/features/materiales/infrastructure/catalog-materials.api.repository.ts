@@ -2,6 +2,7 @@ import { apiClient } from '@shared/infrastructure/http/api-client'
 import { INTERIORISMO_APP_SLUG } from '../../../config/app.constants'
 import type { InteriorCatalogMaterialsRepository } from '../domain/repositories/catalogMaterials.repository'
 import type {
+  InteriorCatalogMaterialStats,
   CreateInteriorCatalogMaterialPayload,
   InteriorCatalogMaterialDetail,
   ListInteriorCatalogMaterialsParams,
@@ -21,6 +22,7 @@ export const interiorCatalogMaterialsApiRepository: InteriorCatalogMaterialsRepo
     searchParams.set('page', String(params.page ?? 1))
     searchParams.set('limit', String(params.limit ?? 20))
     if (params.search) searchParams.set('search', params.search)
+    if (params.stock) searchParams.set('stock', params.stock)
     if (params.category) searchParams.set('category', params.category)
     return apiClient
       .get<ListInteriorCatalogMaterialsResponse>(`${BASE}?${searchParams.toString()}`)
@@ -73,4 +75,9 @@ export const interiorCatalogMaterialsApiRepository: InteriorCatalogMaterialsRepo
       })
       .then((r) => r.data)
   },
+
+  getStats: () =>
+    apiClient
+      .get<InteriorCatalogMaterialStats>(`${BASE}/stats`, { params: { applicationSlug: INTERIORISMO_APP_SLUG } })
+      .then((r) => r.data),
 }

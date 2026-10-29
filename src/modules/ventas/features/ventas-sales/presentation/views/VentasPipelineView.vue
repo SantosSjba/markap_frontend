@@ -363,7 +363,18 @@ const boardBusy = computed(() => savingMove.value)
 
 <template>
   <div class="flex w-full min-h-0 flex-col space-y-6">
-    <PageHeader class="shrink-0" title="Pipeline de ventas" subtitle="Arrastra las tarjetas para avanzar de una etapa a la vez o regresar con motivo · solo procesos activos">
+    <PageHeader
+      class="shrink-0"
+      title="Pipeline de ventas"
+      subtitle="Arrastra las tarjetas para avanzar de una etapa a la vez o regresar con motivo · solo procesos activos"
+      :help-items="[
+        { icon: 'lucide:route', term: 'Flujo', text: stageOptions.map((o) => o.label).join(' → ') },
+        { icon: 'lucide:file-check', term: 'Avanzar', text: 'Una etapa a la vez y con su documento cargado en Cumplimiento legal (arras, minuta, escritura).' },
+        { icon: 'lucide:undo-2', term: 'Regresar', text: 'Se puede volver a una etapa anterior indicando el motivo.' },
+        { icon: 'lucide:circle-x', term: 'Venta caída', text: 'Si la venta no continúa: anula las comisiones pendientes, vence la separación y libera el inmueble.' },
+        { icon: 'lucide:sigma', term: 'Montos', text: 'El total de cada columna es el precio de lista, separado por moneda.' },
+      ]"
+    >
       <template #actions>
         <div class="flex gap-2 w-full sm:w-auto">
           <BaseButton variant="outline" icon="lucide:list" class="flex-1 sm:flex-none justify-center" @click="router.push({ name: 'ventas-procesos' })">
@@ -552,13 +563,6 @@ const boardBusy = computed(() => savingMove.value)
       </div>
     </div>
 
-    <p v-if="!isLoading && !boardIsError" class="flex items-start gap-2 text-theme-xs text-gray-500 dark:text-gray-400">
-      <AppIcon icon="lucide:info" :size="14" class="mt-0.5 shrink-0" />
-      <span>
-        Flujo: {{ stageOptions.map((o) => o.label).join(' → ') }}. Se avanza una etapa a la vez, con su documento cargado en Cumplimiento legal (arras, minuta, escritura); para regresar se pide el motivo. Si la venta no continúa usa
-        <strong>Venta caída</strong> (anula las comisiones pendientes). El monto de cada columna es el precio de lista por moneda.
-      </span>
-    </p>
 
     <StageRollbackModal
       :model-value="!!rollbackTarget"

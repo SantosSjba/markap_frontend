@@ -20,6 +20,13 @@ export interface InteriorProjectAgentRef {
   fullName: string
 }
 
+export interface InteriorProjectDistrictRef {
+  id: string
+  name: string
+  provinceId: string
+  departmentId: string
+}
+
 export interface InteriorProjectListItem {
   id: string
   code: string
@@ -27,7 +34,14 @@ export interface InteriorProjectListItem {
   projectType: InteriorProjectType
   status: InteriorProjectStatus
   progressPct: number
+  interventionLevel: string | null
+  currency: string
+  estimatedBudget: number | null
+  /** Suma de cobros al cliente en estado pagado */
+  paidTotal: number
+  startDate: string | null
   estimatedEndDate: string | null
+  district: InteriorProjectDistrictRef | null
   client: InteriorProjectClientRef
 }
 
@@ -53,6 +67,20 @@ export interface InteriorProjectPaymentDto {
   concept: string
   paymentType?: string
   status: string
+  /** null = moneda del presupuesto */
+  currency: string | null
+  exchangeRate: number | null
+}
+
+/** Tipos que se registran a mano (los cambios de etapa los anota el sistema) */
+export type InteriorManualActivityType = 'NOTE' | 'MEETING' | 'TASK' | 'OTHER'
+
+export interface CreateInteriorProjectActivityPayload {
+  activityType: InteriorManualActivityType
+  title: string
+  description?: string | null
+  /** ISO con hora */
+  occurredAt: string
 }
 
 export interface InteriorProjectActivityDto {
@@ -71,17 +99,17 @@ export interface InteriorProjectMilestoneDto {
 }
 
 export interface InteriorProjectDetail extends InteriorProjectListItem {
+  legacyCode: string | null
   addressLine: string | null
   city: string | null
-  interventionLevel: string | null
   executionTimeNote: string | null
-  currency: string
+  exchangeRate: number | null
   defaultUtilityPct: number
+  defaultOverheadPct: number
   defaultIgvPct: number
   areaSqm: number | null
   levelsCount: number | null
   environmentsNote: string | null
-  startDate: string | null
   designerAgent: InteriorProjectAgentRef | null
   architectJrAgent: InteriorProjectAgentRef | null
   architectSrAgent: InteriorProjectAgentRef | null
@@ -105,6 +133,22 @@ export interface ListInteriorProjectsParams {
   status?: InteriorProjectStatus
   inProgressOnly?: boolean
   clientId?: string
+  projectType?: InteriorProjectType
+  /** Responsable en cualquiera de los cinco roles */
+  agentId?: string
+}
+
+export interface CurrencyAmount {
+  currency: string
+  amount: number
+}
+
+export interface InteriorProjectStats {
+  total: number
+  byStatus: Record<InteriorProjectStatus, number>
+  createdThisMonth: number
+  /** Presupuesto estimado de proyectos activos, por moneda */
+  activeBudgetByCurrency: CurrencyAmount[]
 }
 
 export interface ListInteriorProjectsResponse {
@@ -128,6 +172,9 @@ export interface CreateInteriorProjectPayload {
   currency?: string
   defaultUtilityPct?: number | null
   defaultIgvPct?: number | null
+  defaultOverheadPct?: number | null
+  exchangeRate?: number | null
+  districtId?: string | null
   areaSqm?: number | null
   levelsCount?: number | null
   environmentsNote?: string | null
@@ -144,8 +191,9 @@ export interface CreateInteriorProjectPayload {
   progressPct?: number | null
 }
 
-/** PATCH `/interiorismo-projects/:id` (el código no es editable tras crear) */
+/** PATCH `/interiorismo-projects/:id` (el código solo cambia al pulsar «Regenerar») */
 export interface UpdateInteriorProjectPayload {
+  code?: string
   name?: string
   clientId?: string
   projectType?: InteriorProjectType
@@ -157,6 +205,9 @@ export interface UpdateInteriorProjectPayload {
   currency?: string
   defaultUtilityPct?: number | null
   defaultIgvPct?: number | null
+  defaultOverheadPct?: number | null
+  exchangeRate?: number | null
+  districtId?: string | null
   areaSqm?: number | null
   levelsCount?: number | null
   environmentsNote?: string | null
@@ -171,4 +222,27 @@ export interface UpdateInteriorProjectPayload {
   projectedCost?: number | null
   expectedMargin?: number | null
   progressPct?: number | null
+}
+
+/** Lo que emite el formulario de proyecto (alta y edición) */
+export type InteriorProjectFormPayload = Omit<CreateInteriorProjectPayload, 'applicationSlug'>
+
+/** Proyectos de un cliente (listado de clientes) */
+export interface InteriorClientProjectsSummary {
+  clientId: string
+  total: number
+  active: number
+}
+
+/** Cobro de un cliente en cualquiera de sus proyectos (ficha del cliente) */
+export interface InteriorClientPaymentDto {
+  id: string
+  paidAt: string
+  amount: number
+  /** Moneda efectiva: la del cobro o la del proyecto */
+  currency: string
+  concept: string
+  paymentType: string
+  status: string
+  project: { id: string; code: string; name: string }
 }

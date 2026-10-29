@@ -24,7 +24,7 @@ import {
   useVentasDocumentationCostsList,
   useVentasMarkBuyerPaymentPaid,
 } from '../composables/useVentasFinanzas'
-import { useVentasCurrencyCatalog } from '../../../../presentation/composables/useVentasCurrencyCatalog'
+import { useCurrencyCatalog } from '@shared/presentation/composables/useCurrencyCatalog'
 
 /**
  * Cobranza y gastos de un cierre, en la moneda de la venta: cronograma de pagos del comprador
@@ -39,7 +39,7 @@ const props = defineProps<{
 
 const closingId = computed(() => props.closingId)
 const money = (n: number) => formatCurrency(n, props.currency)
-const { options: currencyOptions, label: currencyLabel } = useVentasCurrencyCatalog()
+const { options: currencyOptions, label: currencyLabel } = useCurrencyCatalog()
 
 const { data: profit, isError: profitError, error: profitFetchError, refetch: refetchProfit } =
   useVentasClosingProfitability(closingId)

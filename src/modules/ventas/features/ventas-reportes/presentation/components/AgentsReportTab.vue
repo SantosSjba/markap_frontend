@@ -96,6 +96,7 @@ async function exportExcel() {
     <ReportSectionHeader
       title="Rendimiento de asesores"
       :subtitle="`Resultados y comisiones · ${periodLabel}`"
+      help="Por asesor: procesos nuevos y activos, ganados y caídos, y su tasa de cierre (ganados ÷ ganados + caídos). Lo vendido y las comisiones (total, pagada y por pagar) van en su moneda."
       icon="lucide:user-check"
       :exporting="isExporting"
       @export="exportExcel"

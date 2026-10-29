@@ -20,8 +20,8 @@ import {
   UBIGEO_OTHER_DISTRICT_ID,
   buildLocationCustomPayload,
   mergeDepartmentOptions,
-} from '../../constants/ubigeo-other'
-import { useClientAddressUbigeo } from '../../composables/useClientAddressUbigeo'
+} from '@shared/domain/ubigeo-other'
+import { useClientAddressUbigeo } from '@shared/presentation/composables/useClientAddressUbigeo'
 import type { ClientDetail, ClientFormPayload, DocumentType } from '../../domain/client.types'
 /**
  * ClienteForm — formulario único de alta/edición de clientes de alquileres

@@ -2,219 +2,158 @@
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
 const { canWrite, canAdmin, filterActions } = useApplicationAccess('interiorismo')
 
+import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
-import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
-import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
 import BasePagination from '@shared/presentation/components/ui/BasePagination.vue'
-import BaseModal from '@shared/presentation/components/ui/BaseModal.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
 import DataTable from '@shared/presentation/components/ui/DataTable.vue'
-import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
-import FormInput from '@shared/presentation/components/forms/FormInput.vue'
-import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import ActionsDropdown from '@shared/presentation/components/ui/ActionsDropdown.vue'
-import type {
-  InteriorCatalogMaterialListItem,
-  ListInteriorCatalogMaterialsParams,
-} from '../../domain/catalog.types'
-import {
-  useInteriorCatalogMaterialsList,
-  useDeleteInteriorCatalogMaterial,
-} from '../composables/useInteriorCatalogMaterials'
-import { formatSol, formatQty } from '../labels'
-import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
+import SearchInput from '@shared/presentation/components/forms/SearchInput.vue'
+import { useDebouncedRef } from '@shared/presentation/composables/useDebouncedRef'
+import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
+import { formatMoney } from '@shared/utils/money'
+import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
+import {
+  useDeleteInteriorCatalogMaterial,
+  useInteriorCatalogMaterialStats,
+  useInteriorCatalogMaterialsList,
+} from '../composables/useInteriorCatalogMaterials'
+import type { InteriorCatalogMaterialListItem, ListInteriorCatalogMaterialsParams } from '../../domain/catalog.types'
+import { formatQty } from '../labels'
+/** Catálogo de materiales y productos: indicadores, filtros por categoría y stock, una fila por material. */
+
 const router = useRouter()
-const ITEMS = 10
-
-const listParams = ref<ListInteriorCatalogMaterialsParams>({
-  page: 1,
-  limit: ITEMS,
-})
 const searchInput = ref('')
-const categoryFilter = ref('')
+const debouncedSearch = useDebouncedRef(searchInput)
+const filterCategory = ref('ALL')
+const filterStock = ref<'ALL' | 'OUT'>('ALL')
+const page = ref(1)
+const pageSize = ref(10)
+watch([debouncedSearch, filterCategory, filterStock], () => (page.value = 1))
 
-watch([searchInput, categoryFilter], () => {
-  listParams.value = {
-    ...listParams.value,
-    page: 1,
-    search: searchInput.value.trim() || undefined,
-    category: categoryFilter.value.trim() || undefined,
-  }
-})
-
-const {
-  data: result,
-  isLoading,
-  isError: listQueryError,
-  error: listFetchError,
-  refetch: refetchList,
-} = useInteriorCatalogMaterialsList(listParams)
-
+const params = computed<ListInteriorCatalogMaterialsParams>(() => ({
+  page: page.value,
+  limit: pageSize.value,
+  search: debouncedSearch.value.trim() || undefined,
+  category: filterCategory.value === 'ALL' ? undefined : filterCategory.value,
+  stock: filterStock.value === 'OUT' ? 'OUT' : undefined,
+}))
+const { data: result, isLoading, isFetching, isError, error, refetch } = useInteriorCatalogMaterialsList(params)
 const rows = computed(() => result.value?.data ?? [])
 const total = computed(() => result.value?.total ?? 0)
 
-const onPage = (p: number) => {
-  listParams.value = { ...listParams.value, page: p }
-}
-const onSize = (s: number) => {
-  listParams.value = { ...listParams.value, limit: s, page: 1 }
-}
+const statsQuery = useInteriorCatalogMaterialStats()
+const stats = computed(() => statsQuery.data.value)
+const categoryOptions = computed(() => [
+  { value: 'ALL', label: 'Todas las categorías' },
+  ...(stats.value?.categories ?? []).map((c) => ({ value: c, label: c })),
+])
+const stockOptions = [
+  { value: 'ALL', label: 'Todo el stock' },
+  { value: 'OUT', label: 'Sin stock' },
+]
 
 const columns = [
-  { key: 'code', label: 'Código', align: 'left' as const, sortable: true },
-  { key: 'name', label: 'Nombre', align: 'left' as const, sortable: true },
+  { key: 'material', label: 'Material o producto', align: 'left' as const },
   { key: 'category', label: 'Categoría', align: 'left' as const },
-  { key: 'brand', label: 'Marca', align: 'left' as const },
-  { key: 'unit', label: 'Unidad', align: 'left' as const },
-  { key: 'price', label: 'Precio', align: 'left' as const },
-  { key: 'stock', label: 'Stock', align: 'left' as const },
-  { key: 'imageCount', label: 'Imgs.', align: 'left' as const },
+  { key: 'price', label: 'Precio ref.', align: 'right' as const },
+  { key: 'stock', label: 'Stock', align: 'right' as const },
+  { key: 'suppliers', label: 'Proveedores', align: 'left' as const },
   { key: 'actions', label: '', align: 'right' as const },
 ]
-
+const asRow = (r: unknown) => r as InteriorCatalogMaterialListItem
 const paginationProps = computed(() => {
-  const page = listParams.value.page ?? 1
-  const limit = listParams.value.limit ?? ITEMS
-  const totalPages = Math.max(1, Math.ceil(total.value / limit))
-  return {
-    currentPage: page,
-    totalPages,
-    totalItems: total.value,
-    pageSize: limit,
-    hasPrevPage: page > 1,
-    hasNextPage: page < totalPages,
-  }
+  const totalPages = Math.max(1, Math.ceil(total.value / pageSize.value))
+  return { currentPage: page.value, totalPages, totalItems: total.value, pageSize: pageSize.value, hasPrevPage: page.value > 1, hasNextPage: page.value < totalPages }
 })
 
-const goDetail = (r: InteriorCatalogMaterialListItem) =>
-  router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo/${r.id}`)
-const goNew = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo/nuevo`)
-
-const showDeleteModal = ref(false)
-const deleteTarget = ref<InteriorCatalogMaterialListItem | null>(null)
-const { mutateAsync: deleteMaterial, isPending: isDeletingMaterial } =
-  useDeleteInteriorCatalogMaterial()
-
-const openDeleteConfirm = (r: InteriorCatalogMaterialListItem) => {
-  deleteTarget.value = r
-  showDeleteModal.value = true
+const base = `${INTERIORISMO_BASE_PATH}/materiales/catalogo`
+const goDetail = (m: InteriorCatalogMaterialListItem) => router.push(`${base}/${m.id}`)
+const deleteMut = useDeleteInteriorCatalogMaterial()
+async function remove(m: InteriorCatalogMaterialListItem) {
+  const ok = await markapAlert.confirmDanger({ title: 'Eliminar material', text: `«${m.code} · ${m.name}» se eliminará del catálogo.`, confirmText: 'Eliminar' })
+  if (ok) await deleteMut.mutateAsync(m.id).catch(() => undefined)
 }
-
-const closeDeleteModal = () => {
-  showDeleteModal.value = false
-  deleteTarget.value = null
+const actionsFor = (m: InteriorCatalogMaterialListItem) => {
+  const items: { label: string; icon: string; onClick: () => void }[] = [
+    { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(m) },
+    { label: 'Editar', icon: 'lucide:pencil', onClick: () => router.push(`${base}/${m.id}/editar`) },
+  ]
+  if (canAdmin.value) items.push({ label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => void remove(m) })
+  return items
 }
-
-const executeDelete = async () => {
-  const r = deleteTarget.value
-  if (!r) return
-  try {
-    await deleteMaterial(r.id)
-    closeDeleteModal()
-  } catch {
-    void 0
-  }
-}
-
-const getActions = (
-  r: InteriorCatalogMaterialListItem,
-): { label: string; icon: string; onClick: () => void }[] => [
-  { label: 'Ver ficha', icon: 'lucide:eye', onClick: () => goDetail(r) },
-  { label: 'Editar', icon: 'lucide:pencil', onClick: () => goDetail(r) },
-  { label: 'Eliminar', icon: 'lucide:trash-2', onClick: () => openDeleteConfirm(r) },
-]
 </script>
 
 <template>
-  <div class="max-w-[1200px] mx-auto space-y-6">
-    <PageHeader
-      title="Catálogo de materiales"
-      subtitle="Código, categoría, marca, precio y stock para usar en presupuestos y obra."
-    >
+  <div class="space-y-6">
+    <PageHeader title="Catálogo de materiales y productos" subtitle="Referencias reutilizables para presupuestar; cada proyecto conserva sus propios costos. Los servicios y trabajos completos también se pueden escribir directamente en el presupuesto.">
       <template #actions>
-        <BaseButton v-if="canWrite" variant="primary" class="shrink-0" @click="goNew">
-        <AppIcon icon="lucide:plus" :size="18" class="mr-1.5" />
-        Nuevo material
-      </BaseButton>
+        <BaseButton v-if="canWrite" variant="primary" icon="lucide:plus" class="w-full justify-center sm:w-auto" @click="router.push(`${base}/nuevo`)">Nuevo material o producto</BaseButton>
       </template>
     </PageHeader>
 
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatsCard compact title="Materiales y productos" :value="String(stats?.total ?? 0)" subtitle="en el catálogo" :loading="statsQuery.isPending.value">
+        <template #icon><AppIcon icon="lucide:layers" :size="20" color="var(--color-primary)" /></template>
+      </StatsCard>
+      <StatsCard compact title="Categorías" :value="String(stats?.categories.length ?? 0)" subtitle="distintas" :loading="statsQuery.isPending.value">
+        <template #icon><AppIcon icon="lucide:tags" :size="20" color="#2563eb" /></template>
+      </StatsCard>
+      <StatsCard compact title="Sin stock" :value="String(stats?.outOfStock ?? 0)" subtitle="por reponer" :loading="statsQuery.isPending.value">
+        <template #icon><AppIcon icon="lucide:package-x" :size="20" color="#dc2626" /></template>
+      </StatsCard>
+      <StatsCard compact title="Sin proveedor" :value="String(stats?.withoutSupplier ?? 0)" subtitle="sin vincular" :loading="statsQuery.isPending.value">
+        <template #icon><AppIcon icon="lucide:unlink" :size="20" color="#d97706" /></template>
+      </StatsCard>
+    </div>
+
     <BaseCard padding="none" class="block overflow-hidden">
-      <LoadingState v-if="isLoading" />
-      <div
-        v-else-if="listQueryError"
-        class="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center"
-      >
-        <p class="text-sm font-medium text-error-500 dark:text-error-400">{{ getApiErrorMessage(listFetchError) }}</p>
-        <BaseButton variant="outline" size="sm" @click="() => refetchList()">Reintentar</BaseButton>
+      <div v-if="isError" class="flex flex-col items-center gap-3 px-4 py-16 text-center">
+        <p class="text-sm font-medium text-error-500">{{ getApiErrorMessage(error) }}</p>
+        <BaseButton variant="outline" size="sm" @click="() => refetch()">Reintentar</BaseButton>
       </div>
       <template v-else>
-        <DataTable empty-text="No hay materiales en el catálogo." :columns="columns" :data="rows" row-key="id">
+        <DataTable :columns="columns" :data="rows" row-key="id" :loading="isLoading || isFetching" empty-text="No hay materiales ni productos con estos filtros.">
           <template #toolbar>
-            <div class="flex flex-col sm:flex-row gap-3 flex-1 min-w-0 w-full">
-              <SearchInput v-model="searchInput" placeholder="Buscar por código o nombre…" class="flex-1 min-w-0" />
-              <FormInput v-model="categoryFilter" placeholder="Filtrar por categoría…" class="w-full sm:w-52" />
+            <div class="min-w-0 flex-1"><SearchInput v-model="searchInput" placeholder="Buscar por código, nombre, marca o categoría..." /></div>
+            <div class="flex shrink-0 flex-wrap gap-3 sm:flex-nowrap">
+              <div class="w-full min-w-0 sm:w-[190px]"><FormSelect v-model="filterCategory" :options="categoryOptions" /></div>
+              <div class="w-full min-w-0 sm:w-[150px]"><FormSelect v-model="filterStock" :options="stockOptions" /></div>
             </div>
           </template>
           <template #row="{ row }">
-            <td class="py-3 px-4">
-              <BaseButton @click="goDetail(row as InteriorCatalogMaterialListItem)" variant="link" class="font-medium">{{ (row as InteriorCatalogMaterialListItem).code }}</BaseButton>
+            <td class="px-4 py-3">
+              <button type="button" class="text-left" @click="goDetail(asRow(row))">
+                <span class="block font-medium text-gray-800 hover:text-brand-500 dark:text-white/90">{{ asRow(row).name }}</span>
+                <span class="block text-xs text-gray-400">{{ asRow(row).code }} · {{ asRow(row).brand }}</span>
+              </button>
             </td>
-            <td class="py-3 px-4">
-              <BaseButton variant="link" class="font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400" @click="goDetail(row as InteriorCatalogMaterialListItem)">{{ (row as InteriorCatalogMaterialListItem).name }}</BaseButton>
+            <td class="px-4 py-3"><Badge variant="neutral">{{ asRow(row).category }}</Badge></td>
+            <td class="px-4 py-3 text-right text-sm tabular-nums">
+              <span class="font-medium text-gray-800 dark:text-white/90">{{ formatMoney(asRow(row).price, asRow(row).currency) }}</span>
+              <span class="block text-xs text-gray-400">por {{ asRow(row).unit }}</span>
             </td>
-            <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
-              {{ (row as InteriorCatalogMaterialListItem).category }}
+            <td class="px-4 py-3 text-right text-sm tabular-nums">
+              <span :class="asRow(row).stock <= 0 ? 'font-medium text-error-500' : 'text-gray-800 dark:text-white/90'">{{ formatQty(asRow(row).stock) }}</span>
             </td>
-            <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
-              {{ (row as InteriorCatalogMaterialListItem).brand }}
+            <td class="px-4 py-3 text-sm">
+              <span v-if="asRow(row).suppliersCount" class="text-gray-800 dark:text-white/90">{{ asRow(row).suppliersCount }}</span>
+              <span v-else class="text-warning-600 dark:text-warning-400">Sin proveedor</span>
             </td>
-            <td class="py-3 px-4 text-sm">{{ (row as InteriorCatalogMaterialListItem).unit }}</td>
-            <td class="py-3 px-4 text-sm">{{ formatSol((row as InteriorCatalogMaterialListItem).price) }}</td>
-            <td class="py-3 px-4 text-sm">{{ formatQty((row as InteriorCatalogMaterialListItem).stock) }}</td>
-            <td class="py-3 px-4 text-sm">{{ (row as InteriorCatalogMaterialListItem).imageCount }}</td>
-            <td class="py-3 px-4 text-right">
-              <ActionsDropdown :items="filterActions(getActions(row as InteriorCatalogMaterialListItem))" />
-            </td>
+            <td class="px-4 py-3 text-right"><ActionsDropdown :items="filterActions(actionsFor(asRow(row)))" /></td>
           </template>
         </DataTable>
-        <div v-if="!isLoading && !listQueryError" class="border-t border-gray-200 dark:border-gray-800">
-          <BasePagination
-            v-bind="paginationProps"
-            :show-page-size="true"
-            @update:current-page="onPage"
-            @update:page-size="onSize"
-          />
+        <div class="border-t border-gray-200 dark:border-gray-800">
+          <BasePagination v-bind="paginationProps" :show-page-size="true" @update:current-page="(p: number) => (page = p)" @update:page-size="(s: number) => { pageSize = s; page = 1 }" />
         </div>
       </template>
     </BaseCard>
-
-    <BaseModal v-model="showDeleteModal" :closable="true" size="sm" @close="closeDeleteModal">
-      <template #title>
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center bg-error-50 dark:bg-error-500/15">
-            <AppIcon class="text-error-500 dark:text-error-400" icon="lucide:trash-2" :size="16" />
-          </div>
-          <span class="text-base font-semibold text-gray-800 dark:text-white/90">Eliminar material</span>
-        </div>
-      </template>
-      <div class="p-4 space-y-3">
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          ¿Eliminar del catálogo
-          <span class="font-semibold text-gray-800 dark:text-white/90">{{ deleteTarget?.code }}</span>
-          — {{ deleteTarget?.name }}?
-        </p>
-      </div>
-      <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-800">
-        <BaseButton variant="ghost" @click="closeDeleteModal">Cancelar</BaseButton>
-        <BaseButton v-if="canAdmin" variant="danger" :loading="isDeletingMaterial" @click="executeDelete">
-          <AppIcon icon="lucide:trash-2" :size="16" class="mr-1" />
-          Eliminar
-        </BaseButton>
-      </div>
-    </BaseModal>
   </div>
 </template>

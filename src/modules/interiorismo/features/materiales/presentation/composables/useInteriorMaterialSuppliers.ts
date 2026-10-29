@@ -1,4 +1,5 @@
 import { interiorMaterialSuppliersRepositoryKey as repoKey } from '../../application/ports/material-suppliers.port'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 import { useService } from '@shared/presentation/di/services'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
@@ -18,6 +19,7 @@ export const interiorMaterialSuppliersKeys = {
   list: (p: ListInteriorMaterialSuppliersParams) =>
     [...interiorMaterialSuppliersKeys.all, 'list', p] as const,
   detail: (id: string) => [...interiorMaterialSuppliersKeys.all, 'detail', id] as const,
+  stats: () => [...interiorMaterialSuppliersKeys.all, 'stats'] as const,
 }
 
 export function useInteriorMaterialSuppliersList(params: Ref<ListInteriorMaterialSuppliersParams>) {
@@ -26,6 +28,12 @@ export function useInteriorMaterialSuppliersList(params: Ref<ListInteriorMateria
     queryKey: computed(() => interiorMaterialSuppliersKeys.list(params.value)),
     queryFn: () => repo.getList(params.value),
   })
+}
+
+/** Indicadores de proveedores (con materiales, con proyectos, compras del mes) */
+export function useInteriorMaterialSupplierStats() {
+  const repo = useService(repoKey)
+  return useQuery({ queryKey: interiorMaterialSuppliersKeys.stats(), queryFn: () => repo.getStats() })
 }
 
 export function useInteriorMaterialSupplierDetail(id: Ref<string> | string) {
@@ -127,4 +135,11 @@ export function useRecordInteriorMaterialPurchase(supplierId: Ref<string> | stri
       void markapAlert.toast.error('No se pudo registrar la compra', getApiErrorMessage(err))
     },
   })
+}
+
+/** Directorio completo para asignar proveedores sin limitarlo a la primera página. */
+export function useInteriorMaterialSupplierOptions() {
+  const repo = useService(repoKey)
+  return useQuery({ queryKey: [...interiorMaterialSuppliersKeys.all, 'options'],
+    queryFn: () => fetchAllPages((page, limit) => repo.getList({ page, limit })) })
 }

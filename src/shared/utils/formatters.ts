@@ -126,7 +126,7 @@ export function formatNumber(
 }
 
 /**
- * Format file size
+ * Format file size: bytes enteros y un decimal desde KB, sin ceros sobrantes (`820 B`, `1.5 MB`, `15 MB`).
  */
 export function formatFileSize(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB', 'TB']
@@ -137,7 +137,8 @@ export function formatFileSize(bytes: number): string {
     unitIndex++
   }
 
-  return `${bytes.toFixed(2)} ${units[unitIndex]}`
+  const value = unitIndex === 0 ? Math.round(bytes) : Math.round(bytes * 10) / 10
+  return `${value} ${units[unitIndex]}`
 }
 
 /**

@@ -1,4 +1,5 @@
 import type {
+  InteriorCatalogMaterialStats,
   CreateInteriorCatalogMaterialPayload,
   InteriorCatalogMaterialDetail,
   ListInteriorCatalogMaterialsParams,
@@ -14,6 +15,7 @@ export interface InteriorCatalogMaterialsRepository {
     payload: UpdateInteriorCatalogMaterialPayload,
   ): Promise<InteriorCatalogMaterialDetail>
   delete(id: string): Promise<void>
+  getStats(): Promise<InteriorCatalogMaterialStats>
   uploadAsset(
     file: File,
     kind: 'technical-sheet' | 'image',

@@ -1,4 +1,5 @@
 import type {
+  InteriorSupplierStats,
   CreateInteriorMaterialSupplierPayload,
   InteriorSupplierDetail,
   LinkSupplierCatalogPayload,
@@ -18,6 +19,7 @@ export interface InteriorMaterialSuppliersRepository {
     payload: UpdateInteriorMaterialSupplierPayload,
   ): Promise<InteriorSupplierDetail>
   delete(id: string): Promise<void>
+  getStats(): Promise<InteriorSupplierStats>
   unlinkCatalogLink(linkId: string): Promise<void>
   linkCatalogMaterial(
     supplierId: string,

@@ -2,97 +2,82 @@ import { apiClient } from '@shared/infrastructure/http/api-client'
 import { INTERIORISMO_APP_SLUG } from '../../../config/app.constants'
 import type { ProjectBudgetRepository } from '../domain/repositories/project-budget.repository'
 import type {
-  ProjectBudgetDetailDto,
-  ProjectBudgetLineItemDto,
-  ProjectBudgetSectionDto,
-  ProjectSettlementDto,
-  DuplicateBudgetSnapshotResult,
-  SyncBudgetFromExecutionResult,
+  BudgetSheetDto,
+  CreateBudgetRowsResult,
   ImportBudgetFromExcelResult,
   ProjectBudgetAttachmentDto,
+  ProjectSettlementDto,
+  SyncBudgetFromExecutionResult,
 } from '../domain/project-budget.types'
 const slug = () => ({ applicationSlug: INTERIORISMO_APP_SLUG })
 const base = (projectId: string) => `/interiorismo-projects/${projectId}`
+const sheet = (p: Promise<{ data: BudgetSheetDto }>) => p.then((r) => r.data)
 
 export const projectBudgetApiRepository: ProjectBudgetRepository = {
-  getBudget: (projectId) =>
-    apiClient
-      .get<ProjectBudgetDetailDto>(`${base(projectId)}/budget`, { params: slug() })
-      .then((r) => r.data),
+  getSheet: (projectId) =>
+    sheet(apiClient.get<BudgetSheetDto>(`${base(projectId)}/budget`, { params: slug() })),
 
   getSettlement: (projectId) =>
     apiClient
       .get<ProjectSettlementDto>(`${base(projectId)}/settlement`, { params: slug() })
       .then((r) => r.data),
 
-  createSection: (projectId, payload) =>
+  updateHeader: (projectId, payload) =>
+    sheet(apiClient.patch<BudgetSheetDto>(`${base(projectId)}/budget`, payload, { params: slug() })),
+
+  createRows: (projectId, payload) =>
     apiClient
-      .post<ProjectBudgetSectionDto>(`${base(projectId)}/budget/sections`, payload, {
-        params: slug(),
-      })
+      .post<CreateBudgetRowsResult>(`${base(projectId)}/budget/rows`, payload, { params: slug() })
       .then((r) => r.data),
 
-  updateSection: (projectId, sectionId, payload) =>
-    apiClient
-      .patch<ProjectBudgetSectionDto>(`${base(projectId)}/budget/sections/${sectionId}`, payload, {
+  updateRow: (projectId, rowId, payload) =>
+    sheet(
+      apiClient.patch<BudgetSheetDto>(`${base(projectId)}/budget/rows/${rowId}`, payload, {
         params: slug(),
-      })
-      .then((r) => r.data),
+      }),
+    ),
 
-  deleteSection: (projectId, sectionId) =>
-    apiClient
-      .delete(`${base(projectId)}/budget/sections/${sectionId}`, { params: slug() })
-      .then(() => undefined),
-
-  createLineItem: (projectId, payload) =>
-    apiClient
-      .post<ProjectBudgetLineItemDto>(`${base(projectId)}/budget/line-items`, payload, {
+  moveRow: (projectId, rowId, payload) =>
+    sheet(
+      apiClient.post<BudgetSheetDto>(`${base(projectId)}/budget/rows/${rowId}/move`, payload, {
         params: slug(),
-      })
-      .then((r) => r.data),
+      }),
+    ),
 
-  updateLineItem: (projectId, lineItemId, payload) =>
-    apiClient
-      .patch<ProjectBudgetLineItemDto>(
-        `${base(projectId)}/budget/line-items/${lineItemId}`,
+  deleteRow: (projectId, rowId) =>
+    sheet(apiClient.delete<BudgetSheetDto>(`${base(projectId)}/budget/rows/${rowId}`, { params: slug() })),
+
+  createSupplierPayment: (projectId, rowId, payload) =>
+    sheet(
+      apiClient.post<BudgetSheetDto>(
+        `${base(projectId)}/budget/rows/${rowId}/supplier-payments`,
         payload,
-        {
-          params: slug(),
-        },
-      )
-      .then((r) => r.data),
-
-  deleteLineItem: (projectId, lineItemId) =>
-    apiClient
-      .delete(`${base(projectId)}/budget/line-items/${lineItemId}`, { params: slug() })
-      .then(() => undefined),
-
-  createSupplierPayment: (projectId, payload) =>
-    apiClient
-      .post<ProjectBudgetLineItemDto>(`${base(projectId)}/budget/supplier-payments`, payload, {
-        params: slug(),
-      })
-      .then((r) => r.data),
+        { params: slug() },
+      ),
+    ),
 
   deleteSupplierPayment: (projectId, paymentId) =>
-    apiClient
-      .delete(`${base(projectId)}/budget/supplier-payments/${paymentId}`, { params: slug() })
-      .then(() => undefined),
-
-  fetchPdfHtml: (projectId) =>
-    apiClient
-      .get(`${base(projectId)}/budget/pdf`, {
+    sheet(
+      apiClient.delete<BudgetSheetDto>(`${base(projectId)}/budget/supplier-payments/${paymentId}`, {
         params: slug(),
-        responseType: 'text',
-      })
-      .then((r) => String(r.data)),
+      }),
+    ),
 
   duplicateSnapshot: (projectId) =>
-    apiClient
-      .post<DuplicateBudgetSnapshotResult>(`${base(projectId)}/budget/duplicate-snapshot`, null, {
+    sheet(
+      apiClient.post<BudgetSheetDto>(`${base(projectId)}/budget/duplicate-snapshot`, null, {
         params: slug(),
-      })
-      .then((r) => r.data),
+      }),
+    ),
+
+  activateVersion: (projectId, budgetId) =>
+    sheet(
+      apiClient.post<BudgetSheetDto>(
+        `${base(projectId)}/budget/versions/${budgetId}/activate`,
+        null,
+        { params: slug() },
+      ),
+    ),
 
   syncFromExecution: (projectId) =>
     apiClient
@@ -111,6 +96,16 @@ export const projectBudgetApiRepository: ProjectBudgetRepository = {
       })
       .then((r) => r.data)
   },
+
+  exportExcel: (projectId) =>
+    apiClient
+      .get<Blob>(`${base(projectId)}/budget/export.xlsx`, { params: slug(), responseType: 'blob' })
+      .then((r) => r.data),
+
+  fetchPdfHtml: (projectId) =>
+    apiClient
+      .get(`${base(projectId)}/budget/pdf`, { params: slug(), responseType: 'text' })
+      .then((r) => String(r.data)),
 
   listAttachments: (projectId, lineItemId) =>
     apiClient

@@ -14,7 +14,7 @@ import type {
 import {
   UBIGEO_OTHER_DEPARTMENT_ID,
   UBIGEO_OTHER_PROVINCE_ID,
-} from '@modules/alquileres/features/clientes/constants/ubigeo-other'
+} from '@shared/domain/ubigeo-other'
 /** Query keys solo para inventario Ventas — no comparten caché con Alquileres. */
 export const ventasPropertyKeys = {
   root: ['ventas-properties'] as const,

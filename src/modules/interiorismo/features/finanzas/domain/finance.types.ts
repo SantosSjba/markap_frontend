@@ -27,6 +27,9 @@ export interface InteriorFinancePaymentDto {
   paymentType: string
   status: string
   scheduleItemId: string | null
+  /** null = moneda del presupuesto */
+  currency: string | null
+  exchangeRate: number | null
 }
 
 export interface InteriorFinanceExpenseLineDto {
@@ -117,6 +120,8 @@ export interface CreateFinancePaymentPayload {
   paymentType?: string
   status: string
   scheduleItemId?: string | null
+  currency?: string | null
+  exchangeRate?: number | null
 }
 
 export interface UpdateFinancePaymentPayload {
@@ -126,4 +131,6 @@ export interface UpdateFinancePaymentPayload {
   paymentType?: string
   status?: string
   scheduleItemId?: string | null
+  currency?: string | null
+  exchangeRate?: number | null
 }

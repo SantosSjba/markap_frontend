@@ -10,7 +10,7 @@ import { fieldErrorClass, fieldHintClass, fieldLabelClass, inputClass } from './
 interface Props {
   /** VeeValidate / bindings pueden enviar undefined hasta el primer input */
   modelValue?: string | number | null
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date' | 'datetime-local'
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date' | 'time' | 'datetime-local'
   placeholder?: string
   label?: string
   error?: string
@@ -24,8 +24,10 @@ interface Props {
   inputmode?: 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
   /** Mostrar ojito para ver/ocultar (solo type="password"). Por defecto true. */
   showPasswordToggle?: boolean
-  /** `sm`: control compacto (h-9) para tablas y filas editables */
-  size?: 'sm' | 'default'
+  /** `sm`: compacto (h-9); `xs`: celda de hoja (h-8). El tamaño normal queda como predeterminado. */
+  size?: 'xs' | 'sm' | 'default'
+  /** Celda de hoja: conserva edición, accesibilidad y eventos del input compartido. */
+  variant?: 'default' | 'cell'
 }
 
 // Atributos nativos (min, step, max, autocomplete, readonly, name…) van al <input>;
@@ -40,6 +42,7 @@ const props = withDefaults(defineProps<Props>(), {
   inputClass: '',
   showPasswordToggle: true,
   size: 'default',
+  variant: 'default',
 })
 
 const slots = useSlots()
@@ -101,6 +104,8 @@ const controlClass = computed(() =>
   cn(
     inputClass,
     props.size === 'sm' && 'h-9 rounded-lg py-2 ps-3 pe-3',
+    props.size === 'xs' && 'h-8 rounded-md py-1 ps-2 pe-2',
+    props.variant === 'cell' && 'border-transparent bg-transparent shadow-none hover:border-gray-200 focus:bg-white focus-visible:bg-white dark:border-transparent dark:bg-transparent dark:hover:border-gray-700 dark:focus:bg-gray-900 dark:focus-visible:bg-gray-900',
     hasRightAdornment.value && 'pe-12',
     props.inputClass,
   ),
@@ -113,8 +118,8 @@ const handleBlur = (event: FocusEvent) => {
 </script>
 
 <template>
-  <div role="group" data-slot="field" class="flex w-full flex-col gap-2" v-bind="wrapperAttrs">
-    <label v-if="label" :for="inputId" :class="fieldLabelClass">
+  <div role="group" data-slot="field" :class="['flex w-full min-w-0 flex-col', size === 'default' ? 'gap-2' : 'gap-1']" v-bind="wrapperAttrs">
+    <label v-if="label" :for="inputId" :class="[fieldLabelClass, size !== 'default' && 'text-theme-xs text-gray-500 dark:text-gray-400']">
       {{ label }}
       <span v-if="required" class="text-error-500">*</span>
     </label>

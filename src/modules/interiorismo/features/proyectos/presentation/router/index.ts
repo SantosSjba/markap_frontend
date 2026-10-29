@@ -4,7 +4,7 @@ export const interiorismoProyectosRoutes: RouteRecordRaw[] = [
     path: '',
     name: 'interiorismo-proyectos',
     component: () => import('../views/InteriorismoProyectosListView.vue'),
-    meta: { title: 'Listado de proyectos', inProgressOnly: false },
+    meta: { title: 'Listado de proyectos' },
   },
   {
     path: 'nuevo',
@@ -13,10 +13,10 @@ export const interiorismoProyectosRoutes: RouteRecordRaw[] = [
     meta: { title: 'Nuevo proyecto' },
   },
   {
+    // Antes era un ítem del menú; ahora es el listado filtrado por etapa
     path: 'en-progreso',
     name: 'interiorismo-proyectos-en-progreso',
-    component: () => import('../views/InteriorismoProyectosListView.vue'),
-    meta: { title: 'En progreso', inProgressOnly: true },
+    redirect: { name: 'interiorismo-proyectos', query: { status: 'IN_PROGRESS' } },
   },
   {
     path: ':id/editar',

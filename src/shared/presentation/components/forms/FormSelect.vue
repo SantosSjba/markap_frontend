@@ -25,8 +25,9 @@ interface Props {
   loading?: boolean
   required?: boolean
   id?: string
-  /** `sm`: control compacto (h-9) para tablas y filas editables */
-  size?: 'sm' | 'default'
+  /** `sm`: compacto (h-9); `xs`: celda de hoja (h-8). El tamaño normal queda como predeterminado. */
+  size?: 'xs' | 'sm' | 'default'
+  variant?: 'default' | 'cell'
 }
 
 // Atributos nativos al disparador; class y style al contenedor.
@@ -38,6 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   required: false,
   size: 'default',
+  variant: 'default',
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
@@ -75,8 +77,8 @@ const handleChange = (value: AcceptableValue) => {
 </script>
 
 <template>
-  <div role="group" data-slot="field" class="flex w-full flex-col gap-2" v-bind="wrapperAttrs">
-    <label v-if="label" :for="selectId" :class="fieldLabelClass">
+  <div role="group" data-slot="field" :class="['flex w-full min-w-0 flex-col', size === 'default' ? 'gap-2' : 'gap-1']" v-bind="wrapperAttrs">
+    <label v-if="label" :for="selectId" :class="[fieldLabelClass, size !== 'default' && 'text-theme-xs text-gray-500 dark:text-gray-400']">
       {{ label }}
       <span v-if="required" class="text-error-500">*</span>
     </label>
@@ -90,6 +92,7 @@ const handleChange = (value: AcceptableValue) => {
         v-bind="controlAttrs"
         :id="selectId"
         :size="size"
+        :class="variant === 'cell' ? 'border-transparent bg-transparent shadow-none hover:border-gray-200 hover:bg-transparent dark:border-transparent dark:bg-transparent dark:hover:border-gray-700 dark:hover:bg-transparent' : undefined"
         :aria-invalid="error ? 'true' : undefined"
         :aria-describedby="error ? messageId : undefined"
       >

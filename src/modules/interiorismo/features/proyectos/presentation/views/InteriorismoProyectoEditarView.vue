@@ -2,451 +2,73 @@
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
 const { canWrite } = useApplicationAccess('interiorismo')
 
-import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
 import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
-import { useService } from '@shared/presentation/di/services'
-import { DIRECTORY } from '@shared/application/ports/directory.port'
-import { toCalendarDateString } from '@shared/utils/formatters'
-import { ref, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useQuery } from '@tanstack/vue-query'
-import * as yup from 'yup'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import FormInput from '@shared/presentation/components/forms/FormInput.vue'
-import FormSelect from '@shared/presentation/components/forms/FormSelect.vue'
-import FormTextarea from '@shared/presentation/components/forms/FormTextarea.vue'
-import { useForm, toTypedSchema } from '@shared/presentation/components/forms/index'
-import { INTERIORISMO_APP_SLUG } from '../../../../config/app.constants'
+import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
+import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
-import { useInteriorClientsList } from '../../../clientes/presentation/composables/useClients'
-import {
-  useInteriorProjectDetail,
-  useUpdateInteriorProject,
-} from '../composables/useInteriorProjects'
-import type { InteriorProjectStatus, InteriorProjectType } from '../../domain/project.types'
-import type { ClientListItem, ListClientsParams } from '../../../clientes/domain/client.types'
-import { PROJECT_TYPE_LABELS } from '../labels'
-import { useInteriorProjectStageOptions } from '../composables/useInteriorProjectStageOptions'
-import {
-  CURRENCY_OPTIONS,
-  INTERVENTION_LEVEL_OPTIONS,
-} from '../../../proyecto-presupuesto/presentation/labels'
-const directory = useService(DIRECTORY)
+import { useInteriorProjectDetail, useUpdateInteriorProject } from '../composables/useInteriorProjects'
+import type { InteriorProjectFormPayload } from '../../domain/project.types'
+import InteriorProyectoForm from '../components/InteriorProyectoForm.vue'
 
 const route = useRoute()
 const router = useRouter()
-const projectId = computed(() => String(route.params.id ?? ''))
+const id = computed(() => String(route.params.id ?? ''))
 
-const listClientsParams = ref<ListClientsParams>({
-  applicationSlug: INTERIORISMO_APP_SLUG,
-  page: 1,
-  limit: 500,
-})
-const { data: clientsRes, isLoading: loadingClients } = useInteriorClientsList(listClientsParams)
-
-const { data: agentsRes, isLoading: loadingAgents } = useQuery({
-  queryKey: ['agents', INTERIORISMO_APP_SLUG, 'interior-pick'],
-  queryFn: async () => {
-    const data = await directory.listAgents({
-      applicationSlug: INTERIORISMO_APP_SLUG,
-      limit: 500,
-      page: 1,
-    })
-    return data
-  },
-})
-
-const { data: project, isLoading: loadingProject, isError } = useInteriorProjectDetail(projectId)
-
-const clientOptions = computed(() =>
-  (clientsRes.value?.data ?? []).map((c: ClientListItem) => ({
-    value: c.id,
-    label: `${c.fullName} (${c.documentNumber})`,
-  })),
-)
-
-const agentOptions = computed(() =>
-  (agentsRes.value?.data ?? []).map((a) => ({
-    value: a.id,
-    label: a.fullName,
-  })),
-)
-
-const typeOptions = computed(() =>
-  (Object.keys(PROJECT_TYPE_LABELS) as InteriorProjectType[]).map((k) => ({
-    value: k,
-    label: PROJECT_TYPE_LABELS[k],
-  })),
-)
-
-const { filterOptions: statusOptions } = useInteriorProjectStageOptions({ includeCancelled: true })
-
-const schema = yup.object({
-  name: yup.string().required('Ingrese el nombre').trim(),
-  clientId: yup.string().required('Seleccione el cliente'),
-  projectType: yup.string().required(),
-  status: yup.string().required(),
-  addressLine: yup.string().trim(),
-  city: yup.string().trim(),
-  interventionLevel: yup.string().trim(),
-  executionTimeNote: yup.string().trim(),
-  currency: yup.string().required(),
-  defaultUtilityPct: yup.number().nullable().min(0),
-  defaultIgvPct: yup.number().nullable().min(0),
-  areaSqm: yup.number().nullable(),
-  levelsCount: yup.number().integer().nullable(),
-  environmentsNote: yup.string().trim(),
-  startDate: yup.string().trim(),
-  estimatedEndDate: yup.string().trim(),
-  designerAgentId: yup.string().trim(),
-  architectJrAgentId: yup.string().trim(),
-  architectSrAgentId: yup.string().trim(),
-  supervisorAgentId: yup.string().trim(),
-  commercialAgentId: yup.string().trim(),
-  estimatedBudget: yup.number().nullable(),
-  projectedCost: yup.number().nullable(),
-  expectedMargin: yup.number().nullable(),
-})
-
-const { handleSubmit, errors, defineComponentBinds, resetForm } = useForm({
-  validationSchema: toTypedSchema(schema),
-  initialValues: {
-    name: '',
-    clientId: '',
-    projectType: 'INTERIOR_DESIGN' as InteriorProjectType,
-    status: 'DESIGN' as InteriorProjectStatus,
-    addressLine: '',
-    city: '',
-    interventionLevel: '',
-    executionTimeNote: '',
-    currency: 'PEN',
-    defaultUtilityPct: 20,
-    defaultIgvPct: 18,
-    areaSqm: undefined as number | undefined,
-    levelsCount: undefined as number | undefined,
-    environmentsNote: '',
-    startDate: '',
-    estimatedEndDate: '',
-    designerAgentId: '',
-    architectJrAgentId: '',
-    architectSrAgentId: '',
-    supervisorAgentId: '',
-    commercialAgentId: '',
-    estimatedBudget: undefined as number | undefined,
-    projectedCost: undefined as number | undefined,
-    expectedMargin: undefined as number | undefined,
-  },
-})
-
-watch(
-  project,
-  (p) => {
-    if (!p) return
-    resetForm({
-      values: {
-        name: p.name,
-        clientId: p.client.id,
-        projectType: p.projectType,
-        status: p.status,
-        addressLine: p.addressLine ?? '',
-        city: p.city ?? '',
-        interventionLevel: p.interventionLevel ?? '',
-        executionTimeNote: p.executionTimeNote ?? '',
-        currency: p.currency ?? 'PEN',
-        defaultUtilityPct: p.defaultUtilityPct ?? 20,
-        defaultIgvPct: p.defaultIgvPct ?? 18,
-        areaSqm: p.areaSqm ?? undefined,
-        levelsCount: p.levelsCount ?? undefined,
-        environmentsNote: p.environmentsNote ?? '',
-        startDate: p.startDate ? toCalendarDateString(p.startDate) : '',
-        estimatedEndDate: p.estimatedEndDate ? toCalendarDateString(p.estimatedEndDate) : '',
-        designerAgentId: p.designerAgent?.id ?? '',
-        architectJrAgentId: p.architectJrAgent?.id ?? '',
-        architectSrAgentId: p.architectSrAgent?.id ?? '',
-        supervisorAgentId: p.supervisorAgent?.id ?? '',
-        commercialAgentId: p.commercialAgent?.id ?? '',
-        estimatedBudget: p.estimatedBudget ?? undefined,
-        projectedCost: p.projectedCost ?? undefined,
-        expectedMargin: p.expectedMargin ?? undefined,
-      },
-    })
-  },
-  { immediate: true },
-)
-
-const nameB = defineComponentBinds('name')
-const clientIdB = defineComponentBinds('clientId')
-const projectTypeB = defineComponentBinds('projectType')
-const statusB = defineComponentBinds('status')
-const addressLineB = defineComponentBinds('addressLine')
-const cityB = defineComponentBinds('city')
-const interventionLevelB = defineComponentBinds('interventionLevel')
-const executionTimeNoteB = defineComponentBinds('executionTimeNote')
-const currencyB = defineComponentBinds('currency')
-const defaultUtilityPctB = defineComponentBinds('defaultUtilityPct')
-const defaultIgvPctB = defineComponentBinds('defaultIgvPct')
-const areaSqmB = defineComponentBinds('areaSqm')
-const levelsCountB = defineComponentBinds('levelsCount')
-const environmentsNoteB = defineComponentBinds('environmentsNote')
-const startDateB = defineComponentBinds('startDate')
-const estimatedEndDateB = defineComponentBinds('estimatedEndDate')
-const designerB = defineComponentBinds('designerAgentId')
-const architectJrB = defineComponentBinds('architectJrAgentId')
-const architectSrB = defineComponentBinds('architectSrAgentId')
-const supervisorB = defineComponentBinds('supervisorAgentId')
-const commercialB = defineComponentBinds('commercialAgentId')
-const estimatedBudgetB = defineComponentBinds('estimatedBudget')
-const projectedCostB = defineComponentBinds('projectedCost')
-const expectedMarginB = defineComponentBinds('expectedMargin')
-
+const { data: project, isLoading, isError, error, refetch } = useInteriorProjectDetail(id)
 const updateMut = useUpdateInteriorProject()
 
-const loading = computed(() => loadingClients.value || loadingAgents.value || loadingProject.value)
+const goBack = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos/${id.value}`)
 
-const goBack = () => router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)
-
-const emptyToUndef = (s: string | undefined | null) => (s?.trim() ? s.trim() : undefined)
-
-const onSubmit = handleSubmit(async (v) => {
-  if (!project.value) return
+async function onSubmit(payload: InteriorProjectFormPayload) {
+  const { code, ...rest } = payload
   try {
     await updateMut.mutateAsync({
-      id: project.value.id,
-      payload: {
-        name: v.name,
-        clientId: v.clientId,
-        projectType: v.projectType as InteriorProjectType,
-        status: v.status as InteriorProjectStatus,
-        addressLine: emptyToUndef(v.addressLine) ?? null,
-        city: emptyToUndef(v.city) ?? null,
-        interventionLevel: emptyToUndef(v.interventionLevel) ?? null,
-        executionTimeNote: emptyToUndef(v.executionTimeNote) ?? null,
-        currency: v.currency || 'PEN',
-        defaultUtilityPct: v.defaultUtilityPct ?? 20,
-        defaultIgvPct: v.defaultIgvPct ?? 18,
-        areaSqm: v.areaSqm ?? null,
-        levelsCount: v.levelsCount ?? null,
-        environmentsNote: emptyToUndef(v.environmentsNote) ?? null,
-        startDate: emptyToUndef(v.startDate) ?? null,
-        estimatedEndDate: emptyToUndef(v.estimatedEndDate) ?? null,
-        designerAgentId: emptyToUndef(v.designerAgentId) ?? null,
-        architectJrAgentId: emptyToUndef(v.architectJrAgentId) ?? null,
-        architectSrAgentId: emptyToUndef(v.architectSrAgentId) ?? null,
-        supervisorAgentId: emptyToUndef(v.supervisorAgentId) ?? null,
-        commercialAgentId: emptyToUndef(v.commercialAgentId) ?? null,
-        estimatedBudget: v.estimatedBudget ?? null,
-        projectedCost: v.projectedCost ?? null,
-        expectedMargin: v.expectedMargin ?? null,
-      },
+      id: id.value,
+      // El código solo viaja si se regeneró
+      payload: code !== project.value?.code ? { ...rest, code } : rest,
     })
-    router.push(`${INTERIORISMO_BASE_PATH}/proyectos/${project.value.id}`)
+    goBack()
   } catch {
     void 0
   }
-})
+}
 </script>
 
 <template>
-  <div class="max-w-[1100px] mx-auto space-y-6">
+  <div>
     <PageHeader
       title="Editar proyecto"
-      :subtitle="project?.code ? `Código: ${project.code}` : 'Cargando…'"
+      :subtitle="project ? `${project.code} · ${project.client.fullName}` : 'Cargando…'"
       back
+      class="mb-6"
       @back="goBack"
     />
 
-    <LoadingState v-if="loading" />
-    <div
-      v-else-if="isError || !project"
-      class="text-center py-16 text-sm text-gray-500 dark:text-gray-400"
-    >
-      No se encontró el proyecto.
-      <div class="mt-4">
-        <BaseButton variant="outline" @click="goBack">Volver</BaseButton>
-      </div>
-    </div>
-
-    <form v-else class="space-y-8" @submit.prevent="onSubmit">
-      <FormSectionCard
-        title="Información general"
-        dense
-      >
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="md:col-span-2">
-            <p class="text-xs font-medium mb-1 text-gray-400 dark:text-gray-500">Código</p>
-            <p class="text-sm font-mono font-semibold text-gray-800 dark:text-white/90">
-              {{ project.code }}
-            </p>
-            <p class="text-xs mt-1 text-gray-400 dark:text-gray-500">
-              El código no se puede cambiar tras crear el proyecto.
-            </p>
-          </div>
-          <FormInput v-bind="nameB" label="Nombre" required :error="errors.name" />
-          <FormSelect
-            v-bind="clientIdB"
-            label="Cliente"
-            :options="clientOptions"
-            placeholder="Seleccionar"
-            required
-            :error="errors.clientId"
-          />
-          <FormSelect
-            v-bind="projectTypeB"
-            label="Tipo"
-            :options="typeOptions"
-            required
-            :error="errors.projectType"
-          />
-          <FormSelect
-            v-bind="statusB"
-            label="Estado"
-            :options="statusOptions"
-            required
-            :error="errors.status"
-            class="md:col-span-2"
-          />
-        </div>
-      </FormSectionCard>
-
-      <FormSectionCard
-        title="Presupuesto / cotización"
-        dense
-      >
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput v-bind="cityB" label="Ciudad" placeholder="TRUJILLO" :error="errors.city" />
-          <FormSelect
-            v-bind="interventionLevelB"
-            label="Nivel de intervención"
-            :options="INTERVENTION_LEVEL_OPTIONS"
-            placeholder="Seleccionar"
-            :error="errors.interventionLevel"
-          />
-          <FormInput
-            v-bind="executionTimeNoteB"
-            class="md:col-span-2"
-            label="Tiempo de ejecución"
-            placeholder="30 DÍAS HÁBILES"
-            :error="errors.executionTimeNote"
-          />
-          <FormSelect
-            v-bind="currencyB"
-            label="Moneda"
-            :options="CURRENCY_OPTIONS"
-            required
-            :error="errors.currency"
-          />
-          <FormInput
-            v-bind="defaultUtilityPctB"
-            type="number"
-            label="Utilidad por defecto (%)"
-            :error="errors.defaultUtilityPct"
-          />
-          <FormInput
-            v-bind="defaultIgvPctB"
-            type="number"
-            label="IGV por defecto (%)"
-            :error="errors.defaultIgvPct"
-          />
-        </div>
-      </FormSectionCard>
-
-      <FormSectionCard
-        title="Información técnica"
-        dense
-      >
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput v-bind="addressLineB" class="md:col-span-2" label="Dirección" :error="errors.addressLine" />
-          <FormInput v-bind="areaSqmB" type="number" label="Área m²" :error="errors.areaSqm" />
-          <FormInput v-bind="levelsCountB" type="number" label="Niveles / pisos" :error="errors.levelsCount" />
-          <FormTextarea
-            v-bind="environmentsNoteB"
-            class="md:col-span-2"
-            label="Ambientes"
-            placeholder="Ej. cocina, sala, dormitorios…"
-            :rows="3"
-          />
-          <FormInput v-bind="startDateB" type="date" label="Fecha inicio" :error="errors.startDate" />
-          <FormInput
-            v-bind="estimatedEndDateB"
-            type="date"
-            label="Fecha estimada fin"
-            :error="errors.estimatedEndDate"
-          />
-        </div>
-      </FormSectionCard>
-
-      <FormSectionCard
-        title="Responsables"
-        dense
-      >
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormSelect
-            v-bind="designerB"
-            label="Diseñador"
-            :options="agentOptions"
-            placeholder="Opcional"
-            :error="errors.designerAgentId"
-          />
-          <FormSelect
-            v-bind="architectJrB"
-            label="Arquitecto Jr"
-            :options="agentOptions"
-            placeholder="Opcional"
-            :error="errors.architectJrAgentId"
-          />
-          <FormSelect
-            v-bind="architectSrB"
-            label="Arquitecto Sr"
-            :options="agentOptions"
-            placeholder="Opcional"
-            :error="errors.architectSrAgentId"
-          />
-          <FormSelect v-bind="supervisorB" label="Supervisor" :options="agentOptions" placeholder="Opcional" />
-          <FormSelect
-            v-bind="commercialB"
-            label="Asesor comercial"
-            :options="agentOptions"
-            placeholder="Opcional"
-          />
-        </div>
-      </FormSectionCard>
-
-      <FormSectionCard
-        title="Información financiera"
-        dense
-      >
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormInput
-            v-bind="estimatedBudgetB"
-            type="number"
-            step="0.01"
-            label="Presupuesto estimado (S/)"
-            :error="errors.estimatedBudget"
-          />
-          <FormInput
-            v-bind="projectedCostB"
-            type="number"
-            step="0.01"
-            label="Costo proyectado (S/)"
-            :error="errors.projectedCost"
-          />
-          <FormInput
-            v-bind="expectedMarginB"
-            type="number"
-            step="0.01"
-            label="Margen esperado %"
-            :error="errors.expectedMargin"
-          />
-        </div>
-      </FormSectionCard>
-
-      <div class="flex justify-end gap-3">
-        <BaseButton type="button" variant="outline" @click="goBack">Cancelar</BaseButton>
-        <BaseButton v-if="canWrite" type="submit" variant="primary" :loading="updateMut.isPending.value">
-          Guardar cambios
+    <LoadingState v-if="isLoading" text="Cargando proyecto..." class="py-24" />
+    <div v-else-if="isError || !project" class="flex flex-col items-center justify-center gap-3 py-16">
+      <AppIcon icon="lucide:alert-circle" :size="40" color="var(--color-error)" />
+      <p class="max-w-md text-center text-sm font-medium text-error-500 dark:text-error-400">
+        {{ isError ? getApiErrorMessage(error) : 'No se encontró el proyecto.' }}
+      </p>
+      <div class="flex flex-wrap justify-center gap-2">
+        <BaseButton v-if="isError" variant="outline" size="sm" @click="() => refetch()">Reintentar</BaseButton>
+        <BaseButton variant="outline" size="sm" @click="router.push(`${INTERIORISMO_BASE_PATH}/proyectos`)">
+          Volver al listado
         </BaseButton>
       </div>
-    </form>
+    </div>
+    <InteriorProyectoForm
+      v-else
+      :initial="project"
+      submit-label="Guardar cambios"
+      :submitting="updateMut.isPending.value"
+      :can-write="canWrite"
+      @submit="onSubmit"
+      @cancel="goBack"
+    />
   </div>
 </template>

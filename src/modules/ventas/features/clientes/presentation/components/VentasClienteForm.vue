@@ -21,8 +21,8 @@ import {
   UBIGEO_OTHER_DISTRICT_ID,
   buildLocationCustomPayload,
   mergeDepartmentOptions,
-} from '@modules/alquileres/features/clientes/constants/ubigeo-other'
-import { useClientAddressUbigeo } from '@modules/alquileres/features/clientes/composables/useClientAddressUbigeo'
+} from '@shared/domain/ubigeo-other'
+import { useClientAddressUbigeo } from '@shared/presentation/composables/useClientAddressUbigeo'
 import {
   VENTAS_LEAD_ORIGIN_OPTIONS,
   VENTAS_SALES_STATUS_OPTIONS,

@@ -9,11 +9,4 @@ export interface InteriorismoProjectStageDTO {
 
 export interface InteriorismoConfigBootstrap {
   projectStages: InteriorismoProjectStageDTO[]
-  numbering: {
-    interiorProject: {
-      prefix: string
-      lastNumber: number
-      nextPreview: string
-    }
-  }
 }

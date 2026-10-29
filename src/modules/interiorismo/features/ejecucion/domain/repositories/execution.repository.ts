@@ -2,12 +2,15 @@ import type {
   CreateExecutionActualCostPayload,
   CreateExecutionEvidencePayload,
   CreateExecutionIncidentPayload,
+  CreateExecutionMilestonePayload,
   CreateExecutionTaskPayload,
   InteriorExecutionEvidenceDto,
   InteriorExecutionIncidentDto,
+  InteriorExecutionMilestoneDto,
   InteriorExecutionOverviewDto,
   InteriorExecutionTaskDto,
   UpdateExecutionIncidentPayload,
+  UpdateExecutionMilestonePayload,
   UpdateExecutionTaskPayload,
   UploadExecutionEvidencePayload,
 } from '../execution.types'
@@ -43,6 +46,16 @@ export interface InteriorExecutionRepository {
     payload: UpdateExecutionIncidentPayload,
   ): Promise<InteriorExecutionIncidentDto>
   createActualCost(projectId: string, payload: CreateExecutionActualCostPayload): Promise<unknown>
+  createMilestone(
+    projectId: string,
+    payload: CreateExecutionMilestonePayload,
+  ): Promise<InteriorExecutionMilestoneDto>
+  updateMilestone(
+    projectId: string,
+    milestoneId: string,
+    payload: UpdateExecutionMilestonePayload,
+  ): Promise<InteriorExecutionMilestoneDto>
+  deleteMilestone(projectId: string, milestoneId: string): Promise<void>
   deleteActualCost(projectId: string, costId: string): Promise<void>
   getDownloadUrl(archivoId: string): Promise<string>
 }

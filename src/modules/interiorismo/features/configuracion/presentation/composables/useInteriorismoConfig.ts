@@ -36,17 +36,3 @@ export function useInteriorismoSaveProjectStages() {
     onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
   })
 }
-
-export function useInteriorismoSaveInteriorProjectNumbering() {
-  const interiorismoConfigRepository = useService(interiorismoConfigRepositoryKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (body: { prefix?: string; lastNumber?: number }) =>
-      interiorismoConfigRepository.patchInteriorProjectNumbering(body),
-    onSuccess: async () => {
-      await invalidateInteriorismoConfigCache(qc)
-      void markapAlert.toast.success('Numeración actualizada')
-    },
-    onError: (e) => void markapAlert.toast.error('No se pudo guardar', getApiErrorMessage(e)),
-  })
-}

@@ -1,26 +1,29 @@
 import { projectBudgetRepositoryKey as repoKey } from '../../application/ports/project-budget.port'
 import { useService } from '@shared/presentation/di/services'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import { triggerBlobDownload } from '@shared/presentation/downloads/download-blob'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
 import { invalidateModuleQueries } from '@shared/utils/invalidateModuleQueries'
 import { INTERIORISMO_APP_SLUG } from '../../../../config/app.constants'
-import type {
-  CreateLineItemSupplierPaymentPayload,
-  CreateProjectBudgetLineItemPayload,
-  CreateProjectBudgetSectionPayload,
-  UpdateProjectBudgetLineItemPayload,
-  UpdateProjectBudgetSectionPayload,
-} from '../../domain/project-budget.types'
+import { interiorProjectKeys } from '../../../proyectos/presentation/composables/useInteriorProjects'
+import type { BudgetSheetDto } from '../../domain/project-budget.types'
+
 export const projectBudgetKeys = {
   all: ['interiorismo-project-budget', INTERIORISMO_APP_SLUG] as const,
   budget: (projectId: string) => [...projectBudgetKeys.all, 'budget', projectId] as const,
   settlement: (projectId: string) => [...projectBudgetKeys.all, 'settlement', projectId] as const,
 }
 
-function invalidateBudget(qc: ReturnType<typeof useQueryClient>, _projectId: string) {
-  return invalidateModuleQueries(qc, 'interiorismo')
+/**
+ * La hoja que devuelve el servidor reemplaza la caché (sin volver a pedirla) y se refrescan
+ * la liquidación y la ficha del proyecto, que dependen de los totales.
+ */
+export function applyBudgetSheet(qc: QueryClient, projectId: string, sheet: BudgetSheetDto) {
+  qc.setQueryData(projectBudgetKeys.budget(projectId), sheet)
+  void qc.invalidateQueries({ queryKey: projectBudgetKeys.settlement(projectId) })
+  void qc.invalidateQueries({ queryKey: interiorProjectKeys.all })
 }
 
 export function useProjectBudget(projectId: Ref<string> | string) {
@@ -28,7 +31,7 @@ export function useProjectBudget(projectId: Ref<string> | string) {
   const pid = () => unref(projectId)
   return useQuery({
     queryKey: computed(() => projectBudgetKeys.budget(pid())),
-    queryFn: () => repo.getBudget(pid()),
+    queryFn: () => repo.getSheet(pid()),
     enabled: computed(() => !!pid()),
   })
 }
@@ -43,128 +46,9 @@ export function useProjectSettlement(projectId: Ref<string> | string) {
   })
 }
 
-export function useCreateBudgetSection(projectId: Ref<string> | string) {
-  const repo = useService(repoKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: CreateProjectBudgetSectionPayload) =>
-      repo.createSection(unref(projectId), payload),
-    onSuccess: async () => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success('Sección creada')
-    },
-    onError: (err) =>
-      void markapAlert.toast.error('No se pudo crear la sección', getApiErrorMessage(err)),
-  })
-}
-
-export function useUpdateBudgetSection(projectId: Ref<string> | string) {
-  const repo = useService(repoKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({
-      sectionId,
-      payload,
-    }: {
-      sectionId: string
-      payload: UpdateProjectBudgetSectionPayload
-    }) => repo.updateSection(unref(projectId), sectionId, payload),
-    onSuccess: async () => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success('Sección actualizada')
-    },
-    onError: (err) =>
-      void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(err)),
-  })
-}
-
-export function useDeleteBudgetSection(projectId: Ref<string> | string) {
-  const repo = useService(repoKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (sectionId: string) => repo.deleteSection(unref(projectId), sectionId),
-    onSuccess: async () => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success('Sección eliminada')
-    },
-    onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),
-  })
-}
-
-export function useCreateBudgetLineItem(projectId: Ref<string> | string) {
-  const repo = useService(repoKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: CreateProjectBudgetLineItemPayload) =>
-      repo.createLineItem(unref(projectId), payload),
-    onSuccess: async () => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success('Partida agregada')
-    },
-    onError: (err) =>
-      void markapAlert.toast.error('No se pudo agregar la partida', getApiErrorMessage(err)),
-  })
-}
-
-export function useUpdateBudgetLineItem(projectId: Ref<string> | string) {
-  const repo = useService(repoKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({
-      lineItemId,
-      payload,
-    }: {
-      lineItemId: string
-      payload: UpdateProjectBudgetLineItemPayload
-    }) => repo.updateLineItem(unref(projectId), lineItemId, payload),
-    onSuccess: async () => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success('Partida actualizada')
-    },
-    onError: (err) =>
-      void markapAlert.toast.error('No se pudo actualizar', getApiErrorMessage(err)),
-  })
-}
-
-export function useDeleteBudgetLineItem(projectId: Ref<string> | string) {
-  const repo = useService(repoKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (lineItemId: string) => repo.deleteLineItem(unref(projectId), lineItemId),
-    onSuccess: async () => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success('Partida eliminada')
-    },
-    onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),
-  })
-}
-
-export function useCreateSupplierPayment(projectId: Ref<string> | string) {
-  const repo = useService(repoKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: CreateLineItemSupplierPaymentPayload) =>
-      repo.createSupplierPayment(unref(projectId), payload),
-    onSuccess: async () => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success('Abono registrado')
-    },
-    onError: (err) =>
-      void markapAlert.toast.error('No se pudo registrar el abono', getApiErrorMessage(err)),
-  })
-}
-
-export function useDeleteSupplierPayment(projectId: Ref<string> | string) {
-  const repo = useService(repoKey)
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (paymentId: string) => repo.deleteSupplierPayment(unref(projectId), paymentId),
-    onSuccess: async () => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success('Abono eliminado')
-    },
-    onError: (err) => void markapAlert.toast.error('No se pudo eliminar', getApiErrorMessage(err)),
-  })
+/** Acceso al repositorio para el editor (que encola sus propias llamadas). */
+export function useBudgetRepository() {
+  return useService(repoKey)
 }
 
 export function useOpenProjectBudgetPdf() {
@@ -183,19 +67,40 @@ export function useOpenProjectBudgetPdf() {
   }
 }
 
+export function useExportBudgetExcel(projectId: Ref<string> | string) {
+  const repo = useService(repoKey)
+  return useMutation({
+    mutationFn: async (fileName: string) => ({ blob: await repo.exportExcel(unref(projectId)), fileName }),
+    onSuccess: ({ blob, fileName }) => triggerBlobDownload(blob, fileName),
+    onError: (err) => void markapAlert.toast.error('No se pudo exportar', getApiErrorMessage(err)),
+  })
+}
+
 export function useDuplicateBudgetSnapshot(projectId: Ref<string> | string) {
   const repo = useService(repoKey)
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () => repo.duplicateSnapshot(unref(projectId)),
-    onSuccess: async (result) => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success(
-        `Snapshot creado: ${result.sectionsCreated} secciones, ${result.lineItemsCreated} partidas`,
-      )
+    onSuccess: (sheet) => {
+      applyBudgetSheet(qc, unref(projectId), sheet)
+      void markapAlert.toast.success(`Versión ${sheet.budget.version} creada; la anterior queda guardada`)
     },
     onError: (err) =>
-      void markapAlert.toast.error('No se pudo duplicar el presupuesto', getApiErrorMessage(err)),
+      void markapAlert.toast.error('No se pudo crear la versión', getApiErrorMessage(err)),
+  })
+}
+
+export function useActivateBudgetVersion(projectId: Ref<string> | string) {
+  const repo = useService(repoKey)
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (budgetId: string) => repo.activateVersion(unref(projectId), budgetId),
+    onSuccess: (sheet) => {
+      applyBudgetSheet(qc, unref(projectId), sheet)
+      void markapAlert.toast.success(`Ahora se trabaja la versión ${sheet.budget.version}`)
+    },
+    onError: (err) =>
+      void markapAlert.toast.error('No se pudo cambiar de versión', getApiErrorMessage(err)),
   })
 }
 
@@ -204,19 +109,16 @@ export function useSyncBudgetFromExecution(projectId: Ref<string> | string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () => repo.syncFromExecution(unref(projectId)),
-    onSuccess: async (result) => {
-      await invalidateBudget(qc, unref(projectId))
+    onSuccess: (result) => {
+      applyBudgetSheet(qc, unref(projectId), result.sheet)
       const extra =
         result.unmatchedConcepts.length > 0
           ? ` · ${result.unmatchedConcepts.length} concepto(s) sin partida coincidente`
           : ''
-      void markapAlert.toast.success(`${result.updatedLineItems} partida(s) actualizada(s)${extra}`)
+      void markapAlert.toast.success(`${result.updatedRows} partida(s) actualizada(s)${extra}`)
     },
     onError: (err) =>
-      void markapAlert.toast.error(
-        'No se pudo sincronizar desde ejecución',
-        getApiErrorMessage(err),
-      ),
+      void markapAlert.toast.error('No se pudo sincronizar desde ejecución', getApiErrorMessage(err)),
   })
 }
 
@@ -226,11 +128,9 @@ export function useImportBudgetExcel(projectId: Ref<string> | string) {
   return useMutation({
     mutationFn: ({ file, replace }: { file: File; replace?: boolean }) =>
       repo.importExcel(unref(projectId), file, replace),
-    onSuccess: async (result) => {
-      await invalidateBudget(qc, unref(projectId))
-      void markapAlert.toast.success(
-        `Importado: ${result.sectionsCreated} secciones, ${result.lineItemsCreated} partidas`,
-      )
+    onSuccess: (result) => {
+      applyBudgetSheet(qc, unref(projectId), result)
+      void markapAlert.toast.success(`Importadas ${result.rowsCreated} filas desde «${result.import.sheetName}»`)
     },
     onError: (err) =>
       void markapAlert.toast.error('No se pudo importar el Excel', getApiErrorMessage(err)),

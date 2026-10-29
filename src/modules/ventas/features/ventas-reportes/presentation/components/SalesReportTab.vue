@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { computed, ref, watch, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@shared/presentation/ui/table'
+import { TableCell, TableRow } from '@shared/presentation/ui/table'
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
 import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
 import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
 import Badge from '@shared/presentation/components/ui/Badge.vue'
-import TableBodySkeleton from '@shared/presentation/components/ui/TableBodySkeleton.vue'
 import ReportSectionHeader from '@shared/presentation/components/reports/ReportSectionHeader.vue'
+import PeriodBreakdownTable, {
+  PERIOD_DETAIL_ROW_CLASS,
+  type PeriodColumn,
+} from '@shared/presentation/components/reports/PeriodBreakdownTable.vue'
 import { useExcelExport } from '@shared/presentation/composables/useExcelExport'
 import { formatCurrency, formatCurrencyRounded, formatShortDate } from '@shared/utils/formatters'
 import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
@@ -107,15 +110,14 @@ const hasSales = (period: string) => viewCurrencies.value.some((c) => salesIn(pe
 const hasCommissions = (period: string) =>
   periodCurrencies(period).some((c) => totalsOf(salesIn(period, c)).commissions.length > 0)
 
-const expanded = ref<string | null>(null)
-watch(
-  () => props.params,
-  () => (expanded.value = null),
-)
-function toggle(period: string) {
-  if (!hasSales(period)) return
-  expanded.value = expanded.value === period ? null : period
-}
+const PERIOD_COLUMNS: PeriodColumn[] = [
+  { key: 'count', label: 'Ventas' },
+  { key: 'total', label: 'Monto vendido', hint: '(precio final)', highlight: true },
+  { key: 'list', label: 'Valor de lista' },
+  { key: 'discount', label: 'Descuento' },
+  { key: 'commissions', label: 'Comisiones', hint: 'asesores (neto)' },
+  { key: 'paid', label: 'Pagado', hint: 'a asesores' },
+]
 
 const periodTotals = computed(() => viewCurrencies.value.map((c) => ({ currency: c, ...totalsOf(salesIn(null, c)) })))
 
@@ -207,6 +209,7 @@ async function exportExcel() {
     <ReportSectionHeader
       title="Ventas por periodo"
       :subtitle="`Ventas cerradas · ${periodLabel}`"
+      :help="`Cada venta se ubica en el ${params.granularity === 'year' ? 'año' : 'mes'} de su cierre. Haz clic en un periodo con ventas para ver cada una. El descuento compara el precio final con el de lista; las comisiones se muestran en su propia moneda.`"
       icon="lucide:trending-up"
       :exporting="isExporting"
       @export="exportExcel"
@@ -255,168 +258,121 @@ async function exportExcel() {
       </BaseCard>
     </div>
 
-    <p class="text-xs text-gray-400 dark:text-gray-500">
-      Cada venta se ubica en el {{ params.granularity === 'year' ? 'año' : 'mes' }} de su cierre. Haz clic en un periodo con ventas
-      para ver el detalle de cada una; las comisiones se muestran en su propia moneda.
-    </p>
 
-    <div class="overflow-x-auto">
-      <Table class="w-full border-collapse text-sm">
-        <TableHeader>
-          <TableRow class="border-b-2 border-gray-200 dark:border-gray-800">
-            <TableCell is-header class="min-w-[260px] text-left py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Periodo</TableCell>
-            <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Ventas</TableCell>
-            <TableCell is-header class="text-right py-3 px-4 font-semibold text-brand-500 dark:text-brand-400">
-              Monto vendido
-              <span class="block text-xs font-normal text-gray-400 dark:text-gray-500">(precio final)</span>
-            </TableCell>
-            <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Valor de lista</TableCell>
-            <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Descuento</TableCell>
-            <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">
-              Comisiones
-              <span class="block text-xs font-normal">asesores (neto)</span>
-            </TableCell>
-            <TableCell is-header class="text-right py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">
-              Pagado
-              <span class="block text-xs font-normal">a asesores</span>
-            </TableCell>
-          </TableRow>
-        </TableHeader>
-        <TableBodySkeleton v-if="query.isPending.value" :rows="6" :columns="7" />
-        <TableBody v-else>
-          <template v-for="p in periods" :key="p">
-            <!-- Periodo: cada moneda visible en su propia línea -->
-            <TableRow
-              :class="[
-                hasSales(p) ? 'cursor-pointer hover:opacity-90' : '',
-                expanded === p ? 'bg-brand-50 dark:bg-brand-500/12' : 'border-b border-gray-200 dark:border-gray-800',
-              ]"
-              @click="toggle(p)"
-            >
-              <TableCell class="py-3 px-4 font-medium text-gray-800 dark:text-white/90">
-                <span class="inline-flex items-center gap-2 whitespace-nowrap">
-                  <AppIcon
-                    v-if="hasSales(p)"
-                    :icon="expanded === p ? 'lucide:chevron-down' : 'lucide:chevron-right'"
-                    :size="14"
-                    color="var(--color-text-muted)"
-                  />
-                  <span v-else class="w-3.5 shrink-0" />
-                  {{ periodName(p) }}
-                </span>
-              </TableCell>
-              <TableCell class="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                <div v-for="c in periodCurrencies(p)" :key="c">{{ totalsOf(salesIn(p, c)).count || '—' }}</div>
-              </TableCell>
-              <TableCell class="py-3 px-4 text-right whitespace-nowrap">
-                <div v-for="c in periodCurrencies(p)" :key="c" class="font-semibold tabular-nums text-brand-500 dark:text-brand-400">
-                  {{ formatCurrency(totalsOf(salesIn(p, c)).total, c) }}
-                </div>
-              </TableCell>
-              <TableCell class="py-3 px-4 text-right whitespace-nowrap tabular-nums text-gray-500 dark:text-gray-400">
-                <div v-for="c in periodCurrencies(p)" :key="c">{{ formatCurrency(totalsOf(salesIn(p, c)).listTotal, c) }}</div>
-              </TableCell>
-              <TableCell class="py-3 px-4 text-right whitespace-nowrap tabular-nums">
-                <div v-for="c in periodCurrencies(p)" :key="c" :class="discountClass(totalsOf(salesIn(p, c)).discount)">
-                  {{ discountText(totalsOf(salesIn(p, c)).discount) }}
-                </div>
-              </TableCell>
-              <TableCell class="py-3 px-4 text-right whitespace-nowrap tabular-nums text-gray-700 dark:text-gray-300">
-                <template v-for="c in periodCurrencies(p)" :key="c">
-                  <div v-for="k in totalsOf(salesIn(p, c)).commissions" :key="k.currency">{{ formatCurrency(k.total, k.currency) }}</div>
-                </template>
-                <span v-if="!hasCommissions(p)" class="text-gray-400">—</span>
-              </TableCell>
-              <TableCell class="py-3 px-4 text-right whitespace-nowrap tabular-nums text-gray-500 dark:text-gray-400">
-                <template v-for="c in periodCurrencies(p)" :key="c">
-                  <div v-for="k in totalsOf(salesIn(p, c)).commissions" :key="k.currency">{{ formatCurrency(k.paid, k.currency) }}</div>
-                </template>
-                <span v-if="!hasCommissions(p)" class="text-gray-400">—</span>
+    <div>
+      <PeriodBreakdownTable
+        :periods="periods"
+        :columns="PERIOD_COLUMNS"
+        :has-detail="hasSales"
+        :loading="query.isPending.value"
+        show-total
+      >
+        <template #cell="{ period: p, column }">
+          <template v-if="column === 'count'">
+            <div v-for="c in periodCurrencies(p)" :key="c" class="text-gray-700 dark:text-gray-300">{{ totalsOf(salesIn(p, c)).count || '—' }}</div>
+          </template>
+          <template v-else-if="column === 'total'">
+            <div v-for="c in periodCurrencies(p)" :key="c" class="font-semibold text-brand-500 dark:text-brand-400">{{ formatCurrency(totalsOf(salesIn(p, c)).total, c) }}</div>
+          </template>
+          <template v-else-if="column === 'list'">
+            <div v-for="c in periodCurrencies(p)" :key="c" class="text-gray-500 dark:text-gray-400">{{ formatCurrency(totalsOf(salesIn(p, c)).listTotal, c) }}</div>
+          </template>
+          <template v-else-if="column === 'discount'">
+            <div v-for="c in periodCurrencies(p)" :key="c" :class="discountClass(totalsOf(salesIn(p, c)).discount)">{{ discountText(totalsOf(salesIn(p, c)).discount) }}</div>
+          </template>
+          <template v-else>
+            <template v-for="c in periodCurrencies(p)" :key="c">
+              <div
+                v-for="k in totalsOf(salesIn(p, c)).commissions"
+                :key="k.currency"
+                :class="column === 'commissions' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'"
+              >
+                {{ formatCurrency(column === 'commissions' ? k.total : k.paid, k.currency) }}
+              </div>
+            </template>
+            <span v-if="!hasCommissions(p)" class="text-gray-400">—</span>
+          </template>
+        </template>
+
+        <!-- Detalle del periodo: cada venta, por moneda -->
+        <template #detail="{ period: p }">
+          <template v-for="c in periodCurrencies(p)" :key="`${p}-${c}`">
+            <TableRow v-if="periodCurrencies(p).length > 1" class="border-b border-gray-200 bg-gray-100/70 dark:border-gray-800 dark:bg-white/5">
+              <TableCell colspan="7" class="py-2 px-4 pl-10 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {{ currencyName(c) }}
               </TableCell>
             </TableRow>
+            <TableRow
+              v-for="s in salesIn(p, c)"
+              :key="s.id"
+              :class="[PERIOD_DETAIL_ROW_CLASS, 'transition-opacity', s.processId ? 'cursor-pointer hover:opacity-90' : '']"
+              @click.stop="goProcess(s)"
+            >
+              <TableCell class="py-2.5 px-4 pl-10">
+                <p class="font-medium text-sm whitespace-nowrap text-brand-500 dark:text-brand-400">{{ s.processCode ?? s.propertyCode }}</p>
+                <p class="text-xs mt-0.5 line-clamp-2 text-gray-800 dark:text-white/90">{{ s.propertyCode }} · {{ s.propertyAddress }}</p>
+                <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
+                  {{ s.buyerName }}<template v-if="s.agentName"> · {{ s.agentName }}</template> · {{ paymentLabel(s.paymentType) }}
+                </p>
+              </TableCell>
+              <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                {{ formatShortDate(s.closedAt) }}
+                <span v-if="s.daysToClose != null" class="block">{{ s.daysToClose }} días</span>
+              </TableCell>
+              <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm font-semibold tabular-nums text-brand-500 dark:text-brand-400">
+                {{ formatCurrency(s.finalPrice, s.currency) }}
+              </TableCell>
+              <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm tabular-nums text-gray-500 dark:text-gray-400">
+                {{ s.listPrice != null ? formatCurrency(s.listPrice, s.currency) : '—' }}
+              </TableCell>
+              <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm tabular-nums" :class="discountClass(saleDiscount(s))">
+                {{ discountText(saleDiscount(s)) }}
+              </TableCell>
+              <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm">
+                <div v-for="(k, i) in s.commissions" :key="i" class="tabular-nums text-gray-700 dark:text-gray-300">
+                  {{ formatCurrency(k.total, k.currency) }}
+                  <span class="block text-xs text-gray-400 dark:text-gray-500">{{ k.agentName }}</span>
+                </div>
+                <span v-if="!s.commissions.length" class="text-gray-400">—</span>
+              </TableCell>
+              <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm tabular-nums text-gray-500 dark:text-gray-400">
+                <div v-for="(k, i) in s.commissions" :key="i" :class="k.paid >= k.total ? 'text-success-600 dark:text-success-500' : ''">
+                  {{ formatCurrency(k.paid, k.currency) }}
+                  <span class="block text-xs text-gray-400 dark:text-gray-500">{{ k.paid >= k.total ? 'pagada' : 'pendiente' }}</span>
+                </div>
+                <span v-if="!s.commissions.length" class="text-gray-400">—</span>
+              </TableCell>
+            </TableRow>
+          </template>
+        </template>
 
-            <!-- Detalle del periodo: cada venta, por moneda -->
-            <template v-if="expanded === p">
-              <template v-for="c in periodCurrencies(p)" :key="`${p}-${c}`">
-                <TableRow v-if="periodCurrencies(p).length > 1" class="border-b border-gray-200 bg-gray-100/70 dark:border-gray-800 dark:bg-white/5">
-                  <TableCell colspan="7" class="py-2 px-4 pl-10 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {{ currencyName(c) }}
-                  </TableCell>
-                </TableRow>
-                <TableRow
-                  v-for="s in salesIn(p, c)"
-                  :key="s.id"
-                  class="border-b border-gray-200 bg-gray-50 transition-opacity dark:border-gray-800 dark:bg-gray-800"
-                  :class="s.processId ? 'cursor-pointer hover:opacity-90' : ''"
-                  @click.stop="goProcess(s)"
-                >
-                  <TableCell class="py-2.5 px-4 pl-10">
-                    <p class="font-medium text-sm whitespace-nowrap text-brand-500 dark:text-brand-400">{{ s.processCode ?? s.propertyCode }}</p>
-                    <p class="text-xs mt-0.5 line-clamp-2 text-gray-800 dark:text-white/90">{{ s.propertyCode }} · {{ s.propertyAddress }}</p>
-                    <p class="text-xs mt-0.5 text-gray-400 dark:text-gray-500">
-                      {{ s.buyerName }}<template v-if="s.agentName"> · {{ s.agentName }}</template> · {{ paymentLabel(s.paymentType) }}
-                    </p>
-                  </TableCell>
-                  <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
-                    {{ formatShortDate(s.closedAt) }}
-                    <span v-if="s.daysToClose != null" class="block">{{ s.daysToClose }} días</span>
-                  </TableCell>
-                  <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm font-semibold tabular-nums text-brand-500 dark:text-brand-400">
-                    {{ formatCurrency(s.finalPrice, s.currency) }}
-                  </TableCell>
-                  <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm tabular-nums text-gray-500 dark:text-gray-400">
-                    {{ s.listPrice != null ? formatCurrency(s.listPrice, s.currency) : '—' }}
-                  </TableCell>
-                  <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm tabular-nums" :class="discountClass(saleDiscount(s))">
-                    {{ discountText(saleDiscount(s)) }}
-                  </TableCell>
-                  <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm">
-                    <div v-for="(k, i) in s.commissions" :key="i" class="tabular-nums text-gray-700 dark:text-gray-300">
-                      {{ formatCurrency(k.total, k.currency) }}
-                      <span class="block text-xs text-gray-400 dark:text-gray-500">{{ k.agentName }}</span>
-                    </div>
-                    <span v-if="!s.commissions.length" class="text-gray-400">—</span>
-                  </TableCell>
-                  <TableCell class="py-2.5 px-4 text-right whitespace-nowrap text-sm tabular-nums text-gray-500 dark:text-gray-400">
-                    <div v-for="(k, i) in s.commissions" :key="i" :class="k.paid >= k.total ? 'text-success-600 dark:text-success-500' : ''">
-                      {{ formatCurrency(k.paid, k.currency) }}
-                      <span class="block text-xs text-gray-400 dark:text-gray-500">{{ k.paid >= k.total ? 'pagada' : 'pendiente' }}</span>
-                    </div>
-                    <span v-if="!s.commissions.length" class="text-gray-400">—</span>
-                  </TableCell>
-                </TableRow>
-              </template>
+        <template #total="{ column }">
+          <template v-if="!rows.length" />
+          <template v-else-if="column === 'count'">
+            <div v-for="t in periodTotals" :key="t.currency" class="text-gray-700 dark:text-gray-300">{{ t.count }}</div>
+          </template>
+          <template v-else-if="column === 'total'">
+            <div v-for="t in periodTotals" :key="t.currency" class="text-brand-500 dark:text-brand-400">{{ formatCurrency(t.total, t.currency) }}</div>
+          </template>
+          <template v-else-if="column === 'list'">
+            <div v-for="t in periodTotals" :key="t.currency" class="text-gray-500 dark:text-gray-400">{{ formatCurrency(t.listTotal, t.currency) }}</div>
+          </template>
+          <template v-else-if="column === 'discount'">
+            <div v-for="t in periodTotals" :key="t.currency" :class="discountClass(t.discount)">{{ discountText(t.discount) }}</div>
+          </template>
+          <template v-else>
+            <template v-for="t in periodTotals" :key="t.currency">
+              <div
+                v-for="k in t.commissions"
+                :key="k.currency"
+                :class="column === 'commissions' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'"
+              >
+                {{ formatCurrency(column === 'commissions' ? k.total : k.paid, k.currency) }}
+              </div>
             </template>
           </template>
-        </TableBody>
-        <tfoot v-if="periods.length > 1 && rows.length">
-          <TableRow class="border-t-2 border-gray-200 dark:border-gray-800">
-            <TableCell class="py-3 px-4 font-semibold text-gray-800 dark:text-white/90">Total</TableCell>
-            <TableCell class="py-3 px-4 text-right font-semibold tabular-nums text-gray-700 dark:text-gray-300">
-              <div v-for="t in periodTotals" :key="t.currency">{{ t.count }}</div>
-            </TableCell>
-            <TableCell class="py-3 px-4 text-right whitespace-nowrap font-semibold tabular-nums text-brand-500 dark:text-brand-400">
-              <div v-for="t in periodTotals" :key="t.currency">{{ formatCurrency(t.total, t.currency) }}</div>
-            </TableCell>
-            <TableCell class="py-3 px-4 text-right whitespace-nowrap font-semibold tabular-nums text-gray-500 dark:text-gray-400">
-              <div v-for="t in periodTotals" :key="t.currency">{{ formatCurrency(t.listTotal, t.currency) }}</div>
-            </TableCell>
-            <TableCell class="py-3 px-4 text-right whitespace-nowrap font-semibold tabular-nums">
-              <div v-for="t in periodTotals" :key="t.currency" :class="discountClass(t.discount)">{{ discountText(t.discount) }}</div>
-            </TableCell>
-            <TableCell class="py-3 px-4 text-right whitespace-nowrap font-semibold tabular-nums text-gray-700 dark:text-gray-300">
-              <template v-for="t in periodTotals" :key="t.currency">
-                <div v-for="k in t.commissions" :key="k.currency">{{ formatCurrency(k.total, k.currency) }}</div>
-              </template>
-            </TableCell>
-            <TableCell class="py-3 px-4 text-right whitespace-nowrap font-semibold tabular-nums text-gray-500 dark:text-gray-400">
-              <template v-for="t in periodTotals" :key="t.currency">
-                <div v-for="k in t.commissions" :key="k.currency">{{ formatCurrency(k.paid, k.currency) }}</div>
-              </template>
-            </TableCell>
-          </TableRow>
-        </tfoot>
-      </Table>
+        </template>
+      </PeriodBreakdownTable>
       <p v-if="!rows.length && !query.isPending.value && !query.isError.value" class="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
         No hay ventas cerradas en el periodo seleccionado.
       </p>

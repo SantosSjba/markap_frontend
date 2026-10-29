@@ -1,4 +1,5 @@
 import { interiorCatalogMaterialsRepositoryKey as repoKey } from '../../application/ports/catalog-materials.port'
+import { fetchAllPages } from '@shared/utils/fetchAllPages'
 import { useService } from '@shared/presentation/di/services'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
@@ -16,6 +17,7 @@ export const interiorCatalogMaterialsKeys = {
   list: (p: ListInteriorCatalogMaterialsParams) =>
     [...interiorCatalogMaterialsKeys.all, 'list', p] as const,
   detail: (id: string) => [...interiorCatalogMaterialsKeys.all, 'detail', id] as const,
+  stats: () => [...interiorCatalogMaterialsKeys.all, 'stats'] as const,
 }
 
 export function useInteriorCatalogMaterialsList(params: Ref<ListInteriorCatalogMaterialsParams>) {
@@ -24,6 +26,12 @@ export function useInteriorCatalogMaterialsList(params: Ref<ListInteriorCatalogM
     queryKey: computed(() => interiorCatalogMaterialsKeys.list(params.value)),
     queryFn: () => repo.getList(params.value),
   })
+}
+
+/** Indicadores del catálogo y categorías para el filtro */
+export function useInteriorCatalogMaterialStats() {
+  const repo = useService(repoKey)
+  return useQuery({ queryKey: interiorCatalogMaterialsKeys.stats(), queryFn: () => repo.getStats() })
 }
 
 export function useInteriorCatalogMaterialDetail(id: Ref<string> | string) {
@@ -95,5 +103,15 @@ export function useUploadInteriorCatalogAsset() {
     onError: (err) => {
       void markapAlert.toast.error('No se pudo subir el archivo', getApiErrorMessage(err))
     },
+  })
+}
+
+/** Opciones completas del catálogo; evita truncar la selección a la primera página. */
+export function useInteriorCatalogMaterialsOptions(enabled: Ref<boolean>) {
+  const repo = useService(repoKey)
+  return useQuery({
+    queryKey: [...interiorCatalogMaterialsKeys.all, 'options'],
+    queryFn: () => fetchAllPages((page, limit) => repo.getList({ page, limit })),
+    enabled,
   })
 }

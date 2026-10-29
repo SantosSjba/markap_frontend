@@ -1,4 +1,4 @@
-export type CalendarFeedSource = 'MANUAL' | 'MILESTONE' | 'EXECUTION_TASK' | 'FINANCE_SCHEDULE'
+export type CalendarFeedSource = 'MANUAL' | 'MILESTONE' | 'EXECUTION_TASK' | 'FINANCE_SCHEDULE' | 'PROJECT'
 
 export interface CalendarFeedItemDto {
   id: string

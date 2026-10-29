@@ -18,7 +18,8 @@ import {
 import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import DashboardAlertasList from '../components/DashboardAlertasList.vue'
 import DashboardBarChart from '../components/DashboardBarChart.vue'
-import DashboardAccionesRapidas from '../components/DashboardAccionesRapidas.vue'
+import QuickActionsBar from '@shared/presentation/components/dashboard/QuickActionsBar.vue'
+import type { QuickAction } from '@shared/presentation/components/dashboard/quick-actions.types'
 import DashboardEstadoContratos from '../components/DashboardEstadoContratos.vue'
 import DashboardCobranzaMes from '../components/DashboardCobranzaMes.vue'
 import DashboardFinanzasCartera from '../components/DashboardFinanzasCartera.vue'
@@ -87,6 +88,15 @@ const chartTabs: { id: ChartMode; label: string }[] = [
 function formatPercent(val: number) {
   return `${Math.round(val)}%`
 }
+
+const quickActions: QuickAction[] = [
+  { id: 'nuevo-contrato', label: 'Nuevo Contrato', route: { name: 'alquileres-contratos-nuevo' }, icon: 'lucide:plus', primary: true },
+  { id: 'contratos', label: 'Contratos', route: { name: 'alquileres-contratos' }, icon: 'lucide:file-text' },
+  { id: 'clientes', label: 'Clientes', route: { name: 'alquileres-clientes' }, icon: 'lucide:users' },
+  { id: 'propiedades', label: 'Propiedades', route: { name: 'alquileres-propiedades' }, icon: 'lucide:building-2' },
+  { id: 'cobranzas', label: 'Cobranzas', route: { name: 'alquileres-cobranzas' }, icon: 'lucide:credit-card' },
+  { id: 'reportes', label: 'Reportes', route: { name: 'alquileres-reportes' }, icon: 'lucide:bar-chart-3' },
+]
 </script>
 
 <template>
@@ -112,7 +122,7 @@ function formatPercent(val: number) {
     </PageHeader>
 
     <!-- ── Acciones rápidas ── -->
-    <DashboardAccionesRapidas />
+    <QuickActionsBar :actions="quickActions" />
 
     <!-- ── KPIs (compactos) ── -->
     <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">

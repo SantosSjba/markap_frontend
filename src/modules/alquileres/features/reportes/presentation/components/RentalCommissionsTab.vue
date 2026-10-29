@@ -503,6 +503,7 @@ async function handleExport() {
   <ReportSectionHeader
     title="Comisiones de alquileres"
     subtitle="Ingreso por intermediación en el mes de cobro de cada comisión; soles y dólares por separado"
+    help="Cada ingreso se ubica en el mes de su fecha de cobro (no en el inicio del contrato); las comisiones pendientes no cuentan hasta marcarlas como cobradas en Comisiones. Haz clic en un mes con cobros para ver el detalle de cada alquiler."
     icon="lucide:bar-chart-2"
     :exporting="isExporting"
     @export="handleExport"
@@ -604,11 +605,6 @@ async function handleExport() {
     </div>
 
 
-  <p class="text-xs mb-3 text-gray-400 dark:text-gray-500">
-    Cada ingreso se ubica en el mes de su fecha de cobro (no en el inicio del contrato); las comisiones pendientes no cuentan hasta marcarlas como pagadas en
-    <router-link :to="{ name: 'alquileres-comisiones' }" class="text-brand-500 dark:text-brand-400">Comisiones</router-link>.
-    Haz clic en un mes con cobros para ver el detalle de cada alquiler.
-  </p>
 
   <div class="overflow-x-auto">
     <Table class="w-full border-collapse text-sm">

@@ -2,67 +2,72 @@ export type InteriorReportesRangeParams = {
   startDate: string
   endDate: string
 }
-
-export type InteriorReportsVentas = {
-  cobranzasPeriodo: number
-  pagosRegistradosPeriodo: number
-  proyectosConCobroEnPeriodo: number
-  carteraPendienteCuotas: number
+export type ReportMoney = { currency: string; amount: number }
+export type ReportProject = {
+  id: string
+  code: string
+  name: string
+  status: string
+  createdDate: string
+  currency: string
+  budget: number
+  actualCost: number
+  paid: number
+  pending: number
+  utility: number
+  marginPct: number | null
+  unconverted: ReportMoney[]
 }
-
-export type InteriorReportsConversion = {
-  proyectosPorEstado: { status: string; count: number }[]
-  proyectosNuevosPeriodo: number
-  proyectosFinalizadosPeriodo: number
-  presupuestosAprobadosPeriodo: number
-  presupuestosRechazadosPeriodo: number
-  presupuestosEnviadosSnapshot: number
-  tasaCierrePresupuestoPct: number | null
+export type ReportCollection = {
+  id: string
+  projectId: string
+  projectCode: string
+  concept: string
+  date: string
+  currency: string
+  amount: number
 }
-
-export type InteriorReportsRentabilidad = {
-  volumenPresupuestosAprobadosPeriodo: number
-  costosEjecucionPeriodo: number
-  comprasMaterialesPeriodo: number
-  margenBrutoEstimado: number
-  margenBrutoPct: number | null
+export type ReportSupplier = {
+  key: string
+  supplierId: string | null
+  name: string
+  currency: string
+  actualCost: number
+  paid: number
+  balance: number
+  catalogPurchases: number
 }
-
-export type InteriorReportsProductividad = {
-  tareasTotales: number
-  tareasCompletadasSnapshot: number
-  tareasCompletadasPeriodo: number
-  pctAvanceTareas: number | null
-  evidenciasPeriodo: number
-  incidenciasAbiertas: number
-  progresoPromedioProyectosPct: number | null
-}
-
-export type InteriorReportsCostosCategoria = {
-  category: string
-  total: number
-}
-
-export type InteriorReportsCostos = {
-  ejecucionPorCategoria: InteriorReportsCostosCategoria[]
-  comprasProveedoresPeriodo: number
-  totalCostosPeriodo: number
-}
-
-export type InteriorReportsKpis = {
-  proyectosActivos: number
-  proyectosEnEjecucion: number
-  clientesTotales: number
-  presupuestosBorrador: number
-}
-
 export type InteriorReportsDashboard = {
   applicationSlug: string
   range: InteriorReportesRangeParams
-  ventas: InteriorReportsVentas
-  conversion: InteriorReportsConversion
-  rentabilidad: InteriorReportsRentabilidad
-  productividad: InteriorReportsProductividad
-  costos: InteriorReportsCostos
-  kpis: InteriorReportsKpis
+  projects: ReportProject[]
+  profitability: ReportProject[]
+  collections: ReportCollection[]
+  suppliers: ReportSupplier[]
+  monthly: { key: string; projects: number; collections: ReportMoney[] }[]
+  totals: {
+    budget: ReportMoney[]
+    actualCost: ReportMoney[]
+    collected: ReportMoney[]
+    pending: ReportMoney[]
+    supplierBalance: ReportMoney[]
+    catalogPurchases: ReportMoney[]
+  }
+  stages: { status: string; count: number }[]
+  kpis: {
+    activeProjects: number
+    inExecution: number
+    clients: number
+    quotation: number
+    newProjects: number
+    tasks: number
+    completedTasks: number
+    openIncidents: number
+  }
+  alerts: {
+    overdueProjects: number
+    pendingProjects: number
+    unpaidSuppliers: number
+    unconvertedPayments: number
+  }
 }

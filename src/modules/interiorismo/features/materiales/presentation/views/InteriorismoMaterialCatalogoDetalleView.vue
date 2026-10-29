@@ -1,282 +1,131 @@
 <script setup lang="ts">
 import { useApplicationAccess } from '@modules/applications/presentation/composables/useApplicationAccess'
-const { canWrite, canAdmin } = useApplicationAccess('interiorismo')
+const { canWrite } = useApplicationAccess('interiorismo')
 
-import BaseCard from '@shared/presentation/components/ui/BaseCard.vue'
-import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
-import { useService } from '@shared/presentation/di/services'
-import { FILE_ACCESS } from '@shared/application/ports/file-access.port'
-import { ref, watch, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import PageHeader from '@shared/presentation/components/ui/PageHeader.vue'
+import LoadingState from '@shared/presentation/components/ui/LoadingState.vue'
 import BaseButton from '@shared/presentation/components/ui/BaseButton.vue'
-import FormInput from '@shared/presentation/components/forms/FormInput.vue'
-import FileDropzone from '@shared/presentation/components/forms/FileDropzone.vue'
+import BaseTabs from '@shared/presentation/components/ui/BaseTabs.vue'
+import Badge from '@shared/presentation/components/ui/Badge.vue'
+import StatsCard from '@shared/presentation/components/ui/StatsCard.vue'
 import AppIcon from '@shared/presentation/components/ui/AppIcon.vue'
-import { markapAlert } from '@shared/presentation/composables/useMarkapAlert'
+import StoredImageThumb from '@shared/presentation/components/ui/StoredImageThumb.vue'
+import FormSectionCard from '@shared/presentation/components/forms/FormSectionCard.vue'
+import { useOpenStoredFile } from '@shared/presentation/composables/useOpenStoredFile'
+import { formatShortDate } from '@shared/utils/formatters'
+import { formatMoney } from '@shared/utils/money'
+import { INTERIORISMO_APP_SLUG } from '../../../../config/app.constants'
 import { INTERIORISMO_BASE_PATH } from '../../../../config/routes.constants'
-import {
-  useInteriorCatalogMaterialDetail,
-  useUpdateInteriorCatalogMaterial,
-  useDeleteInteriorCatalogMaterial,
-  useUploadInteriorCatalogAsset,
-} from '../composables/useInteriorCatalogMaterials'
-import { formatSol, formatQty } from '../labels'
-import { getApiErrorMessage } from '@shared/utils/apiErrorMessage'
-const fileAccess = useService(FILE_ACCESS)
+import { useInteriorCatalogMaterialDetail } from '../composables/useInteriorCatalogMaterials'
+import { formatQty } from '../labels'
+/** Ficha del material: cifras clave y pestañas Datos · Proveedores · Compras. */
 
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id ?? ''))
+const { data: m, isLoading, isError } = useInteriorCatalogMaterialDetail(id)
+const { openStoredFile } = useOpenStoredFile(INTERIORISMO_APP_SLUG)
 
-const { data: detail, isLoading } = useInteriorCatalogMaterialDetail(id)
-const updateMut = useUpdateInteriorCatalogMaterial(id)
-const deleteMut = useDeleteInteriorCatalogMaterial()
-const uploadMut = useUploadInteriorCatalogAsset()
-
-const name = ref('')
-const category = ref('')
-const brand = ref('')
-const unit = ref('')
-const price = ref(0)
-const stock = ref(0)
-const technicalSheetUrl = ref('')
-const imageUrls = ref<string[]>([])
-const sheetFile = ref<File | null>(null)
-const imageFile = ref<File | null>(null)
-const sheetError = ref('')
-const imageError = ref('')
-
-watch(
-  detail,
-  (d) => {
-    if (!d) return
-    name.value = d.name
-    category.value = d.category
-    brand.value = d.brand
-    unit.value = d.unit
-    price.value = d.price
-    stock.value = d.stock
-    technicalSheetUrl.value = d.technicalSheetUrl ?? ''
-    imageUrls.value = [...d.images].sort((a, b) => a.sortOrder - b.sortOrder).map((i) => i.url)
-  },
-  { immediate: true },
-)
-
-async function openPath(path: string) {
-  try {
-    if (/^https?:\/\//i.test(path)) {
-      window.open(path, '_blank', 'noopener,noreferrer')
-      return
-    }
-    const data = await fileAccess.resolveDownloadUrl(path, { applicationSlug: 'interiorismo' })
-    if (data?.url) {
-      window.open(data.url, '_blank', 'noopener,noreferrer')
-      return
-    }
-    void markapAlert.toast.error('No se pudo resolver la URL del archivo')
-  } catch (e) {
-    void markapAlert.toast.error('No se pudo abrir', getApiErrorMessage(e))
-  }
-}
-
-async function uploadSheet() {
-  if (!sheetFile.value) {
-    sheetError.value = 'Seleccione un archivo'
-    return
-  }
-  sheetError.value = ''
-  const res = await uploadMut.mutateAsync({
-    file: sheetFile.value,
-    kind: 'technical-sheet',
-    materialId: id.value,
-  })
-  technicalSheetUrl.value = res.objectKey
-  sheetFile.value = null
-  if (res.downloadUrl) {
-    // keep for immediate Ver
-  }
-  void markapAlert.toast.success('Ficha técnica lista (guarde para persistir)')
-}
-
-async function uploadImage() {
-  if (!imageFile.value) {
-    imageError.value = 'Seleccione un archivo'
-    return
-  }
-  imageError.value = ''
-  const res = await uploadMut.mutateAsync({
-    file: imageFile.value,
-    kind: 'image',
-    materialId: id.value,
-  })
-  imageUrls.value = [...imageUrls.value, res.objectKey]
-  imageFile.value = null
-  void markapAlert.toast.success('Imagen agregada (guarde para persistir)')
-}
-
-function removeImage(idx: number) {
-  imageUrls.value.splice(idx, 1)
-}
-
-async function save() {
-  await updateMut.mutateAsync({
-    name: name.value.trim(),
-    category: category.value.trim(),
-    brand: brand.value.trim(),
-    unit: unit.value.trim(),
-    price: Number(price.value),
-    stock: Number(stock.value),
-    technicalSheetUrl: technicalSheetUrl.value.trim() || null,
-    imageUrls: imageUrls.value,
-  })
-}
-
-async function remove() {
-  const ok = await markapAlert.confirmDanger({
-    title: '¿Eliminar material?',
-    text: 'Se quitará del catálogo y de vínculos con proveedores.',
-    confirmText: 'Eliminar',
-  })
-  if (!ok) return
-  await deleteMut.mutateAsync(id.value)
-  await router.replace(`${INTERIORISMO_BASE_PATH}/materiales/catalogo`)
-}
+const TABS = [
+  { id: 'datos', label: 'Datos', icon: 'lucide:info' },
+  { id: 'proveedores', label: 'Proveedores', icon: 'lucide:truck' },
+  { id: 'compras', label: 'Compras', icon: 'lucide:shopping-cart' },
+] as const
+const activeTab = ref<(typeof TABS)[number]['id']>('datos')
+const images = computed(() => [...(m.value?.images ?? [])].sort((a, b) => a.sortOrder - b.sortOrder))
+const lastPurchase = computed(() => m.value?.purchases[0] ?? null)
 
 const goBack = () => router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo`)
-
-const sortedImages = computed(() =>
-  detail.value ? [...detail.value.images].sort((a, b) => a.sortOrder - b.sortOrder) : [],
-)
+const goSupplier = (supplierId: string) => router.push(`${INTERIORISMO_BASE_PATH}/materiales/proveedores/${supplierId}`)
+const th = 'border-b border-gray-200 px-4 py-2.5 text-theme-xs font-medium uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400'
+const td = 'border-b border-gray-100 px-4 py-3 text-sm dark:border-gray-800'
 </script>
 
 <template>
-  <div class="max-w-[960px] mx-auto space-y-6">
-    <PageHeader
-      :title="`${detail?.code ?? '…'} · ${detail?.name ?? 'Cargando…'}`"
-      :subtitle="`Precio ref. ${formatSol(detail?.price)} · Stock ${formatQty(detail?.stock)}`"
-      eyebrow="Catálogo"
-    >
+  <div>
+    <PageHeader :title="m?.name ?? 'Material'" :subtitle="m ? `${m.code} · ${m.brand}` : 'Ficha del material'" back class="mb-6" @back="goBack">
       <template #actions>
-        <div class="flex flex-wrap gap-2">
-        <BaseButton variant="ghost" type="button" @click="goBack">
-          <AppIcon icon="lucide:arrow-left" :size="18" class="mr-1.5" />
-          Listado
-        </BaseButton>
-        <BaseButton v-if="canAdmin" variant="danger" type="button" :loading="deleteMut.isPending.value" @click="remove">
-          Eliminar
-        </BaseButton>
-        <BaseButton v-if="canWrite" variant="primary" type="button" :loading="updateMut.isPending.value" @click="save">
-          Guardar cambios
-        </BaseButton>
-      </div>
+        <div v-if="m" class="flex items-center gap-2">
+          <Badge variant="neutral">{{ m.category }}</Badge>
+          <BaseButton v-if="canWrite" variant="primary" size="sm" icon="lucide:pencil" @click="router.push(`${INTERIORISMO_BASE_PATH}/materiales/catalogo/${m.id}/editar`)">Editar</BaseButton>
+        </div>
       </template>
     </PageHeader>
 
-    <div v-if="isLoading" class="text-sm text-gray-500 dark:text-gray-400">Cargando…</div>
+    <LoadingState v-if="isLoading" class="py-24" />
+    <p v-else-if="isError || !m" class="py-16 text-center text-sm text-gray-500">No se encontró el material.</p>
+    <div v-else class="space-y-6">
+      <div class="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatsCard compact title="Precio ref." :value="formatMoney(m.price, m.currency)" :subtitle="`por ${m.unit}`">
+          <template #icon><AppIcon icon="lucide:tag" :size="20" /></template>
+        </StatsCard>
+        <StatsCard compact title="Stock" :value="formatQty(m.stock)" :subtitle="m.stock <= 0 ? 'por reponer' : m.unit">
+          <template #icon><AppIcon icon="lucide:package" :size="20" /></template>
+        </StatsCard>
+        <StatsCard compact title="Proveedores" :value="String(m.suppliers.length)" subtitle="lo surten">
+          <template #icon><AppIcon icon="lucide:truck" :size="20" /></template>
+        </StatsCard>
+        <StatsCard compact title="Última compra" :value="lastPurchase ? formatMoney(lastPurchase.unitPrice, lastPurchase.currency) : '—'" :subtitle="lastPurchase ? `${formatShortDate(lastPurchase.purchasedAt)} · ${lastPurchase.supplierName}` : 'sin compras'">
+          <template #icon><AppIcon icon="lucide:receipt" :size="20" /></template>
+        </StatsCard>
+      </div>
 
-    <template v-else-if="detail">
-      <BaseCard v-if="sortedImages.length" padding="sm" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <button
-          v-for="img in sortedImages"
-          :key="img.id"
-          type="button"
-          class="aspect-square rounded-lg overflow-hidden border text-left border-gray-200 dark:border-gray-800"
-          @click="openPath(img.url)"
-        >
-          <img
-            v-if="/^https?:\/\//i.test(img.url)"
-            :src="img.url"
-            alt=""
-            class="w-full h-full object-cover"
-            loading="lazy"
-          />
-          <div
-            v-else
-            class="w-full h-full flex items-center justify-center text-xs px-2 text-center text-gray-500 dark:text-gray-400"
-          >
-            Ver imagen
+      <BaseTabs v-model="activeTab" :tabs="TABS" />
+
+      <div v-if="activeTab === 'datos'" class="grid grid-cols-1 items-start gap-6 xl:grid-cols-3">
+        <FormSectionCard class="xl:col-span-2" title="Imágenes" icon="lucide:image" show-icon>
+          <div v-if="images.length" class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <button v-for="img in images" :key="img.id" type="button" class="aspect-square overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800" @click="openStoredFile({ url: img.url, filePath: img.url })">
+              <StoredImageThumb :path="img.url" :application-slug="INTERIORISMO_APP_SLUG" />
+            </button>
           </div>
-        </button>
-      </BaseCard>
+          <p v-else class="text-sm text-gray-400">Sin imágenes. Agréguelas desde Editar.</p>
+        </FormSectionCard>
+        <aside class="space-y-6">
+          <FormSectionCard title="Descripción" icon="lucide:align-left" show-icon>
+            <p class="text-sm whitespace-pre-wrap text-gray-600 dark:text-gray-400">{{ m.description || 'Sin descripción.' }}</p>
+          </FormSectionCard>
+          <FormSectionCard title="Ficha técnica" icon="lucide:file-text" show-icon>
+            <BaseButton v-if="m.technicalSheetUrl" variant="outline" size="sm" icon="lucide:external-link" @click="openStoredFile({ url: m.technicalSheetUrl, filePath: m.technicalSheetUrl })">Abrir ficha técnica</BaseButton>
+            <p v-else class="text-sm text-gray-400">Sin ficha técnica.</p>
+          </FormSectionCard>
+        </aside>
+      </div>
 
-      <BaseCard class="block space-y-4">
-        <p class="text-sm font-semibold text-gray-800 dark:text-white/90">Edición</p>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <FormInput :model-value="detail.code" label="Código" disabled />
-          <FormInput v-model="name" label="Nombre" required />
-        </div>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <FormInput v-model="category" label="Categoría" required />
-          <FormInput v-model="brand" label="Marca" required />
-        </div>
-        <div class="grid sm:grid-cols-3 gap-4">
-          <FormInput v-model="unit" label="Unidad" required />
-          <FormInput v-model="price" type="number" label="Precio ref." required />
-          <FormInput v-model="stock" type="number" label="Stock" />
-        </div>
+      <div v-else-if="activeTab === 'proveedores'" class="overflow-x-auto rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+        <table class="w-full min-w-max border-collapse">
+          <thead class="bg-gray-50 dark:bg-gray-900"><tr><th :class="[th, 'text-left']">Proveedor</th><th :class="[th, 'text-left']">RUC</th><th :class="[th, 'text-left']">SKU del proveedor</th></tr></thead>
+          <tbody>
+            <tr v-for="s in m.suppliers" :key="s.linkId" class="cursor-pointer hover:bg-gray-50/60 dark:hover:bg-white/[0.02]" @click="goSupplier(s.supplierId)">
+              <td :class="[td, 'font-medium text-gray-800 dark:text-white/90']">{{ s.companyName }}</td>
+              <td :class="[td, 'text-gray-500']">{{ s.ruc }}</td>
+              <td :class="[td, 'text-gray-500']">{{ s.supplierSku ?? '—' }}</td>
+            </tr>
+            <tr v-if="!m.suppliers.length"><td colspan="3" class="px-4 py-12 text-center text-sm text-gray-400">Ningún proveedor lo tiene vinculado. Vincúlelo desde la ficha del proveedor.</td></tr>
+          </tbody>
+        </table>
+      </div>
 
-        <div class="space-y-2">
-          <p class="text-sm font-medium">Ficha técnica</p>
-          <FileDropzone
-            v-model="sheetFile"
-            accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
-            :max-size="25 * 1024 * 1024"
-            :multiple="false"
-            :error="sheetError"
-            @error="(m: string) => (sheetError = m)"
-          />
-          <div class="flex flex-wrap gap-2">
-            <BaseButton
-              variant="secondary"
-              type="button"
-              :loading="uploadMut.isPending.value"
-              @click="uploadSheet"
-            >
-              Subir ficha
-            </BaseButton>
-            <BaseButton
-              v-if="technicalSheetUrl.trim()"
-              variant="outline"
-              type="button"
-              @click="openPath(technicalSheetUrl.trim())"
-            >
-              Ver ficha
-            </BaseButton>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <p class="text-sm font-medium">Imágenes</p>
-          <FileDropzone
-            v-model="imageFile"
-            accept=".png,.jpg,.jpeg,.webp"
-            :max-size="25 * 1024 * 1024"
-            :multiple="false"
-            :error="imageError"
-            @error="(m: string) => (imageError = m)"
-          />
-          <BaseButton v-if="canWrite"
-            variant="secondary"
-            type="button"
-            :loading="uploadMut.isPending.value"
-            @click="uploadImage"
-          >
-            Agregar imagen
-          </BaseButton>
-          <ul v-if="imageUrls.length" class="space-y-1 text-sm">
-            <li
-              v-for="(u, idx) in imageUrls"
-              :key="`${u}-${idx}`"
-              class="flex items-center justify-between gap-2"
-            >
-              <BaseButton @click="openPath(u)" variant="link">{{ u.split('/').pop() }}</BaseButton>
-              <BaseButton type="button" variant="ghost" size="sm" @click="removeImage(idx)">
-                Quitar
-              </BaseButton>
-            </li>
-          </ul>
-        </div>
-      </BaseCard>
-    </template>
+      <div v-else class="overflow-x-auto rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+        <table class="w-full min-w-max border-collapse">
+          <thead class="bg-gray-50 dark:bg-gray-900">
+            <tr><th :class="[th, 'text-left']">Fecha</th><th :class="[th, 'text-left']">Proveedor</th><th :class="[th, 'text-right']">Cantidad</th><th :class="[th, 'text-right']">P. unitario</th><th :class="[th, 'text-right']">Total</th><th :class="[th, 'text-left']">Comprobante</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in m.purchases" :key="p.id">
+              <td :class="[td, 'whitespace-nowrap text-gray-500']">{{ formatShortDate(p.purchasedAt) }}</td>
+              <td :class="td"><button type="button" class="text-left text-gray-800 hover:text-brand-500 dark:text-white/90" @click="goSupplier(p.supplierId)">{{ p.supplierName }}</button></td>
+              <td :class="[td, 'text-right tabular-nums']">{{ formatQty(p.quantity) }}</td>
+              <td :class="[td, 'text-right tabular-nums']">{{ formatMoney(p.unitPrice, p.currency) }}</td>
+              <td :class="[td, 'text-right font-medium tabular-nums']">{{ formatMoney(p.totalAmount, p.currency) }}</td>
+              <td :class="[td, 'text-gray-500']">{{ p.invoiceRef ?? '—' }}</td>
+            </tr>
+            <tr v-if="!m.purchases.length"><td colspan="6" class="px-4 py-12 text-center text-sm text-gray-400">Sin compras registradas de este material.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>

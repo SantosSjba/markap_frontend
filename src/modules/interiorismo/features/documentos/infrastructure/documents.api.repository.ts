@@ -1,6 +1,7 @@
 import { apiClient } from '@shared/infrastructure/http/api-client'
 import { INTERIORISMO_APP_SLUG } from '../../../config/app.constants'
 import type {
+  InteriorDocumentStats,
   CreateInteriorDocumentPayload,
   InteriorDocumentRow,
   ListInteriorDocumentsParams,
@@ -14,7 +15,7 @@ const BASE = '/interiorismo-documents'
 function queryParams(params: ListInteriorDocumentsParams) {
   const searchParams = new URLSearchParams()
   searchParams.set('applicationSlug', INTERIORISMO_APP_SLUG)
-  searchParams.set('docType', params.docType)
+  if (params.docType) searchParams.set('docType', params.docType)
   searchParams.set('page', String(params.page ?? 1))
   searchParams.set('limit', String(params.limit ?? 10))
   if (params.search) searchParams.set('search', params.search)
@@ -67,4 +68,11 @@ export const interiorDocumentsApiRepository: InteriorDocumentsRepository = {
         params: { applicationSlug: INTERIORISMO_APP_SLUG },
       })
       .then((r) => r.data.url),
+
+  stats: (projectId?: string) =>
+    apiClient
+      .get<InteriorDocumentStats>(`${BASE}/stats`, {
+        params: { applicationSlug: INTERIORISMO_APP_SLUG, ...(projectId ? { projectId } : {}) },
+      })
+      .then((r) => r.data),
 }

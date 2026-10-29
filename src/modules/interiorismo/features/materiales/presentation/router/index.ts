@@ -13,6 +13,12 @@ export const interiorismoMaterialesCatalogoRoutes: RouteRecordRaw[] = [
     meta: { title: 'Nuevo material' },
   },
   {
+    path: ':id/editar',
+    name: 'interiorismo-materiales-catalogo-editar',
+    component: () => import('../views/InteriorismoMaterialCatalogoEditarView.vue'),
+    meta: { title: 'Editar material' },
+  },
+  {
     path: ':id',
     name: 'interiorismo-materiales-catalogo-detalle',
     component: () => import('../views/InteriorismoMaterialCatalogoDetalleView.vue'),
@@ -32,6 +38,12 @@ export const interiorismoMaterialesProveedoresRoutes: RouteRecordRaw[] = [
     name: 'interiorismo-materiales-proveedores-nuevo',
     component: () => import('../views/InteriorismoProveedorNuevoView.vue'),
     meta: { title: 'Nuevo proveedor' },
+  },
+  {
+    path: ':id/editar',
+    name: 'interiorismo-materiales-proveedores-editar',
+    component: () => import('../views/InteriorismoProveedorEditarView.vue'),
+    meta: { title: 'Editar proveedor' },
   },
   {
     path: ':id',
